@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
 import { useClock } from '@/contexts/clock.context'
-import { useLedger } from '@/contexts/ledger.context'
+import { useCanWrite, useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { cn } from '@/lib/utils/cn.utils'
 import { pageTitleKey } from './navigation.utils'
@@ -22,7 +22,7 @@ export function Topbar() {
   const translateNav = useTranslations('nav')
   const translateCommon = useTranslations('common')
   const formatter = useFormatter()
-  const canWrite = ledger.role !== 'viewer'
+  const canWrite = useCanWrite()
   const titleKey = pageTitleKey(pathname)
   // Figma 11:73245: the mobile Topbar is the title and the bell only, the space card below says the rest
   const spacePage = pathname === '/space'
