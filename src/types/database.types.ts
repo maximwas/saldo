@@ -1360,6 +1360,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_my_display_name: {
+        Args: {
+          p_ledger_id: string
+          p_name: string
+        }
+        Returns: undefined
+      }
       update_operation: {
         Args: {
           p_expected_version: number
