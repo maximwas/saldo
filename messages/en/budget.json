@@ -1,0 +1,79 @@
+{
+  "loadFailed": "Could not load the budget. Refresh the page.",
+  "month": {
+    "previous": "Previous month",
+    "next": "Next month"
+  },
+  "summary": {
+    "income": "Income, actual",
+    "expense": "Expenses, actual",
+    "result": "Result, actual",
+    "incomePlan": "Plan {amount}",
+    "incomePlanNone": "No income plan",
+    "editIncomePlan": "Change income plan",
+    "limitsTotal": "Limits {amount}",
+    "limitsNone": "No limits",
+    "resultNote": "Transfers between accounts excluded"
+  },
+  "copy": {
+    "toNext": "Copy to {month}",
+    "fromPrevious": "Copy from {month}",
+    "done": "{count, plural, one {# limit copied} other {# limits copied}}",
+    "nothing": "This month already has these limits"
+  },
+  "limits": {
+    "title": "Limits by category",
+    "add": "Add a limit",
+    "legend": "Over the limit: the money is on your accounts, this is not a shortfall, the category just passed its limit.",
+    "empty": "No limits for this month.",
+    "noCategory": "No category",
+    "noLimit": "No limit",
+    "unknown": "{count} without a sum",
+    "remaining": "Left {amount}",
+    "remainingUnknown": "Remainder unknown",
+    "over": "Over the limit by {amount}",
+    "warning": "Over {pct}% of the limit · left {amount}",
+    "ofLimit": "of {limit} · {pct}%",
+    "ofLimitCarried": "of {limit} + carried {carried} · {pct}%",
+    "carriedUnknown": "of {limit} + carried unknown · {pct}%",
+    "operations": "Operations of “{name}” this month",
+    "edit": "Change the limit of “{name}”"
+  },
+  "empty": {
+    "title": "No budget for {month} yet",
+    "text": "Copy limits and the income plan from the previous month or start from scratch. A plan does not change the balance.",
+    "start": "Add a limit"
+  },
+  "limitSheet": {
+    "titleNew": "New limit · {month}",
+    "title": "Limit “{name}” · {month}",
+    "category": "Category",
+    "categoryPlaceholder": "Choose a category",
+    "amount": "Monthly limit",
+    "carry": "Unspent remainder",
+    "carryReset": "Reset at the end of the month",
+    "carryCarry": "Carry over to the next month",
+    "carryHintReset": "Does not move to the next month.",
+    "carryHintCarry": "When you copy the month, the remainder is added to the next limit.",
+    "spent": "Spent {amount}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete limit",
+    "saved": "Limit saved"
+  },
+  "deleteSheet": {
+    "title": "Delete the limit of “{name}”?",
+    "text": "The limit of {amount} for {month} will be deleted. The category's operations stay in the month's expenses, just without a limit.",
+    "confirm": "Delete",
+    "cancel": "Cancel",
+    "deleted": "Limit deleted"
+  },
+  "incomeSheet": {
+    "title": "Income plan · {month}",
+    "hint": "A plan does not change the balance and is not an actual. An empty field removes the plan.",
+    "amount": "Expected income for the month",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Income plan saved"
+  }
+}
