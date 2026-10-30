@@ -18,14 +18,14 @@
 | tailwindcss, @tailwindcss/postcss | 4.3.3 | тема — лише `docs/design/theme.css` | — |
 | shadcn (CLI) | 4.23.0 | генерація примітивів у `src/components/ui` | — |
 | @base-ui/react | 1.9.0 | основа shadcn, Drawer для шторок mobile | radix-ui 1.8.1 (більше не дефолт shadcn), vaul (не підтримується) |
-| next-themes | перевірити у фазі 0 | `data-theme` light / dark / system (theme.css) | власний скрипт теми |
+| next-themes | 0.4.6 (березень 2025, стабільний; інших оновлень немає) | `data-theme` light / dark / system (theme.css) | власний скрипт теми |
 | lucide-react | 1.65.0 | іконки (ті самі, що в Figma) | — |
 | sonner | 2.0.8 | тости | — |
 | cmdk | 1.1.1 | пошук ⌘K | — |
 | react-day-picker | 10.0.2 | вибір дати | — |
 | motion | 14.8.0 | анімації лише як відповідь на дію | — |
 | class-variance-authority | 0.7.1 | варіанти компонентів | — |
-| clsx, tailwind-merge | 2.1.1, 3.7.0 | `cn()` | — |
+| cn | 0.5.0 (MIT, shadcn) | `cn()` через `createCn` з токенами теми; shadcn CLI 4.23 генерує саме його | clsx + tailwind-merge (cn — їх drop-in заміна) |
 | tw-animate-css | 1.4.0 | анімації shadcn | — |
 | react-number-format | 5.4.5 | поле суми, числова клавіатура mobile | — |
 | @tanstack/react-table | 9.3.1 | таблиці desktop | — |
@@ -80,7 +80,7 @@
 | gitleaks | 8.30 (MIT; лише security-патчі, drop-in заміна — betterleaks) | пошук секретів у lefthook pre-commit і CI |
 | age | 1.3 (BSD-3-Clause, apt на ubuntu-latest) | шифрування бекапу на публічний ключ |
 | pgTAP + basejump-supabase_test_helpers | 0.0.6 (MIT, через dbdev) | тести RLS просторів (`supabase test db`) |
-| pnpm | перевірити у фазі 0 | менеджер пакетів |
+| pnpm | 12.14.0 (`packageManager`), Node ≥ 24 | менеджер пакетів |
 
 ## Ліміти безкоштовних тарифів, що мають значення
 
