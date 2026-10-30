@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { type Control, Controller, type ControllerRenderProps, type FieldPath, type FieldValues } from 'react-hook-form'
 import { Field, type FieldControlProps } from './field.component'
 
@@ -18,12 +19,19 @@ export function FormField<Values extends FieldValues, Name extends FieldPath<Val
   hint,
   render,
 }: FormFieldProps<Values, Name>) {
+  // schema messages are keys of the errors namespace (docs/conventions §3b); translated here once for every form
+  const translateErrors = useTranslations('errors')
+
   return (
     <Controller
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <Field label={label} hint={hint} error={fieldState.error?.message}>
+        <Field
+          label={label}
+          hint={hint}
+          error={fieldState.error?.message ? translateErrors(fieldState.error.message as never) : undefined}
+        >
           {render(field)}
         </Field>
       )}

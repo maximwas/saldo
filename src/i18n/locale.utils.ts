@@ -16,6 +16,9 @@ export const MESSAGE_NAMESPACES = [
   'common',
   'settings',
   'overview',
+  'accounts',
+  'categories',
+  'currencies',
   'operations',
   'obligations',
 ] as const
