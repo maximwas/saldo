@@ -15,8 +15,13 @@ type SpaceSwitcherProps = {
   onSelectAction?: (spaceId: string) => void
 }
 
+type SpaceAvatarProps = {
+  name: string
+  size: 'md' | 'sm'
+}
+
 // Figma «Saldo» → LetterAvatar Color=blue, Size 32 / 24
-function SpaceAvatar({ name, size }: { name: string; size: 'md' | 'sm' }) {
+function SpaceAvatar({ name, size }: SpaceAvatarProps) {
   return (
     <span
       aria-hidden

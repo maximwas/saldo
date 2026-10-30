@@ -217,7 +217,29 @@ src/features/subscriptions/
 - Коментарі — англійською, лише «чому», а не «що». Українська — лише в текстах інтерфейсу
   (`messages/<locale>/*.json`, §3b). TS/TSX — локальне правило ESLint `saldo/english-comments`
   (`eslint.config.mjs`), SQL — `pnpm lint:comments` (`scripts/check-sql-comments.mjs`).
-- Хто що перевіряє: Biome — лінтер і форматер (основний); ESLint (`eslint.config.mjs`) — лише три правила вище, без
+- Об'єкти й об'єктні типи (`type`, `interface`, літерал об'єкта) з двома й більше полями — кожне поле в окремому
+  рядку, дужки на своїх рядках; ніколи не згортаються в один рядок. Об'єкт з одним полем може лишитися в рядку;
+  деструктуризація й списки імпорту/експорту — як їх друкує Biome (переносяться лише за `lineWidth` 120). ESLint
+  `@stylistic/object-curly-newline` (`minProperties: 2`, `consistent`) + `@stylistic/object-property-newline`
+  (автофікс), Biome `javascript.formatter.expand: "auto"` тримає розгорнутий об'єкт розгорнутим. Тип параметра
+  функції з кількох полів завжди має ім'я (`type NavItemProps = { … }`): єдиний параметр Biome «обіймає» й згортає
+  його inline-тип у рядок (так само Prettier), тож ESLint `no-restricted-syntax` забороняє такий inline-тип.
+
+  ```ts
+  export type LedgerSummary = {
+    id: string
+    name: string
+    role: LedgerRole
+  }
+
+  type LedgerProviderProps = {
+    ledger: ActiveLedger | null
+    children: React.ReactNode
+  }
+
+  export function LedgerProvider({ ledger, children }: LedgerProviderProps) {
+  ```
+- Хто що перевіряє: Biome — лінтер і форматер (основний); ESLint (`eslint.config.mjs`) — лише правила вище, без
   пресетів і без форматування. `pnpm lint` = Biome + ESLint + коментарі SQL, `pnpm format` = `biome check --write` +
   `eslint --fix`; усе входить у `pnpm check` і lefthook. VS Code: `.vscode/settings.json` (Biome форматує при
   збереженні, ESLint і Biome виправляють), `.vscode/extensions.json`.
@@ -258,6 +280,42 @@ async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
   `new Intl.DateTimeFormat('uk')` у компонентах немає.
 - `<html lang>` рендериться поза Suspense, де читається локаль (cacheComponents), тому його оновлює `AppProviders`.
 
+## 3c. Логи (ADR 26, `docs/architecture.md`)
+
+- Лише сервер: `import { logger } from '@/lib/logger/logger.server'`, у модулі — `const log = logger.child({ module:
+  'ledgers' })` на рівні файлу. `console.*` у серверному коді не пишемо; у браузері логів немає.
+- Що логувати: помилки й відмови (`error` — збій, який користувач бачить як помилку; `warn` — відмова чи підозрілий
+  запит, який сервер обробив; `info` — старт і кінець cron із тривалістю; `debug` — лише локально). Щасливий шлях
+  кожного запиту не логуємо.
+- Приватність (репозиторій публічний, дані фінансові): ніколи не логуємо суми, назви рахунків, категорій і просторів,
+  нотатки, email, токени, cookie, заголовки авторизації й `message` помилок Postgres (у ньому значення рядків).
+  Логуємо id, `kind`, коди, constraint, тривалість. `redact` у `logger.utils.ts` — страховка для відомих ключів, а не
+  дозвіл передавати в лог цілі об'єкти. Назви полів — `ledgerName`, `accountName`, а не `name`: `*.name` редакція
+  не ховає, бо так зветься тип помилки (`err.name`).
+- Помилка Postgres: `logPgError(log, error, 'locale update failed')` пише `code`, `kind`, `constraint` і повертає
+  `PgError` для UI (`errors.db.<kind>`). Необроблені помилки сторінок, Route Handlers і Server Actions пише
+  `onRequestError` у `src/instrumentation.ts` — ловити їх, щоб лише залогувати, не треба.
+- Рівень — env `LOG_LEVEL` (`.env.example`), за замовчуванням `debug` у dev і `info` у проді. Прод — JSON-рядки,
+  які показують Vercel Runtime Logs; dev — `pino-pretty`. Транспорти pino (worker thread) не використовуємо.
+
+```ts
+const log = logger.child({
+  module: 'ledgers',
+})
+
+if (!membership) {
+  log.warn(
+    {
+      ledgerId,
+      userId: session.userId,
+    },
+    'switch to a space without membership',
+  )
+
+  throw new Error('Not a member of this space')
+}
+```
+
 ## 4. Патерни
 
 ### 4.1 Ключі й `queryOptions`
@@ -279,9 +337,16 @@ export const operationKeys = {
 
 export const operationQueries = {
   list: (ledgerId: string, filters: OperationFilters) =>
-    queryOptions({ queryKey: operationKeys.list(ledgerId, filters), queryFn: () => fetchOperations(getBrowserSupabase(), ledgerId, filters), staleTime: 30_000 }),
+    queryOptions({
+      queryKey: operationKeys.list(ledgerId, filters),
+      queryFn: () => fetchOperations(getBrowserSupabase(), ledgerId, filters),
+      staleTime: 30_000,
+    }),
   detail: (ledgerId: string, id: string) =>
-    queryOptions({ queryKey: operationKeys.detail(ledgerId, id), queryFn: () => fetchOperation(getBrowserSupabase(), id) }),
+    queryOptions({
+      queryKey: operationKeys.detail(ledgerId, id),
+      queryFn: () => fetchOperation(getBrowserSupabase(), id),
+    }),
 }
 
 // у компоненті: const { ledgerId } = useLedger(); const { data } = useQuery(operationQueries.list(ledgerId, filters))
@@ -289,17 +354,27 @@ export const operationQueries = {
 
 ```ts
 // src/constants/query-roots.constants.ts
-export const MONEY_QUERY_ROOTS = ['operations', 'accounts', 'obligations', 'reserves', 'overview', 'budget', 'calendar', 'statistics', 'taxes'] as const
-export const isMoneyQuery = (q: { queryKey: readonly unknown[] }) =>
-  (MONEY_QUERY_ROOTS as readonly unknown[]).includes(q.queryKey[0])
+export const MONEY_QUERY_ROOTS = [
+  'operations',
+  'accounts',
+  'obligations',
+  'reserves',
+  'overview',
+  'budget',
+  'calendar',
+  'statistics',
+  'taxes',
+] as const
+export const isMoneyQuery = (query: { queryKey: readonly unknown[] }) =>
+  (MONEY_QUERY_ROOTS as readonly unknown[]).includes(query.queryKey[0])
 ```
 
 ### 4.2 Мутація з `setMutationDefaults` і UUID клієнта
 
 ```ts
 // src/features/operations/api/operations.mutations.ts
-import { type QueryClient, useMutation } from '@tanstack/react-query'
 import type { PostgrestError } from '@supabase/supabase-js'
+import { type QueryClient, useMutation } from '@tanstack/react-query'
 import { isMoneyQuery } from '@/constants/query-roots.constants'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import type { Operation, OperationInsert } from '../operations.types'
@@ -318,7 +393,10 @@ export function registerOperationMutations(queryClient: QueryClient) {
     onMutate: async (input: OperationInsert) => {
       await queryClient.cancelQueries({ queryKey: operationKeys.lists() })
       queryClient.setQueriesData<Operation[]>({ queryKey: operationKeys.lists() }, (rows = []) => [
-        { ...input, syncState: 'pending' } as Operation,
+        {
+          ...input,
+          syncState: 'pending',
+        } as Operation,
         ...rows,
       ])
     },
@@ -342,7 +420,11 @@ import { type OperationInsert, operationInsertSchema } from '../schemas/create-o
 
 export async function createOperation(supabase: SaldoClient, input: OperationInsert): Promise<Operation> {
   const { data, error } = await supabase.rpc('create_operation', { p_operation: operationInsertSchema.parse(input) })
-  if (error) throw error
+
+  if (error) {
+    throw error
+  }
+
   return data
 }
 ```
@@ -355,7 +437,7 @@ export async function createOperation(supabase: SaldoClient, input: OperationIns
 export async function payObligation(supabase: SaldoClient, raw: PayObligationInput) {
   const input = payObligationInputSchema.parse(raw) // schemas/pay-obligation-input.schema.ts
   const { data, error } = await supabase.rpc('pay_obligation', {
-    p_payment_id: input.paymentId,          // UUID клієнта
+    p_payment_id: input.paymentId, // UUID клієнта
     p_obligation_id: input.obligationId,
     p_amount_minor: input.amountMinor,
     p_operation: input.newOperation ?? null, // з власним UUID
@@ -363,7 +445,11 @@ export async function payObligation(supabase: SaldoClient, raw: PayObligationInp
     p_reserve_id: input.reserveId ?? null,
     p_settle: input.settle,
   })
-  if (error) throw error // PT409 → conflict, 23514 → поле, див. pg-error.utils
+
+  if (error) {
+    throw error // PT409 → conflict, 23514 → поле, див. pg-error.utils
+  }
+
   return data
 }
 ```
@@ -399,18 +485,20 @@ end $$;
 import { z } from 'zod'
 import { CURRENCIES } from '@/constants/currencies.constants'
 
-export const operationFormSchema = z.object({
-  kind: z.enum(['income', 'expense', 'refund', 'adjustment']),
-  amount: z.string().regex(/^\d+([.,]\d{1,2})?$/, 'Сума з двома знаками'),
-  currency: z.enum(CURRENCIES),
-  accountId: z.uuid(),
-  categoryId: z.uuid().nullable(),
-  occurredOn: z.iso.date(),
-  note: z.string().trim().max(500).default(''),
-}).refine((v) => v.kind !== 'adjustment' || v.note.length > 0, {
-  path: ['note'],
-  message: 'Коригування пояснюється приміткою',
-})
+export const operationFormSchema = z
+  .object({
+    kind: z.enum(['income', 'expense', 'refund', 'adjustment']),
+    amount: z.string().regex(/^\d+([.,]\d{1,2})?$/, 'Сума з двома знаками'),
+    currency: z.enum(CURRENCIES),
+    accountId: z.uuid(),
+    categoryId: z.uuid().nullable(),
+    occurredOn: z.iso.date(),
+    note: z.string().trim().max(500).default(''),
+  })
+  .refine((values) => values.kind !== 'adjustment' || values.note.length > 0, {
+    path: ['note'],
+    message: 'Коригування пояснюється приміткою',
+  })
 ```
 
 ```tsx
@@ -424,7 +512,10 @@ const create = useCreateOperation()
 
 const onSubmit = form.handleSubmit((values) =>
   create.mutate(
-    { ...toOperationInsert(values, clock), id: crypto.randomUUID() },
+    {
+      ...toOperationInsert(values, clock),
+      id: crypto.randomUUID(),
+    },
     { onError: (error) => applyPgError(error, form.setError) },
   ),
 )
@@ -437,11 +528,27 @@ const CONSTRAINT_FIELDS: Record<string, string> = {
   operations_adjustment_note: 'note',
   transfers_distinct_accounts: 'toAccountId',
 }
-export function mapPgError(error: { code?: string; message: string; details?: string }) {
-  if (error.code === 'PT409') return { kind: 'conflict' } as const
+
+type PgErrorLike = {
+  code?: string
+  message: string
+  details?: string
+}
+
+export function mapPgError(error: PgErrorLike) {
+  if (error.code === 'PT409') {
+    return { kind: 'conflict' } as const
+  }
+
   const constraint = /constraint "([^"]+)"/.exec(error.message)?.[1]
   const field = constraint ? CONSTRAINT_FIELDS[constraint] : undefined
-  return field ? ({ kind: 'field', field } as const) : ({ kind: 'unknown' } as const)
+
+  return field
+    ? ({
+        kind: 'field',
+        field,
+      } as const)
+    : ({ kind: 'unknown' } as const)
 }
 ```
 
@@ -452,16 +559,24 @@ export function mapPgError(error: { code?: string; message: string; details?: st
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-type UiState = { amountsHidden: boolean; sidebarCollapsed: boolean; toggleAmounts: () => void }
+type UiState = {
+  amountsHidden: boolean
+  sidebarCollapsed: boolean
+  toggleAmounts: () => void
+}
 
 export const useUiStore = create<UiState>()(
   persist(
     (set) => ({
       amountsHidden: false,
       sidebarCollapsed: false,
-      toggleAmounts: () => set((s) => ({ amountsHidden: !s.amountsHidden })),
+      toggleAmounts: () => set((state) => ({ amountsHidden: !state.amountsHidden })),
     }),
-    { name: 'saldo-ui', skipHydration: true }, // rehydrate() у useEffect після монтування
+    // rehydrate() у useEffect після монтування
+    {
+      name: 'saldo-ui',
+      skipHydration: true,
+    },
   ),
 )
 ```
@@ -474,16 +589,37 @@ export const useUiStore = create<UiState>()(
 import { TZDate } from '@date-fns/tz'
 import { createContext, use } from 'react'
 
-type Clock = { timeZone: string; now: () => TZDate }
+type Clock = {
+  timeZone: string
+  now: () => TZDate
+}
 const ClockContext = createContext<Clock | null>(null)
 
-export function ClockProvider({ timeZone, children }: { timeZone: string; children: React.ReactNode }) {
-  return <ClockContext value={{ timeZone, now: () => TZDate.tz(timeZone) }}>{children}</ClockContext>
+type ClockProviderProps = {
+  timeZone: string
+  children: React.ReactNode
+}
+
+export function ClockProvider({ timeZone, children }: ClockProviderProps) {
+  return (
+    <ClockContext
+      value={{
+        timeZone,
+        now: () => TZDate.tz(timeZone),
+      }}
+    >
+      {children}
+    </ClockContext>
+  )
 }
 
 export function useClock() {
   const clock = use(ClockContext)
-  if (!clock) throw new Error('useClock outside ClockProvider')
+
+  if (!clock) {
+    throw new Error('useClock outside ClockProvider')
+  }
+
   return clock
 }
 ```
@@ -493,36 +629,60 @@ export function useClock() {
 ```ts
 // src/lib/finance/available-money.utils.ts
 export type AvailableInput = {
-  balances: { accountId: string; baseMinor: number | null }[]        // лише include_in_available
-  reserves: { reserveId: string; baseMinor: number }[]
-  obligations: { id: string; dueOn: string; remainingBaseMinor: number | null; envelopeId: string | null }[]
-  reserveById: Record<string, number>                                 // залишок конверта в базовій валюті
+  balances: {
+    accountId: string
+    baseMinor: number | null
+  }[] // лише include_in_available
+  reserves: {
+    reserveId: string
+    baseMinor: number
+  }[]
+  obligations: {
+    id: string
+    dueOn: string
+    remainingBaseMinor: number | null
+    envelopeId: string | null
+  }[]
+  reserveById: Record<string, number> // залишок конверта в базовій валюті
 }
 export type AvailableResult = {
   totalMinor: number
   balancesMinor: number
   reservesMinor: number
   uncoveredMinor: number
-  unknownAmountIds: string[]   // невідома сума: не віднімається, показується окремо
-  incomplete: boolean          // є рахунок без курсу
+  unknownAmountIds: string[] // невідома сума: не віднімається, показується окремо
+  incomplete: boolean // є рахунок без курсу
 }
 
 export function computeAvailable(input: AvailableInput): AvailableResult {
-  const balancesMinor = input.balances.reduce((s, b) => s + (b.baseMinor ?? 0), 0)
-  const reservesMinor = input.reserves.reduce((s, r) => s + r.baseMinor, 0)
+  const balancesMinor = input.balances.reduce((sum, balance) => sum + (balance.baseMinor ?? 0), 0)
+  const reservesMinor = input.reserves.reduce((sum, reserve) => sum + reserve.baseMinor, 0)
   const left = { ...input.reserveById }
   let uncoveredMinor = 0
   const unknownAmountIds: string[] = []
-  for (const o of [...input.obligations].sort((a, b) => a.dueOn.localeCompare(b.dueOn))) {
-    if (o.remainingBaseMinor === null) { unknownAmountIds.push(o.id); continue }
-    const cover = o.envelopeId ? Math.min(left[o.envelopeId] ?? 0, o.remainingBaseMinor) : 0
-    if (o.envelopeId) left[o.envelopeId] = (left[o.envelopeId] ?? 0) - cover
-    uncoveredMinor += o.remainingBaseMinor - cover
+
+  for (const obligation of [...input.obligations].sort((first, second) => first.dueOn.localeCompare(second.dueOn))) {
+    if (obligation.remainingBaseMinor === null) {
+      unknownAmountIds.push(obligation.id)
+      continue
+    }
+
+    const cover = obligation.envelopeId ? Math.min(left[obligation.envelopeId] ?? 0, obligation.remainingBaseMinor) : 0
+
+    if (obligation.envelopeId) {
+      left[obligation.envelopeId] = (left[obligation.envelopeId] ?? 0) - cover
+    }
+
+    uncoveredMinor += obligation.remainingBaseMinor - cover
   }
+
   return {
     totalMinor: balancesMinor - reservesMinor - uncoveredMinor,
-    balancesMinor, reservesMinor, uncoveredMinor, unknownAmountIds,
-    incomplete: input.balances.some((b) => b.baseMinor === null),
+    balancesMinor,
+    reservesMinor,
+    uncoveredMinor,
+    unknownAmountIds,
+    incomplete: input.balances.some((balance) => balance.baseMinor === null),
   }
 }
 ```
@@ -534,23 +694,56 @@ import { computeAvailable } from './available-money.utils'
 
 describe('computeAvailable', () => {
   it('не віднімає податок, покритий податковим резервом, удруге (§3)', () => {
-    const r = computeAvailable({
-      balances: [{ accountId: 'a', baseMinor: 100_000 }],
-      reserves: [{ reserveId: 'tax', baseMinor: 30_000 }],
+    const result = computeAvailable({
+      balances: [
+        {
+          accountId: 'a',
+          baseMinor: 100_000,
+        },
+      ],
+      reserves: [
+        {
+          reserveId: 'tax',
+          baseMinor: 30_000,
+        },
+      ],
       reserveById: { tax: 30_000 },
-      obligations: [{ id: 't1', dueOn: '2026-11-20', remainingBaseMinor: 30_000, envelopeId: 'tax' }],
+      obligations: [
+        {
+          id: 't1',
+          dueOn: '2026-11-20',
+          remainingBaseMinor: 30_000,
+          envelopeId: 'tax',
+        },
+      ],
     })
-    expect(r.totalMinor).toBe(70_000)
-    expect(r.uncoveredMinor).toBe(0)
+
+    expect(result.totalMinor).toBe(70_000)
+    expect(result.uncoveredMinor).toBe(0)
   })
 
   it('невідома сума не стає нулем, а виноситься окремо', () => {
-    const r = computeAvailable({
-      balances: [{ accountId: 'a', baseMinor: 10_000 }], reserves: [], reserveById: {},
-      obligations: [{ id: 'x', dueOn: '2026-11-01', remainingBaseMinor: null, envelopeId: null }],
+    const result = computeAvailable({
+      balances: [
+        {
+          accountId: 'a',
+          baseMinor: 10_000,
+        },
+      ],
+      reserves: [],
+      reserveById: {},
+      obligations: [
+        {
+          id: 'x',
+          dueOn: '2026-11-01',
+          remainingBaseMinor: null,
+          envelopeId: null,
+        },
+      ],
     })
-    expect(r.totalMinor).toBe(10_000)
-    expect(r.unknownAmountIds).toEqual(['x'])
+
+    expect(result.totalMinor).toBe(10_000)
+    expect(result.unknownAmountIds).toEqual(['x'])
   })
 })
 ```
@@ -563,9 +756,11 @@ describe('computeAvailable', () => {
 {
   "$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "includes": ["src/**", "e2e/**", "*.ts", "!src/types/database.types.ts", "!e2e/.auth"] },
+  "files": {
+    "includes": ["src/**", "e2e/**", "scripts/**", "*.{ts,mjs,cjs}", ".dependency-cruiser.cjs", "!src/types/database.types.ts", "!e2e/.auth"]
+  },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
-  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
+  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded", "expand": "auto" } },
   "linter": {
     "rules": {
       "preset": "recommended",
@@ -634,7 +829,14 @@ module.exports = {
 import { defineConfig } from 'vitest/config'
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  test: { environment: 'node', include: ['src/**/*.test.ts'], coverage: { provider: 'v8', include: ['src/**/*.utils.ts', 'src/**/*.schema.ts'] } },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.utils.ts', 'src/**/*.schema.ts'],
+    },
+  },
 })
 ```
 
@@ -711,9 +913,21 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'setup', testMatch: '**/*.setup.ts' },
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] }, dependencies: ['setup'] },
-    { name: 'mobile', use: { ...devices['Pixel 7'] }, grep: /@mobile/, dependencies: ['setup'] },
+    {
+      name: 'setup',
+      testMatch: '**/*.setup.ts',
+    },
+    {
+      name: 'desktop',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'mobile',
+      use: { ...devices['Pixel 7'] },
+      grep: /@mobile/,
+      dependencies: ['setup'],
+    },
   ],
   webServer: {
     // прод-збірка, як радить гайд Next: Serwist і service worker працюють лише в ній, і без холодної компіляції dev
@@ -904,8 +1118,9 @@ e2e:
 
 ## 8. Коміти
 
-- Conventional Commits: `feat(operations): переказ із комісією`, `fix(recurrence): лютий для правила skip`,
-  `chore(db): міграція obligations`.
+- Conventional Commits лише англійською: `feat(operations): transfer with a fee`,
+  `fix(recurrence): February for the skip rule`, `chore(db): obligations migration`. Англійською також назви гілок,
+  заголовки й описи PR. Кирилицю в повідомленні коміту відхиляє lefthook `commit-msg` (`scripts/check-commit-msg.mjs`).
 - Один коміт — одна логічна зміна; `pnpm check` зелений.
 - Без `Co-Authored-By: Claude`, без «Generated with Claude Code» і будь-яких згадок AI у комітах і PR.
 - Секрети, `.env*`, дампи БД у git не потрапляють. Репозиторій публічний: gitleaks у pre-commit і push protection

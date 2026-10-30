@@ -48,6 +48,8 @@
 | @hookform/resolvers | 6.0.2 | zodResolver | — |
 | zod | 4.6.7 | схеми форм, env, вхід RPC на клієнті | — |
 | @t3-oss/env-nextjs | 0.13.11 | типізовані env, розділ server/client | — |
+| pino | 10.4.0 (MIT, 02.10.2026) | серверні логи: JSON у проді, `redact`, child-логери (ADR 26) | LogTape 2.4.2, consola 3.4.2 (без релізів з 03.2025), next-logger 5.0.2 |
+| pino-pretty | 13.2.0 (MIT, 04.10.2026) | читабельні логи в dev, потік у тому ж процесі (без transport) | — |
 
 ## Домен
 

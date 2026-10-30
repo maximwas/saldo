@@ -6,7 +6,10 @@ module.exports = {
       comment: 'Фічі не імпортують одна одну; спільне — у src/lib, src/components, src/types',
       severity: 'error',
       from: { path: '^src/features/([^/]+)/' },
-      to: { path: '^src/features/([^/]+)/', pathNot: '^src/features/$1/' },
+      to: {
+        path: '^src/features/([^/]+)/',
+        pathNot: '^src/features/$1/',
+      },
     },
     {
       name: 'api-is-portable',
@@ -17,5 +20,8 @@ module.exports = {
       to: { path: '(node_modules/(react|react-dom|next|@tanstack)/|^src/lib/supabase/browser-client)' },
     },
   ],
-  options: { tsConfig: { fileName: 'tsconfig.json' }, doNotFollow: { path: 'node_modules' } },
+  options: {
+    tsConfig: { fileName: 'tsconfig.json' },
+    doNotFollow: { path: 'node_modules' },
+  },
 }

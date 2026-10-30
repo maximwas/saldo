@@ -24,5 +24,9 @@ export default getRequestConfig(async () => {
     acceptLanguage: headerList.get('accept-language'),
   })
 
-  return { locale, timeZone: DEFAULT_TIME_ZONE, messages: await loadMessages(locale) }
+  return {
+    locale,
+    timeZone: DEFAULT_TIME_ZONE,
+    messages: await loadMessages(locale),
+  }
 })

@@ -16,10 +16,19 @@ import type { Messages } from 'next-intl'
 /** a key of messages/<locale>/nav.json */
 export type NavKey = keyof Messages['nav']
 /** href is a plain string: typed routes only see the stub catch-all, so <Link> casts it to Route */
-export type NavLink = { key: NavKey; href: string }
-export type NavSection = NavLink & { icon: LucideIcon; children?: readonly NavLink[] }
+export type NavLink = {
+  key: NavKey
+  href: string
+}
+export type NavSection = NavLink & {
+  icon: LucideIcon
+  children?: readonly NavLink[]
+}
 
-const link = (key: NavKey, href: string): NavLink => ({ key, href })
+const link = (key: NavKey, href: string): NavLink => ({
+  key,
+  href,
+})
 const section = (key: NavKey, href: string, icon: LucideIcon, children?: NavLink[]): NavSection => ({
   ...link(key, href),
   icon,

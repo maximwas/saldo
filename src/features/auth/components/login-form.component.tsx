@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { type FormEvent, useId, useState } from 'react'
+import { type SubmitEvent, useId, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Input } from '@/components/ui/input.component'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
@@ -19,7 +19,13 @@ export function LoginForm() {
   const router = useRouter()
   const translate = useTranslations('auth')
   const translateError = useTranslations('errors.auth')
-  const ids = { email: useId(), password: useId(), passwordHint: useId(), code: useId(), codeHint: useId() }
+  const ids = {
+    email: useId(),
+    password: useId(),
+    passwordHint: useId(),
+    code: useId(),
+    codeHint: useId(),
+  }
   const [step, setStep] = useState<Step>('password')
   const [factorId, setFactorId] = useState<string | null>(null)
   const [code, setCode] = useState('')
@@ -34,7 +40,7 @@ export function LoginForm() {
     router.refresh()
   }
 
-  async function submitPassword(event: FormEvent<HTMLFormElement>) {
+  async function submitPassword(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     const supabase = getBrowserSupabase()
@@ -68,7 +74,7 @@ export function LoginForm() {
     finish()
   }
 
-  async function submitCode(event: FormEvent<HTMLFormElement>) {
+  async function submitCode(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
 
     if (!factorId) {
@@ -77,7 +83,10 @@ export function LoginForm() {
 
     setIsPending(true)
     setError(null)
-    const { error: verifyError } = await getBrowserSupabase().auth.mfa.challengeAndVerify({ factorId, code })
+    const { error: verifyError } = await getBrowserSupabase().auth.mfa.challengeAndVerify({
+      factorId,
+      code,
+    })
 
     if (verifyError) {
       setIsPending(false)

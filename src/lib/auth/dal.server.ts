@@ -3,17 +3,38 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import type { ActiveLedger } from '@/contexts/ledger.context'
+import { logger } from '@/lib/logger/logger.server'
+import { logPgError } from '@/lib/supabase/pg-error.server'
 import { getServerSupabase } from '@/lib/supabase/server-client'
 import type { LedgerRole } from '@/types/supabase.types'
 
 export const LEDGER_COOKIE = 'saldo-ledger'
 
+const log = logger.child({
+  module: 'dal',
+})
+
 // getClaims verifies the JWT (JWKS for asymmetric keys, Auth for the legacy secret); getSession is never trusted on the server
 const getSession = cache(async () => {
   const supabase = await getServerSupabase()
-  const { data } = await supabase.auth.getClaims()
+  const { data, error } = await supabase.auth.getClaims()
 
-  return data?.claims ? { userId: data.claims.sub, email: data.claims.email ?? null } : null
+  // no session is not an error; a token that fails verification or an unreachable Auth is
+  if (error) {
+    log.warn(
+      {
+        code: error.code ?? error.name,
+      },
+      'session claims check failed',
+    )
+  }
+
+  return data?.claims
+    ? {
+        userId: data.claims.sub,
+        email: data.claims.email ?? null,
+      }
+    : null
 })
 
 export async function verifySession() {
@@ -35,11 +56,15 @@ const getUserSettings = cache(async () => {
   }
 
   const supabase = await getServerSupabase()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('user_settings')
     .select('last_ledger_id, locale')
     .eq('user_id', session.userId)
     .maybeSingle()
+
+  if (error) {
+    logPgError(log, error, 'user_settings lookup failed')
+  }
 
   return data
 })
@@ -60,6 +85,11 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
     supabase.from('ledger_members').select('ledger_id, role, ledgers(name, time_zone)').eq('user_id', session.userId),
     getUserSettings(),
   ])
+
+  if (memberships.error) {
+    logPgError(log, memberships.error, 'ledger_members lookup failed')
+  }
+
   const rows = memberships.data ?? []
   const preferred = [cookieStore.get(LEDGER_COOKIE)?.value, settings?.last_ledger_id]
   const membership =
@@ -75,6 +105,10 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
     ledgerId: membership.ledger_id,
     role: membership.role as LedgerRole,
     timeZone: membership.ledgers?.time_zone ?? 'Europe/Kyiv',
-    ledgers: rows.map((row) => ({ id: row.ledger_id, name: row.ledgers?.name ?? '', role: row.role as LedgerRole })),
+    ledgers: rows.map((row) => ({
+      id: row.ledger_id,
+      name: row.ledgers?.name ?? '',
+      role: row.role as LedgerRole,
+    })),
   }
 })

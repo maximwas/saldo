@@ -34,6 +34,9 @@ export function Badge({ className, tone, render, ...props }: BadgeProps) {
     defaultTagName: 'span',
     props: mergeProps<'span'>({ className: cn(badgeVariants({ tone }), className) }, props),
     render,
-    state: { slot: 'badge', tone },
+    state: {
+      slot: 'badge',
+      tone,
+    },
   })
 }

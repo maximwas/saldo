@@ -8,16 +8,31 @@ test('owner switches the interface to English and back', async ({ pageAs }) => {
   await page.goto('/settings')
   await page.getByRole('button', { name: 'English' }).click()
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Settings',
+    }),
+  ).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
 
   await page.reload()
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Settings',
+    }),
+  ).toBeVisible()
 
   await page.getByRole('button', { name: 'Українська' }).click()
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Налаштування' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Налаштування',
+    }),
+  ).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
 })
 

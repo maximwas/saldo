@@ -21,7 +21,10 @@ const amountVariants = cva('whitespace-nowrap tabular-nums', {
       xl: 'font-display text-hero',
     },
   },
-  defaultVariants: { kind: 'fact', size: 's' },
+  defaultVariants: {
+    kind: 'fact',
+    size: 's',
+  },
 })
 
 type AmountProps = VariantProps<typeof amountVariants> & {
@@ -39,7 +42,16 @@ export function Amount({ minor, currency, hidden = false, kind, size, className 
   const symbol = currencySymbol(currency, locale)
 
   return (
-    <span className={cn(amountVariants({ kind, size }), minor === null && 'text-text-tertiary', className)}>
+    <span
+      className={cn(
+        amountVariants({
+          kind,
+          size,
+        }),
+        minor === null && 'text-text-tertiary',
+        className,
+      )}
+    >
       {hidden ? `•••• ${symbol}` : minor === null ? `? ${symbol}` : formatMinor(minor, currency, locale)}
     </span>
   )
