@@ -1,6 +1,8 @@
 'use client'
 
 import { Plus } from 'lucide-react'
+import type { Route } from 'next'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 import { useState } from 'react'
@@ -13,24 +15,23 @@ import { BUCKETS, groupByBucket } from '../utils/obligation-groups.utils'
 import { CancelPaymentSheet } from './cancel-payment-sheet.component'
 import { ObligationFormSheet } from './obligation-form-sheet.component'
 import { ObligationRowItem } from './obligation-row.component'
-import { PayObligationSheet } from './pay-obligation-sheet.component'
+import { ObligationSheetsHost } from './obligation-sheets-host.component'
 
 type FormState = { obligation: ObligationRow | null } | null
 
 // Figma «Saldo» → Upcoming payments 2:12142 (desktop) / 2:13276 (mobile): white cards per group, amber hint under
-// date passed, not confirmed. The Paid sheet is the ?pay=<obligation id> state of the page (plan 1.11).
+// date passed, not confirmed. The Paid sheet is the ?pay=<obligation id> state of the page (plan 1.11); a debt's date
+// is paid by a repayment on the debt (add_debt_movement), so its row leads to the debts screen instead.
 export function ObligationsScreen() {
   const translate = useTranslations('obligations')
   const canWrite = useCanWrite()
   const today = useToday()
   const { data, isPending, isError } = useObligations()
   const options = useObligationOptions()
-  const [payId, setPayId] = useQueryState('pay', parseAsString)
+  const router = useRouter()
+  const [, setPayId] = useQueryState('pay', parseAsString)
   const [form, setForm] = useState<FormState>(null)
   const [cancelId, setCancelId] = useState<string | null>(null)
-  // the row as it was when the sheet opened: if someone else pays meanwhile, submitting gets PT409 with a clear message
-  // instead of the sheet vanishing under the hands
-  const [opened, setOpened] = useState<ObligationRow | null>(null)
 
   if (isPending || options.isPending) {
     return <div aria-busy className="h-64 rounded-card bg-subtle" />
@@ -46,17 +47,13 @@ export function ObligationsScreen() {
 
   const groups = groupByBucket(data.open, today)
   const everything = [...data.open, ...data.paid]
-  const paying = opened?.id === payId ? opened : everything.find((row) => row.id === payId && row.state !== 'paid')
   const cancelling = everything.find((row) => row.id === cancelId)
 
   const renderRow = (row: ObligationRow) => (
     <ObligationRowItem
       key={row.id}
       obligation={row}
-      onPay={() => {
-        setOpened(row)
-        setPayId(row.id)
-      }}
+      onPay={() => (row.sourceType === 'debt' ? router.push('/payments/debts' as Route) : void setPayId(row.id))}
       onEdit={() => setForm({ obligation: row })}
       onCancelPayment={() => setCancelId(row.id)}
     />
@@ -91,7 +88,7 @@ export function ObligationsScreen() {
           <ul className="flex flex-col gap-4">{data.paid.map(renderRow)}</ul>
         </section>
       )}
-      {paying && <PayObligationSheet key={paying.id} obligation={paying} onClose={() => setPayId(null)} />}
+      <ObligationSheetsHost />
       {form && <ObligationFormSheet obligation={form.obligation} onClose={() => setForm(null)} />}
       {cancelling && <CancelPaymentSheet obligation={cancelling} onClose={() => setCancelId(null)} />}
     </div>
