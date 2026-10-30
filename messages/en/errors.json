@@ -7,6 +7,8 @@
   "db": {
     "forbidden": "You don't have permission to do this",
     "conflict": "This record was changed on another device or by another person. Refresh and try again",
+    "expired": "The invite has expired, been revoked or already been used",
+    "notFound": "Record not found: it may have been deleted",
     "duplicate": "This record already exists",
     "invalid": "Check the data you entered",
     "reference": "The linked record was not found or cannot be changed",

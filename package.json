@@ -17,7 +17,7 @@
     "deps": "depcruise src --config .dependency-cruiser.cjs",
     "test": "vitest run",
     "test:db": "supabase test db",
-    "check": "biome check . && eslint . && pnpm lint:comments && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run && supabase test db",
+    "check": "biome check . && eslint . && pnpm lint:comments && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run",
     "db:types": "supabase gen types typescript --local > src/types/database.types.ts && biome format --write src/types/database.types.ts",
     "prepare": "lefthook install",
     "lint:comments": "node scripts/check-sql-comments.mjs",

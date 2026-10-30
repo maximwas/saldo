@@ -80,16 +80,16 @@ PWA-маніфест, нічний бекап.
 **Мета:** вносити факт (дохід, витрату, переказ, повернення, коригування), бачити залишки, вносити разові планові
 платежі й відмічати їх оплату; Огляд з «Доступно».
 
-- [ ] 1.1 Міграція: `accounts`, `categories` (+ сід стандартних категорій §6), `fx_rates`, `operations`, `transfers`, `attachments`, view `account_balances`.
-- [ ] 1.2 Міграція: `obligations`, `obligation_payments`, view `obligation_states` (часовий пояс із `ledgers.time_zone`).
-- [ ] 1.3 RPC: `create_operation`, `update_operation`, `delete_operation`, `create_transfer`, `pay_obligation`, `delete_obligation_payment`, `archive_category`.
+- [x] 1.1 Міграція: `accounts`, `categories` (+ сід стандартних категорій §6), `fx_rates`, `operations`, `transfers`, `attachments`, view `account_balances`.
+- [x] 1.2 Міграція: `obligations`, `obligation_payments`, view `obligation_states` (часовий пояс із `ledgers.time_zone`).
+- [x] 1.3 RPC: `create_operation`, `update_operation`, `delete_operation`, `create_transfer`, `pay_obligation`, `delete_obligation_payment`, `archive_category`.
 - [x] 1.4 `src/lib/money/money.utils.ts` (toMinor, fromMinor, format з «−» і ₴ $ €), `fx.utils.ts` (convert з decimal.js і режимом округлення).
 - [ ] 1.5 Фіча `accounts`: список, створення (початковий залишок + дата), архів, картка рахунку.
 - [ ] 1.6 Фіча `categories`: дерево доходів/витрат, підкатегорії, колір (`--color-c-*`), порядок, архів із перенесенням.
 - [ ] 1.7 Фіча `currencies`: базова валюта, ручний курс із датою; знімок курсу в операції; `null` при невідомому.
 - [ ] 1.8 Фіча `operations`: форма (MoneyInput, рахунок, категорія, дата, контрагент, коментар), список (таблиця desktop / картки по днях mobile), фільтри в URL, дублювати, видалити, перехід до джерела.
 - [ ] 1.9 Переказ між рахунками з різними валютами й окремою комісією.
-- [ ] 1.10 Вкладення чека: стиснення, приватний бакет `attachments`, політика Storage, signed URL.
+- [ ] 1.10 Вкладення чека: стиснення, приватний бакет `attachments`, політика Storage, signed URL. Видалення операції чи простору має видаляти й об'єкти Storage (рядки `attachments` ідуть каскадом, файли — ні).
 - [ ] 1.11 Фіча `obligations`: ручний плановий платіж, «Найближчі» з групами §7, діалог «Оплачено» (`?pay=`), прив'язка наявної операції.
 - [ ] 1.12 `src/lib/finance/available-money.utils.ts` (без резервів поки) + Огляд: залишки, місяць (дохід/витрата/результат), найближчі, «Доступно до дати» з розкриттям складових.
   - [x] чиста частина: `computeAvailableMoney` (складові, невідома сума / курс → `null`, очікуваний дохід не додається)
@@ -98,12 +98,13 @@ PWA-маніфест, нічний бекап.
 - [x] 1.15 (для MCP) Кожна дія запису має input-схему `<action>-input.schema.ts` (мінорні одиниці, `id: z.uuid()`, без `transform`), а форма — чисту `to<Action>Input(values, clock)`; функції `*.api.ts` отримують `db: SaldoClient` першим параметром і роблять `parse` перед `rpc()`.
 - [ ] 1.16 (для MCP) Огляд і «Доступно» читаються функціями `*.api.ts` + `available-money.utils.ts` з `now`/`timeZone` параметрами; хук лише склеює. Тест: та сама функція без React дає ті самі складові.
   - [x] чиста частина: `available-money.utils.ts` бере `now`/`timeZone` параметрами (`src/lib/utils/clock.utils.ts`)
-- [ ] 1.17 Фіча `ledgers`, RPC: `create_ledger`, `create_ledger_invite`, `accept_ledger_invite` (security definer, email з JWT), `set_member_role`, `remove_member`; pgTAP: прострочене / чуже / повторне запрошення, editor не запрошує.
+- [x] 1.17a RPC: `create_ledger`, `create_ledger_invite`, `accept_ledger_invite` (security definer, email з JWT), `set_member_role`, `remove_member`; pgTAP: прострочене / чуже / повторне запрошення, editor не запрошує (`supabase/tests/ledger-rpc.test.sql`).
+- [ ] 1.17b Фіча `ledgers` у UI (хвиля B).
 - [ ] 1.18 Налаштування → «Доступ»: учасники з роллю, «Запросити» (email, роль; токен у браузері, у БД — SHA-256; «Копіювати посилання»), зміна ролі, «Відкликати», «Вийти з простору»; налаштування простору (назва, базова валюта, часовий пояс).
 - [ ] 1.19 Прийняття запрошення: `(auth)/invite/[token]`, `api/invites/accept` (`auth.admin.createUser` лише за дійсним токеном), вхід з `?next=`, після прийняття — перемикання на простір.
 - [ ] 1.20 Перемикач простору в Sidebar і mobile Topbar; ключі запитів `[root, ledgerId, …]`; кожна мутація несе `ledger_id`; viewer не бачить кнопок запису.
 - [ ] 1.21 Автор і підтвердження: аватар-ініціал `created_by` у рядках операцій і платежів, «Підтвердив(ла) … · дата» в оплаченому зобов'язанні, фільтр «Хто» в операціях (URL), `pay_obligation` з `p_expected_version` і `PT409`, коли оплату вже позначила інша людина.
-- [ ] 1.22 pgTAP RLS для кожної таблиці фази 1 (owner / editor / viewer / чужий) і складених FK (операція не посилається на рахунок іншого простору).
+- [x] 1.22 pgTAP RLS для кожної таблиці фази 1 (owner / editor / viewer / чужий) і складених FK (операція не посилається на рахунок іншого простору).
 - [ ] 1.23 E2E операцій (`e2e/operations/`): витрата змінює залишок рахунку й «Доступно» на Огляді рівно один раз, подвійний клік «Зберегти» — один рядок, а переказ між рахунками в тому самому тесті не додає витрат місяця; «Оплачено» на плановому платежі створює одну операцію, видалення оплати повертає план у «Найближчі».
 - [ ] 1.24 E2E шарингу (`e2e/sharing/`, фікстура `pageAs`): owner створює запрошення, нова людина відкриває посилання, стає editor і бачить ту саму цифру «Доступно»; editor вносить витрату — owner бачить її з ініціалом автора; viewer не бачить «Додати», а `?add=expense` не зберігає (`42501` → повідомлення); після «Відкликати» простір зникає з перемикача editor після перезавантаження.
 
@@ -189,7 +190,7 @@ PWA-маніфест, нічний бекап.
 
 **Мета:** конверти й цілі, великі витрати з накопиченням, бюджет місяця; «Доступно» з резервами.
 
-- [ ] 4.1 Міграція: `reserves`, `reserve_accounts`, `reserve_movements`, views `reserve_balances`, `account_free_balances`; RPC `move_reserve`; `pay_obligation` з `p_reserve_id`.
+- [ ] 4.1 Міграція: `reserves`, `reserve_accounts`, `reserve_movements`, views `reserve_balances`, `account_free_balances`; RPC `move_reserve`; `pay_obligation` з `p_reserve_id` (і `reserveId` у `payObligationInputSchema`, прибраний у фазі 1, поки RPC його не знав).
 - [ ] 4.2 Фіча `reserves`: конверт / ціль / ціль зі строком, зарезервувати, звільнити, перемістити, оплатити з резерву, завершити, дефіцит забезпечення.
 - [ ] 4.3 Фіча `big-expenses`: оцінка, дата, конверт, накопичено / потрібно ще, план резервування, стани.
 - [ ] 4.4 Зв'язок конверта з підпискою / зобов'язанням без дубля зобов'язання (`obligations.envelope_id`).

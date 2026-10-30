@@ -21,6 +21,7 @@ const context = {
   obligation: {
     id: '6b7c8d9e-0f1a-4b2c-9d3e-4f5a6b7c8d9e',
     version: 2,
+    direction: 'out' as const,
     categoryId: null,
   },
 }
@@ -62,6 +63,23 @@ describe('toPayObligationInput', () => {
         kind: 'expense',
         amount_minor: 150_000,
       },
+    })
+  })
+
+  it('receives an expected income as an income operation', () => {
+    const input = payObligationInputSchema.parse(
+      toPayObligationInput(paid, clock, {
+        ...context,
+        obligation: {
+          ...context.obligation,
+          direction: 'in',
+        },
+      }),
+    )
+
+    expect(input.newOperation).toMatchObject({
+      kind: 'income',
+      direction: 'in',
     })
   })
 
