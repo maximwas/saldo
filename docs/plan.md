@@ -138,7 +138,7 @@ PWA-маніфест, нічний бекап.
 - [x] 2.1 `src/lib/recurrence/recurrence.utils.ts`: `generateOccurrences({ unit, count, firstOn, shortMonthRule, from, until })`, плюс робота з `@date-fns/tz`.
 - [x] 2.2 Міграція: `subscriptions`, `subscription_prices`, `credits`, `debts`, `debt_movements`, `calendar_saved_filters`; RPC `upsert_series_obligations`, `set_subscription_price`, `save_credit`, `replace_credit_schedule`, `save_debt`, `add_debt_movement`.
 - [ ] 2.3 Фіча `subscriptions`: список з фільтрами станів, два підсумки (план місяця / нормалізована середньомісячна), картка (Огляд / Історія / Налаштування), ціна з датою чинності, стани скасування, оцінка, стандартні налаштування без перезапису наявних.
-- [ ] 2.4 Фіча `credits`: три способи введення (повний графік, рівні внески, наявний кредит за наступною датою й залишком), `features/credits/utils/installments.utils.ts`, точність графіка, дострокове погашення з підтвердженням (`replace_credit_schedule`).
+- [x] 2.4 Фіча `credits`: три способи введення (повний графік, рівні внески, наявний кредит за наступною датою й залишком), `features/credits/utils/installments.utils.ts`, точність графіка, дострокове погашення з підтвердженням (`replace_credit_schedule`).
 - [x] 2.5 Фіча `debts`: два напрями, новий рух / старий борг без руху / частка покупки, часткові повернення, строк → зобов'язання.
 - [ ] 2.6 `api/cron/daily`: розширення горизонту зобов'язань до +13 міс. для активних серій.
 - [x] 2.7 Seed лише з `docs/design/demo-data.md` (вигадані підписки й кредити); реальні дані Максим вносить сам через UI. Підтримка `paid_before_tracking_count` (сплачені до обліку, без фіктивних минулих операцій) і позначки «графік розрахунковий» лишається можливістю застосунку.

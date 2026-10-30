@@ -12,6 +12,8 @@ export type InstallmentState = 'plan' | 'partial' | 'unconfirmed' | 'paid' | 're
 export type CreditInstallment = {
   id: string
   sequenceNo: number
+  /** the nominal series date; one active installment per date */
+  occurrenceOn: string
   dueOn: string
   /** null = amount unknown (§7), never 0 */
   plannedMinor: number | null
@@ -51,7 +53,7 @@ export type CreditList = {
 const CREDIT_COLUMNS =
   'id, name, lender, purchase_price_minor, total_payable_minor, currency, opened_on, installments_count, regular_installment_minor, last_installment_minor, account_id, fees_note, schedule_accuracy, paid_before_tracking_count, paid_before_tracking_minor, status, version'
 const INSTALLMENT_COLUMNS =
-  'obligation_id, source_id, sequence_no, due_on, planned_amount_minor, paid_minor, remaining_minor, state'
+  'obligation_id, source_id, sequence_no, occurrence_on, due_on, planned_amount_minor, paid_minor, remaining_minor, state'
 
 type CreditRow = {
   id: string
@@ -77,6 +79,7 @@ type InstallmentRow = {
   obligation_id: string
   source_id: string | null
   sequence_no: number | null
+  occurrence_on: string
   due_on: string
   planned_amount_minor: number | null
   paid_minor: number | null
@@ -87,6 +90,7 @@ type InstallmentRow = {
 const toInstallment = (row: InstallmentRow): CreditInstallment => ({
   id: row.obligation_id,
   sequenceNo: row.sequence_no ?? 0,
+  occurrenceOn: row.occurrence_on,
   dueOn: row.due_on,
   plannedMinor: row.planned_amount_minor,
   paidMinor: row.paid_minor ?? 0,

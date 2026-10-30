@@ -10,6 +10,7 @@ const installment = (
 ): CreditInstallment => ({
   id: `i${sequenceNo}${state}`,
   sequenceNo,
+  occurrenceOn: dueOn,
   dueOn,
   plannedMinor: 270_825,
   paidMinor,
@@ -122,11 +123,13 @@ describe('payoffOf', () => {
       amountMinor: 541_650,
       count: 2,
       sequenceNo: 4,
+      occurrenceOn: '2026-10-20',
     })
     expect(payoffOf(credit({ installments: [partial, installment(5, '2026-11-05', 'plan')] }))).toEqual({
       amountMinor: 270_825,
       count: 1,
       sequenceNo: 5,
+      occurrenceOn: '2026-11-05',
     })
   })
 

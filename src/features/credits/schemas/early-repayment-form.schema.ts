@@ -29,6 +29,7 @@ export function toReplaceCreditScheduleInput(
       {
         id: context.id,
         sequence_no: context.payoff.sequenceNo,
+        occurrence_on: context.payoff.occurrenceOn,
         due_on: values.payOn,
         amount_minor: context.payoff.amountMinor,
       },

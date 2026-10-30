@@ -19,14 +19,14 @@ export type StepState = 'paid' | 'current' | 'unconfirmed' | 'plan'
 
 const OPEN_STATES = new Set<string>(['plan', 'partial', 'unconfirmed'])
 
-export const isOpen = (installment: CreditInstallment) => OPEN_STATES.has(installment.state)
+const isOpen = (installment: CreditInstallment) => OPEN_STATES.has(installment.state)
 
 /** the installments in force: replaced and cancelled ones are history */
 export const activeInstallments = (credit: Credit) =>
   credit.installments.filter((installment) => installment.state !== 'replaced' && installment.state !== 'cancelled')
 
 /** one unknown amount makes the sum unknown (§7: null, never 0) */
-export function sumKnown(amounts: readonly (number | null)[]): number | null {
+function sumKnown(amounts: readonly (number | null)[]): number | null {
   let total = 0
 
   for (const amount of amounts) {
@@ -85,7 +85,7 @@ export function creditProgress(credit: Credit): CreditProgress {
   }
 }
 
-export type CurrencyTotal = {
+type CurrencyTotal = {
   currency: string
   /** planned installments due this month, paid or not */
   monthMinor: number | null
@@ -154,8 +154,10 @@ export type Payoff = {
   amountMinor: number
   /** the unpaid installments the payoff replaces */
   count: number
-  /** the payoff takes the number of the first of them */
+  /** the payoff takes the number and the series date of the first of them: a paid installment may hold the payoff
+   * date as its own series date, and a series date has one active installment */
   sequenceNo: number
+  occurrenceOn: string
 }
 
 /** an early payoff covers the installments with no payment yet; partly paid ones stay (replace_credit_schedule) */
@@ -171,5 +173,6 @@ export function payoffOf(credit: Credit): Payoff | null {
     amountMinor,
     count: unpaid.length,
     sequenceNo: unpaid[0].sequenceNo,
+    occurrenceOn: unpaid[0].occurrenceOn,
   }
 }

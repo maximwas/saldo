@@ -5,6 +5,8 @@ import { CURRENCIES } from '@/constants/currencies.constants'
 export const installmentInputSchema = z.object({
   sequence_no: z.int().positive(),
   due_on: z.iso.date(),
+  /** the nominal series date; the server takes due_on when it is missing */
+  occurrence_on: z.iso.date().optional(),
   /** null = amount unknown, never 0 */
   amount_minor: z.int().positive().nullable(),
 })

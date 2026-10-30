@@ -199,7 +199,7 @@ describe('toSaveCreditInput', () => {
 })
 
 describe('toReplaceCreditScheduleInput', () => {
-  it('replaces the unpaid rest with one installment of the whole rest on the payoff date', () => {
+  it('replaces the unpaid rest with one installment of the whole rest, due on the payoff date', () => {
     const input = toReplaceCreditScheduleInput(
       { payOn: '2026-10-30' },
       {
@@ -210,6 +210,7 @@ describe('toReplaceCreditScheduleInput', () => {
           amountMinor: 2_437_425,
           count: 9,
           sequenceNo: 4,
+          occurrenceOn: '2026-11-05',
         },
       },
     )
@@ -218,6 +219,7 @@ describe('toReplaceCreditScheduleInput', () => {
       {
         id: '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d',
         sequence_no: 4,
+        occurrence_on: '2026-11-05',
         due_on: '2026-10-30',
         amount_minor: 2_437_425,
       },
