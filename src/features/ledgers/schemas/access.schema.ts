@@ -29,6 +29,14 @@ export const removeMemberInputSchema = z.object({
 
 export type RemoveMemberInput = z.infer<typeof removeMemberInputSchema>
 
+// set_my_display_name: blank clears the name (the UI then shows the email prefix)
+export const setMyDisplayNameInputSchema = z.object({
+  ledgerId: z.uuid(),
+  name: z.string().trim().max(60),
+})
+
+export type SetMyDisplayNameInput = z.infer<typeof setMyDisplayNameInputSchema>
+
 // ledgers has no RPC: the owner's UPDATE (RLS) carries the version, a stale one matches no row
 export const updateLedgerSettingsInputSchema = z.object({
   ledgerId: z.uuid(),
