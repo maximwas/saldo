@@ -704,10 +704,13 @@ operations on delete cascade` (null для старого боргу без ру
 
 ### 5.5 Бюджет, резерви, великі витрати
 
-**budget_months** — `month date check (extract(day from month) = 1)`, `income_plan_minor null`, unique
-`(user_id, month)`. **budget_limits** — `budget_month_id on delete cascade`, `category_id`, `limit_minor >= 0`,
-`warn_at_pct smallint check (between 1 and 100)`, `carry_mode check in ('none','carry','reset')`,
-`carried_in_minor bigint default 0`; unique `(budget_month_id, category_id)`. Бюджет не змінює баланс (§11).
+**budget_months** — `month date check (extract(day from month) = 1)`, `income_plan_minor null` (null — плану доходів
+немає), unique `(ledger_id, month)`. **budget_limits** — `budget_month_id` (складений FK з `ledger_id`, `on delete
+cascade`), `category_id` (лише категорії витрат, `on delete cascade`), `limit_minor >= 0`, `warn_at_pct smallint null
+default 80 check (between 1 and 100)` (null — без попередження), `carry_mode check in ('carry','reset') default
+'reset'`, `carried_in_minor bigint null default 0` (null — залишок невідомий: у місяці-джерелі були операції без
+курсу); unique `(budget_month_id, category_id)`. Суми — у базовій валюті простору. Обидві таблиці пишуть owner і editor
+напряму під RLS (з версією), viewer лише читає; копіювання — RPC `copy_budget_month`. Бюджет не змінює баланс (§11).
 
 **reserves** — `kind check in ('envelope','goal','goal_dated')`, `name`, `currency`, `target_minor null`,
 `target_on null`, `reserves_goal_target check (kind = 'envelope' or target_minor is not null)`,
@@ -831,9 +834,19 @@ editor/owner; прийняти чи відхилити може будь-хто 
 | `tax_liability_states` | складові податку | утримане не додається до сплаченого з рахунків |
 | `calendar_entries(p_ledger_id uuid, p_from date, p_to date, p_filter jsonb default '{}')` — `security definer`, лише учасник простору (інакше `42501`) | `entry_id`, `entry` (`fact`/`plan`), `day`, `kind`, `direction`, `state`, `title`, `note`, `amount_minor`, `currency`, `base_amount_minor`, `account_id`, `category_id`, `operation_id`, `transfer_id`, `obligation_id`, `source_type`, `source_id`, `planned_on`, `planned_amount_minor`, `paid_minor` | факт — операція на `occurred_on` (переказ — один запис, нога `transfer_out`; комісія — окрема витрата); операція, що оплатила зобов'язання, несе його `obligation_id`, джерело й `planned_on`, а оплачене зобов'язання окремо не показується — один запис (§18); план — неоплачене зобов'язання на `due_on` із залишком (часткова оплата й залишок окремо). Фільтр: `entry`, `kinds` (план — `expense`/`income`, борг — `debt_out`/`debt_in`), `direction`, `states` (за замовчуванням без `cancelled`/`replaced`), `source_types`, `source_id`, `category_ids`, `account_ids`, `currencies`, `min_amount_minor`/`max_amount_minor` (база), `q`; заправка/сервіс = одна операція (фаза 5) |
 | `calendar_day_totals(p_ledger_id uuid, p_from date, p_to date, p_filter jsonb default '{}')` | `day`, `fact_income_minor`, `fact_expense_minor`, `plan_in_minor`, `plan_out_minor`, `unknown_count`, `entries_count` (суми в базовій валюті) | рахує рівно рядки `calendar_entries` з тим самим фільтром; витрати = expense − refund; перекази, борги, коригування не дохід і не витрата; план — залишки за напрямом; невідомі суми — у `unknown_count`, не 0 |
-| `budget_month_facts(p_month)` | ліміт, факт, залишок, зобов'язання, податки сплачені й зарезервовані окремо | податковий резерв не є витратою (§11) |
-| `stats_cashflow(p_from, p_to, p_bucket)`, `stats_by_category(...)`, `stats_subscriptions(...)`, `stats_credits(...)`, `stats_auto(...)`, `stats_reserves(...)`, `stats_taxes(...)` | агрегати в базовій валюті + `unknown_fx_count` | виключені `transfer_*`, `debt_*`, `adjustment`; витрати = expense − refund; план окремо від факту (§20) |
-| `search_entities(p_q text)` | тип, id, назва, шлях | лише читання |
+| `budget_month_facts(p_ledger_id uuid, p_month date, p_created_by uuid default null)` | на категорію: `category_kind`, `category_id`, `limit_id`, `limit_minor`, `carried_in_minor`, `warn_at_pct`, `carry_mode`, `gross_minor`, `refund_minor`, `fact_minor`, `unknown_count`, `operations_count`, `remaining_minor` (= ліміт + перенесене − факт; від'ємний — перевищення; `null` без ліміту) | факт — `private.fact_operations`: income, expense (з комісією переказу), refund; витрата = expense − refund; перекази, рухи боргів і коригування не рахуються; вартість кредитної покупки не операція, сплачені внески — витрати. Витрата рахується один раз — у найближчій категорії з лімітом: своїй, інакше батьківській, інакше у своїй без ліміту. Зобов'язання місяця — плани `calendar_entries`; податки — з фазою 5 (§11) |
+| `stats_cashflow(p_ledger_id uuid, p_from date, p_to date, p_bucket text default 'month', p_created_by uuid default null)` | на кожен період `day` / `week` / `month` / `year` (порожній теж, `operations_count = 0`): `period_start`, `income_minor`, `expense_minor`, `refund_minor`, `result_minor` (= income − expense + refund), `unknown_count`, `operations_count` | інший `p_bucket` або `p_from > p_to` — `22023` |
+| `stats_by_category(p_ledger_id uuid, p_from date, p_to date, p_created_by uuid default null)` | `category_kind`, `category_id` (власна категорія операції, `null` — без категорії), `gross_minor`, `refund_minor`, `fact_minor`, `unknown_count`, `operations_count` | рядки витрат у сумі = expense − refund у `stats_cashflow` |
+| `stats_budget(p_ledger_id uuid, p_from date, p_to date, p_created_by uuid default null)` | на кожен місяць: `income_plan_minor`, `income_fact_minor`, `limit_minor` (`null` — лімітів немає), `carried_in_minor`, `limited_fact_minor`, `expense_fact_minor`, `unknown_count` | складові — `budget_month_facts` того місяця |
+| `stats_subscriptions(p_ledger_id uuid, p_from date, p_to date, p_created_by uuid default null)` | на підписку: `fact_minor` / `fact_count` (оплати її зобов'язань операціями періоду — частка базової суми операції), `plan_minor` / `plan_count` (заплановане активних зобов'язань із `due_on` у періоді, оплачених чи ні, за курсом на `due_on`), `unknown_count`, `months`, `avg_month_minor` (= факт / місяці, half up) | план окремо від факту (§20) |
+| `stats_credits(p_ledger_id uuid, p_from date, p_to date, p_created_by uuid default null)` | на кредит: `installments_count`, `paid_count` (+ сплачені до обліку), `remaining_count`, `remaining_minor` (валюта кредиту), `remaining_base_minor` (за курсом на дату внеску), `next_due_on`, `payoff_on` (останній внесок графіка), `period_paid_minor` / `period_paid_count`, `unknown_count` | лише за внесеним графіком; вартість покупки не рахується (§9) |
+| `search_entities(p_ledger_id uuid, p_q text, p_limit int default 20)` | `entity_type` (`account` / `category` / `subscription` / `credit` / `debt` / `obligation` / `operation`), `entity_id`, `title`, `subtitle`, `link_path`, `day`, `amount_minor`, `currency` | операції — за контрагентом і коментарем (`operations_search_idx`) або сумою («349» = 349,00–349,99, «349,50» — точно), переказ — лише вихідна нога; джерела — за назвою, зобов'язання — лише `manual` / `income_plan`; спершу джерела, далі операції від нових; запит коротший за 2 символи — порожньо; не більше 50 |
+
+Усі функції статистики, бюджету й пошуку — `security definer` з `private.assert_readable(p_ledger_id)` першим кроком
+(будь-який учасник, інакше `42501`), як `calendar_entries`; суми — у базовій валюті, невідомі (немає курсу чи суми) —
+у `unknown_count`, не 0. `p_created_by` — фільтр «Хто» (§20, 7.7): звужує лише факти (`operations.created_by`), плани
+й ліміти належать простору. Прогноз майбутніх місяців (7.3) — `calendar_entries` з `{"entry": "plan"}`: лише внесені
+графіки. `stats_auto`, `stats_reserves`, `stats_taxes` — з фазами 5–6, яких поки немає.
 
 ### 5.10 RPC-функції запису
 
@@ -868,7 +881,7 @@ definer`, бо ці таблиці клієнтам лише
 | `confirm_tax_liability(p_id uuid, p_expected_version int, p_accrued_minor bigint, p_payment_due_on date)` | підтвердження | створює одне зобов'язання `tax`; `base_complete = false` → відмова |
 | `adjust_tax_liability(p_adjustment jsonb)` | коригування з причиною | історія оплат не змінюється (§16) |
 | `archive_category(p_id uuid, p_move_to uuid default null)` | архів / перенесення | операції не знищуються (§6) |
-| `copy_budget_month(p_ledger_id uuid, p_from date, p_to date)` | копія місяця | перенесення залишку за `carry_mode` |
+| `copy_budget_month(p_ledger_id uuid, p_from date, p_to date)` → кількість записаних лімітів — `security definer`, `assert_writable` | ліміти місяця `p_from` у місяць `p_to`; місяця `p_to` немає — створюється з тим самим планом доходів | наявний ліміт цільового місяця не чіпається, тож повтор нічого не пише; `carry` — `carried_in_minor` = max(ліміт + перенесене − факт, 0) (перевищення не переноситься), із невідомими фактами — `null`; `reset` — 0; той самий місяць — `22023`, немає бюджету джерела — `P0002`, viewer і чужий — `42501` |
 | `create_ledger(p_id uuid, p_name text, p_base_currency text default 'UAH')` — `security definer` | новий простір | автор стає `owner`, сід категорій; definer, бо INSERT-політика на `ledger_members` дала б стати owner чужого простору |
 | `create_ledger_invite(p_id uuid, p_ledger_id uuid, p_email text, p_role text, p_token_hash bytea)` | запрошення | лише owner; роль не `owner` |
 | `accept_ledger_invite(p_token text)` — `security definer` | прийняття | hash = SHA-256 UTF-8 рядка токена з посилання; hash є, не прийнято, не відкликано, не прострочено, `email = auth.jwt() ->> 'email'` (без регістру); insert `ledger_members` on conflict do nothing; повтор тією самою людиною безпечний. Помилки: `P0002` немає, `PT410` прострочене / відкликане / використане іншим, `42501` чужий email |

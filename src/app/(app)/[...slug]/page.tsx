@@ -15,6 +15,7 @@ const OWN_PAGES = [
   '/operations/accounts',
   '/operations/categories',
   '/payments/debts',
+  '/payments/subscriptions',
 ]
 
 const STUB_HREFS = [
