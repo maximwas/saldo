@@ -19,7 +19,9 @@
     "check": "biome check . && eslint . && pnpm lint:comments && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run && supabase test db",
     "db:types": "supabase gen types typescript --local > src/types/database.types.ts",
     "prepare": "lefthook install",
-    "lint:comments": "node scripts/check-sql-comments.mjs"
+    "lint:comments": "node scripts/check-sql-comments.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -45,6 +47,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
+    "@playwright/test": "1.64.1",
     "@stylistic/eslint-plugin": "5.10.0",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^24.19.2",
