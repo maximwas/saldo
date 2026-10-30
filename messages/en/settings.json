@@ -3,7 +3,8 @@
   "tabsLabel": "Settings sections",
   "tabs": {
     "general": "General",
-    "access": "Access"
+    "access": "Access",
+    "data": "Data"
   },
   "themeTitle": "Theme",
   "themeHint": "Light, dark or as on the device. Saved to your account.",
@@ -111,5 +112,20 @@
       "label": "Reminders of this space for me",
       "hint": "Your own choice only: other members get reminders by their own settings. When off, none arrive in the app or as push."
     }
+  },
+  "data": {
+    "exportTitle": "Export",
+    "exportHint": "Files with the data of the active space. Any member can export.",
+    "csv": "Operations (CSV)",
+    "archive": "All data and receipts (ZIP)",
+    "exportFailed": "Could not prepare the file",
+    "deleteTitle": "Delete all data",
+    "deleteHint": "Operations, accounts, payments, debts and receipts of the space are deleted for good. The space and its members stay.",
+    "delete": "Delete all data",
+    "deleteBody": "This cannot be undone. If you may need the data, save the archive first.",
+    "typeName": "To confirm, type the space name «{space}»",
+    "keep": "Keep",
+    "confirm": "Delete for good",
+    "deleted": "The space data is deleted"
   }
 }

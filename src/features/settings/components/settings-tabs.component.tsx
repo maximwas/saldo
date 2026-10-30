@@ -15,11 +15,15 @@ const TABS = [
     key: 'access',
     href: '/settings/access',
   },
+  {
+    key: 'data',
+    href: '/settings/data',
+  },
 ] as const
 
 // Figma «Saldo» → Settings, Tabs 2:30898: gap 24, 1px border-bottom; Tab = label body-medium (text-primary when
 // active, else text-secondary), padding 10/4/0, 2px primary indicator under the active one. Only the tabs that exist
-// are shown; Notifications, Currencies, Security and Data arrive with their features.
+// are shown; Notifications, Currencies and Security arrive with their features.
 export function SettingsTabs() {
   const pathname = usePathname()
   const translate = useTranslations('settings')

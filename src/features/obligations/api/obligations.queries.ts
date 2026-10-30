@@ -12,7 +12,7 @@ export const obligationQueries = {
   list: (ledgerId: string) =>
     queryOptions({
       queryKey: ledgerQueryKey('obligations', ledgerId, 'list'),
-      queryFn: () => listObligations(getBrowserSupabase(), ledgerId),
+      queryFn: () => listObligations(getBrowserSupabase(), { ledgerId }),
     }),
   options: (ledgerId: string) =>
     queryOptions({

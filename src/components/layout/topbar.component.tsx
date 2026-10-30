@@ -1,6 +1,5 @@
 'use client'
 
-import { Search } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { Suspense } from 'react'
@@ -8,6 +7,7 @@ import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { NotificationBell } from '@/features/notifications/components/notification-bell.component'
+import { SearchPalette } from '@/features/search/components/search-palette.component'
 import { cn } from '@/lib/utils/cn.utils'
 import { AddButton } from './add-button.component'
 import { pageTitleKey } from './navigation.utils'
@@ -58,15 +58,8 @@ export function Topbar() {
           {today}
         </p>
       </div>
-      {/* shortcut: search opens nothing until ⌘K search (cmdk) lands */}
-      <button
-        type="button"
-        className="hidden h-11 w-70 items-center gap-2 rounded-md border border-border bg-card px-3 text-body text-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-primary lg:flex"
-      >
-        <Search aria-hidden size={20} className="shrink-0" />
-        <span className="flex-1 truncate text-left">{translate('search')}</span>
-      </button>
       <div className="flex items-center gap-3">
+        <SearchPalette />
         <NotificationBell />
         {/* nuqs reads the URL, so the button waits in Suspense while the shell stays static */}
         <Suspense fallback={null}>

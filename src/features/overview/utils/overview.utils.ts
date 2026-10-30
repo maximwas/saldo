@@ -187,6 +187,74 @@ export type UpcomingRow = DueRow & {
   source_type: string
 }
 
+type OpenDebtRow = {
+  id: string
+  direction: string
+  principal_minor: number
+  currency: string
+}
+
+type RepaymentRow = {
+  debt_id: string
+  amount_minor: number
+}
+
+export type OpenDebts = {
+  /** «owed to me» still to come back, in the base currency */
+  owedToMeMinor: number
+  /** «I owe» still to pay back, in the base currency */
+  iOweMinor: number
+  /** open debts in a currency without a rate: not added, said apart (null ≠ 0) */
+  unknownCount: number
+}
+
+/** principal minus repayments per debt; an overpayment leaves 0, never a negative debt */
+function remainingByDebt(debts: OpenDebtRow[], repayments: RepaymentRow[]) {
+  const repaid = new Map<string, number>()
+
+  for (const repayment of repayments) {
+    repaid.set(repayment.debt_id, (repaid.get(repayment.debt_id) ?? 0) + repayment.amount_minor)
+  }
+
+  return debts.map((debt) => ({
+    ...debt,
+    leftMinor: Math.max(debt.principal_minor - (repaid.get(debt.id) ?? 0), 0),
+  }))
+}
+
+/** what the open debts still ask for, by direction (§3: apart from the month's minus and the shortfall of «Available») */
+export function sumOpenDebts(debts: OpenDebtRow[], repayments: RepaymentRow[], context: OverviewRates): OpenDebts {
+  const sums: OpenDebts = {
+    owedToMeMinor: 0,
+    iOweMinor: 0,
+    unknownCount: 0,
+  }
+
+  for (const debt of remainingByDebt(debts, repayments).filter((row) => row.leftMinor > 0)) {
+    const baseMinor = accountBaseMinor({
+      balanceMinor: debt.leftMinor,
+      currency: debt.currency,
+      baseCurrency: context.baseCurrency,
+      rate: accountRate({
+        currency: debt.currency,
+        baseCurrency: context.baseCurrency,
+        rates: context.rates,
+        date: context.today,
+      }),
+    })
+
+    if (baseMinor === null) {
+      sums.unknownCount += 1
+    } else if (debt.direction === 'owed_to_me') {
+      sums.owedToMeMinor += baseMinor
+    } else {
+      sums.iOweMinor += baseMinor
+    }
+  }
+
+  return sums
+}
+
 export const toUpcoming = (row: UpcomingRow): OverviewObligation => ({
   id: row.obligation_id,
   title: row.title,

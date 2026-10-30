@@ -5,6 +5,7 @@ import { Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { AuthorAvatar } from '@/components/ui/author-avatar.component'
+import { Badge } from '@/components/ui/badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
@@ -22,6 +23,13 @@ type OperationListProps = {
   onSelectAction: (item: OperationItem) => void
 }
 
+// the «+» takes the colour of the amount after it; a refund's stays the text colour, never green
+const PLUS_TONE = {
+  fact: undefined,
+  income: 'text-positive-text',
+  transfer: 'text-text-tertiary',
+} as const
+
 const ROW_BUTTON = 'cursor-pointer rounded-xs text-left outline-none focus-visible:ring-2 focus-visible:ring-primary'
 
 // Figma Saldo file → Operations 2:11403: a table (desktop) with day group rows (44, app fill) and 64 high rows; 2:13681: a card
@@ -36,6 +44,7 @@ export function OperationList({ items, receiptIds, onSelectAction }: OperationLi
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const today = useToday()
   const options = useQuery(operationQueries.options(ledgerId))
+  const refunds = useQuery(operationQueries.refunds(ledgerId))
   const accounts = options.data?.accounts ?? []
   const categories = options.data?.categories ?? []
   const names = useMemberNames()
@@ -140,10 +149,49 @@ export function OperationList({ items, receiptIds, onSelectAction }: OperationLi
 
     return (
       <span className="whitespace-nowrap">
-        {amount.plus ? <span className={amount.tone === 'income' ? 'text-positive-text' : undefined}>+</span> : null}
+        {amount.plus ? <span className={PLUS_TONE[amount.tone]}>+</span> : null}
         <Amount minor={amount.minor} currency={amount.currency} kind={amount.tone} />
       </span>
     )
+  }
+
+  // a transfer and an adjustment are neutral lines: no category colour, neither income nor spending (§5)
+  const neutral = (item: OperationItem) => item.kind === 'transfer' || item.kind === 'adjustment'
+
+  function iconOf(item: OperationItem) {
+    if (item.kind === 'transfer') {
+      return 'arrow-left-right'
+    }
+
+    if (item.kind === 'adjustment') {
+      return 'scale'
+    }
+
+    // a refund keeps the colour of its category, with the «returned» arrow
+    return item.kind === 'refund' ? 'undo-2' : (category(item.row.categoryId)?.icon ?? null)
+  }
+
+  const colorOf = (item: OperationItem) => (neutral(item) ? null : (category(item.row.categoryId)?.color ?? null))
+
+  // a purchase chip with its date on a refund, the refunded sum on a purchase that has refunds
+  function refundNote(item: OperationItem) {
+    const purchase = item.row.refundOfId ? refunds.data?.purchases[item.row.refundOfId] : undefined
+
+    if (purchase) {
+      return (
+        <Badge tone="neutral" className="shrink-0">
+          {translate('refund.purchase', { date: shortDate(purchase.occurredOn) })}
+        </Badge>
+      )
+    }
+
+    const refunded = refunds.data?.refundedById[item.row.id]
+
+    return refunded ? (
+      <span className="shrink-0 whitespace-nowrap">
+        · {translate('refund.refunded', { amount: formatMinor(refunded, item.row.currency, locale) })}
+      </span>
+    ) : null
   }
 
   const author = (item: OperationItem) => (item.row.createdBy ? names[item.row.createdBy] : null)
@@ -209,12 +257,7 @@ export function OperationList({ items, receiptIds, onSelectAction }: OperationLi
                   <td className="px-4 text-label text-text-secondary">{shortDate(item.row.occurredOn)}</td>
                   <td className="px-4">
                     <span className="flex min-w-0 items-center gap-3">
-                      <CategoryIcon
-                        icon={
-                          item.kind === 'transfer' ? 'arrow-left-right' : (category(item.row.categoryId)?.icon ?? null)
-                        }
-                        color={item.kind === 'transfer' ? null : (category(item.row.categoryId)?.color ?? null)}
-                      />
+                      <CategoryIcon icon={iconOf(item)} color={colorOf(item)} />
                       <span className="flex min-w-0 flex-col">
                         <button
                           type="button"
@@ -227,14 +270,13 @@ export function OperationList({ items, receiptIds, onSelectAction }: OperationLi
                           <AuthorAvatar name={author(item)} />
                           <span className="truncate">{subtitleOf(item)}</span>
                           {paperclip(item)}
+                          {refundNote(item)}
                         </span>
                       </span>
                     </span>
                   </td>
                   <td className="hidden truncate px-4 text-body text-text-secondary xl:table-cell">
-                    {item.kind === 'transfer'
-                      ? ''
-                      : (category(item.row.categoryId)?.name ?? translate('row.noCategory'))}
+                    {neutral(item) ? '' : (category(item.row.categoryId)?.name ?? translate('row.noCategory'))}
                   </td>
                   <td className="hidden truncate px-4 text-body text-text-secondary xl:table-cell">
                     {item.kind === 'transfer' ? '' : accountName(item.row.accountId)}
@@ -264,18 +306,14 @@ export function OperationList({ items, receiptIds, onSelectAction }: OperationLi
                     // a transfer shows two amounts: they drop to their own line instead of cutting the title
                     className={`${ROW_BUTTON} flex min-h-16 w-full items-center gap-x-3 py-2 ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
                   >
-                    <CategoryIcon
-                      icon={
-                        item.kind === 'transfer' ? 'arrow-left-right' : (category(item.row.categoryId)?.icon ?? null)
-                      }
-                      color={item.kind === 'transfer' ? null : (category(item.row.categoryId)?.color ?? null)}
-                    />
+                    <CategoryIcon icon={iconOf(item)} color={colorOf(item)} />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-body font-medium text-text-primary">{titleOf(item)}</span>
                       <span className="flex items-center gap-1.5 text-caption text-text-secondary">
                         <AuthorAvatar name={author(item)} />
                         <span className="truncate">{subtitleOf(item)}</span>
                         {paperclip(item)}
+                        {refundNote(item)}
                       </span>
                     </span>
                     <span

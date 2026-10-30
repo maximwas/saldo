@@ -1,5 +1,6 @@
 import { Pencil } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
+import { parseAsString, useQueryState } from 'nuqs'
 import { Amount } from '@/components/ui/amount.component'
 import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { Badge } from '@/components/ui/badge.component'
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
+import { cn } from '@/lib/utils/cn.utils'
 import type { ObligationRow } from '../api/obligations.api'
 import { useObligationOptions } from '../hooks/obligations.hook'
 
@@ -26,7 +28,12 @@ const STATE_TONE = {
 
 // Figma «Saldo» → Upcoming payments 2:12142 / 2:13276: title, «source · account» + state pill, amount and date on the
 // right, desktop Paid button; on mobile the row itself opens the confirm sheet (no room for the button).
+// a search result links here: bring the row into view
+const scrollIntoView = (node: HTMLLIElement | null) => node?.scrollIntoView({ block: 'center' })
+
 export function ObligationRowItem({ obligation, onPay, onEdit, onCancelPayment }: ObligationRowItemProps) {
+  const [linkedId] = useQueryState('obligation', parseAsString)
+  const linked = linkedId === obligation.id
   const translate = useTranslations('obligations')
   const format = useFormatter()
   const names = useMemberNames()
@@ -48,7 +55,13 @@ export function ObligationRowItem({ obligation, onPay, onEdit, onCancelPayment }
         })
 
   return (
-    <li className="flex flex-col gap-2">
+    <li
+      ref={linked ? scrollIntoView : undefined}
+      className={cn(
+        'flex flex-col gap-2',
+        linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card',
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
@@ -90,7 +103,7 @@ export function ObligationRowItem({ obligation, onPay, onEdit, onCancelPayment }
         </button>
         {canWrite && open && (
           <Button size="s" variant="secondary" className="hidden lg:inline-flex" onClick={onPay}>
-            {translate('actions.paid')}
+            {translate(obligation.sourceType === 'debt' ? 'actions.toDebt' : 'actions.paid')}
           </Button>
         )}
       </div>

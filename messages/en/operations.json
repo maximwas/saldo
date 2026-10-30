@@ -10,7 +10,7 @@
     "income": "Income",
     "expense": "Expense",
     "refund": "Refund",
-    "adjustment": "Adjustment",
+    "adjustment": "Balance adjustment",
     "transfer": "Transfer",
     "debt": "Debt"
   },
@@ -111,7 +111,8 @@
       "from": "From",
       "to": "To",
       "fee": "Fee",
-      "rate": "Rate"
+      "rate": "Rate",
+      "purchase": "Purchase"
     }
   },
   "deleteConfirm": {
@@ -132,5 +133,22 @@
     "expense": "Expense",
     "income": "Income",
     "transfer": "Transfer"
+  },
+  "refund": {
+    "action": "Refund this expense",
+    "title": "Refund an expense",
+    "limit": "Up to {amount} can be refunded",
+    "tooMuch": "More than can be refunded: up to {amount}",
+    "info": "The month’s expenses and the category budget go down by this amount. A refund is not income.",
+    "submit": "Record refund",
+    "done": "Refund recorded",
+    "purchase": "Purchase {date}",
+    "refunded": "refunded {amount}"
+  },
+  "source": {
+    "paid": "Payment: {title} · {date}",
+    "meta": "{type} · plan {amount} · Payments",
+    "metaUnknown": "{type} · Payments",
+    "open": "Open source"
   }
 }
