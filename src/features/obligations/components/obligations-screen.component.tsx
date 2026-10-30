@@ -29,6 +29,9 @@ export function ObligationsScreen() {
   const [payId, setPayId] = useQueryState('pay', parseAsString)
   const [form, setForm] = useState<FormState>(null)
   const [cancelId, setCancelId] = useState<string | null>(null)
+  // the row as it was when the sheet opened: if someone else pays meanwhile, submitting gets PT409 with a clear message
+  // instead of the sheet vanishing under the hands
+  const [opened, setOpened] = useState<ObligationRow | null>(null)
   const today = localDate(clock.now(), clock.timeZone)
 
   if (isPending || options.isPending) {
@@ -46,7 +49,7 @@ export function ObligationsScreen() {
   const groups = groupByBucket(data.open, today)
   const accountName = new Map(options.data.accounts.map((account) => [account.id, account.name]))
   const everything = [...data.open, ...data.paid]
-  const paying = everything.find((row) => row.id === payId && row.state !== 'paid')
+  const paying = opened?.id === payId ? opened : everything.find((row) => row.id === payId && row.state !== 'paid')
   const cancelling = everything.find((row) => row.id === cancelId)
 
   const renderRow = (row: ObligationRow) => (
@@ -56,7 +59,10 @@ export function ObligationsScreen() {
       today={today}
       accountName={row.accountId ? (accountName.get(row.accountId) ?? null) : null}
       canWrite={canWrite}
-      onPay={() => setPayId(row.id)}
+      onPay={() => {
+        setOpened(row)
+        setPayId(row.id)
+      }}
       onEdit={() => setForm({ obligation: row })}
       onCancelPayment={() => setCancelId(row.id)}
     />
