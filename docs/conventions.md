@@ -248,7 +248,7 @@ src/features/subscriptions/
   збереженні, ESLint і Biome виправляють), `.vscode/extensions.json`.
 
 ```tsx
-async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
+async function Stub({ params }: Pick<PageProps<'/[...slug]'>, 'params'>) {
   const { slug } = await params
   const path = `/${(slug ?? []).join('/')}`
   const titleKey = pageTitleKey(path)

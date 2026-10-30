@@ -1,0 +1,50 @@
+{
+  "availableUntil": "Available until {date}",
+  "loadFailed": "Could not load the Overview. Reload the page.",
+  "availableNoDate": "Available",
+  "noIncomeDate": "The next income date is not set, so «Available» is not computed until it is.",
+  "howWeCount": "How it is calculated",
+  "balances": "Money on accounts",
+  "obligationsUntil": "− Obligations until {date}",
+  "total": "= Available",
+  "expectedIncome": "Expected income {amount} is not added until it arrives",
+  "unknownAmounts": "{count, plural, one {# payment with an unknown amount} other {# payments with an unknown amount}}",
+  "unknownRates": "No exchange rate for {currencies}",
+  "upcoming": {
+    "title": "Upcoming payments",
+    "all": "All payments",
+    "empty": "No upcoming payments",
+    "emptyHint": "Planned payments, subscriptions and credits will show up here.",
+    "today": "Today",
+    "overdue": "{count, plural, one {# payment past its date is not confirmed} other {# payments past their date are not confirmed}}",
+    "review": "Review"
+  },
+  "state": {
+    "plan": "Planned",
+    "partial": "Partial",
+    "unconfirmed": "Unconfirmed"
+  },
+  "source": {
+    "manual": "Planned payment",
+    "subscription": "Subscription",
+    "credit": "Credit",
+    "debt": "Debt",
+    "big_expense": "Big expense",
+    "auto_plan": "Car",
+    "tax": "Tax",
+    "income_plan": "Expected income"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "all": "All accounts",
+    "empty": "No accounts yet",
+    "emptyHint": "Add your first account and balances will show up here.",
+    "kind": {
+      "bank": "Card or account",
+      "cash": "Cash",
+      "savings": "Savings"
+    },
+    "notInAvailable": "Not in available",
+    "inAvailable": "In available"
+  }
+}
