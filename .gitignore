@@ -7,6 +7,8 @@ docs/design/screens/
 .env*
 !.env.example
 .claude/settings.local.json
+.claude/worktrees/
+.playwright-mcp/
 
 # build and tooling
 node_modules/
@@ -17,3 +19,17 @@ coverage/
 supabase/.temp/
 supabase/.branches/
 .DS_Store
+next-env.d.ts
+/out/
+/build/
+.pnp
+.pnp.*
+*.pem
+npm-debug.log*
+.pnpm-debug.log*
+.vercel
+
+# e2e output
+e2e/.auth/
+playwright-report/
+test-results/

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/proxy.ts",
+    "src/lib/env.ts",
+    "src/app/sw.ts",
+    "src/lib/supabase/admin-client.server.ts",
+    "src/lib/auth/dal.server.ts",
+    "src/contexts/*.context.tsx",
+    "pwa-assets.config.ts"
+  ],
+  "ignore": [
+    "src/types/database.types.ts",
+    "src/components/ui/**"
+  ],
+  "ignoreBinaries": [
+    "gitleaks"
+  ],
+  "playwright": {
+    "config": [],
+    "entry": [
+      "playwright.config.ts",
+      "e2e/global-setup.ts",
+      "e2e/**/*.setup.ts",
+      "e2e/**/*.e2e.ts"
+    ]
+  }
+}

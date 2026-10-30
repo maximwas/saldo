@@ -10,6 +10,8 @@
 | next | 16.4.3 | App Router, `proxy.ts`, Turbopack, Route Handlers для cron і інтеграцій | — |
 | react, react-dom | 19.3.1 | | — |
 | typescript | 6.0.3 | | 7.0.2 (нативний): сумісність із Next і Biome не підтверджена |
+| next-intl | 4.14.9 (MIT, 02.10.2026) | локалізація `uk` / `en` без i18n-маршрутизації, типізовані ключі, `useFormatter` (ADR 25) | `[locale]`-маршрутизація; react-i18next (без RSC) |
+| negotiator | 1.1.0 (MIT, 20.08.2026; типи `@types/negotiator`) | вибір мови з `Accept-Language` (q-значення, `en-US` → `en`) | власний парсер заголовка |
 
 ## UI
 
@@ -18,14 +20,14 @@
 | tailwindcss, @tailwindcss/postcss | 4.3.3 | тема — лише `docs/design/theme.css` | — |
 | shadcn (CLI) | 4.23.0 | генерація примітивів у `src/components/ui` | — |
 | @base-ui/react | 1.9.0 | основа shadcn, Drawer для шторок mobile | radix-ui 1.8.1 (більше не дефолт shadcn), vaul (не підтримується) |
-| next-themes | перевірити у фазі 0 | `data-theme` light / dark / system (theme.css) | власний скрипт теми |
+| next-themes | 0.4.6 (березень 2025, стабільний; інших оновлень немає) | `data-theme` light / dark / system (theme.css) | власний скрипт теми |
 | lucide-react | 1.65.0 | іконки (ті самі, що в Figma) | — |
 | sonner | 2.0.8 | тости | — |
 | cmdk | 1.1.1 | пошук ⌘K | — |
 | react-day-picker | 10.0.2 | вибір дати | — |
 | motion | 14.8.0 | анімації лише як відповідь на дію | — |
 | class-variance-authority | 0.7.1 | варіанти компонентів | — |
-| clsx, tailwind-merge | 2.1.1, 3.7.0 | `cn()` | — |
+| cn | 0.5.0 (MIT, shadcn) | `cn()` через `createCn` з токенами теми; shadcn CLI 4.23 генерує саме його | clsx + tailwind-merge (cn — їх drop-in заміна) |
 | tw-animate-css | 1.4.0 | анімації shadcn | — |
 | react-number-format | 5.4.5 | поле суми, числова клавіатура mobile | — |
 | @tanstack/react-table | 9.3.1 | таблиці desktop | — |
@@ -46,6 +48,10 @@
 | @hookform/resolvers | 6.0.2 | zodResolver | — |
 | zod | 4.6.7 | схеми форм, env, вхід RPC на клієнті | — |
 | @t3-oss/env-nextjs | 0.13.11 | типізовані env, розділ server/client | — |
+| pino | 10.4.0 (MIT, 02.10.2026) | серверні логи: JSON у проді, `redact`, child-логери (ADR 26) | LogTape 2.4.2, consola 3.4.2 (без релізів з 03.2025), next-logger 5.0.2 |
+| pino-pretty | 13.2.0 (MIT, 04.10.2026) | читабельні логи в dev, потік у тому ж процесі (без transport) | — |
+| @vercel/analytics | 2.0.1 (MIT, 02.10.2026) | Vercel Web Analytics без cookies; `beforeSend` відрізає query string, Vercel бачить лише шлях | — |
+| @vercel/speed-insights | 2.0.0 (Apache-2.0, 03.07.2026) | Core Web Vitals з реальних пристроїв, той самий `beforeSend` | — |
 
 ## Домен
 
@@ -69,6 +75,7 @@
 | Пакет / інструмент | Версія | Навіщо |
 |---|---|---|
 | @biomejs/biome | 2.6.4 | lint + format (`next lint` прибрано в Next 16) |
+| eslint, @stylistic/eslint-plugin, typescript-eslint | 10.13.0, 5.10.0, 8.72.1 (MIT) | лише правила стилю, яких немає в Biome 2.6: `id-length`, `padding-line-between-statements`, коментарі англійською (conventions §3a) |
 | vitest, @vitest/coverage-v8 | 5.0.5 | unit-тести чистого ядра |
 | lefthook | 2.2.2 | pre-commit |
 | knip | 6.44.0 | невикористані файли, експорти, залежності |
@@ -76,11 +83,11 @@
 | @playwright/test | 1.64.1 (Apache-2.0) | e2e проти локального Supabase і `next start`, лише Chromium; `pnpm test:e2e`, окремий CI-job |
 | supabase (CLI) | 2.122.0 | міграції, локальна БД, `gen types`, `db dump` |
 | Vercel | — | деплой, `regions: ["fra1"]`, cron раз на добу; домен `saldo.maksymvasianin.com` (Cloudflare CNAME, DNS only) |
-| GitHub Actions | — | нічний бекап, CI на PR без secrets: job `check` (`pnpm check` + `supabase test db`) і job `e2e` (оцінка 7–12 хв) |
+| GitHub Actions | — | нічний бекап, CI на PR без secrets: job `check` (`pnpm check` + `supabase test db`), `gitleaks` і `e2e` (оцінка 7–12 хв; локально `pnpm test:e2e` — 59 тестів за 54 с разом із `next build`, 30.10.2026) |
 | gitleaks | 8.30 (MIT; лише security-патчі, drop-in заміна — betterleaks) | пошук секретів у lefthook pre-commit і CI |
 | age | 1.3 (BSD-3-Clause, apt на ubuntu-latest) | шифрування бекапу на публічний ключ |
-| pgTAP + basejump-supabase_test_helpers | 0.0.6 (MIT, через dbdev) | тести RLS просторів (`supabase test db`) |
-| pnpm | перевірити у фазі 0 | менеджер пакетів |
+| pgTAP | 1.3.3 (у стеку Supabase) | тести RLS просторів (`supabase test db`); вхід ролями — хелпер `pg_temp.login`, без basejump/dbdev (`docs/conventions.md` §6.2) |
+| pnpm | 12.14.0 (`packageManager`), Node 26.x LTS (`engines`, `.nvmrc`, CI, Vercel) | менеджер пакетів |
 
 ## Ліміти безкоштовних тарифів, що мають значення
 

@@ -56,6 +56,8 @@
 | 22 | **Репозиторій GitHub публічний** (рішення Максима 30.10.2026). Особисті дані — лише поза git: `.gitignore` ховає `.private/`, `docs/spec/`, `docs/design/screens/`, `.env*` (крім `.env.example`); gitleaks у lefthook + GitHub secret scanning і push protection; workflow з секретами не запускаються з PR (§8) | відкритий код; у специфікації й демо-екранах — реальні доходи й кредити | приватний репозиторій — рішення Максима інше |
 | 23 | Нічний бекап шифрується **age** на публічний ключ (recipient); приватний ключ лише в Максима, поза GitHub (§9) | у публічному репозиторії артефакти Actions може завантажити будь-хто з акаунтом GitHub; CI не має чим розшифрувати — витік secrets не відкриває бекапи | `gpg --symmetric` з паролем у secrets (пароль і шифротекст в одному місці); приватне сховище (R2/S3) — ще один акаунт і ключі |
 | 24 | Домен `saldo.maksymvasianin.com`: DNS на Cloudflare, CNAME `saldo` → Vercel у режимі **DNS only** (сіра хмара), Vercel-проєкт у `fra1` (§7) | основний сайт уже на Vercel, DNS — на Cloudflare | проксі Cloudflare (помаранчева хмара) — Vercel не видасть сертифікат; `*.vercel.app` — URL зміниться при перейменуванні, OAuth і VAPID прив'язані до домену |
+| 25 | **Локалізація з фази 0** (рішення Максима 30.10.2026): next-intl 4.14.9 **без i18n-маршрутизації** — без префікса `/uk`, `/en` в URL; локалі `uk` (за замовчуванням) і `en`; мова: `user_settings.locale` → cookie `NEXT_LOCALE` → `Accept-Language` (negotiator) → `uk` (`src/i18n/locale.utils.ts`, `src/i18n/request.ts`); тексти — `messages/<locale>/<namespace>.json`, ключі типізовані (`src/types/next-intl.d.ts`); дати й суми — `Intl` з активною локаллю (`useFormatter`, `formatMinor`); перемикач у Налаштуваннях пише і БД, і cookie (Server Action `setLocale`) | застосунок приватний, SEO не потрібне, типізовані маршрути лишаються простими; друга людина в просторі може читати англійською | маршрутизація `[locale]` (зайвий сегмент у кожному URL), react-i18next (немає RSC-інтеграції), тексти в константах |
+| 26 | **Серверні логи — pino 10.4.0** (Максим 30.10.2026: «нормальні логи»): один `logger` у `src/lib/logger/logger.server.ts`, модулі беруть `logger.child({ module })`; прод — JSON-рядки в stdout (`error`/`fatal` — у stderr через `pino.multistream` з `dedupe`), dev — `pino-pretty` як потік у тому ж процесі; рівень `LOG_LEVEL` (дефолт `debug` у dev, `info` у проді); `redact` ховає суми, нотатки, email, токени, cookie й `authorization` на трьох рівнях вкладення; `src/instrumentation.ts` → `onRequestError` пише кожну необроблену помилку (шлях без query, метод, `routeType`, `routePath`, `err` зі стеком і `digest`); помилки Postgres — `logPgError` (`src/lib/supabase/pg-error.server.ts`): код і constraint у лог, без `message` (у ньому значення рядків) | Vercel Runtime Logs читають JSON зі stdout/stderr; pino і pino-pretty уже в `serverExternalPackages` Next за замовчуванням; найпоширеніший логер Node з вбудованою редакцією | transports pino (worker thread ламається в бандлі Next); LogTape 2.4.2 (редакція — окремий пакет, менша екосистема); consola 3.4.2 (без релізів з 03.2025, без редакції); next-logger 5.0.2 (патчить консоль Next, без child-логерів) |
 
 ## 3. Діаграми
 
@@ -856,6 +858,10 @@ text)` (security definer, Vault). `revoke execute … from anon, authenticated`.
   `42501` → «немає права на запис у цьому просторі».
 - **Auth.** `@supabase/ssr`; `src/proxy.ts` оновлює токени й робить оптимістичний редирект на `/login`;
   `src/lib/auth/dal.server.ts` — `verifySession()` у React `cache` через `getClaims()`. Межа безпеки — RLS.
+  `getServerSupabase()` спершу чекає `await connection()`: з `cacheComponents` + `partialPrefetching` префетч App
+  Shell уже бачить `cookies()`, але забороняє `Date.now()`, а клієнт `@supabase/ssr` читає його, коли вантажить
+  сесію (`onAuthStateChange` → `_emitInitialSession`). Тож кожне читання Supabase на сервері — лише в справжньому
+  запиті, всередині `<Suspense>`.
   Реєстрація вимкнена; новий акаунт — лише через запрошення (§3.8). `(auth)/invite/[token]/page.tsx` — прийняття.
 - **Вкладення.** browser-image-compression (до ~1600 px, JPEG/WebP) → `storage.from('attachments').upload` →
   рядок `attachments`. Показ — `createSignedUrl` на 5 хв. Офлайн-фото тримається в IndexedDB до синхронізації.
@@ -881,6 +887,8 @@ Server Actions для даних не використовуються; вихі
 - Vercel: домен у проєкті Saldo (`regions: ["fra1"]`); `*.vercel.app` лишається для preview.
 - Supabase Auth → URL Configuration: Site URL = домен; Redirect URLs: `https://saldo.maksymvasianin.com/**` і
   `http://localhost:3000/**` (посилання запрошень `/invite/{token}`, `?next=` після входу, `/oauth/consent`).
+  Preview-проєкт: Site URL `https://saldo-git-develop-maximwas-projects.vercel.app`, Redirect URLs — він же,
+  `https://*-maximwas-projects.vercel.app/**` і `http://localhost:3000/**`.
 - Google OAuth-клієнт: authorized JavaScript origin = домен, redirect URI
   `https://saldo.maksymvasianin.com/api/integrations/google/callback`; домен — у authorized domains екрана згоди.
 - Канал Google `events.watch`: `address` = `https://saldo.maksymvasianin.com/api/integrations/google/webhook`.
@@ -935,16 +943,18 @@ Server Actions для даних не використовуються; вихі
 - Публічний репозиторій (ADR 22): особисті файли — лише в `.gitignore`-теках; `seed.sql` і фікстури тестів —
   вигадані дані, не з §25. gitleaks (`gitleaks git --pre-commit --staged --redact`) у lefthook pre-commit; у
   GitHub увімкнені secret scanning і push protection. `.env.example` — лише назви змінних.
-- GitHub Actions: `ci.yml` на `pull_request` без жодного secret, два jobs: `check` (локальний стек `supabase start`,
-  pgTAP, `pnpm check`) і `e2e` (свій `supabase start`, `next build && next start`, Playwright Chromium; звіт і
+- GitHub Actions: `ci.yml` на `pull_request` у `develop`/`main` і `push` у `develop` без жодного secret, три jobs:
+  `check` (`supabase db start`, pgTAP, `pnpm check`), `gitleaks` (діапазон комітів PR чи push) і `e2e` (свій `supabase start`, `next build && next start`, Playwright Chromium; звіт і
   трейси — артефакт лише при падінні, 7 днів; дані в них лише вигадані, `docs/conventions.md` §6.3); `backup.yml` лише `schedule` + `workflow_dispatch`, тож PR із форку його не запускає;
+  `preview-db.yml` (`push` у `develop` зі змінами в `supabase/migrations`, щотижня й вручну) — `supabase db push` у
+  preview-проєкт, заодно тримає Free-проєкт активним;
   `pull_request_target` не використовується; Settings → Actions: «Require approval for all external
   contributors», `permissions: contents: read` за замовчуванням. Логи без даних: `supabase db dump` пише у файл,
   кроки не роблять `cat`/`echo` даних, `set +x`, секрети лише через `env:` (GitHub маскує їх у логах).
 - Схема — лише міграціями з репозиторію (Supabase CLI, спершу локальний стек `supabase start`, на прод — `supabase
   db push`). Supabase MCP — для огляду, advisors, пошуку в доках і типів; `apply_migration` у віддалений проєкт
-  не робиться, щоб репо лишалось джерелом правди. Проєкт `tqummrofnesdivujyluw`, регіон має бути Frankfurt
-  (`eu-central-1`) — перевірка у фазі 0.
+  не робиться, щоб репо лишалось джерелом правди. Прод — `mlgcnbtnkrwspzvnuhmz` («Saldo»), preview —
+  `kwzskdqswlqnbsboqqbl` («Saldo Preview»), обидва Frankfurt (`eu-central-1`, Postgres 17; перевірено 30.10.2026).
 - Cron-маршрути: секрет у заголовку, порівняння `timingSafeEqual`; webhook Google — `X-Goog-Channel-Token`.
 
 ## 9. Резервні копії й відновлення (§21, §26)
@@ -954,7 +964,9 @@ Server Actions для даних не використовуються; вихі
   `actions/upload-artifact` з `retention-days: 30`; незашифровані файли видаляються в тому самому кроці. Не в git.
 - Репозиторій публічний, тож артефакт може завантажити будь-хто з акаунтом GitHub — тому шифрування на публічний
   ключ: `AGE_RECIPIENT` (публічний, у repo variables), приватний ключ `age-keygen` зберігає Максим офлайн (менеджер
-  паролів + друга копія). Workflow бачить лише `SUPABASE_DB_URL` (secret); розшифрувати бекап у CI нічим.
+  паролів + друга копія). Workflow бачить лише secrets `SUPABASE_ACCESS_TOKEN` і `SUPABASE_PROD_DB_PASSWORD`
+  (`supabase link` + `db dump --linked`: CLI сам іде через pooler, бо прямий хост БД — лише IPv6); розшифрувати
+  бекап у CI нічим.
   `age` 1.3 (BSD-3-Clause) — з apt на `ubuntu-latest`.
 - Розшифрування: `age -d -i key.txt backup.tar.age | tar x` — частина навчання з відновлення.
 - Файли Storage — у повному експорті застосунку (JSON + вкладення архівом).

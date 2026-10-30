@@ -1,0 +1,44 @@
+@import "tailwindcss";
+@import "../../docs/design/theme.css";
+
+/* Logo A2 arcs (Figma «A · Градієнти» 10:70994): each arc's gradient, light and «A2 dark» */
+:root {
+  --brand-arc-top-from: var(--color-cat-yellow-soft);
+  --brand-arc-top-to: var(--color-cat-yellow);
+  --brand-arc-bottom-from: var(--color-on-primary);
+  --brand-arc-bottom-to: var(--color-cat-cyan-soft);
+}
+
+:root[data-theme="dark"] {
+  --brand-arc-top-from: var(--color-cat-yellow-text);
+  --brand-arc-top-to: var(--color-cat-orange);
+  --brand-arc-bottom-from: var(--color-primary-text);
+  --brand-arc-bottom-to: var(--color-cat-purple);
+}
+
+@layer base {
+  body {
+    @apply bg-app font-sans text-body text-text-primary antialiased;
+  }
+
+  /* Tailwind v4 preflight resets buttons to cursor: default; every clickable thing points (Maxim, 30.10.2026).
+     Base UI triggers render <button> or carry these roles. */
+  button:not(:disabled),
+  [role="button"],
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="option"],
+  [role="tab"],
+  a[href],
+  label[for],
+  select,
+  summary {
+    cursor: pointer;
+  }
+
+  :disabled,
+  [aria-disabled="true"],
+  [data-disabled] {
+    cursor: not-allowed;
+  }
+}

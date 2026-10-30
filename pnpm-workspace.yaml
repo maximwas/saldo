@@ -1,0 +1,10 @@
+allowBuilds:
+  "@parcel/watcher": false
+  "@swc/core": false
+  esbuild: true
+  lefthook: true
+  sharp: false
+  unrs-resolver: false
+minimumReleaseAgeExclude:
+  - knip@6.44.0
+  - lucide-react@1.65.0

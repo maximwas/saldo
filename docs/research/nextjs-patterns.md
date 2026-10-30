@@ -14,6 +14,22 @@ Reddit/HN не перевірено; решта — офіційні доки, �
   https://nextjs.org/docs/app/getting-started/mutating-data
 - Офлайн: дока радить Serwist. https://nextjs.org/docs/app/guides/progressive-web-apps
 
+## Спайк Serwist на Next 16.4 (0.16, 30.10.2026) — працює
+
+- Пакети: `@serwist/turbopack` 9.5.13 і `serwist` 9.5.13 (MIT, 04.10.2026), `esbuild` 0.28.2 (dev, для
+  `useNativeEsbuild: true`). Дока: https://serwist.pages.dev/docs/next/turbo
+- Файли: `next.config.ts` → `withSerwist(nextConfig)`; `src/app/serwist/[path]/route.ts` → `createSerwistRoute({ swSrc:
+  'src/app/sw.ts', useNativeEsbuild: true })`; `src/app/sw.ts` (`Serwist` + `defaultCache`, `skipWaiting`,
+  `clientsClaim`, `navigationPreload`); `SerwistProvider swUrl="/serwist/sw.js"` у `(app)/layout.tsx`, вимкнений у dev.
+- Пастка з `cacheComponents`: `createSerwistRoute` повертає ще й `dynamic`, `revalidate`, `dynamicParams`, а Next 16 з
+  `cacheComponents` такі segment config не приймає. Тому з маршруту експортуються лише `generateStaticParams` і `GET`.
+  Маршрут у build — `ƒ /serwist/[path]` (рендер на запит), а не статичний.
+- Перевірка (`pnpm build` + `next start`, Playwright): SW `/serwist/sw.js` активний і контролює сторінку, 17 записів
+  precache (976 KiB). Офлайн відкриваються відвідані сторінки (`/`, `/calendar`) з оболонкою; невідвідані (`/more`,
+  `/budget`) — `net::ERR_FAILED`.
+- Далі (фаза 8): сторінка `/~offline` як fallback для `destination: 'document'` і precache оболонки
+  (`additionalPrecacheEntries` з ревізією), стратегія для RSC-запитів, оновлення SW без розриву сесії.
+
 ## Supabase + Next
 - `@supabase/supabase-js` + `@supabase/ssr`; env `NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Токени оновлювати лише в `proxy.ts`.
