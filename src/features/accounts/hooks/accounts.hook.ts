@@ -3,7 +3,7 @@ import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
 import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import { localDate } from '@/lib/utils/clock.utils'
-import { createAccount, updateAccount } from '../api/accounts.api'
+import { adjustBalance, createAccount, updateAccount } from '../api/accounts.api'
 import { accountsQueries } from '../api/accounts.queries'
 
 export function useAccounts() {
@@ -30,3 +30,5 @@ export function useAccountOperationCount(accountId: string, enabled: boolean) {
 export const useCreateAccount = () => useLedgerWrite(createAccount)
 
 export const useUpdateAccount = () => useLedgerWrite(updateAccount)
+
+export const useAdjustBalance = () => useLedgerWrite(adjustBalance)

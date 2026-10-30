@@ -1,5 +1,11 @@
 import type { SelectOption } from '@/components/ui/select.component'
-import type { AccountOption, CategoryOption, OperationItem } from '../operations.types'
+import type {
+  AccountOption,
+  CategoryOption,
+  OperationItem,
+  OperationItemKind,
+  OperationSource,
+} from '../operations.types'
 
 export type DisplayAmount = {
   /** signed: a spend is negative, so Amount prints the real minus */
@@ -7,7 +13,13 @@ export type DisplayAmount = {
   currency: string
   /** «+» is printed before an inflow; Amount itself only prints «−» */
   plus: boolean
-  tone: 'fact' | 'income'
+  tone: 'fact' | 'income' | 'transfer'
+}
+
+// an adjustment is neutral like a transfer: it is neither income nor spending (§5)
+const TONES: Partial<Record<OperationItemKind, DisplayAmount['tone']>> = {
+  income: 'income',
+  adjustment: 'transfer',
 }
 
 /**
@@ -23,7 +35,7 @@ export function displayAmount({ row, kind }: OperationItem): DisplayAmount {
     minor: inflow ? minor : -minor,
     currency: useBase ? row.baseCurrency : row.currency,
     plus: inflow,
-    tone: kind === 'income' ? 'income' : 'fact',
+    tone: TONES[kind] ?? 'fact',
   }
 }
 
@@ -58,4 +70,21 @@ export function categoryOptions(
         label: parent ? `${parent.name} › ${category.name}` : category.name,
       }
     })
+}
+
+/** what is still refundable of a purchase; refunds of a purchase never exceed it (§5, checked by the database too) */
+export const refundableMinor = (purchaseMinor: number, refundedMinor: number) =>
+  Math.max(0, purchaseMinor - refundedMinor)
+
+/** where «open source» leads: the credit or subscription card, the debts, else the payments list */
+export function sourceHref({ sourceType, sourceId }: Pick<OperationSource, 'sourceType' | 'sourceId'>): string {
+  if (sourceType === 'credit' && sourceId) {
+    return `/payments/credits/${sourceId}`
+  }
+
+  if (sourceType === 'subscription' && sourceId) {
+    return `/payments/subscriptions?sub=${sourceId}`
+  }
+
+  return sourceType === 'debt' ? '/payments/debts' : '/payments'
 }

@@ -45,6 +45,7 @@ import {
   Plane,
   Receipt,
   Repeat,
+  Scale,
   Scissors,
   ShieldCheck,
   Shirt,
@@ -132,6 +133,8 @@ export const CATEGORY_ICONS = {
   handshake: Handshake,
   'arrow-left-right': ArrowLeftRight,
   'undo-2': Undo2,
+  // the icon of a balance adjustment row, not offered in the category picker
+  scale: Scale,
   tag: Tag,
   cloud: Cloud,
   ellipsis: Ellipsis,

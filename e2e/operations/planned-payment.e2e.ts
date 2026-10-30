@@ -49,4 +49,23 @@ test('«Оплачено» створює одну операцію, видал�
   await page.goto('/')
   await expect(upcoming).toHaveCount(1)
   expect(await monthExpenseMinor(page)).toBe(expenseBefore)
+
+  // a plan whose date has passed without a payment waits in the overdue group (§7)
+  await page.goto('/payments')
+  await page.getByRole('button', { name: 'Додати платіж' }).click()
+
+  const late = page.getByRole('dialog')
+
+  await late.getByLabel('Назва').fill(`${mark}-late`)
+  await late.getByLabel('Сума').fill('120')
+  await late.getByLabel('Дата платежу').click()
+  await page.getByRole('button', { name: 'Попередній місяць' }).click()
+  await page.getByRole('gridcell').filter({ hasText: /^15$/ }).getByRole('button').click()
+  // the calendar popover is a dialog too: save once only the sheet is left
+  await expect(late).toHaveCount(1)
+  await late.getByRole('button', { name: 'Зберегти' }).click()
+  await expect(late).toBeHidden()
+  await expect(
+    page.locator('section').filter({ has: page.getByRole('heading', { name: 'Дата минула, оплату не підтверджено' }) }),
+  ).toContainText(`${mark}-late`)
 })
