@@ -1125,3 +1125,14 @@ e2e:
 - Без `Co-Authored-By: Claude`, без «Generated with Claude Code» і будь-яких згадок AI у комітах і PR.
 - Секрети, `.env*`, дампи БД у git не потрапляють. Репозиторій публічний: gitleaks у pre-commit і push protection
   на GitHub; хибне спрацювання — `gitleaks:allow` у рядку з поясненням, не `--no-verify`.
+
+### Гілки й релізи
+
+- `main` — гілка за замовчуванням на GitHub і продакшн (Vercel). `develop` — інтеграційна гілка, preview.
+- Кожен пункт або група пунктів — своя гілка від `develop` → PR у `develop` (`gh pr create --base develop`: база за
+  замовчуванням тепер `main`). Агенти працюють у worktree від `develop` (`.claude/settings.local.json`:
+  `worktree.baseRef: "head"`).
+- Кінець фази: PR `develop` → `main` (`release: v0.<N+1>.0 — phase N`), CI зелений, мердж = продакшн-деплой, перевірка
+  проду, потім реліз GitHub: `gh release create v0.<N+1>.0 --target main --generate-notes` з коротким підсумком
+  англійською. Версії: фаза 0 — `v0.1.0`, фаза N — `v0.(N+1).0`, уся специфікація v1.1 — `v1.0.0`.
+- Розклад (`backup.yml`, щотижневий пінг preview) GitHub запускає з гілки за замовчуванням, тобто з `main`.

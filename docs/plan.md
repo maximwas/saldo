@@ -24,7 +24,7 @@
 PWA-маніфест, нічний бекап.
 
 - [x] 0.1 `git init`, `.gitignore` (уже є: `.private/`, `docs/spec/`, `docs/design/screens/`, `.env*` крім `.env.example`; `graphify-out/` — у глобальному), гілка `main`, репозиторій GitHub **public** (ADR 22). Перед першим push: `git status --ignored` — особисті теки не в індексі; `gitleaks git` по всій історії чистий.
-- [x] 0.1a GitHub Settings: Secret scanning + Push protection увімкнені; Actions → «Require approval for all external contributors», workflow permissions «Read repository contents»; гілка `main` захищена (лише через PR, і для власника; без force-push і видалення), `develop` — гілка за замовчуванням, без force-push і видалення. Гілки: `main` ← PR з `develop` наприкінці фази; `develop` ← PR з `feat/*`. Required status checks — коли з'явиться CI (0.18a).
+- [x] 0.1a GitHub Settings: Secret scanning + Push protection увімкнені; Actions → «Require approval for all external contributors», workflow permissions «Read repository contents»; гілка `main` захищена (лише через PR, і для власника; без force-push і видалення), `develop` — інтеграційна гілка, без force-push і видалення; з 30.10.2026 гілка за замовчуванням — `main`. Гілки: `main` ← PR з `develop` наприкінці фази; `develop` ← PR з `feat/*`. Required status checks — коли з'явиться CI (0.18a).
 - [x] 0.2 `pnpm create next-app@16.4` (TypeScript, App Router, `src/`, Turbopack, без ESLint), `typescript@6.0.3`, `typedRoutes: true`.
 - [x] 0.3 Tailwind 4.3: `src/app/globals.css` робить `@import "tailwindcss"; @import "../../docs/design/theme.css";` — файл теми не копіюється й не змінюється; `next-themes` (`attribute="data-theme"`).
 - [x] 0.4 Шрифти Fixel Text / Fixel Display (OFL) — woff2 у `src/app/fonts/`, `next/font/local` у `src/app/layout.tsx`, змінні під `--font-sans`, `--font-display`.
@@ -61,12 +61,14 @@ PWA-маніфест, нічний бекап.
 
 Готово, коли:
 - [ ] прод-URL відкривається, вхід лише для наявних акаунтів, реєстрація відмовляє;
-- [ ] `supabase test db` зелений: чотири ролі бачать і пишуть рівно те, що дозволено;
-- [ ] усі пункти меню §2 відкриваються на desktop і mobile без горизонтального скролу;
+- [x] `supabase test db` зелений: чотири ролі бачать і пишуть рівно те, що дозволено;
+- [x] усі пункти меню §2 відкриваються на desktop і mobile без горизонтального скролу;
 - [ ] PWA встановлюється (Chrome desktop, iOS Home Screen);
 - [ ] артефакт бекапу завантажується й розшифровується `age -d` ключем Максима; лог workflow не містить даних;
-- [ ] push із тестовим фейковим ключем зупиняє gitleaks локально і push protection на GitHub;
-- [ ] `https://saldo.maksymvasianin.com` відкривається з валідним сертифікатом; регіон Supabase — Frankfurt.
+- [x] push із тестовим фейковим ключем зупиняє gitleaks локально і push protection на GitHub; (30.10: gitleaks у lefthook
+  зупинив коміт із фейковим `sk_live_…`; push protection увімкнений, але вигаданий `ghp_…` без валідної контрольної суми
+  пропустив — GitHub ловить лише справжні формати, тому головний захист — gitleaks локально й у CI)
+- [x] `https://saldo.maksymvasianin.com` відкривається з валідним сертифікатом; регіон Supabase — Frankfurt.
 
 Питання: акаунт GitHub/Vercel для проєкту; де Максим зберігає приватний ключ age (менеджер паролів + друга копія).
 
