@@ -10,9 +10,11 @@ import {
   SIDEBAR_SECTIONS,
 } from '@/constants/navigation.constants'
 import { SHELL_TEXT } from '@/constants/shell.constants'
+import { useLedger } from '@/contexts/ledger.context'
+import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { cn } from '@/lib/utils/cn.utils'
 import { activeHref } from './navigation.utils'
-import { type Space, SpaceSwitcher } from './space-switcher.component'
+import { SpaceSwitcher } from './space-switcher.component'
 import { SyncStatus } from './sync-status.component'
 
 // Figma «Saldo» → NavItem 2:8110: 44 high, icon 20, Default / Hover (subtle) / Active (primary-soft)
@@ -51,11 +53,10 @@ function NavSubItem({ link, active }: { link: NavLink; active: boolean }) {
   )
 }
 
-type SidebarProps = { spaces: readonly Space[]; currentSpaceId: string }
-
 // Figma «Saldo» → Sidebar 2:11401: Expanded=true opens the active section's sub-items; «Show space» on
-export function Sidebar({ spaces, currentSpaceId }: SidebarProps) {
+export function Sidebar() {
   const pathname = usePathname()
+  const ledger = useLedger()
   const sections = [...SIDEBAR_SECTIONS, SIDEBAR_FOOTER_SECTION]
   const current = activeHref(pathname, sections)
 
@@ -71,7 +72,12 @@ export function Sidebar({ spaces, currentSpaceId }: SidebarProps) {
         <span className="text-card-title text-text-primary">{SHELL_TEXT.brand}</span>
       </div>
       <div className="pb-3">
-        <SpaceSwitcher spaces={spaces} currentId={currentSpaceId} platform="sidebar" />
+        <SpaceSwitcher
+          spaces={ledger.ledgers}
+          currentId={ledger.ledgerId}
+          platform="sidebar"
+          onSelectAction={switchLedger}
+        />
       </div>
       <nav aria-label={SHELL_TEXT.navLabel} className="flex flex-1 flex-col gap-1">
         {SIDEBAR_SECTIONS.map((section) => {

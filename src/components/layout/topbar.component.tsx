@@ -5,27 +5,39 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button.component'
 import { SHELL_TEXT } from '@/constants/shell.constants'
+import { useClock } from '@/contexts/clock.context'
+import { useLedger } from '@/contexts/ledger.context'
+import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { pageTitle } from './navigation.utils'
-import { type Space, SpaceSwitcher } from './space-switcher.component'
-
-type TopbarProps = { spaces: readonly Space[]; currentSpaceId: string }
+import { SpaceSwitcher } from './space-switcher.component'
 
 // Figma «Saldo» → Topbar 2:8195. Desktop (lg): padding 24/32, page-title, search 280, bell 44, Add button.
 // Mobile: padding 12/20 on app, SpaceSwitcher over a display/number title, bell 40 with a 44 hit area.
-// shortcut: no date subtitle until ClockProvider (P0-B) gives a prerender-safe «today»
-export function Topbar({ spaces, currentSpaceId }: TopbarProps) {
+export function Topbar() {
   const pathname = usePathname()
-  const canWrite = spaces.find((space) => space.id === currentSpaceId)?.role !== 'viewer'
+  const ledger = useLedger()
+  const { now, timeZone } = useClock()
+  const canWrite = ledger.role !== 'viewer'
+  const today = new Intl.DateTimeFormat('uk', { weekday: 'long', day: 'numeric', month: 'long', timeZone }).format(
+    now(),
+  )
 
   return (
     <header className="flex items-center justify-between gap-4 bg-app px-5 py-3 lg:px-8 lg:py-6">
       <div className="flex min-w-0 flex-col gap-0.5 lg:flex-1">
         <div className="lg:hidden">
-          <SpaceSwitcher spaces={spaces} currentId={currentSpaceId} platform="topbar" />
+          <SpaceSwitcher
+            spaces={ledger.ledgers}
+            currentId={ledger.ledgerId}
+            platform="topbar"
+            onSelectAction={switchLedger}
+          />
         </div>
         <h1 className="truncate font-display text-number text-text-primary lg:text-page-title">
           {pageTitle(pathname)}
         </h1>
+        {/* Subtitle: text/label on mobile, text/body on desktop (Topbar 2:8195) */}
+        <p className="text-label text-text-secondary first-letter:uppercase lg:text-body">{today}</p>
       </div>
       {/* shortcut: search opens nothing until ⌘K search (cmdk) lands */}
       <button

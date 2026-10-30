@@ -2,13 +2,12 @@
 
 import { Menu } from '@base-ui/react/menu'
 import { Check, ChevronDown } from 'lucide-react'
-import { ROLE_LABELS, SHELL_TEXT, type SpaceRole } from '@/constants/shell.constants'
+import { ROLE_LABELS, SHELL_TEXT } from '@/constants/shell.constants'
+import type { LedgerSummary } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 
-export type Space = { id: string; name: string; role: SpaceRole }
-
 type SpaceSwitcherProps = {
-  spaces: readonly Space[]
+  spaces: readonly LedgerSummary[]
   currentId: string
   /** Sidebar: avatar 32, name and role, border; Topbar: avatar 24 and name only */
   platform: 'sidebar' | 'topbar'

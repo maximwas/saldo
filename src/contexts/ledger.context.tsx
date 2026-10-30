@@ -3,7 +3,8 @@
 import { createContext, use } from 'react'
 import type { LedgerRole } from '@/types/supabase.types'
 
-export type ActiveLedger = { ledgerId: string; role: LedgerRole; timeZone: string }
+export type LedgerSummary = { id: string; name: string; role: LedgerRole }
+export type ActiveLedger = { ledgerId: string; role: LedgerRole; timeZone: string; ledgers: LedgerSummary[] }
 
 // null on /login and other signed-out pages
 const LedgerContext = createContext<ActiveLedger | null>(null)

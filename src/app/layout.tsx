@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import { ThemeProvider } from 'next-themes'
 import { Suspense } from 'react'
 import { AppProviders } from '@/components/providers/app-providers.component'
+import { ServiceWorker } from '@/components/providers/service-worker.component'
 import { getActiveLedger } from '@/lib/auth/dal.server'
 import './globals.css'
 
@@ -38,9 +39,11 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="uk" suppressHydrationWarning>
       <body className={`${fixelText.variable} ${fixelDisplay.variable}`}>
         <ThemeProvider attribute="data-theme">
-          <Suspense>
-            <Providers>{children}</Providers>
-          </Suspense>
+          <ServiceWorker>
+            <Suspense>
+              <Providers>{children}</Providers>
+            </Suspense>
+          </ServiceWorker>
         </ThemeProvider>
       </body>
     </html>

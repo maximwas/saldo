@@ -13,8 +13,6 @@ type Step = 'password' | 'code'
 const CODE_LENGTH = 6
 
 // Figma "Saldo", app states: login 4:79954 (desktop), 4:79982 (mobile), error 4:80005, TOTP code 4:80027.
-// Field height and padding come from the frames (48px, 16px): the shared Input is 44px / 12px.
-const FIELD_CLASS = 'h-12 px-4'
 
 export function LoginForm() {
   const router = useRouter()
@@ -52,6 +50,7 @@ export function LoginForm() {
           ? 'Невірний email або пароль'
           : 'Не вдалося увійти. Спробуйте ще раз',
       )
+
       return
     }
 
@@ -63,6 +62,7 @@ export function LoginForm() {
       setFactorId(factors?.totp[0]?.id ?? null)
       setStep('code')
       setIsPending(false)
+
       return
     }
 
@@ -83,6 +83,7 @@ export function LoginForm() {
     if (verifyError) {
       setIsPending(false)
       setError('Невірний код. Спробуйте ще раз')
+
       return
     }
 
@@ -118,7 +119,6 @@ export function LoginForm() {
             onValueChange={(value) => setCode(value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? ids.codeHint : undefined}
-            className={FIELD_CLASS}
           />
           {error ? (
             <p id={ids.codeHint} className="text-caption text-negative-text">
@@ -147,7 +147,7 @@ export function LoginForm() {
         <label htmlFor={ids.email} className="text-label font-medium text-text-secondary">
           Email
         </label>
-        <Input id={ids.email} name="email" type="email" autoComplete="email" required className={FIELD_CLASS} />
+        <Input id={ids.email} name="email" type="email" autoComplete="email" required />
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor={ids.password} className="text-label font-medium text-text-secondary">
@@ -161,7 +161,6 @@ export function LoginForm() {
           required
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? ids.passwordHint : undefined}
-          className={FIELD_CLASS}
         />
         {error ? (
           <p id={ids.passwordHint} className="text-caption text-negative-text">

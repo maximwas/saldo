@@ -6,7 +6,7 @@ import type { ActiveLedger } from '@/contexts/ledger.context'
 import { getServerSupabase } from '@/lib/supabase/server-client'
 import type { LedgerRole } from '@/types/supabase.types'
 
-const LEDGER_COOKIE = 'saldo-ledger'
+export const LEDGER_COOKIE = 'saldo-ledger'
 
 // getClaims verifies the JWT (JWKS for asymmetric keys, Auth for the legacy secret); getSession is never trusted on the server
 const getSession = cache(async () => {
@@ -37,7 +37,7 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   const supabase = await getServerSupabase()
   const [cookieStore, memberships, settings] = await Promise.all([
     cookies(),
-    supabase.from('ledger_members').select('ledger_id, role, ledgers(time_zone)').eq('user_id', session.userId),
+    supabase.from('ledger_members').select('ledger_id, role, ledgers(name, time_zone)').eq('user_id', session.userId),
     supabase.from('user_settings').select('last_ledger_id').eq('user_id', session.userId).maybeSingle(),
   ])
   const rows = memberships.data ?? []
@@ -55,5 +55,6 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
     ledgerId: membership.ledger_id,
     role: membership.role as LedgerRole,
     timeZone: membership.ledgers?.time_zone ?? 'Europe/Kyiv',
+    ledgers: rows.map((row) => ({ id: row.ledger_id, name: row.ledgers?.name ?? '', role: row.role as LedgerRole })),
   }
 })

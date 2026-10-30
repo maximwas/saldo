@@ -1,4 +1,4 @@
-export type SpaceRole = 'owner' | 'editor' | 'viewer'
+import type { LedgerRole } from '@/types/supabase.types'
 
 // shell UI texts in one place; i18n replaces this object later
 export const SHELL_TEXT = {
@@ -12,7 +12,7 @@ export const SHELL_TEXT = {
   stub: (title: string) => `Розділ «${title}» з'явиться згодом.`,
 } as const
 
-export const ROLE_LABELS: Record<SpaceRole, string> = {
+export const ROLE_LABELS: Record<LedgerRole, string> = {
   owner: 'Власник',
   editor: 'Редагує',
   viewer: 'Переглядає',
