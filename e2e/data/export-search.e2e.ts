@@ -40,9 +40,14 @@ test('⌘K знаходить операцію за коментарем і ві
 
   await addExpense(page, mark)
   await page.goto('/')
-  await page.keyboard.press('ControlOrMeta+k')
 
   const palette = page.getByRole('dialog', { name: 'Пошук' })
+
+  // the shortcut listener exists only after hydration: press again until the palette opens
+  await expect(async () => {
+    await page.keyboard.press('ControlOrMeta+k')
+    await expect(palette).toBeVisible({ timeout: 1000 })
+  }).toPass()
 
   await palette.getByRole('combobox').fill(mark)
   await expect(
