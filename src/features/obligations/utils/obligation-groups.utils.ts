@@ -1,0 +1,38 @@
+export type ObligationBucket = 'overdue' | 'today' | 'week' | 'later'
+
+export const BUCKETS: readonly ObligationBucket[] = ['overdue', 'today', 'week', 'later']
+
+const WEEK_DAYS = 7
+
+/** YYYY-MM-DD plus days, calendar arithmetic in UTC so no browser zone or DST can move the day */
+export function addDaysIso(isoDate: string, days: number): string {
+  const [year, month, day] = isoDate.split('-').map(Number)
+
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+
+/**
+ * §7 groups by due date against «today» in the ledger time zone: a past date is never «paid» or «overdue» fact,
+ * only «date passed, not confirmed»; «next 7 days» is tomorrow through today + 7.
+ */
+export function groupByBucket<Row extends { dueOn: string }>(
+  rows: readonly Row[],
+  today: string,
+): Record<ObligationBucket, Row[]> {
+  const weekEnd = addDaysIso(today, WEEK_DAYS)
+  const groups: Record<ObligationBucket, Row[]> = {
+    overdue: [],
+    today: [],
+    week: [],
+    later: [],
+  }
+
+  for (const row of [...rows].sort((first, second) => first.dueOn.localeCompare(second.dueOn))) {
+    const bucket: ObligationBucket =
+      row.dueOn < today ? 'overdue' : row.dueOn === today ? 'today' : row.dueOn <= weekEnd ? 'week' : 'later'
+
+    groups[bucket].push(row)
+  }
+
+  return groups
+}
