@@ -8,7 +8,16 @@ const DEFAULT_LOCALE: AppLocale = 'uk'
 /** next-intl's own cookie name */
 export const LOCALE_COOKIE = 'NEXT_LOCALE'
 /** files messages/<locale>/<namespace>.json, merged into one object in src/i18n/request.ts */
-export const MESSAGE_NAMESPACES = ['nav', 'shell', 'auth', 'errors', 'common', 'settings', 'overview'] as const
+export const MESSAGE_NAMESPACES = [
+  'nav',
+  'shell',
+  'auth',
+  'errors',
+  'common',
+  'settings',
+  'overview',
+  'operations',
+] as const
 
 type LocaleSources = {
   settingsLocale?: string | null

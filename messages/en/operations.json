@@ -1,0 +1,134 @@
+{
+  "typeLabel": "Operation type",
+  "types": {
+    "all": "All",
+    "expense": "Expenses",
+    "income": "Income",
+    "transfer": "Transfers"
+  },
+  "kinds": {
+    "income": "Income",
+    "expense": "Expense",
+    "refund": "Refund",
+    "adjustment": "Adjustment",
+    "transfer": "Transfer",
+    "debt": "Debt"
+  },
+  "filters": {
+    "period": "Period",
+    "allTime": "All time",
+    "account": "Account",
+    "allAccounts": "All accounts",
+    "category": "Category",
+    "allCategories": "All categories",
+    "reset": "Reset filters"
+  },
+  "totals": {
+    "income": "Income",
+    "expenses": "Expenses",
+    "result": "Result",
+    "unknownRate": "No rate: {count}"
+  },
+  "table": {
+    "date": "Date",
+    "description": "Description",
+    "category": "Category",
+    "account": "Account",
+    "amount": "Amount"
+  },
+  "day": {
+    "today": "Today, {date}",
+    "yesterday": "Yesterday, {date}",
+    "count": "{count, plural, one {# operation} other {# operations}}"
+  },
+  "row": {
+    "receipt": "Has a receipt",
+    "rate": "rate {rate}",
+    "rateUnknown": "rate unknown",
+    "noCategory": "No category",
+    "fee": "Transfer fee"
+  },
+  "empty": {
+    "title": "No operations yet",
+    "hint": "Add your first expense or income with the «Add» button.",
+    "filtered": "No operations match this filter"
+  },
+  "loadFailed": "Could not load operations",
+  "truncated": "Showing the latest {count} operations. Narrow the period or the filter.",
+  "form": {
+    "newTitle": "New operation",
+    "editTitle": "Operation",
+    "transferTitle": "Transfer between accounts",
+    "deleteTitle": "Delete this operation?",
+    "deleteTransferTitle": "Delete this transfer?",
+    "amount": "Amount",
+    "account": "Account",
+    "category": "Category",
+    "noCategory": "No category",
+    "date": "Date",
+    "counterparty": "Payee",
+    "counterpartyHint": "As on the bank statement",
+    "note": "Comment",
+    "noteHint": "Up to 500 characters",
+    "save": "Save",
+    "saveTransfer": "Save transfer",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "receipt": "Receipt",
+    "addReceipt": "Add receipt",
+    "receiptHint": "Photo or PDF, optional",
+    "receiptRemove": "Remove receipt",
+    "receiptDelete": "Delete receipt",
+    "receiptOpenPdf": "Open PDF",
+    "receiptImageAlt": "Receipt of the operation",
+    "receiptFailed": "The operation is saved, but the receipt was not uploaded",
+    "receiptBadType": "A photo or a PDF will do",
+    "receiptTooBig": "The file is too big: up to 10 MB",
+    "transferNote": "A transfer is neither an expense nor income: money only moves between your accounts.",
+    "from": "From",
+    "to": "To",
+    "fromAmount": "Sent",
+    "toAmount": "Received",
+    "fee": "Fee",
+    "feeHint": "A separate expense, not part of the transfer",
+    "feeCategory": "Fee category",
+    "rate": "Rate by the amounts: {rate} per 1 {currency}",
+    "rateReference": "reference {rate}",
+    "rateNote": "The actual amounts do not have to match the reference rate.",
+    "viewOnly": "View only",
+    "details": {
+      "type": "Type",
+      "amount": "Amount",
+      "account": "Account",
+      "category": "Category",
+      "date": "Date",
+      "counterparty": "Payee",
+      "note": "Comment",
+      "from": "From",
+      "to": "To",
+      "fee": "Fee",
+      "rate": "Rate"
+    }
+  },
+  "deleteConfirm": {
+    "balanceUp": "The balance of «{account}» will grow by {amount}; period totals will be recalculated.",
+    "balanceDown": "The balance of «{account}» will drop by {amount}; period totals will be recalculated.",
+    "transfer": "The whole transfer will be deleted: both parts and the fee. Both account balances will be restored."
+  },
+  "toast": {
+    "created": "Operation saved",
+    "updated": "Changes saved",
+    "deleted": "Operation deleted",
+    "transferCreated": "Transfer saved"
+  },
+  "conflict": "Someone else changed this operation. Refresh and open it again.",
+  "refresh": "Refresh",
+  "add": {
+    "typeLabel": "Entry type",
+    "expense": "Expense",
+    "income": "Income",
+    "transfer": "Transfer"
+  }
+}
