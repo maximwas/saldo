@@ -106,7 +106,7 @@ create policy ledgers_write on public.ledgers for update to authenticated
   with check (id in (select private.my_owned_ledger_ids()));
 
 -- ledger_members: members read; only the owner changes roles; the owner row is never changed or removed;
--- a member may remove their own row («Вийти»). New rows come from the trigger above and accept_ledger_invite.
+-- a member may remove their own row (leave the space). New rows come from the trigger above and accept_ledger_invite.
 create policy ledger_members_read on public.ledger_members for select to authenticated
   using (ledger_id in (select private.my_ledger_ids()));
 create policy ledger_members_write on public.ledger_members for update to authenticated
