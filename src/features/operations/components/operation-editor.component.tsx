@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { TriangleAlert } from 'lucide-react'
+import { TriangleAlert, Undo2 } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
@@ -28,10 +28,12 @@ import {
   toUpdateOperationInput,
 } from '../schemas/operation-form.schema'
 import { type TransferFormValues, toCreateTransferInput } from '../schemas/transfer-form.schema'
-import { displayAmount } from '../utils/operation-display.utils'
+import { displayAmount, refundableMinor } from '../utils/operation-display.utils'
 import { formatRate, impliedRate } from '../utils/rate.utils'
 import { OperationForm } from './operation-form.component'
+import { OperationSource } from './operation-source.component'
 import { ReceiptField } from './receipt-field.component'
+import { RefundForm } from './refund-form.component'
 import { TransferForm } from './transfer-form.component'
 
 export type EditorTarget =
@@ -55,9 +57,12 @@ type OperationEditorProps = {
   /** the global «Add» mirrors the kind into ?add= */
   onKindChangeAction?: (kind: AddKind) => void
   onDuplicateAction?: (defaults: Partial<OperationFormValues>, sourceId: string) => void
+  /** a refund's purchase chip opens that purchase */
+  onOpenAction?: (item: OperationItem) => void
 }
 
 const FORM_ID = 'operation-editor-form'
+const REFUND_FORM_ID = 'operation-refund-form'
 
 const toFormValues = (item: OperationItem): Partial<OperationFormValues> => ({
   kind: item.row.kind as OperationFormValues['kind'],
@@ -81,6 +86,7 @@ export function OperationEditor({
   onOpenChangeAction,
   onKindChangeAction,
   onDuplicateAction,
+  onOpenAction,
 }: OperationEditorProps) {
   const translate = useTranslations('operations')
   const translateErrors = useTranslations('errors.db')
@@ -96,6 +102,7 @@ export function OperationEditor({
   const [kind, setKind] = useState<AddKind>(target.mode === 'create' ? target.kind : 'expense')
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [refunding, setRefunding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -115,6 +122,15 @@ export function OperationEditor({
   const categories = options.data?.categories ?? []
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? '…'
   const categoryName = (id: string | null) => categories.find((category) => category.id === id)?.name ?? null
+  const refunds = useQuery({
+    ...operationQueries.refunds(ledgerId),
+    enabled: item !== null,
+  })
+  const refundedMinor = item ? (refunds.data?.refundedById[item.row.id] ?? 0) : 0
+  const refundLeft = item ? refundableMinor(item.row.amountMinor, refundedMinor) : 0
+  const purchase = item?.row.refundOfId ? refunds.data?.purchases[item.row.refundOfId] : undefined
+  // a fee of a transfer is not a purchase; a fully refunded one has nothing left
+  const canRefund = editable && item?.kind === 'expense' && refunds.isSuccess && refundLeft > 0
   const title = pickTitle()
 
   function pickMode() {
@@ -127,6 +143,10 @@ export function OperationEditor({
 
   function pickTitle() {
     const isTransfer = item?.kind === 'transfer'
+
+    if (refunding) {
+      return translate('refund.title')
+    }
 
     if (confirmingDelete && item) {
       return translate(isTransfer ? 'form.deleteTransferTitle' : 'form.deleteTitle')
@@ -239,6 +259,22 @@ export function OperationEditor({
       notify.success(translate('toast.created'))
     })
 
+  const saveRefund = (values: OperationFormValues) =>
+    run(async () => {
+      if (!item) {
+        return
+      }
+
+      await createOperation.mutateAsync(
+        toCreateOperationInput(values, clock, {
+          id: newId,
+          ledgerId,
+          refundOfId: item.row.id,
+        }),
+      )
+      notify.success(translate('refund.done'))
+    })
+
   const saveTransfer = (values: TransferFormValues) =>
     run(async () => {
       // a stale «received» amount of a same-currency pair must not be sent
@@ -286,7 +322,16 @@ export function OperationEditor({
   )
   let footer: React.ReactNode
 
-  if (confirmingDelete) {
+  if (refunding) {
+    footer = (
+      <>
+        {cancel}
+        <Button type="submit" form={REFUND_FORM_ID} disabled={pending}>
+          {translate('refund.submit')}
+        </Button>
+      </>
+    )
+  } else if (confirmingDelete) {
     footer = (
       <>
         <Button type="button" variant="secondary" onClick={() => setConfirmingDelete(false)}>
@@ -352,6 +397,13 @@ export function OperationEditor({
       timeZone: 'UTC',
     })
 
+  const shortDate = (date: string) =>
+    formatter.dateTime(new Date(`${date}T12:00:00Z`), {
+      day: '2-digit',
+      month: '2-digit',
+      timeZone: 'UTC',
+    })
+
   function summary(current: OperationItem) {
     const amount = displayAmount(current)
     const name = current.row.counterparty ?? categoryName(current.row.categoryId) ?? translateKinds(current.kind)
@@ -364,7 +416,11 @@ export function OperationEditor({
 
   let body: React.ReactNode
 
-  if (confirmingDelete && item) {
+  if (refunding && item) {
+    body = (
+      <RefundForm formId={REFUND_FORM_ID} purchase={item.row} limitMinor={refundLeft} onSubmitAction={saveRefund} />
+    )
+  } else if (confirmingDelete && item) {
     const { amount, name } = summary(item)
     const transfer = item.kind === 'transfer' && item.transfer
     const warning = transfer
@@ -406,14 +462,28 @@ export function OperationEditor({
     body = options.isPending ? (
       <div aria-busy className="h-64 rounded-md bg-subtle" />
     ) : (
-      <OperationForm
-        formId={FORM_ID}
-        kind={item.kind as 'expense' | 'income'}
-        defaults={toFormValues(item)}
-        onSubmitAction={saveOperation}
-      >
-        <ReceiptField operationId={item.row.id} file={receipt} onFileChangeAction={setReceipt} canEdit />
-      </OperationForm>
+      <>
+        <OperationSource operationId={item.row.id} />
+        <OperationForm
+          formId={FORM_ID}
+          kind={item.kind as 'expense' | 'income'}
+          defaults={toFormValues(item)}
+          onSubmitAction={saveOperation}
+        >
+          <ReceiptField operationId={item.row.id} file={receipt} onFileChangeAction={setReceipt} canEdit />
+        </OperationForm>
+        {refundedMinor > 0 ? (
+          <p className="text-label text-text-secondary">
+            {translate('refund.refunded', { amount: formatMinor(refundedMinor, item.row.currency, locale) })}
+          </p>
+        ) : null}
+        {canRefund ? (
+          <Button type="button" variant="ghost" className="self-start" onClick={() => setRefunding(true)}>
+            <Undo2 aria-hidden className="size-5" />
+            {translate('refund.action')}
+          </Button>
+        ) : null}
+      </>
     )
   } else if (item) {
     const { amount } = summary(item)
@@ -466,10 +536,33 @@ export function OperationEditor({
         ? ([[translate('form.details.counterparty'), item.row.counterparty]] as [string, React.ReactNode][])
         : []),
       ...(item.row.note ? ([[translate('form.details.note'), item.row.note]] as [string, React.ReactNode][]) : []),
+      ...(purchase
+        ? ([
+            [
+              translate('form.details.purchase'),
+              <Button
+                key="purchase"
+                type="button"
+                variant="ghost"
+                size="s"
+                onClick={() =>
+                  onOpenAction?.({
+                    row: purchase,
+                    transfer: null,
+                    kind: 'expense',
+                  })
+                }
+              >
+                {translate('refund.purchase', { date: shortDate(purchase.occurredOn) })}
+              </Button>,
+            ],
+          ] as [string, React.ReactNode][])
+        : []),
     ]
 
     body = (
       <>
+        <OperationSource operationId={item.row.id} />
         <dl className="flex flex-col gap-3">
           {rows.map(([label, value]) => (
             <div key={label} className="flex items-baseline justify-between gap-4">

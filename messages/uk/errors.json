@@ -21,7 +21,7 @@
     "unknown": "Не вдалося зберегти. Спробуйте ще раз"
   },
   "amountInvalid": "Вкажіть суму більше нуля",
-  "adjustmentNote": "Коригування пояснюється коментарем",
+  "adjustmentNote": "Додайте примітку: без неї коригування не записати",
   "sameAccount": "Оберіть інший рахунок",
   "accountRequired": "Оберіть рахунок",
   "oneOperationSource": "Оберіть нову операцію або наявну, не обидві",
@@ -30,5 +30,6 @@
   "amountOptionalInvalid": "Введіть суму більшу за нуль або залиште порожнім",
   "installmentsCountInvalid": "Від 1 до 360 внесків",
   "scheduleRequired": "Додайте від 1 до 360 внесків",
-  "purchaseRequired": "Оберіть покупку"
+  "purchaseRequired": "Оберіть покупку",
+  "adjustmentNoChange": "Залишок не змінився: коригувати нічого"
 }

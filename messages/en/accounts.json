@@ -31,7 +31,8 @@
     "label": "Account actions",
     "edit": "Edit",
     "archive": "Archive",
-    "restore": "Restore from archive"
+    "restore": "Restore from archive",
+    "adjust": "Adjust balance"
   },
   "form": {
     "createTitle": "New account",
@@ -62,5 +63,16 @@
     "yes": "Yes",
     "no": "No",
     "notFound": "Account not found"
+  },
+  "adjust": {
+    "title": "Adjust balance",
+    "now": "{account} · now in Saldo {amount}",
+    "actual": "Actual balance",
+    "difference": "Difference to record",
+    "note": "Note",
+    "noteHint": "Required: where the difference comes from",
+    "cancel": "Cancel",
+    "submit": "Record adjustment",
+    "done": "Adjustment recorded"
   }
 }

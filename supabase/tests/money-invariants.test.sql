@@ -2,7 +2,7 @@
 -- Money moves only through the RPCs (operations, transfers, obligation_payments are read-only for clients), every RPC
 -- checks the write role itself, and no call makes money out of nothing. Fictional data only.
 begin;
-select plan(48);
+select plan(50);
 
 create function pg_temp.login(p_user uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_user, 'role', 'authenticated')::text, true);
@@ -224,6 +224,22 @@ values (pg_temp.space('shared'), 'USD', 'UAH', 43, '2026-10-04', 'manual'),
   (pg_temp.space('shared'), 'USD', 'UAH', 44, '2026-10-04', 'reference');
 select is(private.convert_minor(pg_temp.space('shared'), 100, 'USD', 'UAH', '2026-10-06'), 4300::bigint,
   'on the same date a manual rate beats the reference one');
+
+-- a refund returns at most what is left of its purchase (an expense of 100.00 here)
+select pg_temp.login('00000000-0000-4000-8000-000000000201');
+do $$ begin
+  perform public.create_operation(pg_temp.op('f0000000-0000-4000-8000-000000000201', 'expense',
+    'a0000000-0000-4000-8000-000000000201', 10000, 'UAH'));
+end $$;
+select lives_ok(
+  format('select public.create_operation(%L)', pg_temp.op('f0000000-0000-4000-8000-000000000202', 'refund',
+    'a0000000-0000-4000-8000-000000000201', 6000, 'UAH') || '{"refund_of_id": "f0000000-0000-4000-8000-000000000201"}'),
+  'a refund within the purchase is written');
+select throws_ok(
+  format('select public.create_operation(%L)', pg_temp.op('f0000000-0000-4000-8000-000000000203', 'refund',
+    'a0000000-0000-4000-8000-000000000201', 5000, 'UAH') || '{"refund_of_id": "f0000000-0000-4000-8000-000000000201"}'),
+  '23514', null, 'refunds above the purchase (60.00 + 50.00 of 100.00) are refused');
+reset role;
 
 select * from finish();
 rollback;

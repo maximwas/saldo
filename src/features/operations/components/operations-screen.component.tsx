@@ -110,6 +110,7 @@ export function OperationsScreen() {
                 : current,
             )
           }
+          onOpenAction={select}
           onDuplicateAction={({ occurredOn: _date, ...defaults }, sourceId) =>
             openEditor({
               mode: 'create',

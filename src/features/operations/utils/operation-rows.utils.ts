@@ -16,6 +16,7 @@ export type OperationDbRow = {
   occurred_at: string
   occurred_on: string
   transfer_id: string | null
+  refund_of_id: string | null
   version: number
   created_by: string | null
 }
@@ -36,6 +37,7 @@ export const toOperationRow = (row: OperationDbRow): OperationRow => ({
   occurredAt: row.occurred_at,
   occurredOn: row.occurred_on,
   transferId: row.transfer_id,
+  refundOfId: row.refund_of_id,
   version: row.version,
   createdBy: row.created_by,
 })

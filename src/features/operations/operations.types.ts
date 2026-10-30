@@ -33,6 +33,8 @@ export type OperationRow = {
   occurredAt: string
   occurredOn: string
   transferId: string | null
+  /** the purchase a refund returns (operations.refund_of_id) */
+  refundOfId: string | null
   version: number
   createdBy: string | null
 }
@@ -76,4 +78,24 @@ export type OperationItem = {
   row: OperationRow
   transfer: TransferInfo | null
   kind: OperationItemKind
+}
+
+/** refunds linked to purchases in the whole space, whatever page or period the list shows */
+export type RefundLinks = {
+  /** purchase id → the sum of its refunds, in the purchase currency */
+  refundedById: Record<string, number>
+  /** purchase id → the purchase (the date chip on a refund, and opening it) */
+  purchases: Record<string, OperationRow>
+}
+
+/** an obligation an operation paid (obligation_payments → obligations), shown at the top of the operation */
+export type OperationSource = {
+  obligationId: string
+  title: string
+  dueOn: string
+  sourceType: string
+  sourceId: string | null
+  /** null = the planned amount is unknown (§7) */
+  plannedMinor: number | null
+  currency: string
 }
