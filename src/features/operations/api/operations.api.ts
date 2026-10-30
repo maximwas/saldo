@@ -1,9 +1,18 @@
+import { type CreateOperationInput, createOperationInputSchema } from '@/lib/finance/create-operation-input.schema'
 import { getLedgerRates } from '@/lib/finance/ledger-fx.api'
 import { listAccountOptions, listCategoryOptions } from '@/lib/finance/ledger-options.api'
 import type { FxRate } from '@/lib/money/fx.utils'
 import type { SaldoClient } from '@/types/supabase.types'
-import type { AccountOption, CategoryOption, OperationFilters, OperationsData, Receipt } from '../operations.types'
-import { type CreateOperationInput, createOperationInputSchema } from '../schemas/create-operation-input.schema'
+import type {
+  AccountOption,
+  CategoryOption,
+  OperationFilters,
+  OperationRow,
+  OperationSource,
+  OperationsData,
+  Receipt,
+  RefundLinks,
+} from '../operations.types'
 import { type CreateTransferInput, createTransferInputSchema } from '../schemas/create-transfer-input.schema'
 import { type UpdateOperationInput, updateOperationInputSchema } from '../schemas/update-operation-input.schema'
 import {
@@ -22,7 +31,7 @@ const SIGNED_URL_SECONDS = 300
 const IN_CHUNK = 50
 
 const OPERATION_COLUMNS =
-  'id, kind, direction, account_id, amount_minor, currency, base_amount_minor, base_currency, category_id, counterparty, note, occurred_at, occurred_on, transfer_id, version, created_by'
+  'id, kind, direction, account_id, amount_minor, currency, base_amount_minor, base_currency, category_id, counterparty, note, occurred_at, occurred_on, transfer_id, refund_of_id, version, created_by'
 
 type ListParams = {
   ledgerId: string
@@ -136,6 +145,86 @@ export async function listOperations(client: SaldoClient, params: ListParams): P
     receiptIds,
     truncated: found.length > OPERATIONS_LIMIT,
   }
+}
+
+// shortcut: every linked refund of the space in one request, like the receipt owners; per page with «load more»
+export async function listRefundLinks(client: SaldoClient, ledgerId: string): Promise<RefundLinks> {
+  const refunds = await client
+    .from('operations')
+    .select('refund_of_id, amount_minor')
+    .eq('ledger_id', ledgerId)
+    .not('refund_of_id', 'is', null)
+    .limit(5000)
+
+  if (refunds.error) {
+    throw refunds.error
+  }
+
+  const refundedById: Record<string, number> = {}
+
+  for (const refund of refunds.data) {
+    if (refund.refund_of_id) {
+      refundedById[refund.refund_of_id] = (refundedById[refund.refund_of_id] ?? 0) + refund.amount_minor
+    }
+  }
+
+  const results = await Promise.all(
+    chunks(Object.keys(refundedById), IN_CHUNK).map((ids) =>
+      client.from('operations').select(OPERATION_COLUMNS).eq('ledger_id', ledgerId).in('id', ids),
+    ),
+  )
+  const purchases: Record<string, OperationRow> = {}
+
+  for (const result of results) {
+    if (result.error) {
+      throw result.error
+    }
+
+    for (const row of result.data) {
+      purchases[row.id] = toOperationRow(row)
+    }
+  }
+
+  return {
+    refundedById,
+    purchases,
+  }
+}
+
+/** the obligations an operation paid, the latest due date first (the link to the source, §4) */
+export async function listOperationSources(client: SaldoClient, operationId: string): Promise<OperationSource[]> {
+  const payments = await client.from('obligation_payments').select('obligation_id').eq('operation_id', operationId)
+
+  if (payments.error) {
+    throw payments.error
+  }
+
+  if (payments.data.length === 0) {
+    return []
+  }
+
+  const obligations = await client
+    .from('obligations')
+    .select('id, title, due_on, source_type, source_id, planned_amount_minor, currency')
+    .in(
+      'id',
+      payments.data.map((payment) => payment.obligation_id),
+    )
+    .order('due_on', { ascending: false })
+
+  if (obligations.error) {
+    throw obligations.error
+  }
+
+  return obligations.data.map((row) => ({
+    obligationId: row.id,
+    title: row.title,
+    dueOn: row.due_on,
+    sourceType: row.source_type,
+    sourceId: row.source_id,
+    plannedMinor: row.planned_amount_minor,
+    currency: row.currency,
+  }))
 }
 
 export type FormOptions = {

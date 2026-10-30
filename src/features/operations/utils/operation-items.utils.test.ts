@@ -17,6 +17,7 @@ const row = (overrides: Partial<OperationRow>): OperationRow => ({
   occurredAt: '2026-10-30T10:00:00Z',
   occurredOn: '2026-10-30',
   transferId: null,
+  refundOfId: null,
   version: 1,
   createdBy: null,
   ...overrides,

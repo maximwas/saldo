@@ -158,6 +158,141 @@ export type Database = {
           },
         ]
       }
+      budget_limits: {
+        Row: {
+          budget_month_id: string
+          carried_in_minor: number | null
+          carry_mode: string
+          category_id: string
+          category_kind: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          ledger_id: string
+          limit_minor: number
+          updated_at: string
+          version: number
+          warn_at_pct: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          budget_month_id: string
+          carried_in_minor?: number | null
+          carry_mode?: string
+          category_id: string
+          category_kind?: never
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ledger_id: string
+          limit_minor: number
+          updated_at?: string
+          version?: number
+          warn_at_pct?: number | null
+        }
+        Update: {
+          budget_month_id?: string
+          carried_in_minor?: number | null
+          carry_mode?: string
+          category_id?: string
+          category_kind?: never
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ledger_id?: string
+          limit_minor?: number
+          updated_at?: string
+          version?: number
+          warn_at_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'budget_limits_category_fkey'
+            columns: [
+              'ledger_id',
+              'category_id',
+              'category_kind',
+            ]
+            isOneToOne: false
+            referencedRelation: 'categories'
+            referencedColumns: [
+              'ledger_id',
+              'id',
+              'kind',
+            ]
+          },
+          {
+            foreignKeyName: 'budget_limits_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
+              'id',
+            ]
+          },
+          {
+            foreignKeyName: 'budget_limits_month_fkey'
+            columns: [
+              'ledger_id',
+              'budget_month_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'budget_months'
+            referencedColumns: [
+              'ledger_id',
+              'id',
+            ]
+          },
+        ]
+      }
+      budget_months: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          income_plan_minor: number | null
+          ledger_id: string
+          month: string
+          updated_at: string
+          version: number
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          income_plan_minor?: number | null
+          ledger_id: string
+          month: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          income_plan_minor?: number | null
+          ledger_id?: string
+          month?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'budget_months_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
+              'id',
+            ]
+          },
+        ]
+      }
       calendar_saved_filters: {
         Row: {
           created_at: string
@@ -794,6 +929,104 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          delivered_at: string | null
+          delivery_status: string | null
+          fire_key: string
+          id: string
+          ledger_id: string
+          link_path: string | null
+          obligation_id: string | null
+          read_at: string | null
+          reminder_rule_id: string | null
+          title: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          body: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
+          fire_key: string
+          id?: string
+          ledger_id: string
+          link_path?: string | null
+          obligation_id?: string | null
+          read_at?: string | null
+          reminder_rule_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
+          fire_key?: string
+          id?: string
+          ledger_id?: string
+          link_path?: string | null
+          obligation_id?: string | null
+          read_at?: string | null
+          reminder_rule_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
+              'id',
+            ]
+          },
+          {
+            foreignKeyName: 'notifications_obligation_fkey'
+            columns: [
+              'ledger_id',
+              'obligation_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'obligation_states'
+            referencedColumns: [
+              'ledger_id',
+              'obligation_id',
+            ]
+          },
+          {
+            foreignKeyName: 'notifications_obligation_fkey'
+            columns: [
+              'ledger_id',
+              'obligation_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'obligations'
+            referencedColumns: [
+              'ledger_id',
+              'id',
+            ]
+          },
+          {
+            foreignKeyName: 'notifications_reminder_rule_id_fkey'
+            columns: [
+              'reminder_rule_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'reminder_rules'
+            referencedColumns: [
+              'id',
+            ]
+          },
+        ]
+      }
       obligation_payments: {
         Row: {
           amount_minor: number
@@ -1210,6 +1443,101 @@ export type Database = {
             referencedRelation: 'transfers'
             referencedColumns: [
               'ledger_id',
+              'id',
+            ]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reminder_rules: {
+        Row: {
+          at_time: string
+          channels: string[]
+          created_at: string
+          created_by: string | null
+          custom_text: string | null
+          enabled: boolean
+          id: string
+          ledger_id: string
+          offsets_days: number[]
+          source_id: string
+          source_type: string
+          stop_when_paid: boolean
+          updated_at: string
+          version: number
+        }
+        ComputedFields: never
+        Insert: {
+          at_time?: string
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          custom_text?: string | null
+          enabled?: boolean
+          id?: string
+          ledger_id: string
+          offsets_days: number[]
+          source_id: string
+          source_type: string
+          stop_when_paid?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          at_time?: string
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          custom_text?: string | null
+          enabled?: boolean
+          id?: string
+          ledger_id?: string
+          offsets_days?: number[]
+          source_id?: string
+          source_type?: string
+          stop_when_paid?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'reminder_rules_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
               'id',
             ]
           },
@@ -1712,6 +2040,28 @@ export type Database = {
         }
         Returns: undefined
       }
+      budget_month_facts: {
+        Args: {
+          p_created_by?: string
+          p_ledger_id: string
+          p_month: string
+        }
+        Returns: {
+          carried_in_minor: number
+          carry_mode: string
+          category_id: string
+          category_kind: string
+          fact_minor: number
+          gross_minor: number
+          limit_id: string
+          limit_minor: number
+          operations_count: number
+          refund_minor: number
+          remaining_minor: number
+          unknown_count: number
+          warn_at_pct: number
+        }[]
+      }
       calendar_day_totals: {
         Args: {
           p_filter?: Json
@@ -1759,6 +2109,14 @@ export type Database = {
           title: string
           transfer_id: string
         }[]
+      }
+      copy_budget_month: {
+        Args: {
+          p_from: string
+          p_ledger_id: string
+          p_to: string
+        }
+        Returns: number
       }
       create_ledger: {
         Args: {
@@ -1923,6 +2281,27 @@ export type Database = {
         }
         Returns: undefined
       }
+      due_reminder_fires: {
+        Args: {
+          p_now: string
+        }
+        Returns: {
+          amount_minor: number
+          channels: string[]
+          currency: string
+          custom_text: string
+          days_before: number
+          direction: string
+          due_on: string
+          fire_key: string
+          ledger_id: string
+          locale: string
+          obligation_id: string
+          reminder_rule_id: string
+          title: string
+          user_id: string
+        }[]
+      }
       list_orphan_attachments: {
         Args: Record<PropertyKey, never>
         Returns: string[]
@@ -2079,6 +2458,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      search_entities: {
+        Args: {
+          p_ledger_id: string
+          p_limit?: number
+          p_q: string
+        }
+        Returns: {
+          amount_minor: number
+          currency: string
+          day: string
+          entity_id: string
+          entity_type: string
+          link_path: string
+          subtitle: string
+          title: string
+        }[]
+      }
       set_member_role: {
         Args: {
           p_ledger_id: string
@@ -2091,6 +2487,13 @@ export type Database = {
         Args: {
           p_ledger_id: string
           p_name: string
+        }
+        Returns: undefined
+      }
+      set_my_notify_channels: {
+        Args: {
+          p_channels: string[]
+          p_ledger_id: string
         }
         Returns: undefined
       }
@@ -2114,6 +2517,104 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      stats_budget: {
+        Args: {
+          p_created_by?: string
+          p_from: string
+          p_ledger_id: string
+          p_to: string
+        }
+        Returns: {
+          carried_in_minor: number
+          expense_fact_minor: number
+          income_fact_minor: number
+          income_plan_minor: number
+          limit_minor: number
+          limited_fact_minor: number
+          month: string
+          unknown_count: number
+        }[]
+      }
+      stats_by_category: {
+        Args: {
+          p_created_by?: string
+          p_from: string
+          p_ledger_id: string
+          p_to: string
+        }
+        Returns: {
+          category_id: string
+          category_kind: string
+          fact_minor: number
+          gross_minor: number
+          operations_count: number
+          refund_minor: number
+          unknown_count: number
+        }[]
+      }
+      stats_cashflow: {
+        Args: {
+          p_bucket?: string
+          p_created_by?: string
+          p_from: string
+          p_ledger_id: string
+          p_to: string
+        }
+        Returns: {
+          expense_minor: number
+          income_minor: number
+          operations_count: number
+          period_start: string
+          refund_minor: number
+          result_minor: number
+          unknown_count: number
+        }[]
+      }
+      stats_credits: {
+        Args: {
+          p_created_by?: string
+          p_from: string
+          p_ledger_id: string
+          p_to: string
+        }
+        Returns: {
+          credit_id: string
+          currency: string
+          installments_count: number
+          lender: string
+          name: string
+          next_due_on: string
+          paid_count: number
+          payoff_on: string
+          period_paid_count: number
+          period_paid_minor: number
+          remaining_base_minor: number
+          remaining_count: number
+          remaining_minor: number
+          status: string
+          unknown_count: number
+        }[]
+      }
+      stats_subscriptions: {
+        Args: {
+          p_created_by?: string
+          p_from: string
+          p_ledger_id: string
+          p_to: string
+        }
+        Returns: {
+          avg_month_minor: number
+          fact_count: number
+          fact_minor: number
+          months: number
+          name: string
+          plan_count: number
+          plan_minor: number
+          status: string
+          subscription_id: string
+          unknown_count: number
+        }[]
       }
       update_operation: {
         Args: {

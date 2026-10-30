@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { adjustmentHasNote, kindMatchesDirection, operationRowSchema } from './create-operation-input.schema'
+import {
+  adjustmentHasNote,
+  kindMatchesDirection,
+  operationRowSchema,
+} from '@/lib/finance/create-operation-input.schema'
 
 /** update_operation(p_id, p_expected_version, p_patch): the patch holds only the columns that change */
 export const updateOperationInputSchema = z.object({
