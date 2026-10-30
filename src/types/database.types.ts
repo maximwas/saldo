@@ -2239,6 +2239,12 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      delete_ledger_data: {
+        Args: {
+          p_ledger_id: string
+        }
+        Returns: string[]
+      }
       delete_obligation_payment: {
         Args: {
           p_delete_operation?: boolean
