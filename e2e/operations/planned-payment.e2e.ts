@@ -61,6 +61,8 @@ test('«Оплачено» створює одну операцію, видал�
   await late.getByLabel('Дата платежу').click()
   await page.getByRole('button', { name: 'Попередній місяць' }).click()
   await page.getByRole('gridcell').filter({ hasText: /^15$/ }).getByRole('button').click()
+  // the calendar popover is a dialog too: save once only the sheet is left
+  await expect(late).toHaveCount(1)
   await late.getByRole('button', { name: 'Зберегти' }).click()
   await expect(late).toBeHidden()
   await expect(
