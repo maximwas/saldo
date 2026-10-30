@@ -1,9 +1,17 @@
-/** query-key roots whose data depends on money; keys are [root, ledgerId, …] (architecture §6) */
-export const MONEY_QUERY_ROOTS = [
-  'overview',
+// the first element of every query key that depends on money; a money mutation invalidates all of them (conventions §4.1)
+const MONEY_QUERY_ROOTS = [
+  'operations',
   'accounts',
   'categories',
   'currencies',
-  'operations',
   'obligations',
+  'reserves',
+  'overview',
+  'budget',
+  'calendar',
+  'statistics',
+  'taxes',
 ] as const
+
+export const isMoneyQuery = (query: { queryKey: readonly unknown[] }) =>
+  (MONEY_QUERY_ROOTS as readonly unknown[]).includes(query.queryKey[0])

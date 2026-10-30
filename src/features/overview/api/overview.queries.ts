@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
+import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { getOverview } from './overview.api'
 
@@ -9,16 +10,10 @@ type OverviewQueryParams = {
   today: string
 }
 
-// [root, ledgerId, …]: root «overview» is in MONEY_QUERY_ROOTS, the cache of two spaces never mixes
-const overviewKeys = {
-  all: (ledgerId: string) => ['overview', ledgerId] as const,
-  detail: (ledgerId: string, today: string) => [...overviewKeys.all(ledgerId), 'detail', today] as const,
-}
-
 export const overviewQueries = {
   detail: ({ ledgerId, timeZone, today }: OverviewQueryParams) =>
     queryOptions({
-      queryKey: overviewKeys.detail(ledgerId, today),
+      queryKey: ledgerQueryKey('overview', ledgerId, 'detail', today),
       queryFn: () =>
         getOverview(getBrowserSupabase(), {
           ledgerId,
