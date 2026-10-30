@@ -1,0 +1,88 @@
+import { Select as SelectPrimitive } from '@base-ui/react/select'
+import { Check, ChevronDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { cn } from '@/lib/utils/cn.utils'
+import type { FieldControlProps } from './field.component'
+
+export type SelectOption = {
+  value: string
+  label: string
+  disabled?: boolean
+}
+
+type SelectProps = FieldControlProps & {
+  options: readonly SelectOption[]
+  value: string | null
+  onValueChange: (value: string | null) => void
+  placeholder?: string
+  disabled?: boolean
+  name?: string
+  onBlur?: () => void
+  className?: string
+}
+
+// Figma «Saldo» → Select 2:9397: trigger 48 high, padding 0/16, gap 8, 20px chevron (up while open); Default 1px
+// border-strong, Focus 2px primary, Error 1px negative, Disabled subtle fill. List follows Menu 2:10341: raised,
+// border, radius inner, shadow-float, padding 6; rows 40 high, padding 0/12, radius sm, hover subtle.
+export function Select({
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  disabled,
+  name,
+  onBlur,
+  className,
+  id,
+  'aria-describedby': describedBy,
+  'aria-invalid': invalid,
+}: SelectProps) {
+  const translate = useTranslations('common')
+
+  return (
+    <SelectPrimitive.Root items={options} value={value} onValueChange={onValueChange} disabled={disabled} name={name}>
+      <SelectPrimitive.Trigger
+        id={id}
+        aria-describedby={describedBy}
+        aria-invalid={invalid}
+        onBlur={onBlur}
+        className={cn(
+          'flex h-12 w-full items-center gap-2 rounded-md border border-border-strong bg-card px-4 text-left text-body text-text-primary outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary data-popup-open:border-primary data-popup-open:ring-1 data-popup-open:ring-primary aria-invalid:border-negative aria-invalid:focus-visible:ring-negative disabled:cursor-not-allowed disabled:bg-subtle disabled:text-text-tertiary',
+          className,
+        )}
+      >
+        <SelectPrimitive.Value
+          placeholder={placeholder ?? translate('select.placeholder')}
+          className="min-w-0 flex-1 truncate data-placeholder:text-text-tertiary"
+        />
+        <SelectPrimitive.Icon className="shrink-0 text-text-secondary transition-transform data-popup-open:rotate-180">
+          <ChevronDown className="size-5" aria-hidden />
+        </SelectPrimitive.Icon>
+      </SelectPrimitive.Trigger>
+      <SelectPrimitive.Portal>
+        <SelectPrimitive.Positioner sideOffset={4} alignItemWithTrigger={false} className="z-50">
+          <SelectPrimitive.Popup className="max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-inner border border-border bg-raised p-1.5 shadow-float outline-none transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0">
+            <SelectPrimitive.List className="flex flex-col gap-0.5 outline-none">
+              {options.map((option) => (
+                <SelectPrimitive.Item
+                  key={option.value}
+                  value={option.value}
+                  label={option.label}
+                  disabled={option.disabled}
+                  className="flex h-10 cursor-pointer items-center gap-3 rounded-sm px-3 text-body text-text-primary outline-none data-disabled:cursor-not-allowed data-disabled:text-text-tertiary data-highlighted:bg-subtle"
+                >
+                  <SelectPrimitive.ItemText className="min-w-0 flex-1 truncate">
+                    {option.label}
+                  </SelectPrimitive.ItemText>
+                  <SelectPrimitive.ItemIndicator>
+                    <Check className="size-5 text-primary-text" aria-hidden />
+                  </SelectPrimitive.ItemIndicator>
+                </SelectPrimitive.Item>
+              ))}
+            </SelectPrimitive.List>
+          </SelectPrimitive.Popup>
+        </SelectPrimitive.Positioner>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
+  )
+}
