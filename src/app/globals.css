@@ -36,6 +36,16 @@
     cursor: pointer;
   }
 
+  /* Fixel has U+2022 but its dot is tiny and sits on the baseline, and no U+25CF (WebKit's mask glyph).
+     Verdana/Tahoma (macOS, Windows) have a large centred dot in WebKit and Blink alike; the placeholder keeps Fixel. */
+  input[type="password"] {
+    font-family: Verdana, Tahoma, system-ui, sans-serif;
+  }
+
+  input[type="password"]::placeholder {
+    font-family: var(--font-sans);
+  }
+
   :disabled,
   [aria-disabled="true"],
   [data-disabled] {
