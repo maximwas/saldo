@@ -138,7 +138,7 @@ export type Database = {
         Row: {
           base_currency: string
           created_at: string
-          created_by: string
+          created_by: string | null
           id: string
           name: string
           next_income_on: string | null
@@ -153,7 +153,7 @@ export type Database = {
         Insert: {
           base_currency?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           name: string
           next_income_on?: string | null
@@ -167,7 +167,7 @@ export type Database = {
         Update: {
           base_currency?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           id?: string
           name?: string
           next_income_on?: string | null
