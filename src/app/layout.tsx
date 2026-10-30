@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
+import { NextIntlClientProvider } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 import { ThemeProvider } from 'next-themes'
 import { Suspense } from 'react'
 import { AppProviders } from '@/components/providers/app-providers.component'
@@ -22,16 +24,21 @@ const fixelDisplay = localFont({
   variable: '--font-display',
 })
 
-export const metadata: Metadata = {
-  title: 'Saldo',
-  description: 'Особисті фінанси',
+export async function generateMetadata(): Promise<Metadata> {
+  const translate = await getTranslations('common')
+
+  return { title: translate('brand'), description: translate('description') }
 }
 
-// Reads cookies, so it renders per request inside the Suspense boundary (cacheComponents)
+// Reads cookies (space, locale), so it renders per request inside the Suspense boundary (cacheComponents)
 async function Providers({ children }: { children: React.ReactNode }) {
   const ledger = await getActiveLedger()
 
-  return <AppProviders ledger={ledger}>{children}</AppProviders>
+  return (
+    <NextIntlClientProvider>
+      <AppProviders ledger={ledger}>{children}</AppProviders>
+    </NextIntlClientProvider>
+  )
 }
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

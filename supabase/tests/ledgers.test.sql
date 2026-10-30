@@ -1,7 +1,7 @@
 -- RLS of spaces on four roles: owner, editor, viewer, stranger (docs/conventions.md §0, §6.2).
 -- Auth by hand (`role` + `request.jwt.claims`) instead of basejump-supabase_test_helpers: see docs/conventions.md §6.2.
 begin;
-select plan(34);
+select plan(36);
 
 create function pg_temp.login(p_user uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_user, 'role', 'authenticated')::text, true);
@@ -28,6 +28,9 @@ select is(
      on member.ledger_id = settings.last_ledger_id and member.user_id = settings.user_id and member.role = 'owner'
    where settings.user_id::text like '00000000-0000-4000-8000-%'),
   4, 'user_settings.last_ledger_id points at the own space');
+select is(
+  (select count(*)::int from public.user_settings where locale = 'uk' and user_id::text like '00000000-0000-4000-8000-%'),
+  4, 'new users start with the uk locale');
 select is((select count(*)::int from pg_tables where schemaname = 'public' and not rowsecurity), 0, 'RLS on every public table');
 
 insert into public.ledger_members (ledger_id, user_id, role)
@@ -105,6 +108,7 @@ select throws_ok(
   '42501', null, 'stranger cannot invite into a foreign space');
 with updated as (update public.user_settings set locale = 'en' where user_id = '00000000-0000-4000-8000-000000000001' returning 1)
 select is(count(*)::int, 0, 'stranger cannot touch foreign settings') from updated;
+select throws_ok($$ update public.user_settings set locale = 'uk-UA' $$, '23514', null, 'locale is only uk or en');
 reset role;
 
 -- anon

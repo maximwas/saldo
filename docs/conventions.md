@@ -47,6 +47,7 @@ saldo/
     fixtures/users.fixture.ts            E2E_USERS: owner / editor / viewer / stranger @example.com
     fixtures/demo-data.fixture.ts        набір із docs/design/demo-data.md
     <feature>/<flow>.e2e.ts              shell/, operations/, sharing/, offline/ …
+  messages/<locale>/<namespace>.json    тексти інтерфейсу uk / en (§3b)
   public/icons/                          іконки PWA
   supabase/
     config.toml
@@ -118,6 +119,7 @@ saldo/
     components/
       ui/                                button.component.tsx, amount.component.tsx, money-input.component.tsx …
       layout/                            sidebar, topbar, tab-bar, fab, sync-status, app-providers
+    i18n/                                request.ts (next-intl), locale.utils.ts, messages.test.ts (§3b)
     contexts/                            clock.context.tsx, ledger.context.tsx (активний простір і роль)
     store/                               ui.store.ts, drafts.store.ts
     lib/
@@ -131,7 +133,7 @@ saldo/
       utils/cn.utils.ts
     hooks/                               media-query.hook.ts, online-status.hook.ts
     constants/                           navigation.constants.ts, query-roots.constants.ts, currencies.constants.ts
-    types/                               database.types.ts (згенеровано), supabase.types.ts (SaldoClient), money.types.ts, sync.types.ts
+    types/                               database.types.ts (згенеровано), supabase.types.ts (SaldoClient), next-intl.d.ts, money.types.ts, sync.types.ts
     mcp/                                 фаза 10: server.server.ts, tools/<feature>.tools.server.ts
 ```
 
@@ -212,8 +214,8 @@ src/features/subscriptions/
   а не `e`; `error`, а не `err`; `element`, а не `el`; `callback`, а не `cb`; `translate`, а не `t`; generic —
   `TValue`, а не `T`. Виняток — ключі, які диктує зовнішня форма даних (колонка `id`, значення `'uk'` / `'en'`) і
   `cn` (ім'я експорту пакета `cn`). ESLint `id-length` (`min: 3`, `properties: 'never'`).
-- Коментарі — англійською, лише «чому», а не «що». Українська — лише в текстах інтерфейсу (поки в
-  `src/constants/*.constants.ts`, далі `messages/uk`). TS/TSX — локальне правило ESLint `saldo/english-comments`
+- Коментарі — англійською, лише «чому», а не «що». Українська — лише в текстах інтерфейсу
+  (`messages/<locale>/*.json`, §3b). TS/TSX — локальне правило ESLint `saldo/english-comments`
   (`eslint.config.mjs`), SQL — `pnpm lint:comments` (`scripts/check-sql-comments.mjs`).
 - Хто що перевіряє: Biome — лінтер і форматер (основний); ESLint (`eslint.config.mjs`) — лише три правила вище, без
   пресетів і без форматування. `pnpm lint` = Biome + ESLint + коментарі SQL, `pnpm format` = `biome check --write` +
@@ -224,14 +226,37 @@ src/features/subscriptions/
 async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
   const { slug } = await params
   const path = `/${(slug ?? []).join('/')}`
+  const titleKey = pageTitleKey(path)
 
-  if (!STUB_HREFS.some((href) => href === path)) {
+  if (!titleKey || !STUB_HREFS.some((href) => href === path)) {
     notFound()
   }
 
-  return <p className="text-body text-text-secondary">{SHELL_TEXT.stub(pageTitle(path))}</p>
+  const [translate, translateNav] = await Promise.all([getTranslations('shell'), getTranslations('nav')])
+
+  return <p className="text-body text-text-secondary">{translate('stub', { title: translateNav(titleKey) })}</p>
 }
 ```
+
+## 3b. Локалізація (ADR 25, `docs/architecture.md`)
+
+- next-intl без i18n-маршрутизації: URL однакові для всіх мов. Локалі — `LOCALES` у `src/i18n/locale.utils.ts`
+  (`uk`, `en`); мову визначає `resolveLocale`: `user_settings.locale` → cookie `NEXT_LOCALE` → `Accept-Language` →
+  `uk`. Змінює мову лише Server Action `setLocale` (`src/features/settings/api/settings.actions.ts`): пише БД і cookie.
+- Тексти — `messages/<locale>/<namespace>.json`; namespace = область інтерфейсу одним словом у camelCase (`nav`,
+  `shell`, `auth`, `errors`, `common`, `settings`; нова фіча — свій namespace з її назвою). Новий файл namespace
+  додається в `MESSAGE_NAMESPACES` і в `src/types/next-intl.d.ts`. Ключі — camelCase, вкладеність лише для груп
+  (`shell.roles.owner`, `errors.db.conflict`). `uk` — джерело типів; `src/i18n/messages.test.ts` перевіряє, що `en` має
+  ті самі ключі й жодного порожнього рядка, тому новий ключ додається в обидві мови одразу, з повним перекладом.
+- Жодного тексту інтерфейсу в JSX, константах, `aria-label`, `metadata` чи повідомленнях помилок: лише
+  `useTranslations` (клієнт і синхронні серверні компоненти) або `getTranslations` (async-компоненти,
+  `generateMetadata`, Server Actions). Функція перекладу зветься `translate` (`translateNav`, `translateError` для
+  другого namespace). Константи й утиліти тримають ключі (`NavLink.key`, `PgError.kind` → `errors.db.<kind>`), а не
+  тексти. Назва бренду — теж ключ (`common.brand`).
+- Дати — `useFormatter().dateTime(…, { timeZone })` з поясом простору; суми — `Amount` з `minor` і `currency`
+  (`formatMinor` у `src/lib/money/money.utils.ts`, рядок десяткового числа в `Intl.NumberFormat`, без float). Сирого
+  `new Intl.DateTimeFormat('uk')` у компонентах немає.
+- `<html lang>` рендериться поза Suspense, де читається локаль (cacheComponents), тому його оновлює `AppProviders`.
 
 ## 4. Патерни
 

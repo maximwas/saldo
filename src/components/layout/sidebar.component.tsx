@@ -3,13 +3,13 @@
 import type { Route } from 'next'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   type NavLink,
   type NavSection,
   SIDEBAR_FOOTER_SECTION,
   SIDEBAR_SECTIONS,
 } from '@/constants/navigation.constants'
-import { SHELL_TEXT } from '@/constants/shell.constants'
 import { useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { cn } from '@/lib/utils/cn.utils'
@@ -19,6 +19,7 @@ import { SyncStatus } from './sync-status.component'
 
 // Figma «Saldo» → NavItem 2:8110: 44 high, icon 20, Default / Hover (subtle) / Active (primary-soft)
 function NavItem({ section, active }: { section: NavSection; active: boolean }) {
+  const translate = useTranslations('nav')
   const Icon = section.icon
 
   return (
@@ -31,13 +32,15 @@ function NavItem({ section, active }: { section: NavSection; active: boolean }) 
       )}
     >
       <Icon aria-hidden size={20} className={cn('shrink-0', active && 'text-primary')} />
-      <span className="flex-1 truncate">{section.label}</span>
+      <span className="flex-1 truncate">{translate(section.key)}</span>
     </Link>
   )
 }
 
 // Figma «Saldo» → NavSubItem 2:11282: 36 high, a 20 indent in place of the icon, Active has no fill
 function NavSubItem({ link, active }: { link: NavLink; active: boolean }) {
+  const translate = useTranslations('nav')
+
   return (
     <Link
       href={link.href as Route}
@@ -48,7 +51,7 @@ function NavSubItem({ link, active }: { link: NavLink; active: boolean }) {
       )}
     >
       <span aria-hidden className="size-5 shrink-0" />
-      <span className="flex-1 truncate">{link.label}</span>
+      <span className="flex-1 truncate">{translate(link.key)}</span>
     </Link>
   )
 }
@@ -57,6 +60,8 @@ function NavSubItem({ link, active }: { link: NavLink; active: boolean }) {
 export function Sidebar() {
   const pathname = usePathname()
   const ledger = useLedger()
+  const translate = useTranslations('shell')
+  const brand = useTranslations('common')('brand')
   const sections = [...SIDEBAR_SECTIONS, SIDEBAR_FOOTER_SECTION]
   const current = activeHref(pathname, sections)
 
@@ -67,9 +72,9 @@ export function Sidebar() {
           aria-hidden
           className="flex size-8 items-center justify-center rounded-logo-md bg-primary text-body font-semibold text-on-primary"
         >
-          {SHELL_TEXT.brand.charAt(0)}
+          {brand.charAt(0)}
         </span>
-        <span className="text-card-title text-text-primary">{SHELL_TEXT.brand}</span>
+        <span className="text-card-title text-text-primary">{brand}</span>
       </div>
       <div className="pb-3">
         <SpaceSwitcher
@@ -79,7 +84,7 @@ export function Sidebar() {
           onSelectAction={switchLedger}
         />
       </div>
-      <nav aria-label={SHELL_TEXT.navLabel} className="flex flex-1 flex-col gap-1">
+      <nav aria-label={translate('navLabel')} className="flex flex-1 flex-col gap-1">
         {SIDEBAR_SECTIONS.map((section) => {
           const active = section.href === current
           const children = active ? section.children : undefined
@@ -94,7 +99,7 @@ export function Sidebar() {
         })}
         <div className="flex-1" />
         {/* shortcut: static «synced» until the offline queue (phase 8) reports its state */}
-        <SyncStatus state="synced" label={SHELL_TEXT.synced} />
+        <SyncStatus state="synced" label={translate('synced')} />
         <NavItem section={SIDEBAR_FOOTER_SECTION} active={SIDEBAR_FOOTER_SECTION.href === current} />
       </nav>
     </aside>
