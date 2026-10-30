@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { type FormEvent, useId, useState } from 'react'
+import { type SubmitEvent, useId, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Input } from '@/components/ui/input.component'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
@@ -40,7 +40,7 @@ export function LoginForm() {
     router.refresh()
   }
 
-  async function submitPassword(event: FormEvent<HTMLFormElement>) {
+  async function submitPassword(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     const supabase = getBrowserSupabase()
@@ -74,7 +74,7 @@ export function LoginForm() {
     finish()
   }
 
-  async function submitCode(event: FormEvent<HTMLFormElement>) {
+  async function submitCode(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
 
     if (!factorId) {

@@ -105,4 +105,20 @@ export default tseslint.config(
       ],
     },
   },
+  // typed rules: every .ts/.tsx is in tsconfig.json; .mjs/.cjs stay untyped
+  {
+    files: ['src/**/*.{ts,tsx}', 'e2e/**/*.ts', '*.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+    },
+    rules: {
+      '@typescript-eslint/no-deprecated': 'error',
+    },
+  },
 )
