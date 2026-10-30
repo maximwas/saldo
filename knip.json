@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["src/proxy.ts", "src/lib/env.ts"],
+  "ignore": ["src/types/database.types.ts"],
+  "ignoreBinaries": ["gitleaks"]
+}
