@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 /** the one budget sheet that is open: rows and cards open it without passing callbacks down the tree */
-export type BudgetSheet =
+type BudgetSheet =
   | {
       kind: 'limit'
       categoryId: string | null

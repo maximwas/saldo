@@ -25,7 +25,7 @@ export type BudgetFact = {
   limitVersion: number | null
 }
 
-export type LimitState = 'none' | 'ok' | 'warning' | 'over'
+type LimitState = 'none' | 'ok' | 'warning' | 'over'
 
 export type LimitProgress = {
   state: LimitState

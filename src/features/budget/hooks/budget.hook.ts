@@ -17,7 +17,7 @@ export function useBudgetMonthParam() {
   return [resolveMonth(param, today), setParam] as const
 }
 
-export const useBudgetMonth = (month: string) => useQuery(budgetQueries.month(useLedgerId(), month))
+const useBudgetMonth = (month: string) => useQuery(budgetQueries.month(useLedgerId(), month))
 
 export const useBudgetCategories = () => useQuery(budgetQueries.categories(useLedgerId()))
 
