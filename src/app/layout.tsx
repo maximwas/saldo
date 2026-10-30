@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
 import { ThemeProvider } from 'next-themes'
+import { Suspense } from 'react'
+import { AppProviders } from '@/components/providers/app-providers.component'
+import { getActiveLedger } from '@/lib/auth/dal.server'
 import './globals.css'
 
 // Fixel by MacPaw (OFL, src/app/fonts/OFL.txt); the variables override --font-sans / --font-display from theme.css
@@ -23,11 +26,22 @@ export const metadata: Metadata = {
   description: 'Особисті фінанси',
 }
 
+// Reads cookies, so it renders per request inside the Suspense boundary (cacheComponents)
+async function Providers({ children }: { children: React.ReactNode }) {
+  const ledger = await getActiveLedger()
+
+  return <AppProviders ledger={ledger}>{children}</AppProviders>
+}
+
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="uk" suppressHydrationWarning>
       <body className={`${fixelText.variable} ${fixelDisplay.variable}`}>
-        <ThemeProvider attribute="data-theme">{children}</ThemeProvider>
+        <ThemeProvider attribute="data-theme">
+          <Suspense>
+            <Providers>{children}</Providers>
+          </Suspense>
+        </ThemeProvider>
       </body>
     </html>
   )

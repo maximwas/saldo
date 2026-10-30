@@ -943,8 +943,8 @@ Server Actions для даних не використовуються; вихі
   кроки не роблять `cat`/`echo` даних, `set +x`, секрети лише через `env:` (GitHub маскує їх у логах).
 - Схема — лише міграціями з репозиторію (Supabase CLI, спершу локальний стек `supabase start`, на прод — `supabase
   db push`). Supabase MCP — для огляду, advisors, пошуку в доках і типів; `apply_migration` у віддалений проєкт
-  не робиться, щоб репо лишалось джерелом правди. Проєкт `tqummrofnesdivujyluw`, регіон має бути Frankfurt
-  (`eu-central-1`) — перевірка у фазі 0.
+  не робиться, щоб репо лишалось джерелом правди. Прод — `mlgcnbtnkrwspzvnuhmz` («Saldo»), preview —
+  `kwzskdqswlqnbsboqqbl` («Saldo Preview»), обидва Frankfurt (`eu-central-1`, Postgres 17; перевірено 30.10.2026).
 - Cron-маршрути: секрет у заголовку, порівняння `timingSafeEqual`; webhook Google — `X-Goog-Channel-Token`.
 
 ## 9. Резервні копії й відновлення (§21, §26)
