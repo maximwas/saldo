@@ -10,6 +10,8 @@
 | next | 16.4.3 | App Router, `proxy.ts`, Turbopack, Route Handlers для cron і інтеграцій | — |
 | react, react-dom | 19.3.1 | | — |
 | typescript | 6.0.3 | | 7.0.2 (нативний): сумісність із Next і Biome не підтверджена |
+| next-intl | 4.14.9 (MIT, 02.10.2026) | локалізація `uk` / `en` без i18n-маршрутизації, типізовані ключі, `useFormatter` (ADR 25) | `[locale]`-маршрутизація; react-i18next (без RSC) |
+| negotiator | 1.1.0 (MIT, 20.08.2026; типи `@types/negotiator`) | вибір мови з `Accept-Language` (q-значення, `en-US` → `en`) | власний парсер заголовка |
 
 ## UI
 

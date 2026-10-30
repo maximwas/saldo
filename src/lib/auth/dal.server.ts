@@ -26,6 +26,26 @@ export async function verifySession() {
   return session
 }
 
+// One user_settings read per request, shared by the active space and the locale (src/i18n/request.ts)
+const getUserSettings = cache(async () => {
+  const session = await getSession()
+
+  if (!session) {
+    return null
+  }
+
+  const supabase = await getServerSupabase()
+  const { data } = await supabase
+    .from('user_settings')
+    .select('last_ledger_id, locale')
+    .eq('user_id', session.userId)
+    .maybeSingle()
+
+  return data
+})
+
+export const getUserLocale = async () => (await getUserSettings())?.locale ?? null
+
 // Active space: cookie saldo-ledger → user_settings.last_ledger_id → own space; only a space the user is a member of
 export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   const session = await getSession()
@@ -38,10 +58,10 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   const [cookieStore, memberships, settings] = await Promise.all([
     cookies(),
     supabase.from('ledger_members').select('ledger_id, role, ledgers(name, time_zone)').eq('user_id', session.userId),
-    supabase.from('user_settings').select('last_ledger_id').eq('user_id', session.userId).maybeSingle(),
+    getUserSettings(),
   ])
   const rows = memberships.data ?? []
-  const preferred = [cookieStore.get(LEDGER_COOKIE)?.value, settings.data?.last_ledger_id]
+  const preferred = [cookieStore.get(LEDGER_COOKIE)?.value, settings?.last_ledger_id]
   const membership =
     preferred.map((ledgerId) => rows.find((row) => row.ledger_id === ledgerId)).find(Boolean) ??
     rows.find((row) => row.role === 'owner') ??

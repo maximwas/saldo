@@ -3,14 +3,16 @@
 import type { Route } from 'next'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { MORE_SECTION, TAB_BAR_SECTIONS } from '@/constants/navigation.constants'
-import { SHELL_TEXT } from '@/constants/shell.constants'
 import { cn } from '@/lib/utils/cn.utils'
 import { activeHref, isMoreActive } from './navigation.utils'
 
 // Figma «Saldo» → TabBar 2:8207 (padding 6/8/24, top border) of TabBarItem 2:8206 (icon 24, text/micro, 60 high)
 export function TabBar() {
   const pathname = usePathname()
+  const translate = useTranslations('shell')
+  const translateNav = useTranslations('nav')
   const current = activeHref(
     pathname,
     TAB_BAR_SECTIONS.filter((section) => section !== MORE_SECTION),
@@ -18,7 +20,7 @@ export function TabBar() {
 
   return (
     <nav
-      aria-label={SHELL_TEXT.navLabel}
+      aria-label={translate('navLabel')}
       className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-card px-2 pt-1.5 pb-6 lg:hidden"
     >
       {TAB_BAR_SECTIONS.map((section) => {
@@ -36,7 +38,7 @@ export function TabBar() {
             )}
           >
             <Icon aria-hidden size={24} className={cn(active && 'text-primary')} />
-            <span className="truncate">{section.label}</span>
+            <span className="truncate">{translateNav(section.key)}</span>
           </Link>
         )
       })}
