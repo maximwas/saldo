@@ -10,9 +10,11 @@ export async function getServerSupabase(): Promise<SaldoClient> {
   return createServerClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll: () => cookieStore.getAll(),
-      setAll: (toSet) => {
+      setAll: (cookiesToSet) => {
         try {
-          for (const { name, value, options } of toSet) cookieStore.set(name, value, options)
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options)
+          }
         } catch {
           // Server Components cannot set cookies; src/proxy.ts refreshes the session instead
         }

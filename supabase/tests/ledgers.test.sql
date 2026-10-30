@@ -10,20 +10,23 @@ $$;
 
 -- 1 owner, 2 editor, 3 viewer, 4 stranger
 insert into auth.users (id, email) values
-  ('00000000-0000-4000-8000-000000000001', 'owner@example.com'),
-  ('00000000-0000-4000-8000-000000000002', 'editor@example.com'),
-  ('00000000-0000-4000-8000-000000000003', 'viewer@example.com'),
-  ('00000000-0000-4000-8000-000000000004', 'stranger@example.com');
+  ('00000000-0000-4000-8000-000000000001', 'pgtap-owner@example.com'),
+  ('00000000-0000-4000-8000-000000000002', 'pgtap-editor@example.com'),
+  ('00000000-0000-4000-8000-000000000003', 'pgtap-viewer@example.com'),
+  ('00000000-0000-4000-8000-000000000004', 'pgtap-stranger@example.com');
 
 create temp table shared_space (ledger_id uuid);
 insert into shared_space select id from public.ledgers where created_by = '00000000-0000-4000-8000-000000000001';
 grant select on shared_space to authenticated;
 
 -- Trigger on auth.users: own space + owner row + settings pointing at it
-select is((select count(*)::int from public.ledger_members where role = 'owner'), 4, 'every new user owns one space');
+select is(
+  (select count(*)::int from public.ledger_members where role = 'owner' and user_id::text like '00000000-0000-4000-8000-%'),
+  4, 'every new user owns one space');
 select is(
   (select count(*)::int from public.user_settings settings join public.ledger_members member
-     on member.ledger_id = settings.last_ledger_id and member.user_id = settings.user_id and member.role = 'owner'),
+     on member.ledger_id = settings.last_ledger_id and member.user_id = settings.user_id and member.role = 'owner'
+   where settings.user_id::text like '00000000-0000-4000-8000-%'),
   4, 'user_settings.last_ledger_id points at the own space');
 select is((select count(*)::int from pg_tables where schemaname = 'public' and not rowsecurity), 0, 'RLS on every public table');
 

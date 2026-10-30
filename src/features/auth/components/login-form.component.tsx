@@ -12,7 +12,7 @@ type Step = 'password' | 'code'
 
 const CODE_LENGTH = 6
 
-// Figma «Saldo» → Стани застосунку: Вхід 4:79954 (desktop), 4:79982 (mobile), Помилка 4:80005, Код 4:80027.
+// Figma "Saldo", app states: login 4:79954 (desktop), 4:79982 (mobile), error 4:80005, TOTP code 4:80027.
 // Field height and padding come from the frames (48px, 16px): the shared Input is 44px / 12px.
 const FIELD_CLASS = 'h-12 px-4'
 

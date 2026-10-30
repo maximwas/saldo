@@ -10,10 +10,14 @@ export async function proxy(request: NextRequest) {
   const supabase = createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (toSet) => {
-        for (const { name, value } of toSet) request.cookies.set(name, value)
+      setAll: (cookiesToSet) => {
+        for (const { name, value } of cookiesToSet) {
+          request.cookies.set(name, value)
+        }
         response = NextResponse.next({ request })
-        for (const { name, value, options } of toSet) response.cookies.set(name, value, options)
+        for (const { name, value, options } of cookiesToSet) {
+          response.cookies.set(name, value, options)
+        }
       },
     },
   })

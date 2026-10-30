@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils/cn.utils'
 
-// Figma «Saldo» → Вхід 4:79956 «Brand»
+// Figma "Saldo", login frame, layer Brand 4:79956
 export function Brand({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
