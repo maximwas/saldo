@@ -4,6 +4,7 @@ import { Menu } from '@base-ui/react/menu'
 import { Check, ChevronDown, Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
 import type { LedgerSummary } from '@/contexts/ledger.context'
 import { CreateSpaceDialog } from '@/features/ledgers/components/create-space-dialog.component'
 import { cn } from '@/lib/utils/cn.utils'
@@ -42,6 +43,9 @@ function SpaceAvatar({ name, size }: SpaceAvatarProps) {
 export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: SpaceSwitcherProps) {
   const translate = useTranslations('shell')
   const [creating, setCreating] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  // below md the list is a bottom sheet (Figma BottomSheet 2:10281), from md up a popover menu
+  const desktop = useIsDesktop()
   const current = spaces.find((space) => space.id === currentId) ?? spaces[0]
 
   if (!current) {
@@ -86,18 +90,73 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
     </Menu.Portal>
   )
 
+  const sheet = (
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen} title={translate('space.list')}>
+      <div className="flex flex-col gap-0.5">
+        {spaces.map((space) => (
+          <button
+            key={space.id}
+            type="button"
+            onClick={() => {
+              setSheetOpen(false)
+              onSelectAction?.(space.id)
+            }}
+            className="flex h-14 w-full cursor-pointer items-center gap-3 rounded-sm px-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-subtle"
+          >
+            <SpaceAvatar name={space.name} size="md" />
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-body font-medium text-text-primary">{space.name}</span>
+              <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
+            </span>
+            {space.id === current.id && (
+              <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
+            )}
+          </button>
+        ))}
+        <div className="my-1 h-px bg-border" />
+        <button
+          type="button"
+          onClick={() => {
+            setSheetOpen(false)
+            setCreating(true)
+          }}
+          className="flex h-11 w-full cursor-pointer items-center gap-3 rounded-sm px-3 text-left text-body text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-subtle"
+        >
+          <Plus aria-hidden size={20} />
+          {translate('space.create.action')}
+        </button>
+      </div>
+    </Sheet>
+  )
+
   const dialog = <CreateSpaceDialog open={creating} onOpenChange={setCreating} />
+
+  // the same trigger look on both: a Menu.Trigger on desktop, a plain button that opens the sheet below md
+  const renderRoot = (className: string, children: React.ReactNode) =>
+    desktop ? (
+      <Menu.Root>
+        <Menu.Trigger className={className}>{children}</Menu.Trigger>
+        {popup}
+      </Menu.Root>
+    ) : (
+      <>
+        <button type="button" className={className} onClick={() => setSheetOpen(true)}>
+          {children}
+        </button>
+        {sheet}
+      </>
+    )
 
   if (platform === 'button') {
     return (
       <>
-        <Menu.Root>
-          <Menu.Trigger className="flex h-11 min-w-0 cursor-pointer items-center whitespace-nowrap px-3 justify-center gap-1.5 rounded-md bg-subtle text-label font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        {renderRoot(
+          'flex h-11 min-w-0 cursor-pointer items-center whitespace-nowrap px-3 justify-center gap-1.5 rounded-md bg-subtle text-label font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary',
+          <>
             {translate('space.switch')}
             <ChevronDown aria-hidden size={16} />
-          </Menu.Trigger>
-          {popup}
-        </Menu.Root>
+          </>,
+        )}
         {dialog}
       </>
     )
@@ -125,14 +184,7 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
 
   return (
     <>
-      <Menu.Root>
-        <Menu.Trigger
-          className={cn(boxClass, 'cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary')}
-        >
-          {body}
-        </Menu.Trigger>
-        {popup}
-      </Menu.Root>
+      {renderRoot(cn(boxClass, 'cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary'), body)}
       {dialog}
     </>
   )

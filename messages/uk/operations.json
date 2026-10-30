@@ -21,7 +21,9 @@
     "allAccounts": "Усі рахунки",
     "category": "Категорія",
     "allCategories": "Усі категорії",
-    "reset": "Скинути фільтри"
+    "reset": "Скинути фільтри",
+    "who": "Хто",
+    "allMembers": "Усі учасники"
   },
   "totals": {
     "income": "Доходи",

@@ -6,17 +6,17 @@ import type { CreateObligationInput, UpdateObligationInput } from './obligation-
 /** create / edit a one-off planned payment: an empty amount means «unknown», never 0 */
 export const obligationFormSchema = z
   .object({
-    title: z.string().trim().min(1, 'titleRequired').max(200),
+    title: z.string().trim().min(1, 'nameRequired').max(200),
     direction: z.enum(['out', 'in']),
     amount: z.string(),
     currency: z.enum(CURRENCIES),
-    dueOn: z.iso.date('dueOnRequired'),
+    dueOn: z.iso.date('dateInvalid'),
     accountId: z.uuid().nullable(),
     categoryId: z.uuid().nullable(),
   })
   .refine((values) => values.amount.trim() === '' || (toMinor(values.amount, values.currency) ?? 0) > 0, {
     path: ['amount'],
-    message: 'amountInvalid',
+    message: 'amountOptionalInvalid',
   })
 
 export type ObligationFormValues = z.infer<typeof obligationFormSchema>

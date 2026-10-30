@@ -1,6 +1,5 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -18,6 +17,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { isMoneyQuery } from '@/constants/query-roots.constants'
 import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
+import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localDate } from '@/lib/utils/clock.utils'
@@ -28,7 +28,6 @@ import {
   payObligationFormSchema,
   toPayObligationInput,
 } from '../schemas/pay-obligation-form.schema'
-import { withTranslatedErrors } from '../utils/form-resolver.utils'
 
 type PayObligationSheetProps = {
   obligation: ObligationRow
@@ -63,9 +62,7 @@ export function PayObligationSheet({ obligation, options, onClose }: PayObligati
     account?.currency === obligation.currency ? (obligation.remainingMinor ?? obligation.plannedMinor) : null
   const accountName = new Map(options.accounts.map((item) => [item.id, item.name]))
   const form = useForm<z.input<typeof payObligationFormSchema>, unknown, PayObligationFormValues>({
-    resolver: withTranslatedErrors(zodResolver(payObligationFormSchema), (key) =>
-      translate(`pay.errors.${key}` as 'pay.errors.amountInvalid'),
-    ),
+    resolver: useZodResolver(payObligationFormSchema),
     defaultValues: {
       amount: suggested === null ? '' : fromMinor(suggested, obligation.currency),
       currency: (account?.currency ?? obligation.currency) as PayObligationFormValues['currency'],

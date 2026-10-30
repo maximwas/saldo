@@ -3,7 +3,9 @@
 import { Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
+import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { useLedger } from '@/contexts/ledger.context'
+import { useMemberNames } from '@/lib/members/member-names.hook'
 import { formatMinor } from '@/lib/money/money.utils'
 import type { AccountOption, CategoryOption, OperationItem } from '../operations.types'
 import { displayAmount, showsOriginal } from '../utils/operation-display.utils'
@@ -39,6 +41,7 @@ export function OperationList({
   const formatter = useFormatter()
   const locale = useLocale()
   const { timeZone } = useLedger()
+  const names = useMemberNames()
   const groups = groupByDay(items)
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? ''
   const category = (id: string | null) => categories.find((candidate) => candidate.id === id)
@@ -125,10 +128,13 @@ export function OperationList({
       return fromCurrency === toCurrency ? (
         <Amount minor={fromAmountMinor} currency={fromCurrency} kind="transfer" />
       ) : (
-        <span className="whitespace-nowrap">
+        // each side stays whole; on a narrow row the second one drops to its own line instead of being clipped
+        <span className="flex flex-wrap justify-end gap-x-1">
           <Amount minor={-fromAmountMinor} currency={fromCurrency} kind="transfer" />
-          <span className="text-text-tertiary"> → +</span>
-          <Amount minor={toAmountMinor} currency={toCurrency} kind="transfer" />
+          <span className="whitespace-nowrap">
+            <span className="text-text-tertiary">→ +</span>
+            <Amount minor={toAmountMinor} currency={toCurrency} kind="transfer" />
+          </span>
         </span>
       )
     }
@@ -142,6 +148,8 @@ export function OperationList({
       </span>
     )
   }
+
+  const author = (item: OperationItem) => (item.row.createdBy ? names[item.row.createdBy] : null)
 
   const dayTotal = (group: (typeof groups)[number]) => {
     const totals = summarize(group.items)
@@ -218,6 +226,7 @@ export function OperationList({
                           {titleOf(item)}
                         </button>
                         <span className="flex items-center gap-1.5 text-caption text-text-secondary">
+                          <AuthorAvatar name={author(item)} />
                           <span className="truncate">{subtitleOf(item)}</span>
                           {paperclip(item)}
                         </span>
@@ -265,6 +274,7 @@ export function OperationList({
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-body font-medium text-text-primary">{titleOf(item)}</span>
                       <span className="flex items-center gap-1.5 text-caption text-text-secondary">
+                        <AuthorAvatar name={author(item)} />
                         <span className="truncate">{subtitleOf(item)}</span>
                         {paperclip(item)}
                       </span>

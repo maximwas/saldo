@@ -1,3 +1,4 @@
+import { listAccountOptions, listCategoryOptions } from '@/lib/finance/ledger-options.api'
 import type { SaldoClient } from '@/types/supabase.types'
 import {
   type CreateObligationInput,
@@ -24,6 +25,9 @@ export type ObligationRow = {
   categoryId: string | null
   state: ObligationState
   version: number
+  /** who confirmed the latest payment and when; null while nothing is paid */
+  confirmedBy: string | null
+  confirmedAt: string | null
 }
 
 export type ObligationOptions = {
@@ -104,7 +108,51 @@ function toObligationRow(row: StateRow): ObligationRow {
     categoryId: row.category_id,
     state: row.state as ObligationState,
     version: row.version,
+    confirmedBy: null,
+    confirmedAt: null,
   }
+}
+
+/** the newest payment of each obligation carries the confirmer: obligation_payments.created_by */
+async function withLatestPayments(supabase: SaldoClient, rows: ObligationRow[]): Promise<ObligationRow[]> {
+  const withPayments = rows.filter((row) => row.paidMinor > 0).map((row) => row.id)
+
+  if (withPayments.length === 0) {
+    return rows
+  }
+
+  const { data, error } = await supabase
+    .from('obligation_payments')
+    .select('obligation_id, created_by, created_at')
+    .in('obligation_id', withPayments)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  const latest = new Map<
+    string,
+    {
+      createdBy: string | null
+      createdAt: string
+    }
+  >()
+
+  for (const payment of data) {
+    if (!latest.has(payment.obligation_id)) {
+      latest.set(payment.obligation_id, {
+        createdBy: payment.created_by,
+        createdAt: payment.created_at,
+      })
+    }
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    confirmedBy: latest.get(row.id)?.createdBy ?? null,
+    confirmedAt: latest.get(row.id)?.createdAt ?? null,
+  }))
 }
 
 /** open obligations (plan / partial / date passed) oldest first, plus the last paid ones so a payment can be cancelled */
@@ -133,43 +181,33 @@ export async function listObligations(supabase: SaldoClient, ledgerId: string) {
     throw paid.error
   }
 
+  const [openRows, paidRows] = await Promise.all([
+    withLatestPayments(
+      supabase,
+      (open.data ?? []).map((row) => toObligationRow(row as StateRow)),
+    ),
+    withLatestPayments(
+      supabase,
+      (paid.data ?? []).map((row) => toObligationRow(row as StateRow)),
+    ),
+  ])
+
   return {
-    open: (open.data ?? []).map((row) => toObligationRow(row as StateRow)),
-    paid: (paid.data ?? []).map((row) => toObligationRow(row as StateRow)),
+    open: openRows,
+    paid: paidRows,
   }
 }
 
-/** account and category pick lists of the form and the pay sheet (this feature's own copy: features never import each other) */
+/** account and category pick lists of the form and the pay sheet: live ones only */
 export async function listObligationOptions(supabase: SaldoClient, ledgerId: string): Promise<ObligationOptions> {
   const [accounts, categories] = await Promise.all([
-    supabase
-      .from('accounts')
-      .select('id, name, currency')
-      .eq('ledger_id', ledgerId)
-      .is('archived_at', null)
-      .order('sort_order'),
-    supabase
-      .from('categories')
-      .select('id, name, kind')
-      .eq('ledger_id', ledgerId)
-      .is('archived_at', null)
-      .order('sort_order'),
+    listAccountOptions(supabase, ledgerId),
+    listCategoryOptions(supabase, ledgerId),
   ])
 
-  if (accounts.error) {
-    throw accounts.error
-  }
-
-  if (categories.error) {
-    throw categories.error
-  }
-
   return {
-    accounts: accounts.data ?? [],
-    categories: (categories.data ?? []).map((row) => ({
-      ...row,
-      kind: row.kind as 'income' | 'expense',
-    })),
+    accounts: accounts.filter((account) => !account.archived),
+    categories: categories.filter((category) => !category.archived),
   }
 }
 

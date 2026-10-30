@@ -1,6 +1,6 @@
 'use client'
 
-import { useFormatter, useTranslations } from 'next-intl'
+import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select } from '@/components/ui/select.component'
 import { cn } from '@/lib/utils/cn.utils'
@@ -35,13 +35,17 @@ type OperationFiltersProps = {
   period: string
   accountId: string | null
   categoryId: string | null
+  createdBy: string | null
   type: OperationType
+  /** user id → name of the space's members; the «Who» chip appears when there are two or more */
+  members: Record<string, string>
   accounts: AccountOption[]
   categories: CategoryOption[]
   onChangeAction: (change: {
     period?: string | null
     account?: string | null
     category?: string | null
+    who?: string | null
     type?: OperationType
   }) => void
 }
@@ -53,19 +57,26 @@ export function OperationFilters({
   period,
   accountId,
   categoryId,
+  createdBy,
   type,
+  members,
   accounts,
   categories,
   onChangeAction,
 }: OperationFiltersProps) {
   const translate = useTranslations('operations')
   const formatter = useFormatter()
-  const monthLabel = (month: string) =>
-    formatter.dateTime(new Date(`${month}-15T12:00:00Z`), {
+  const locale = useLocale()
+  // Intl gives a lowercase month and a short year suffix; only the first letter is raised so the suffix keeps its case
+  const monthLabel = (month: string) => {
+    const label = formatter.dateTime(new Date(`${month}-15T12:00:00Z`), {
       month: 'long',
       year: 'numeric',
       timeZone: 'UTC',
     })
+
+    return label.charAt(0).toLocaleUpperCase(locale) + label.slice(1)
+  }
   const months = recentMonths(today, 12)
 
   return (
@@ -81,7 +92,7 @@ export function OperationFilters({
       />
       <div className="flex flex-wrap items-center gap-2">
         <ChipSelect
-          className={cn(CHIP, CHIP_ON, 'capitalize')}
+          className={cn(CHIP, CHIP_ON)}
           options={[
             {
               value: ALL_TIME,
@@ -143,6 +154,25 @@ export function OperationFilters({
           id="operation-filter-category"
           label={translate('filters.category')}
         />
+        {Object.keys(members).length > 1 && (
+          <ChipSelect
+            className={cn(CHIP, createdBy && CHIP_ON)}
+            options={[
+              {
+                value: ALL,
+                label: translate('filters.allMembers'),
+              },
+              ...Object.entries(members).map(([userId, name]) => ({
+                value: userId,
+                label: name,
+              })),
+            ]}
+            value={createdBy ?? ALL}
+            onValueChange={(value) => onChangeAction({ who: value === ALL ? null : value })}
+            id="operation-filter-who"
+            label={translate('filters.who')}
+          />
+        )}
       </div>
     </div>
   )

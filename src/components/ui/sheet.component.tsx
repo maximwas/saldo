@@ -16,6 +16,15 @@ const subscribe = (notify: () => void) => {
   return () => query.removeEventListener('change', notify)
 }
 
+/** true from Tailwind's md up; the server snapshot is desktop */
+export function useIsDesktop() {
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(DESKTOP_QUERY).matches,
+    () => true,
+  )
+}
+
 type SheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -36,12 +45,8 @@ const BACKDROP_CLASS =
 // padding 24, gap 20, 36 close, footer right-aligned). The same props render either, so screens write one sheet.
 export function Sheet({ open, onOpenChange, title, children, footer }: SheetProps) {
   const translate = useTranslations('common')
-  // server snapshot is desktop: a sheet is opened by a click, so it never renders during hydration
-  const desktop = useSyncExternalStore(
-    subscribe,
-    () => window.matchMedia(DESKTOP_QUERY).matches,
-    () => true,
-  )
+  // a sheet is opened by a click, so it never renders during hydration
+  const desktop = useIsDesktop()
 
   if (desktop) {
     return (

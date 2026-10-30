@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { useLedger } from '@/contexts/ledger.context'
+import { useMemberNames } from '@/lib/members/member-names.hook'
 import { operationQueries } from '../api/operations.queries'
 import { useOperationFilters } from '../hooks/operation-filters.hook'
 import type { OperationItem } from '../operations.types'
@@ -22,6 +23,7 @@ export function OperationsScreen() {
   const { today, url, filters, period, active, setUrl, reset } = useOperationFilters()
   const list = useQuery(operationQueries.list(ledgerId, filters))
   const options = useQuery(operationQueries.options(ledgerId))
+  const members = useMemberNames()
   // `key` changes with every target, so a row, then its duplicate, each get a fresh form and fresh ids
   const [editor, setEditor] = useState<{
     open: boolean
@@ -100,6 +102,8 @@ export function OperationsScreen() {
         period={period}
         accountId={url.account}
         categoryId={url.category}
+        createdBy={url.who}
+        members={members}
         type={url.type}
         accounts={options.data?.accounts ?? []}
         categories={options.data?.categories ?? []}
