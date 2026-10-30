@@ -1,0 +1,97 @@
+{
+  "title": "Upcoming payments",
+  "add": "Add payment",
+  "loadFailed": "Could not load payments. Reload the page.",
+  "empty": "No upcoming payments",
+  "emptyHint": "Add a planned payment to see it here and in «Available».",
+  "groups": {
+    "overdue": "Date passed, payment not confirmed",
+    "today": "Today",
+    "week": "Next 7 days",
+    "later": "Later",
+    "paid": "Paid"
+  },
+  "overdueHint": "The calendar does not confirm a payment. If the charge already happened, confirm it or link an existing operation.",
+  "state": {
+    "plan": "Plan",
+    "partial": "Partial",
+    "unconfirmed": "Not confirmed",
+    "paid": "Paid"
+  },
+  "source": {
+    "manual": "Planned payment",
+    "subscription": "Subscription",
+    "credit": "Credit",
+    "debt": "Debt",
+    "big_expense": "Big expense",
+    "auto_plan": "Car",
+    "tax": "Tax",
+    "income_plan": "Expected income"
+  },
+  "todayLabel": "Today",
+  "remaining": "Remaining {amount}",
+  "actions": {
+    "paid": "Paid",
+    "edit": "Edit",
+    "cancelPayment": "Cancel payment"
+  },
+  "form": {
+    "createTitle": "New planned payment",
+    "editTitle": "Edit payment",
+    "title": "Title",
+    "kind": "Type",
+    "kindOut": "Payment",
+    "kindIn": "Expected income",
+    "amount": "Amount",
+    "amountHint": "Leave empty if the amount is unknown",
+    "currency": "Currency",
+    "dueOn": "Payment date",
+    "account": "Account",
+    "accountHint": "Optional",
+    "category": "Category",
+    "categoryHint": "Optional",
+    "none": "None",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Payment saved",
+    "errors": {
+      "titleRequired": "Enter a title",
+      "dueOnRequired": "Pick a date",
+      "amountInvalid": "Enter an amount above zero or leave it empty"
+    }
+  },
+  "pay": {
+    "title": "Confirm payment",
+    "summary": "{title} · planned date {date}",
+    "amount": "Amount",
+    "date": "Payment date",
+    "account": "Account",
+    "accountHint": "Creates one actual operation",
+    "settle": "Close the payment completely",
+    "settleHint": "If the amount is below the plan, the rest is no longer expected",
+    "linkTitle": "Link an existing operation",
+    "linkHint": "If the charge is already recorded, link it: no new operation is created.",
+    "linkEmpty": "No matching operations",
+    "link": "Link",
+    "confirm": "Paid",
+    "cancel": "Cancel",
+    "done": "Payment confirmed",
+    "linked": "Operation linked",
+    "alreadyPaid": "Someone else just updated this payment — nothing was doubled. Data is refreshed, check the state and try again.",
+    "errors": {
+      "amountInvalid": "Enter an amount above zero",
+      "accountRequired": "Pick an account"
+    }
+  },
+  "cancelPayment": {
+    "title": "Cancel the payment?",
+    "text": "«{title}» becomes unpaid again.",
+    "payments": "Payments",
+    "deleteOperation": "Also delete the operation this payment created",
+    "deleteOperationHint": "If the operation was linked, not created, turn it off — it stays.",
+    "keep": "Keep",
+    "confirm": "Cancel payment",
+    "done": "Payment cancelled",
+    "empty": "No payments"
+  }
+}
