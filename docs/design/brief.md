@@ -141,6 +141,8 @@ Fixel Display для заголовків і сум, Fixel Text для інте�
   SegmentedControl 2:7681 · Tab 2:7690 / Tabs 2:7691 · Chip 2:7714 · StatusPill 2:7738 · Amount 2:7789 ·
   ProgressBar 2:7800 · CategoryIcon 2:7867 · ServiceLogo 2:7882 · LetterAvatar 2:7963 · ListItem 2:8012 ·
   Card 2:7964 (Body — слот) · StatCard 2:8035 · HeroAvailable 2:8092 · NavItem 2:8110 · Sidebar 2:11401 (набір) ·
+  Brand/Mark 10:71281 (логотип A2: група «A · Градієнти» 10:70994, іконка 512 10:71075, lockup 10:71112; у Mark-фреймах
+  Sidebar 2:8115 / 2:11335 і входу 4:79957, 4:79984, 4:80007, 4:80029; темна версія — «A2 dark», не через Color Dark) ·
   Topbar 2:8195 · TabBarItem 2:8206 · TabBar 2:8207 · FAB 2:8233 · іконки `Icon/<lucide-name>` (Icons 1:1536).
 - Forms & overlays (Section 2:9357): Select 2:9397 · DateField 2:9485 · DatePicker 2:9482 · Textarea 2:9609 ·
   Checkbox 2:9644 · Switch 2:9645 · Kbd 2:9642 · Banner 2:10028 (Kind: Warning/Info/Danger/Success) ·

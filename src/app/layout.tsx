@@ -45,6 +45,19 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: translate('brand'),
     description: translate('description'),
+    icons: {
+      icon: [
+        {
+          url: '/favicon.ico',
+          sizes: '48x48',
+        },
+        {
+          url: '/favicon.svg',
+          type: 'image/svg+xml',
+        },
+      ],
+      apple: '/apple-touch-icon-180x180.png',
+    },
   }
 }
 

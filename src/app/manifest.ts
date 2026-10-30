@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 
 // colours mirror theme.css tokens (a manifest takes plain values): background = --color-app, theme = --color-card;
-// icons are the Sidebar brand mark «Mark» 2:11335, exported from Figma as SVG and rasterised to PNG
+// icons are logo A2 (Figma Brand/Mark 10:71281), generated from public/favicon.svg by `pnpm icons`
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Saldo',
@@ -14,19 +14,25 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#ffffff',
     icons: [
       {
-        src: '/icons/icon.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
+        src: '/pwa-64x64.png',
+        sizes: '64x64',
+        type: 'image/png',
       },
       {
-        src: '/icons/icon-192.png',
+        src: '/pwa-192x192.png',
         sizes: '192x192',
         type: 'image/png',
       },
       {
-        src: '/icons/icon-512.png',
+        src: '/pwa-512x512.png',
         sizes: '512x512',
         type: 'image/png',
+      },
+      {
+        src: '/maskable-icon-512x512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
       },
     ],
   }

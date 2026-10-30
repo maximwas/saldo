@@ -6,7 +6,8 @@
     "src/app/sw.ts",
     "src/lib/supabase/admin-client.server.ts",
     "src/lib/auth/dal.server.ts",
-    "src/contexts/*.context.tsx"
+    "src/contexts/*.context.tsx",
+    "pwa-assets.config.ts"
   ],
   "ignore": [
     "src/types/database.types.ts",

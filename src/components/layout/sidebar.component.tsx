@@ -13,6 +13,7 @@ import {
 import { useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { cn } from '@/lib/utils/cn.utils'
+import { Brand } from './brand.component'
 import { activeHref } from './navigation.utils'
 import { SpaceSwitcher } from './space-switcher.component'
 import { SyncStatus } from './sync-status.component'
@@ -71,21 +72,12 @@ export function Sidebar() {
   const pathname = usePathname()
   const ledger = useLedger()
   const translate = useTranslations('shell')
-  const brand = useTranslations('common')('brand')
   const sections = [...SIDEBAR_SECTIONS, SIDEBAR_FOOTER_SECTION]
   const current = activeHref(pathname, sections)
 
   return (
     <aside className="sticky top-0 hidden h-dvh w-(--sidebar-w) shrink-0 flex-col gap-1 overflow-y-auto border-r border-border bg-card px-4 py-6 lg:flex">
-      <div className="flex items-center gap-2.5 px-2 pb-6">
-        <span
-          aria-hidden
-          className="flex size-8 items-center justify-center rounded-logo-md bg-primary text-body font-semibold text-on-primary"
-        >
-          {brand.charAt(0)}
-        </span>
-        <span className="text-card-title text-text-primary">{brand}</span>
-      </div>
+      <Brand className="px-2 pb-6" />
       <div className="pb-3">
         <SpaceSwitcher
           spaces={ledger.ledgers}
