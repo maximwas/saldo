@@ -4,7 +4,13 @@ import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { LOCALE_COOKIE, LOCALES } from '@/i18n/locale.utils'
 import { verifySession } from '@/lib/auth/dal.server'
+import { logger } from '@/lib/logger/logger.server'
+import { logPgError } from '@/lib/supabase/pg-error.server'
 import { getServerSupabase } from '@/lib/supabase/server-client'
+
+const log = logger.child({
+  module: 'settings',
+})
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
 
@@ -17,7 +23,9 @@ export async function setLocale(rawLocale: string) {
   const { error } = await supabase.from('user_settings').update({ locale }).eq('user_id', session.userId)
 
   if (error) {
-    throw new Error(error.message)
+    const { kind } = logPgError(log, error, 'locale update failed')
+
+    throw new Error(`Locale update failed: ${kind}`)
   }
 
   const cookieStore = await cookies()
