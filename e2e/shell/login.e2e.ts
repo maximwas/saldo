@@ -12,10 +12,12 @@ test('owner logs in and lands on the overview @mobile', async ({ page }) => {
   await logIn(page, emailOf('owner'), E2E_PASSWORD)
 
   await expect(page).toHaveURL('/')
-  await expect(page.getByRole('heading', {
- level: 1,
-name: 'Огляд' 
-})).toBeVisible()
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Огляд',
+    }),
+  ).toBeVisible()
 })
 
 test('stranger with a wrong password stays on the login page', async ({ page }) => {

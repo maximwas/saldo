@@ -15,10 +15,12 @@ export default async function globalSetup() {
   const admin = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
     process.env.SUPABASE_SECRET_KEY ?? '',
-    { auth: {
- persistSession: false,
-autoRefreshToken: false 
-} },
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    },
   )
   const userIds = {} as Record<Role, string>
 
@@ -58,16 +60,16 @@ autoRefreshToken: false
     // the secret key bypasses RLS, so members join directly; the invite flow has its own e2e in phase 1
     admin.from('ledger_members').insert([
       {
- ledger_id: ownerLedgerId,
-user_id: userIds.editor,
-role: 'editor',
-display_name: DEMO.editorName 
-},
+        ledger_id: ownerLedgerId,
+        user_id: userIds.editor,
+        role: 'editor',
+        display_name: DEMO.editorName,
+      },
       {
- ledger_id: ownerLedgerId,
-user_id: userIds.viewer,
-role: 'viewer' 
-},
+        ledger_id: ownerLedgerId,
+        user_id: userIds.viewer,
+        role: 'viewer',
+      },
     ]),
   ])
   const failed = steps.find((step) => step.error)

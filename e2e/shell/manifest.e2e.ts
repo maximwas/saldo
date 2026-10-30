@@ -5,7 +5,7 @@ test('the web app manifest is served', async ({ request }) => {
 
   expect(response.status()).toBe(200)
   expect(await response.json()).toMatchObject({
- name: 'Saldo',
-short_name: 'Saldo' 
-})
+    name: 'Saldo',
+    short_name: 'Saldo',
+  })
 })

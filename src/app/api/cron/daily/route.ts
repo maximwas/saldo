@@ -8,10 +8,13 @@ export async function GET(request: Request) {
     return new Response(null, { status: 401 })
   }
 
-  const { error } = await getAdminSupabase().from('ledgers').select('id', {
- head: true,
-count: 'exact' 
-}).limit(1)
+  const { error } = await getAdminSupabase()
+    .from('ledgers')
+    .select('id', {
+      head: true,
+      count: 'exact',
+    })
+    .limit(1)
 
   if (error) {
     console.error('cron/daily: database ping failed', error.code)

@@ -37,20 +37,20 @@ export default defineConfig({
   },
   projects: [
     {
- name: 'setup',
-testMatch: '**/*.setup.ts' 
-},
+      name: 'setup',
+      testMatch: '**/*.setup.ts',
+    },
     {
- name: 'desktop',
-use: { ...devices['Desktop Chrome'] },
-dependencies: ['setup'] 
-},
+      name: 'desktop',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
+    },
     {
- name: 'mobile',
-use: { ...devices['Pixel 7'] },
-grep: /@mobile/,
-dependencies: ['setup'] 
-},
+      name: 'mobile',
+      use: { ...devices['Pixel 7'] },
+      grep: /@mobile/,
+      dependencies: ['setup'],
+    },
   ],
   webServer: {
     // production build: the service worker exists only there, and there is no cold dev compilation
