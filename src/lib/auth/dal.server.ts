@@ -16,7 +16,7 @@ const log = logger.child({
 })
 
 // getClaims verifies the JWT (JWKS for asymmetric keys, Auth for the legacy secret); getSession is never trusted on the server
-const getSession = cache(async () => {
+export const getSession = cache(async () => {
   const supabase = await getServerSupabase()
   const { data, error } = await supabase.auth.getClaims()
 
