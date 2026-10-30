@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
+import { SignOut } from '@/components/layout/sign-out.component'
 import { SpaceCard } from '@/components/layout/space-card.component'
 import { SpaceTiles } from '@/components/layout/space-tiles.component'
 import { verifySession } from '@/lib/auth/dal.server'
@@ -25,5 +26,10 @@ async function SignedInAs() {
     return null
   }
 
-  return <p className="text-center text-caption text-text-tertiary">{translate('space.signedInAs', { email })}</p>
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <p className="text-center text-caption text-text-tertiary">{translate('space.signedInAs', { email })}</p>
+      <SignOut />
+    </div>
+  )
 }

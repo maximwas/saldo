@@ -1,10 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
+import { defineWrites } from '@/lib/query/ledger-writes.mutations'
 import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import { localDate } from '@/lib/utils/clock.utils'
 import { adjustBalance, createAccount, updateAccount } from '../api/accounts.api'
 import { accountsQueries } from '../api/accounts.queries'
+
+/** this feature's writes in the device's queue; AppProviders registers them before the cache is restored */
+export const accountsWrites = defineWrites('accounts', {
+  createAccount,
+  updateAccount,
+  adjustBalance,
+})
 
 export function useAccounts() {
   const { ledgerId, timeZone } = useLedger()
@@ -27,8 +35,8 @@ export function useAccountOperationCount(accountId: string, enabled: boolean) {
   })
 }
 
-export const useCreateAccount = () => useLedgerWrite(createAccount)
+export const useCreateAccount = () => useLedgerWrite(accountsWrites.createAccount)
 
-export const useUpdateAccount = () => useLedgerWrite(updateAccount)
+export const useUpdateAccount = () => useLedgerWrite(accountsWrites.updateAccount)
 
-export const useAdjustBalance = () => useLedgerWrite(adjustBalance)
+export const useAdjustBalance = () => useLedgerWrite(accountsWrites.adjustBalance)

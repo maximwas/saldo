@@ -1,19 +1,21 @@
 'use client'
 
 import { QueryClientProvider } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { MotionConfig } from 'motion/react'
 import { useLocale } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Toaster } from '@/components/ui/toaster.component'
 import { MOTION } from '@/constants/motion.constants'
 import type { AppTheme } from '@/constants/theme.constants'
 import { ClockProvider } from '@/contexts/clock.context'
 import { LedgerProvider } from '@/contexts/ledger.context'
-import { makeQueryClient } from '@/lib/query/query-client'
+import { resumeWrites } from '@/lib/query/ledger-writes.mutations'
 import type { ActiveLedger } from '@/store/ledger.store'
 import { useUiStore } from '@/store/ui.store'
+import { devicePersistOptions, makeAppQueryClient } from './app-writes.mutations'
 
 const DEFAULT_TIME_ZONE = 'Europe/Kyiv'
 // default for every motion/react animation; reducedMotion="user" drops transform and layout motion under
@@ -25,13 +27,16 @@ const MOTION_DEFAULTS = {
 
 type AppProvidersProps = {
   ledger: ActiveLedger | null
+  /** the signed-in person: their cache and write queue persist on this device; null when signed out */
+  userId: string | null
   /** user_settings.theme; null when signed out */
   theme: AppTheme | null
   children: React.ReactNode
 }
 
-export function AppProviders({ ledger, theme, children }: AppProvidersProps) {
-  const [queryClient] = useState(makeQueryClient)
+export function AppProviders({ ledger, userId, theme, children }: AppProvidersProps) {
+  const [queryClient] = useState(makeAppQueryClient)
+  const persistOptions = useMemo(() => (userId ? devicePersistOptions(userId) : null), [userId])
   const locale = useLocale()
   const { setTheme } = useTheme()
   const appliedTheme = useRef<AppTheme | null>(null)
@@ -56,18 +61,31 @@ export function AppProviders({ ledger, theme, children }: AppProvidersProps) {
     document.documentElement.lang = locale
   }, [locale])
 
+  const content = (
+    <NuqsAdapter>
+      <LedgerProvider ledger={ledger}>
+        <ClockProvider timeZone={ledger?.timeZone ?? DEFAULT_TIME_ZONE}>
+          <MotionConfig reducedMotion="user" transition={MOTION_DEFAULTS}>
+            {children}
+          </MotionConfig>
+          <Toaster />
+        </ClockProvider>
+      </LedgerProvider>
+    </NuqsAdapter>
+  )
+
+  if (!persistOptions) {
+    return <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>
+  }
+
+  // restored first (queries wait for it), then the queue resumes: setMutationDefaults ran in makeAppQueryClient
   return (
-    <QueryClientProvider client={queryClient}>
-      <NuqsAdapter>
-        <LedgerProvider ledger={ledger}>
-          <ClockProvider timeZone={ledger?.timeZone ?? DEFAULT_TIME_ZONE}>
-            <MotionConfig reducedMotion="user" transition={MOTION_DEFAULTS}>
-              {children}
-            </MotionConfig>
-            <Toaster />
-          </ClockProvider>
-        </LedgerProvider>
-      </NuqsAdapter>
-    </QueryClientProvider>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={persistOptions}
+      onSuccess={() => resumeWrites(queryClient)}
+    >
+      {content}
+    </PersistQueryClientProvider>
   )
 }

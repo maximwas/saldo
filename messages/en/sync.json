@@ -1,0 +1,128 @@
+{
+  "status": {
+    "synced": "Synced",
+    "syncedAt": "Synced · {time}",
+    "pending": "Pending ({count})",
+    "offline": "Offline",
+    "offlineWaiting": "Offline · pending ({count})",
+    "error": "Error ({count})",
+    "conflict": "Conflict ({count})"
+  },
+  "banner": {
+    "offline": "No network. Keep going: new records are saved on this device and sent as soon as you are back online.",
+    "asOf": "Data as of {time}."
+  },
+  "savedOffline": "Saved on this device. It will be sent once you are online.",
+  "queue": {
+    "title": "Sync queue",
+    "waiting": "{count, plural, one {# change is} other {# changes are}} waiting to be sent",
+    "empty": "All changes are on the server.",
+    "hint": "Sending again never creates duplicates.",
+    "updatedAt": "Last update: {time}.",
+    "syncNow": "Sync now",
+    "retry": "Retry",
+    "discard": "Discard",
+    "resolve": "Resolve",
+    "forbidden": "access to the space was revoked",
+    "states": {
+      "pending": "pending",
+      "synced": "synced",
+      "error": "error",
+      "conflict": "conflict"
+    },
+    "writes": {
+      "other": "Change",
+      "operations": {
+        "createOperation": "New operation",
+        "updateOperation": "Operation edit",
+        "deleteOperation": "Operation removal",
+        "createTransfer": "Transfer",
+        "uploadKeptReceipt": "Receipt photo",
+        "deleteReceipt": "Receipt removal"
+      },
+      "obligations": {
+        "createObligation": "New payment",
+        "updateObligation": "Payment edit",
+        "payObligation": "Payment",
+        "deleteObligationPayment": "Payment cancellation"
+      },
+      "overview": {
+        "setNextIncomeOn": "Income date"
+      },
+      "accounts": {
+        "createAccount": "New account",
+        "updateAccount": "Account edit",
+        "adjustBalance": "Balance adjustment"
+      },
+      "budget": {
+        "saveLimit": "Budget limit",
+        "setIncomePlan": "Income plan",
+        "deleteLimit": "Limit removal",
+        "copyBudgetMonth": "Budget copy"
+      },
+      "calendar": {
+        "saveCalendarFilter": "Calendar filter"
+      },
+      "categories": {
+        "createCategory": "New category",
+        "updateCategory": "Category edit",
+        "reorderCategories": "Category order",
+        "archiveCategory": "Category archive"
+      },
+      "credits": {
+        "saveCredit": "Credit",
+        "replaceCreditSchedule": "Credit schedule"
+      },
+      "currencies": {
+        "saveRate": "Exchange rate"
+      },
+      "debts": {
+        "saveDebt": "Debt",
+        "addDebtMovement": "Debt repayment",
+        "closeDebt": "Debt closing"
+      },
+      "subscriptions": {
+        "createSubscription": "New subscription",
+        "updateSubscription": "Subscription edit",
+        "setSubscriptionPrice": "Subscription price",
+        "setSubscriptionDefaults": "Subscription settings"
+      },
+      "reminder-rules": {
+        "saveReminderRule": "Reminder"
+      }
+    }
+  },
+  "conflict": {
+    "title": "Conflicting changes",
+    "lead": "The record changed while your change was waiting to be sent. Nothing was overwritten: choose what to keep.",
+    "mine": "Your version · {time}",
+    "theirs": "Server version · {time}",
+    "paidBy": "Confirmed by {name} · {time}",
+    "someone": "another member",
+    "loading": "Loading the server version…",
+    "gone": "This record is no longer on the server.",
+    "keepMine": "Keep mine",
+    "keepAsExpense": "Keep as a separate expense",
+    "takeTheirs": "Take theirs",
+    "fields": {
+      "amount": "Amount",
+      "date": "Date",
+      "account": "Account",
+      "note": "Comment"
+    }
+  },
+  "badge": {
+    "pending": "Pending",
+    "error": "Error",
+    "conflict": "Conflict"
+  },
+  "draft": {
+    "restored": "Draft restored",
+    "discard": "Clear"
+  },
+  "offlinePage": {
+    "title": "No network",
+    "hint": "This page is not saved on this device yet. Open the Overview or try again once you are online.",
+    "home": "Open the Overview"
+  }
+}

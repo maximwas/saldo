@@ -11,6 +11,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
 import { formatMinor } from '@/lib/money/money.utils'
+import type { RecordState } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationItem } from '../operations.types'
 import { displayAmount, showsOriginal } from '../utils/operation-display.utils'
@@ -20,8 +21,16 @@ import { formatRate, impliedRate } from '../utils/rate.utils'
 type OperationListProps = {
   items: OperationItem[]
   receiptIds: ReadonlySet<string>
+  /** rows still in the device's queue: pending, error or conflict (§22) */
+  syncStates?: ReadonlyMap<string, RecordState>
   onSelectAction: (item: OperationItem) => void
 }
+
+const SYNC_TONE = {
+  pending: 'info',
+  error: 'negative',
+  conflict: 'warning',
+} as const
 
 // the «+» takes the colour of the amount after it; a refund's stays the text colour, never green
 const PLUS_TONE = {
@@ -35,8 +44,9 @@ const ROW_BUTTON = 'cursor-pointer rounded-xs text-left outline-none focus-visib
 // Figma Saldo file → Operations 2:11403: a table (desktop) with day group rows (44, app fill) and 64 high rows; 2:13681: a card
 // per day on mobile, the day sum on the right of its header. A transfer is one neutral line «−800,00 € → +33 200,00 ₴».
 // shortcut: no "Planned" group (planned payments are 1.11), no hover quick actions: a click opens the sheet
-export function OperationList({ items, receiptIds, onSelectAction }: OperationListProps) {
+export function OperationList({ items, receiptIds, syncStates, onSelectAction }: OperationListProps) {
   const translate = useTranslations('operations')
+  const translateSync = useTranslations('sync.badge')
   const formatter = useFormatter()
   const locale = useLocale()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
@@ -214,6 +224,12 @@ export function OperationList({ items, receiptIds, onSelectAction }: OperationLi
       <Paperclip aria-label={translate('row.receipt')} role="img" size={14} className="shrink-0" />
     ) : null
 
+  function syncBadge(item: OperationItem) {
+    const state = syncStates?.get(item.row.id)
+
+    return state && state !== 'synced' ? <Badge tone={SYNC_TONE[state]}>{translateSync(state)}</Badge> : null
+  }
+
   return (
     <>
       <div className="hidden overflow-hidden rounded-card bg-card shadow-card lg:block">
@@ -271,6 +287,7 @@ export function OperationList({ items, receiptIds, onSelectAction }: OperationLi
                           <span className="truncate">{subtitleOf(item)}</span>
                           {paperclip(item)}
                           {refundNote(item)}
+                          {syncBadge(item)}
                         </span>
                       </span>
                     </span>
@@ -314,6 +331,7 @@ export function OperationList({ items, receiptIds, onSelectAction }: OperationLi
                         <span className="truncate">{subtitleOf(item)}</span>
                         {paperclip(item)}
                         {refundNote(item)}
+                        {syncBadge(item)}
                       </span>
                     </span>
                     <span

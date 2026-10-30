@@ -2,7 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 import { env } from '@/lib/env'
 
-const PUBLIC_PATHS = ['/login', '/invite']
+// /~offline is precached by the service worker, also before the first sign-in
+const PUBLIC_PATHS = ['/login', '/invite', '/~offline']
 
 // Refreshes the Supabase session cookies and sends signed-out visitors to /login?next=…; the real boundary is RLS
 export async function proxy(request: NextRequest) {

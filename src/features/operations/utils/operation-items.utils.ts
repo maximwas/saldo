@@ -61,6 +61,10 @@ export function buildItems(rows: OperationRow[], transfers: Record<string, Trans
 }
 
 /** rows come newest first, so the groups do too; the order inside a day is kept */
+/** the server's order: the newest day first, then the newest moment of it */
+export const newestFirst = (left: OperationRow, right: OperationRow) =>
+  right.occurredOn.localeCompare(left.occurredOn) || right.occurredAt.localeCompare(left.occurredAt)
+
 export function groupByDay(items: OperationItem[]): DayGroup[] {
   const groups: DayGroup[] = []
 

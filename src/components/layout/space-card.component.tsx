@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { SpaceSwitcher } from './space-switcher.component'
-import { SyncStatus } from './sync-status.component'
+import { SyncIndicator } from './sync-indicator.component'
 
 // Figma «Saldo» → "Menu C · Space" 11:73245, Space card: padding 20, gap 16; the avatar sits at the top of the head
 export function SpaceCard() {
@@ -34,8 +34,9 @@ export function SpaceCard() {
           <h2 className="max-w-full truncate text-card-title text-text-primary">{current.name}</h2>
           {/* shortcut: Figma adds "only you"; the member count is not loaded yet, so the role only */}
           <p className="text-caption text-text-tertiary">{translate(`roles.${current.role}`)}</p>
-          {/* shortcut: static «synced» until the offline queue (phase 8) reports its state */}
-          <SyncStatus state="synced" label={translate('synced')} className="h-7 rounded-full bg-subtle" />
+          <span className="w-fit">
+            <SyncIndicator className="h-7 rounded-full bg-subtle" />
+          </span>
         </div>
       </div>
       <div className={canInvite ? 'grid grid-cols-2 gap-2' : 'grid gap-2'}>

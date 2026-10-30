@@ -1,5 +1,6 @@
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { defineWrites } from '@/lib/query/ledger-writes.mutations'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
@@ -10,6 +11,11 @@ import {
   type ReminderSourceType,
   saveReminderRule,
 } from './reminder-rules.api'
+
+/** this feature's writes in the device's queue; AppProviders registers them before the cache is restored */
+export const reminderRulesWrites = defineWrites('reminder-rules', {
+  saveReminderRule,
+})
 
 const ruleQuery = (ledgerId: string, sourceType: ReminderSourceType, sourceId: string) =>
   queryOptions({
@@ -27,7 +33,7 @@ export function useReminderRule(sourceType: ReminderSourceType, sourceId: string
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const queryClient = useQueryClient()
   const query = useQuery(ruleQuery(ledgerId, sourceType, sourceId))
-  const write = useLedgerWrite(saveReminderRule)
+  const write = useLedgerWrite(reminderRulesWrites.saveReminderRule)
   const save = (rule: ReminderRule | null, patch: ReminderRulePatch) =>
     write.mutate(
       {

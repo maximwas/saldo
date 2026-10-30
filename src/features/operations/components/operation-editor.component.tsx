@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query'
 import { TriangleAlert, Undo2 } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -13,6 +13,7 @@ import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { formatMinor, fromMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDraftsStore } from '@/store/drafts.store'
 import {
   useCreateOperation,
   useCreateTransfer,
@@ -91,6 +92,7 @@ export function OperationEditor({
   const translate = useTranslations('operations')
   const translateErrors = useTranslations('errors.db')
   const translateKinds = useTranslations('operations.kinds')
+  const translateSync = useTranslations('sync')
   const locale = useLocale()
   const formatter = useFormatter()
   const clock = useClock()
@@ -99,6 +101,8 @@ export function OperationEditor({
   const queryClient = useQueryClient()
   const options = useQuery(operationQueries.options(ledgerId))
   const [newId] = useState(() => crypto.randomUUID())
+  // a blank new operation keeps a draft per space; a duplicate starts from its source instead
+  const draftKey = target.mode === 'create' && !target.defaults ? `operations:create:${ledgerId}` : undefined
   const [kind, setKind] = useState<AddKind>(target.mode === 'create' ? target.kind : 'expense')
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -173,11 +177,21 @@ export function OperationEditor({
         formId={FORM_ID}
         kind={kind}
         defaults={target.mode === 'create' ? target.defaults : undefined}
+        draftKey={draftKey}
         onSubmitAction={saveOperation}
       >
         <ReceiptField operationId={null} file={receipt} onFileChangeAction={setReceipt} canEdit />
       </OperationForm>
     )
+  }
+
+  // offline the write waits in the device's queue: the toast says it is kept here, not that it is saved
+  function done(message: string) {
+    if (onlineManager.isOnline()) {
+      notify.success(message)
+    } else {
+      notify.info(translateSync('savedOffline'))
+    }
   }
 
   function changeKind(next: AddKind) {
@@ -243,7 +257,7 @@ export function OperationEditor({
           }),
         )
         await uploadPending(item.row.id)
-        notify.success(translate('toast.updated'))
+        done(translate('toast.updated'))
 
         return
       }
@@ -255,8 +269,13 @@ export function OperationEditor({
           duplicatedFromId: target.mode === 'create' ? target.duplicatedFromId : undefined,
         }),
       )
+
+      if (draftKey) {
+        useDraftsStore.getState().clear(draftKey)
+      }
+
       await uploadPending(newId)
-      notify.success(translate('toast.created'))
+      done(translate('toast.created'))
     })
 
   const saveRefund = (values: OperationFormValues) =>
@@ -272,7 +291,7 @@ export function OperationEditor({
           refundOfId: item.row.id,
         }),
       )
-      notify.success(translate('refund.done'))
+      done(translate('refund.done'))
     })
 
   const saveTransfer = (values: TransferFormValues) =>
@@ -293,7 +312,7 @@ export function OperationEditor({
           },
         ),
       )
-      notify.success(translate('toast.transferCreated'))
+      done(translate('toast.transferCreated'))
     })
 
   const remove = () =>
@@ -306,7 +325,7 @@ export function OperationEditor({
         id: item.row.id,
         expectedVersion: item.row.version,
       })
-      notify.success(translate('toast.deleted'))
+      done(translate('toast.deleted'))
     })
 
   function refresh() {

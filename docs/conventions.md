@@ -167,7 +167,7 @@ src/features/subscriptions/
 | `.store.ts` | zustand-store UI-стану | `src/store/ui.store.ts` |
 | `.api.ts` | виклики supabase-js (select, upsert, rpc) | `src/features/obligations/api/obligations.api.ts` |
 | `.queries.ts` | фабрика ключів + `queryOptions` | `src/features/operations/api/operations.queries.ts` |
-| `.mutations.ts` | `register…Mutations` (`setMutationDefaults`) + `useMutation`-хуки | `src/features/operations/api/operations.mutations.ts` |
+| `.mutations.ts` | `defineWrites` / `registerWrites` (`setMutationDefaults`) + `useLedgerWrite`-хуки; композиція всіх фіч — `src/components/providers/app-writes.mutations.ts` | `src/features/operations/api/operations.mutations.ts` |
 | `.schema.ts` | zod-схема | `src/features/operations/schemas/operation-form.schema.ts` |
 | `.types.ts` | типи фічі або спільні | `src/features/taxes/taxes.types.ts`, `src/types/money.types.ts` |
 | `.constants.ts` | константи | `src/constants/navigation.constants.ts` |
