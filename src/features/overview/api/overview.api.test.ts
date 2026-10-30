@@ -3,7 +3,10 @@ import type { SaldoClient } from '@/types/supabase.types'
 import { getOverview } from './overview.api'
 
 type Stub = Promise<unknown> &
-  Record<'select' | 'eq' | 'is' | 'in' | 'lte' | 'order' | 'limit' | 'single', () => Stub | Promise<unknown>>
+  Record<
+    'select' | 'eq' | 'is' | 'in' | 'gte' | 'lte' | 'order' | 'limit' | 'range' | 'single',
+    () => Stub | Promise<unknown>
+  >
 
 // a table stub: every filter returns the builder, awaiting it gives the rows (the api never touches React)
 function stubClient(tables: Record<string, unknown[]>) {
@@ -18,7 +21,9 @@ function stubClient(tables: Record<string, unknown[]>) {
       eq: () => query,
       is: () => query,
       in: () => query,
+      gte: () => query,
       lte: () => query,
+      range: () => query,
       order: () => query,
       limit: () => query,
       single: () =>
@@ -37,10 +42,29 @@ function stubClient(tables: Record<string, unknown[]>) {
 describe('getOverview', () => {
   const now = new Date('2026-10-30T10:00:00Z')
   const tables = {
+    operations: [
+      {
+        kind: 'income',
+        base_amount_minor: 8_250_000,
+      },
+      {
+        kind: 'expense',
+        base_amount_minor: 3_048_438,
+      },
+      {
+        kind: 'refund',
+        base_amount_minor: 48_438,
+      },
+      {
+        kind: 'expense',
+        base_amount_minor: null,
+      },
+    ],
     ledgers: [
       {
         base_currency: 'UAH',
         next_income_on: '2026-11-14',
+        version: 3,
       },
     ],
     accounts: [
@@ -105,6 +129,13 @@ describe('getOverview', () => {
     expect(overview.available.obligationsMinor).toBe(35_000)
     expect(overview.available.availableMinor).toBe(4_586_580)
     expect(overview.accounts[1].baseMinor).toBe(4_980_000)
+    expect(overview.ledgerVersion).toBe(3)
+    expect(overview.month).toEqual({
+      incomeMinor: 8_250_000,
+      expenseMinor: 3_000_000,
+      resultMinor: 5_250_000,
+      unknownCount: 1,
+    })
   })
 
   it('keeps the date unset instead of inventing it', async () => {
@@ -115,6 +146,7 @@ describe('getOverview', () => {
           {
             base_currency: 'UAH',
             next_income_on: null,
+            version: 3,
           },
         ],
       }),

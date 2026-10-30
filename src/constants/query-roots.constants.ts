@@ -1,5 +1,5 @@
 // the first element of every query key that depends on money; a money mutation invalidates all of them (conventions §4.1)
-export const MONEY_QUERY_ROOTS = [
+const MONEY_QUERY_ROOTS = [
   'operations',
   'accounts',
   'obligations',

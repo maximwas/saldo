@@ -1,15 +1,13 @@
+import { addDays, format, parseISO } from 'date-fns'
+
 export type ObligationBucket = 'overdue' | 'today' | 'week' | 'later'
 
 export const BUCKETS: readonly ObligationBucket[] = ['overdue', 'today', 'week', 'later']
 
 const WEEK_DAYS = 7
 
-/** YYYY-MM-DD plus days, calendar arithmetic in UTC so no browser zone or DST can move the day */
-export function addDaysIso(isoDate: string, days: number): string {
-  const [year, month, day] = isoDate.split('-').map(Number)
-
-  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
-}
+/** YYYY-MM-DD plus days: calendar arithmetic of date-fns on a local-midnight date, so DST cannot move the day */
+export const addDaysIso = (isoDate: string, days: number) => format(addDays(parseISO(isoDate), days), 'yyyy-MM-dd')
 
 /**
  * §7 groups by due date against «today» in the ledger time zone: a past date is never «paid» or «overdue» fact,

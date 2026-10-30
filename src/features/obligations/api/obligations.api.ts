@@ -7,7 +7,7 @@ import {
 } from '../schemas/obligation-input.schema'
 import { type PayObligationInput, payObligationInputSchema } from '../schemas/pay-obligation-input.schema'
 
-export type ObligationState = 'plan' | 'partial' | 'unconfirmed' | 'paid'
+type ObligationState = 'plan' | 'partial' | 'unconfirmed' | 'paid'
 
 export type ObligationRow = {
   id: string
@@ -89,7 +89,7 @@ type StateRow = {
   version: number
 }
 
-export function toObligationRow(row: StateRow): ObligationRow {
+function toObligationRow(row: StateRow): ObligationRow {
   return {
     id: row.obligation_id,
     title: row.title,

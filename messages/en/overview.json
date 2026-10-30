@@ -46,5 +46,22 @@
     },
     "notInAvailable": "Not in available",
     "inAvailable": "In available"
+  },
+  "month": {
+    "stats": "Statistics",
+    "income": "Income",
+    "expense": "Expenses",
+    "result": "Result",
+    "unknown": "{count, plural, one {# operation without a rate is not counted} other {# operations without a rate are not counted}}"
+  },
+  "incomeDate": {
+    "change": "Change",
+    "set": "Set date",
+    "title": "Next income date",
+    "text": "«Available» is counted up to this date. Expected income is not added to the sum.",
+    "label": "Next income",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Date saved"
   }
 }
