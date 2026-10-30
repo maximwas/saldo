@@ -1,6 +1,8 @@
 import type { AppLocale } from '@/i18n/locale.utils'
 import type accounts from '../../messages/uk/accounts.json'
 import type auth from '../../messages/uk/auth.json'
+import type budget from '../../messages/uk/budget.json'
+import type calendar from '../../messages/uk/calendar.json'
 import type categories from '../../messages/uk/categories.json'
 import type common from '../../messages/uk/common.json'
 import type credits from '../../messages/uk/credits.json'
@@ -14,6 +16,7 @@ import type operations from '../../messages/uk/operations.json'
 import type overview from '../../messages/uk/overview.json'
 import type settings from '../../messages/uk/settings.json'
 import type shell from '../../messages/uk/shell.json'
+import type statistics from '../../messages/uk/statistics.json'
 import type subscriptions from '../../messages/uk/subscriptions.json'
 
 // uk is the source of the key types; src/i18n/messages.test.ts keeps en in step
@@ -23,6 +26,8 @@ declare module 'next-intl' {
     Messages: {
       accounts: typeof accounts
       auth: typeof auth
+      budget: typeof budget
+      calendar: typeof calendar
       categories: typeof categories
       common: typeof common
       credits: typeof credits
@@ -36,6 +41,7 @@ declare module 'next-intl' {
       overview: typeof overview
       settings: typeof settings
       shell: typeof shell
+      statistics: typeof statistics
       subscriptions: typeof subscriptions
     }
   }

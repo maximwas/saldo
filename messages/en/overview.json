@@ -63,5 +63,13 @@
     "save": "Save",
     "cancel": "Cancel",
     "saved": "Date saved"
+  },
+  "debts": {
+    "title": "Debts",
+    "all": "All debts",
+    "owedToMe": "Owed to me",
+    "iOwe": "I owe",
+    "apart": "Not part of the month result and not taken from «Available»: a loan is neither income nor an expense.",
+    "unknown": "{count, plural, one {# debt without a rate is not counted} other {# debts without a rate are not counted}}"
   }
 }

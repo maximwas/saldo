@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useOverview } from '../hooks/overview.hook'
 import { AccountsCard } from './accounts-card.component'
+import { DebtsCard } from './debts-card.component'
 import { HeroAvailable } from './hero-available.component'
 import { MonthCard } from './month-card.component'
 import { UpcomingCard } from './upcoming-card.component'
@@ -44,6 +45,7 @@ export function OverviewScreen() {
         <div className="lg:col-span-2">
           <MonthCard overview={data} />
         </div>
+        <DebtsCard overview={data} />
       </div>
     </div>
   )

@@ -103,7 +103,7 @@ export function ObligationRowItem({ obligation, onPay, onEdit, onCancelPayment }
         </button>
         {canWrite && open && (
           <Button size="s" variant="secondary" className="hidden lg:inline-flex" onClick={onPay}>
-            {translate('actions.paid')}
+            {translate(obligation.sourceType === 'debt' ? 'actions.toDebt' : 'actions.paid')}
           </Button>
         )}
       </div>
