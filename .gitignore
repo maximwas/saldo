@@ -1,0 +1,19 @@
+# personal financial data: never in the public repo
+.private/
+docs/spec/
+docs/design/screens/
+
+# secrets and personal tool settings
+.env*
+!.env.example
+.claude/settings.local.json
+
+# build and tooling
+node_modules/
+.next/
+.vercel/
+coverage/
+*.tsbuildinfo
+supabase/.temp/
+supabase/.branches/
+.DS_Store

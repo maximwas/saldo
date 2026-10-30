@@ -1,0 +1,155 @@
+/*
+  Saldo theme for Tailwind v4. The app imports this file from src/app/globals.css unchanged.
+  Source of truth: Figma file "Saldo", collections Color, Space, Radius, text styles and effect styles.
+  Light only: cool grey app background, white cards with a soft shadow, blue primary, colour only where it means something.
+  Tailwind's default palette, fonts, sizes, radii and shadows are cleared: only these tokens exist.
+*/
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --color-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+
+  /* surface */
+  --color-app: #f4f5f7;            /* app background */
+  --color-card: #ffffff;           /* cards */
+  --color-raised: #ffffff;         /* popovers, dialogs, inputs */
+  --color-subtle: #f0f2f5;         /* subtle fills, tracks, segmented control */
+  --color-border: #e5e7eb;         /* dividers, card borders */
+  --color-border-strong: #d0d5dd;  /* input borders, outlined pills */
+
+  /* text */
+  --color-text-primary: #101828;   /* primary text, fact amounts */
+  --color-text-secondary: #475467; /* secondary text, plan amounts */
+  --color-text-tertiary: #5d6679;  /* tertiary text, placeholders, transfers */
+  --color-neutral: #98a2b3;        /* plan outlines, decorative only, never text */
+  --color-on-primary: #ffffff;
+
+  /* primary */
+  --color-primary: #2b66f6;        /* actions, links, hero; white on it is AA 4.85 */
+  --color-primary-hover: #1f55e0;
+  --color-primary-soft: #eaf0ff;
+  --color-primary-text: #1f55e0;   /* links on white or primary-soft */
+
+  /* status: default = fill/icon, soft = pill background, text = text on white or soft */
+  --color-positive: #12b76a;       /* income, paid */
+  --color-positive-soft: #e7f8ef;
+  --color-positive-text: #067647;
+  --color-negative: #f04438;       /* real shortfall only */
+  --color-negative-soft: #feeceb;
+  --color-negative-text: #b42318;
+  --color-warning: #f79009;        /* past date without confirmation, never red */
+  --color-warning-soft: #fff4e5;
+  --color-warning-text: #b54708;
+  --color-reserve: #7a5af8;        /* reserves, goals */
+  --color-reserve-soft: #f1ecff;
+  --color-reserve-text: #5925dc;
+
+  /* category: icon colour, soft circle, text */
+  --color-cat-blue: #2b66f6;    --color-cat-blue-soft: #eaf0ff;    --color-cat-blue-text: #1f55e0;
+  --color-cat-green: #12b76a;   --color-cat-green-soft: #e7f8ef;   --color-cat-green-text: #067647;
+  --color-cat-orange: #f97316;  --color-cat-orange-soft: #fff1e6;  --color-cat-orange-text: #b93815;
+  --color-cat-pink: #e8467c;    --color-cat-pink-soft: #fdecf3;    --color-cat-pink-text: #c11574;
+  --color-cat-purple: #7a5af8;  --color-cat-purple-soft: #f1ecff;  --color-cat-purple-text: #5925dc;
+  --color-cat-teal: #0ea5a4;    --color-cat-teal-soft: #e6f7f7;    --color-cat-teal-text: #0e6e6d;
+  --color-cat-yellow: #eaaa08;  --color-cat-yellow-soft: #fff8e1;  --color-cat-yellow-text: #93590a;
+  --color-cat-red: #f04438;     --color-cat-red-soft: #feeceb;     --color-cat-red-text: #b42318;
+  --color-cat-cyan: #0ba5ec;    --color-cat-cyan-soft: #e6f6fd;    --color-cat-cyan-text: #026aa2;
+  --color-cat-lime: #66a80f;    --color-cat-lime-soft: #f0f9e6;    --color-cat-lime-text: #3f6212;
+
+  /* type: Fixel by MacPaw (OFL), next/font/local in the app; amounts use tabular-nums */
+  --font-sans: "Fixel Text", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fixel Display", "Fixel Text", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace; /* code in docs only */
+
+  /* display/* (pair with font-display, semibold) */
+  --text-hero: 2.75rem;         --text-hero--line-height: 3.25rem;         --text-hero--letter-spacing: -1px;          /* 44/52 */
+  --text-page-title: 1.875rem;  --text-page-title--line-height: 2.375rem;  --text-page-title--letter-spacing: -0.5px;  /* 30/38 */
+  --text-number: 1.75rem;       --text-number--line-height: 2.25rem;       --text-number--letter-spacing: -0.5px;      /* 28/36 */
+  --text-number-sm: 1.375rem;   --text-number-sm--line-height: 1.75rem;    --text-number-sm--letter-spacing: -0.3px;   /* 22/28 */
+  --text-hero--font-weight: 600;
+  --text-page-title--font-weight: 600;
+  --text-number--font-weight: 600;
+  --text-number-sm--font-weight: 600;
+
+  /* text/* (font-sans; -medium / -semibold styles = font-medium / font-semibold) */
+  --text-card-title: 1.125rem;  --text-card-title--line-height: 1.625rem;  --text-card-title--font-weight: 600;  /* 18/26 */
+  --text-body: 1rem;            --text-body--line-height: 1.5rem;          /* 16/24 regular, medium, semibold */
+  --text-label: 0.875rem;       --text-label--line-height: 1.25rem;        /* 14/20 regular, medium, semibold */
+  --text-caption: 0.8125rem;    --text-caption--line-height: 1.125rem;     /* 13/18 regular, medium */
+  --text-micro: 0.75rem;        --text-micro--line-height: 1rem;           --text-micro--font-weight: 500;       /* 12/16 */
+
+  /* spacing: Tailwind's default --spacing: 0.25rem covers Space (0, 0.5, 1, 1.5, 2, 2.5, 3…16 = 0…64 px) */
+
+  /* radius grows with the size of the thing */
+  --radius-xs: 6px;         /* tags */
+  --radius-sm: 8px;         /* small logos, checkboxes */
+  --radius-logo-md: 10px;   /* ServiceLogo 32 */
+  --radius-md: 12px;        /* controls: buttons, inputs, logos 40 */
+  --radius-inner: 14px;     /* blocks inside cards */
+  --radius-card: 20px;      /* cards, hero */
+  --radius-full: 999px;     /* pills, chips, avatars, FAB */
+
+  /* cards rest on a soft shadow; floating layers (dialog, sheet, toast, FAB) cast a deeper one */
+  --shadow-card: 0 4px 16px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.04);
+  --shadow-float: 0 16px 32px -4px rgb(16 24 40 / 0.12), 0 4px 8px -2px rgb(16 24 40 / 0.08);
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root {
+  color-scheme: light;
+  --sidebar-w: 232px;    /* desktop sidebar */
+  --content-max: 1144px; /* main column at 1440: 1208 minus 32 padding each side */
+  --topbar-h: 112px;     /* desktop topbar, padding 24/32; mobile topbar hugs (82) */
+  --tabbar-h: 91px;      /* mobile tab bar: 6 + 60 item + 24 bottom inset + 1 border */
+}
+
+/* dark: same token names, dark values; mirrors Figma's Color Dark collection. No dark screens: the theme switches by tokens only.
+   AA checked: texts on app/card/raised/subtle >= 4.88, status/category text on its soft and on card >= 6.5, icons on soft >= 4.9.
+   on-primary is dark because the lighter primary cannot carry white text at AA. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-app: #121826;
+  --color-card: #1a2130;
+  --color-raised: #212938;
+  --color-subtle: #242c3b;
+  --color-border: #2c3546;
+  --color-border-strong: #3d4859;
+
+  --color-text-primary: #eef1f6;
+  --color-text-secondary: #b4bdcc;
+  --color-text-tertiary: #8f99ab;
+  --color-neutral: #5f6b80;
+  --color-on-primary: #0b1220;
+
+  --color-primary: #6f9cff;
+  --color-primary-hover: #8db1ff;
+  --color-primary-soft: #1d2b4d;
+  --color-primary-text: #8db1ff;
+
+  --color-positive: #34c77e;  --color-positive-soft: #15302a;  --color-positive-text: #5fd59a;
+  --color-negative: #f26b60;  --color-negative-soft: #3a1e24;  --color-negative-text: #ff928a;
+  --color-warning: #f5a524;   --color-warning-soft: #382c17;   --color-warning-text: #fbc062;
+  --color-reserve: #9b85ff;   --color-reserve-soft: #29254d;   --color-reserve-text: #b9a9ff;
+
+  --color-cat-blue: #6f9cff;    --color-cat-blue-soft: #1d2b4d;    --color-cat-blue-text: #8db1ff;
+  --color-cat-green: #34c77e;   --color-cat-green-soft: #15302a;   --color-cat-green-text: #5fd59a;
+  --color-cat-orange: #fb8a3c;  --color-cat-orange-soft: #3a2618;  --color-cat-orange-text: #ffa76b;
+  --color-cat-pink: #f06c9b;    --color-cat-pink-soft: #3a1e2e;    --color-cat-pink-text: #ff97bb;
+  --color-cat-purple: #9b85ff;  --color-cat-purple-soft: #29254d;  --color-cat-purple-text: #b9a9ff;
+  --color-cat-teal: #2bc4c2;    --color-cat-teal-soft: #122f33;    --color-cat-teal-text: #5fd9d6;
+  --color-cat-yellow: #f2c230;  --color-cat-yellow-soft: #342d14;  --color-cat-yellow-text: #f7d46a;
+  --color-cat-red: #f26b60;     --color-cat-red-soft: #3a1e24;     --color-cat-red-text: #ff928a;
+  --color-cat-cyan: #3bb8f2;    --color-cat-cyan-soft: #122c40;    --color-cat-cyan-text: #72cdf7;
+  --color-cat-lime: #8cc63f;    --color-cat-lime-soft: #222f17;    --color-cat-lime-text: #aad86c;
+
+  /* the light shadows are a 4% tint, invisible on dark: cards separate by surface, floating layers keep a deeper black shadow */
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.24);
+  --shadow-float: 0 16px 32px -4px rgb(0 0 0 / 0.48), 0 4px 8px -2px rgb(0 0 0 / 0.32);
+}
