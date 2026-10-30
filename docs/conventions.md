@@ -21,7 +21,9 @@
   `to authenticated` і `(select …)` навколо функцій. Нова функція `security definer` — лише в схемі `private`, з
   `set search_path = ''` і `revoke execute … from public`.
 - **RPC** — `security invoker` (RLS діє); `security definer` лише там, де треба читати чуже (прийняття
-  запрошення), і з явною перевіркою `auth.uid()` усередині.
+  запрошення) або писати таблиці, що клієнтам лише для читання (`operations`, `transfers`, `obligation_payments`,
+  architecture §5.10). Такий RPC до будь-якого читання знаходить простір цілі й кличе `private.assert_writable(ledger_id)`
+  (чи явно перевіряє `auth.uid()`), має `set search_path = ''`, повні імена й `revoke execute … from public, anon`.
 - **Тести RLS на двох людях**: кожна міграція з новою таблицею має pgTAP у `supabase/tests/<table>.test.sql`:
   owner і editor пишуть, viewer читає й отримує `42501` на запис, чужий бачить 0 рядків і не вставляє рядок у чужий
   `ledger_id`; складений FK не дає послатися на рядок іншого простору. `supabase test db` — у `pnpm check` і CI.

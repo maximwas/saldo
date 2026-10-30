@@ -486,6 +486,9 @@ Postgres 15+ у схемі `public`. Спільні правила для кож
   private.my_ledger_ids()));` і `create policy <table>_write on public.<table> for all to authenticated using
   (ledger_id in (select private.my_writable_ledger_ids())) with check (ledger_id in (select
   private.my_writable_ledger_ids()));`.
+- Виняток — `operations`, `transfers`, `obligation_payments`: лише `<table>_read` і `grant select`. Їхні інваріанти
+  охоплюють кілька рядків (дві ноги переказу й комісія, сума оплат ≤ сума операції, `version` зобов'язання), тож
+  пишуть їх тільки RPC §5.10 (`security definer`); прямий insert / update / delete редактора через PostgREST — `42501`.
 - Особисті таблиці (`user_settings`, `push_subscriptions`, `notifications`, `calendar_connections`) — `user_id
   uuid not null default auth.uid()` і політика `<table>_self` (`(select auth.uid()) = user_id`).
 - У §5.1–5.8 `user_id` в індексах і unique-обмеженнях доменних таблиць читається як `ledger_id` (напр.
@@ -547,8 +550,10 @@ null default 0` · `opening_balance_on date not null` · `color text`, `icon tex
 Прапорця видимості немає: рахунок бачать усі учасники простору; приватне — в окремому просторі (ADR 19).
 
 **categories**
-`kind text check in ('income','expense')` · `parent_id uuid null` (складений FK `(ledger_id, parent_id, kind)` →
-`categories (ledger_id, id, kind)`: підкатегорія того самого простору й виду) ·
+`kind text check in ('income','expense')` · `parent_id uuid null` (складений FK `(ledger_id, parent_id, kind,
+parent_depth)` → `categories (ledger_id, id, kind, depth)`: підкатегорія того самого простору й виду; generated
+`depth` 1/2 і `parent_depth` = 1 тримають два рівні — у підкатегорії немає своїх, а категорія з підкатегоріями не
+стає підкатегорією, обидва випадки `23503`) ·
 `name`, `color`, `icon`, `sort_order`, `archived_at`. Check `categories_no_self_parent (parent_id <> id)`.
 `color` — назва токена `--color-cat-*` (`blue` … `yellow`), не hex. Сід 15 стандартних категорій §6 (українською) —
 `private.seed_categories()` з `handle_new_user` і `create_ledger`.
@@ -560,7 +565,7 @@ null default 0` · `opening_balance_on date not null` · `color text`, `icon tex
 `base_currency`, `quote_currency`, `rate numeric(20,10) check (> 0)`, `rate_on date`, `source text check in
 ('manual','reference')`, `source_name text` (напр. назва банку-джерела). Unique
 `fx_rates_unique (ledger_id, base_currency, quote_currency, rate_on, source)`. `rate` — скільки `quote_currency` за 1
-`base_currency` (EUR→UAH 41.5). Ручний курс має пріоритет над довідковим на ту саму дату.
+`base_currency` (EUR→UAH 41.5). Курс для дати D (правило A, Максим 30.10.2026; `findRate` і `private.convert_minor`): береться курс із найпізнішою `rate_on <= D`, за однакової дати ручний перемагає довідковий, а старіший ручний ніколи не перемагає новіший довідковий; пряма пара — раніше за обернену.
 
 ### 5.2 Операції й перекази
 
@@ -617,7 +622,7 @@ unique` (`{ledger_id}/{owner_type}/{owner_id}/{uuid}.{ext}`), `mime`, `size_byte
 | `due_on` | `date not null` — поточна дата платежу |
 | `sequence_no` | `int null` — номер внеску |
 | `planned_amount_minor` | `bigint null`, `obligations_amount_positive check (planned_amount_minor is null or planned_amount_minor > 0)` — невідомо ≠ 0 (§7) |
-| `currency`, `account_id null`, `category_id null` | |
+| `currency`, `account_id null`, `category_id null` | `category_kind` generated (`in` → `income`, `out` → `expense`), FK `(ledger_id, category_id, category_kind)` → `categories (ledger_id, id, kind)`, як в операцій |
 | `envelope_id` | `null references reserves` — резерв, що покриває (§12); колонка з'явиться разом із `reserves` |
 | `lifecycle` | `check in ('active','cancelled','replaced') default 'active'` |
 | `replaced_by_id` | `null references obligations` |
@@ -635,9 +640,12 @@ rpc видалення джерела скасовує (`lifecycle = 'cancelled'
 cascade` · `withholding_id null references tax_withholdings on delete cascade` (у фазі 1 `operation_id not null`,
 `withholding_id` і `obligation_payments_one_source` додаються з `tax_withholdings`) ·
 `obligation_payments_one_source check (num_nonnulls(operation_id, withholding_id) = 1)` ·
-`amount_minor bigint check (> 0)` у валюті зобов'язання · unique `(obligation_id, operation_id)`, unique
+`amount_minor bigint check (> 0)` у валюті зобов'язання · `operation_amount_minor bigint not null check (> 0)` — та
+сама частина у валюті операції (`p_amount_minor` з `pay_obligation`) · unique `(obligation_id, operation_id)`, unique
 `(obligation_id, withholding_id)`. Видалення операції каскадом видаляє оплату, і зобов'язання повертається в план
-(§4, §24). Одна операція може частинами оплачувати кілька зобов'язань; rpc перевіряє, що сума частин ≤ сума операції.
+(§4, §24). Одна операція може частинами оплачувати кілька зобов'язань; rpc перевіряє, що сума
+`operation_amount_minor` ≤ сума операції (у її валюті, тож рахуються й частини в інших валютах; `23514`
+`obligation_payments_within_operation`), а операція з оплатами не змінює валюту (`22023`).
 `created_by` оплати — це «Підтвердив(ла)» у картці платежу (окремої колонки `confirmed_by` немає: автор оплати і
 є той, хто підтвердив).
 
@@ -798,19 +806,25 @@ editor/owner; прийняти чи відхилити може будь-хто 
 
 ### 5.10 RPC-функції запису
 
-Усі — `language plpgsql security invoker set search_path = ''`, одна транзакція, повторний виклик з тим самим
-`id` не створює другого запису. Конфлікт версії — `raise exception using errcode = 'PT409'` (PostgREST повертає
-HTTP 409; перевірити у фазі 0).
+Усі — `language plpgsql set search_path = ''`, одна транзакція, повторний виклик з тим самим `id` не створює
+другого запису. Конфлікт версії — `raise exception using errcode = 'PT409'` (PostgREST повертає HTTP 409); версія
+порівнюється `is distinct from`, тож відсутня (`null`) — теж `PT409`. Функції, що пишуть `operations`, `transfers`,
+`obligation_payments` (фаза 1: `create_operation`, `update_operation`, `delete_operation`, `create_transfer`,
+`pay_obligation`, `delete_obligation_payment`, `archive_category`), — `security definer`, бо ці таблиці клієнтам лише
+для читання (§5): кожна спершу знаходить простір цілі й кличе `private.assert_writable(ledger_id)` (`auth.uid()` не
+`null` і простір у `my_writable_ledger_ids()`, інакше `42501` — і для viewer, і для чужого), лише потім читає чи пише;
+імена повністю кваліфіковані; `execute` відкликано в `public`/`anon`, видано `authenticated`. Повтор створення з `id`
+чужого простору — `23505`, рядок не розкривається. `base_currency` операції — завжди базова валюта простору.
 
 | Функція | Що робить | Інваріанти |
 |---|---|---|
 | `create_operation(p_operation jsonb, p_tax jsonb default null, p_withholdings jsonb default '[]')` | операція + деталі доходу + утримання | валюта = валюта рахунку; idempotent за `id`. Фаза 1: лише `p_operation` (податкові параметри — з таблицями податків); сервер ставить `direction`, `occurred_on` у поясі простору, `base_currency`, а в базовій валюті — `base_amount_minor = amount_minor`; ноги переказу — лише через `create_transfer` |
 | `update_operation(p_id uuid, p_expected_version int, p_patch jsonb)` | редагування | `PT409` при старій версії; тригер ставить `needs_review` податкам; суми оплат ≤ суми операції |
-| `delete_operation(p_id uuid, p_expected_version int)` | видалення | каскад: оплати, spend-резерв, заправка/сервіс → зобов'язання повертається в план |
-| `create_transfer(p_transfer jsonb)` | переказ + 2–3 операції | рахунки різні; комісія — окрема витрата |
-| `pay_obligation(p_payment_id uuid, p_obligation_id uuid, p_expected_version int, p_amount_minor bigint, p_operation jsonb default null, p_existing_operation_id uuid default null, p_reserve_id uuid default null, p_settle bool default false)` | оплата. Фаза 1 — без `p_reserve_id` (з `reserves`); `p_amount_minor` у валюті операції, у `obligation_payments` — у валюті зобов'язання через `fx_rates` простору на дату операції (round half up), курсу немає → `22023`; напрям операції = напрям зобов'язання; повертає `obligation_states` | повтор з тим самим `p_payment_id` повертає стан без запису; інакше `for update` + версія, стара → `PT409` (друга людина вже оплатила); рівно одне з `p_operation` / `p_existing_operation_id`; наявна операція не дублюється (§4, §7); spend не більший за резерв |
+| `delete_operation(p_id uuid, p_expected_version int)` | видалення | каскад: оплати, spend-резерв, заправка/сервіс → зобов'язання повертається в план; нога переказу видаляє весь переказ (обидві ноги й комісію), сама комісія — лише себе й `transfers.fee_minor` (стає `null`) |
+| `create_transfer(p_transfer jsonb)` | переказ + 2–3 операції | рахунки різні; комісія — окрема витрата з категорією `p_transfer.fee_category_id` |
+| `pay_obligation(p_payment_id uuid, p_obligation_id uuid, p_expected_version int, p_amount_minor bigint, p_operation jsonb default null, p_existing_operation_id uuid default null, p_reserve_id uuid default null, p_settle bool default false)` | оплата. Фаза 1 — без `p_reserve_id` (з `reserves`); `p_amount_minor` у валюті операції, у `obligation_payments` — у валюті зобов'язання через `fx_rates` простору на дату операції (round half up), курсу немає → `22023`; `operation_amount_minor = p_amount_minor`; напрям операції = напрям зобов'язання; наявна операція — того самого простору, нога переказу теж може оплатити; повертає `obligation_states` | повтор з тим самим `p_payment_id` повертає стан без запису; інакше `for update` + версія, стара → `PT409` (друга людина вже оплатила); рівно одне з `p_operation` / `p_existing_operation_id`; наявна операція не дублюється (§4, §7); spend не більший за резерв |
 | `link_withholding(p_payment_id uuid, p_obligation_id uuid, p_withholding_id uuid, p_amount_minor bigint)` | зарахувати утримання | без операції, без списання (§17) |
-| `delete_obligation_payment(p_payment_id uuid, p_delete_operation bool default false)` | скасувати оплату | зобов'язання повертається в план (`settled_at` скидається); повтор — no-op |
+| `delete_obligation_payment(p_payment_id uuid, p_delete_operation bool default false)` | скасувати оплату | зобов'язання повертається в план (`settled_at` скидається); з `p_delete_operation` операція видаляється так само, як `delete_operation` (нога переказу — весь переказ); повтор — no-op |
 | `upsert_series_obligations(p_source_type text, p_source_id uuid, p_rows jsonb)` | вставка матеріалізованих дат | `on conflict (…occurrence_on) do nothing`; не чіпає оплачені |
 | `set_subscription_price(p_price jsonb)` | нова ціна з дати | оновлює лише майбутні неоплачені (§8) |
 | `save_credit(p_credit jsonb, p_installments jsonb)`, `replace_credit_schedule(p_credit_id uuid, p_installments jsonb)` | графік | старі неоплачені → `replaced`; оплачені лишаються |
@@ -1075,7 +1089,7 @@ sequenceDiagram
   M-->>C: structuredContent + текст
 ```
 
-**Автентифікація.** Токен — Supabase JWT, тому RLS (членство в просторі через `auth.uid()`) і RPC `security invoker` працюють
+**Автентифікація.** Токен — Supabase JWT, тому RLS (членство в просторі через `auth.uid()`) і RPC (перевірка ролі через `auth.uid()`) працюють
 без змін; service-role у MCP не використовується. `verifySupabaseToken` перевіряє підпис через `getClaims`, а
 також що `client_id` є (токен саме OAuth-клієнта, а не сесії браузера). Обмеження клієнтів у БД — restrictive
 -політики на `auth.jwt() ->> 'client_id'` (наприклад, без `delete`). План Б, якщо OAuth у клієнта не

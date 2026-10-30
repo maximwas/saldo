@@ -35,6 +35,10 @@ create table public.categories (
   ledger_id uuid not null references public.ledgers on delete cascade,
   kind text not null constraint categories_kind_check check (kind in ('income', 'expense')),
   parent_id uuid,
+  -- two levels at most, category and subcategory (§2, §6): categories_parent_fkey accepts only a top-level parent,
+  -- and a category with subcategories cannot get a parent (its children's FK would break)
+  depth smallint generated always as (case when parent_id is null then 1 else 2 end) stored,
+  parent_depth smallint generated always as (case when parent_id is not null then 1 end) stored,
   name text not null,
   color text constraint categories_color_check
     check (color in ('blue', 'cyan', 'green', 'lime', 'orange', 'pink', 'purple', 'red', 'teal', 'yellow')),
@@ -47,10 +51,12 @@ create table public.categories (
   version int not null default 1,
   constraint categories_ledger_id_id_key unique (ledger_id, id),
   constraint categories_ledger_id_id_kind_key unique (ledger_id, id, kind),
+  constraint categories_ledger_id_id_kind_depth_key unique (ledger_id, id, kind, depth),
   constraint categories_no_self_parent check (parent_id <> id),
-  -- a subcategory lives in the same space and has the kind of its parent; no action (not restrict) so a space
-  -- deletion that cascades to parent and child in one statement passes
-  constraint categories_parent_fkey foreign key (ledger_id, parent_id, kind) references public.categories (ledger_id, id, kind)
+  -- a subcategory lives in the same space, has the kind of its parent and a top-level parent; no action (not
+  -- restrict) so a space deletion that cascades to parent and child in one statement passes
+  constraint categories_parent_fkey foreign key (ledger_id, parent_id, kind, parent_depth)
+    references public.categories (ledger_id, id, kind, depth)
 );
 create index categories_ledger_id_kind_sort_order_idx on public.categories (ledger_id, kind, sort_order);
 create index categories_ledger_id_parent_id_idx on public.categories (ledger_id, parent_id) where parent_id is not null;
@@ -260,19 +266,16 @@ create policy fx_rates_read on public.fx_rates for select to authenticated using
 create policy fx_rates_write on public.fx_rates for all to authenticated
   using (ledger_id in (select private.my_writable_ledger_ids())) with check (ledger_id in (select private.my_writable_ledger_ids()));
 create policy transfers_read on public.transfers for select to authenticated using (ledger_id in (select private.my_ledger_ids()));
-create policy transfers_write on public.transfers for all to authenticated
-  using (ledger_id in (select private.my_writable_ledger_ids())) with check (ledger_id in (select private.my_writable_ledger_ids()));
 create policy operations_read on public.operations for select to authenticated using (ledger_id in (select private.my_ledger_ids()));
-create policy operations_write on public.operations for all to authenticated
-  using (ledger_id in (select private.my_writable_ledger_ids())) with check (ledger_id in (select private.my_writable_ledger_ids()));
 create policy attachments_read on public.attachments for select to authenticated using (ledger_id in (select private.my_ledger_ids()));
 create policy attachments_write on public.attachments for all to authenticated
   using (ledger_id in (select private.my_writable_ledger_ids())) with check (ledger_id in (select private.my_writable_ledger_ids()));
 
 revoke all on table public.accounts, public.categories, public.fx_rates, public.transfers, public.operations,
   public.attachments, public.account_balances from anon, authenticated;
-grant select, insert, update, delete on table public.accounts, public.categories, public.fx_rates, public.transfers,
-  public.operations to authenticated;
+grant select, insert, update, delete on table public.accounts, public.categories, public.fx_rates to authenticated;
+-- money moves only through the security definer RPCs of money_rpc.sql: transfer legs, payments and versions span rows
+grant select on table public.transfers, public.operations to authenticated;
 grant select, insert, delete on table public.attachments to authenticated;
 grant select on table public.account_balances to authenticated;
 

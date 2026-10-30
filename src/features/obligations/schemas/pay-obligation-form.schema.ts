@@ -35,6 +35,8 @@ type PayObligationContext = {
   obligation: {
     id: string
     version: number
+    /** out = a payment to make, in = expected income (a debt owed to me) */
+    direction: 'out' | 'in'
     categoryId: string | null
   }
 }
@@ -55,8 +57,8 @@ export function toPayObligationInput(
       ? {
           id: context.operationId,
           ledger_id: context.ledgerId,
-          kind: 'expense' as const,
-          direction: 'out' as const,
+          kind: context.obligation.direction === 'in' ? ('income' as const) : ('expense' as const),
+          direction: context.obligation.direction,
           account_id: values.accountId,
           amount_minor: amountMinor,
           currency: values.currency,
@@ -75,7 +77,6 @@ export function toPayObligationInput(
     amountMinor,
     newOperation,
     existingOperationId: values.existingOperationId,
-    reserveId: null,
     settle: values.settle,
   }
 }

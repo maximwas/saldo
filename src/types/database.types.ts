@@ -164,11 +164,13 @@ export type Database = {
           color: string | null
           created_at: string
           created_by: string | null
+          depth: number | null
           icon: string | null
           id: string
           kind: string
           ledger_id: string
           name: string
+          parent_depth: number | null
           parent_id: string | null
           sort_order: number
           updated_at: string
@@ -180,11 +182,13 @@ export type Database = {
           color?: string | null
           created_at?: string
           created_by?: string | null
+          depth?: never
           icon?: string | null
           id?: string
           kind: string
           ledger_id: string
           name: string
+          parent_depth?: never
           parent_id?: string | null
           sort_order?: number
           updated_at?: string
@@ -195,11 +199,13 @@ export type Database = {
           color?: string | null
           created_at?: string
           created_by?: string | null
+          depth?: never
           icon?: string | null
           id?: string
           kind?: string
           ledger_id?: string
           name?: string
+          parent_depth?: never
           parent_id?: string | null
           sort_order?: number
           updated_at?: string
@@ -223,6 +229,7 @@ export type Database = {
               'ledger_id',
               'parent_id',
               'kind',
+              'parent_depth',
             ]
             isOneToOne: false
             referencedRelation: 'categories'
@@ -230,6 +237,7 @@ export type Database = {
               'ledger_id',
               'id',
               'kind',
+              'depth',
             ]
           },
         ]
@@ -444,6 +452,7 @@ export type Database = {
           id: string
           ledger_id: string
           obligation_id: string
+          operation_amount_minor: number
           operation_id: string
         }
         ComputedFields: never
@@ -454,6 +463,7 @@ export type Database = {
           id?: string
           ledger_id: string
           obligation_id: string
+          operation_amount_minor: number
           operation_id: string
         }
         Update: {
@@ -463,6 +473,7 @@ export type Database = {
           id?: string
           ledger_id?: string
           obligation_id?: string
+          operation_amount_minor?: number
           operation_id?: string
         }
         Relationships: [
@@ -522,6 +533,7 @@ export type Database = {
         Row: {
           account_id: string | null
           category_id: string | null
+          category_kind: string | null
           created_at: string
           created_by: string | null
           currency: string
@@ -546,6 +558,7 @@ export type Database = {
         Insert: {
           account_id?: string | null
           category_id?: string | null
+          category_kind?: never
           created_at?: string
           created_by?: string | null
           currency: string
@@ -569,6 +582,7 @@ export type Database = {
         Update: {
           account_id?: string | null
           category_id?: string | null
+          category_kind?: never
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -621,12 +635,14 @@ export type Database = {
             columns: [
               'ledger_id',
               'category_id',
+              'category_kind',
             ]
             isOneToOne: false
             referencedRelation: 'categories'
             referencedColumns: [
               'ledger_id',
               'id',
+              'kind',
             ]
           },
           {
@@ -1093,19 +1109,6 @@ export type Database = {
             ]
             isOneToOne: false
             referencedRelation: 'accounts'
-            referencedColumns: [
-              'ledger_id',
-              'id',
-            ]
-          },
-          {
-            foreignKeyName: 'obligations_category_fkey'
-            columns: [
-              'ledger_id',
-              'category_id',
-            ]
-            isOneToOne: false
-            referencedRelation: 'categories'
             referencedColumns: [
               'ledger_id',
               'id',

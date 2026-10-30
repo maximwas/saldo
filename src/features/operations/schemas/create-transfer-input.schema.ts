@@ -14,6 +14,8 @@ export const createTransferInputSchema = z
     to_currency: z.enum(CURRENCIES),
     /** in from_currency, taken from the source account */
     fee_minor: z.int().positive().nullable(),
+    /** expense category of the fee operation; null without a fee or category */
+    fee_category_id: z.uuid().nullable(),
     occurred_at: z.iso.datetime({ offset: true }),
     /** local date for the transfer_out / transfer_in operations */
     occurred_on: z.iso.date(),

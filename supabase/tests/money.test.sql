@@ -287,7 +287,7 @@ select throws_ok(
   '42501', null, 'stranger cannot add an obligation to a foreign space');
 select throws_ok(
   $$ select public.update_operation('b0000000-0000-4000-8000-000000000007', 1, '{"note": "x"}') $$,
-  'P0002', null, 'a foreign operation does not exist for the stranger');
+  '42501', null, 'stranger cannot edit a foreign operation');
 reset role;
 
 -- Storage: the first folder of the object name is the space

@@ -17,6 +17,8 @@ create table public.obligations (
   currency text not null constraint obligations_currency_check check (currency in ('UAH', 'USD', 'EUR')),
   account_id uuid,
   category_id uuid,
+  -- an expense obligation takes an expense category, an expected income an income one (as operations.category_kind)
+  category_kind text generated always as (case when direction = 'in' then 'income' else 'expense' end) stored,
   lifecycle text not null default 'active' constraint obligations_lifecycle_check
     check (lifecycle in ('active', 'cancelled', 'replaced')),
   replaced_by_id uuid,
@@ -33,7 +35,8 @@ create table public.obligations (
   constraint obligations_amount_positive check (planned_amount_minor is null or planned_amount_minor > 0),
   constraint obligations_occurrence_unique unique (ledger_id, source_type, source_id, occurrence_on),
   constraint obligations_account_fkey foreign key (ledger_id, account_id) references public.accounts (ledger_id, id),
-  constraint obligations_category_fkey foreign key (ledger_id, category_id) references public.categories (ledger_id, id),
+  constraint obligations_category_fkey foreign key (ledger_id, category_id, category_kind)
+    references public.categories (ledger_id, id, kind),
   constraint obligations_replaced_by_fkey foreign key (ledger_id, replaced_by_id)
     references public.obligations (ledger_id, id) on delete set null (replaced_by_id)
 );
@@ -51,6 +54,9 @@ create table public.obligation_payments (
   obligation_id uuid not null,
   operation_id uuid not null,
   amount_minor bigint not null constraint obligation_payments_amount_positive check (amount_minor > 0), -- obligation currency
+  -- the same part in the paying operation's currency: what pay_obligation got, what «within the operation» sums
+  operation_amount_minor bigint not null
+    constraint obligation_payments_operation_amount_positive check (operation_amount_minor > 0),
   created_by uuid default auth.uid() references auth.users on delete set null, -- who confirmed the payment
   created_at timestamptz not null default now(),
   constraint obligation_payments_operation_unique unique (obligation_id, operation_id),
@@ -116,10 +122,9 @@ create policy obligations_write on public.obligations for all to authenticated
   using (ledger_id in (select private.my_writable_ledger_ids())) with check (ledger_id in (select private.my_writable_ledger_ids()));
 create policy obligation_payments_read on public.obligation_payments for select to authenticated
   using (ledger_id in (select private.my_ledger_ids()));
-create policy obligation_payments_write on public.obligation_payments for all to authenticated
-  using (ledger_id in (select private.my_writable_ledger_ids())) with check (ledger_id in (select private.my_writable_ledger_ids()));
 
 revoke all on table public.obligations, public.obligation_payments, public.obligation_states from anon, authenticated;
 grant select, insert, update, delete on table public.obligations to authenticated;
-grant select, insert, delete on table public.obligation_payments to authenticated;
+-- payments change only through pay_obligation / delete_obligation_payment (security definer, money_rpc.sql)
+grant select on table public.obligation_payments to authenticated;
 grant select on table public.obligation_states to authenticated;
