@@ -17,6 +17,7 @@ export const MESSAGE_NAMESPACES = [
   'settings',
   'overview',
   'operations',
+  'obligations',
 ] as const
 
 type LocaleSources = {

@@ -1,9 +1,14 @@
+'use client'
+
 import { Info } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
+import { useLedger } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
 import type { Overview } from '../api/overview.api'
 import { isoToDate } from '../utils/overview.utils'
+import { IncomeDateSheet } from './income-date-sheet.component'
 
 type HeroAvailableProps = {
   overview: Overview
@@ -44,6 +49,9 @@ export function HeroAvailable({ overview }: HeroAvailableProps) {
   const format = useFormatter()
   const locale = useLocale()
   const { available, baseCurrency, untilOn } = overview
+  const [editing, setEditing] = useState(false)
+  // ledgers.next_income_on is a space setting: RLS lets only the owner change it
+  const isOwner = useLedger().role === 'owner'
   const hasDate = untilOn !== null
   const untilLabel = hasDate
     ? format.dateTime(isoToDate(untilOn), {
@@ -56,9 +64,21 @@ export function HeroAvailable({ overview }: HeroAvailableProps) {
   return (
     <section className="flex flex-col gap-6 rounded-card bg-primary p-6 text-on-primary lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:p-8">
       <div className="flex min-w-0 flex-col gap-3">
-        <h2 className="text-body">
+        <h2 className="flex items-center gap-3 text-body">
           {hasDate ? translate('availableUntil', { date: untilLabel }) : translate('availableNoDate')}
+          {isOwner && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="rounded-xs text-label font-medium underline outline-none focus-visible:ring-2 focus-visible:ring-on-primary"
+            >
+              {translate(hasDate ? 'incomeDate.change' : 'incomeDate.set')}
+            </button>
+          )}
         </h2>
+        {editing && (
+          <IncomeDateSheet untilOn={untilOn} ledgerVersion={overview.ledgerVersion} onClose={() => setEditing(false)} />
+        )}
         <Amount
           minor={hasDate ? available.availableMinor : null}
           currency={baseCurrency}

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { isLedgerMoneyQuery } from '@/constants/query-roots.constants'
+import { isMoneyQuery } from '@/constants/query-roots.constants'
 import { useLedger } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { compressReceipt } from '../utils/receipt-compress.utils'
@@ -12,12 +12,11 @@ import {
   uploadReceipt,
 } from './operations.api'
 
-/** a write to money refreshes the money views of this space: Overview, operations, accounts … */
+/** a write to money refreshes every money view: Overview, operations, accounts … */
 export function useInvalidateMoney() {
   const queryClient = useQueryClient()
-  const { ledgerId } = useLedger()
 
-  return () => queryClient.invalidateQueries({ predicate: isLedgerMoneyQuery(ledgerId) })
+  return () => queryClient.invalidateQueries({ predicate: isMoneyQuery })
 }
 
 // shortcut: no offline queue and no optimistic row yet (phase 8: setMutationDefaults + IndexedDB, architecture §6)

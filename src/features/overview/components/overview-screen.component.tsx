@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { useOverview } from '../hooks/overview.hook'
 import { AccountsCard } from './accounts-card.component'
 import { HeroAvailable } from './hero-available.component'
+import { MonthCard } from './month-card.component'
 import { UpcomingCard } from './upcoming-card.component'
 
 // Figma «Saldo» → Overview 2:8237 (desktop: hero, then "Upcoming" 2/3 + "Accounts" 1/3) and 2:8735 (mobile: one column).
@@ -40,6 +41,9 @@ export function OverviewScreen() {
           <UpcomingCard overview={data} />
         </div>
         <AccountsCard overview={data} />
+        <div className="lg:col-span-2">
+          <MonthCard overview={data} />
+        </div>
       </div>
     </div>
   )
