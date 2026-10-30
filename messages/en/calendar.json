@@ -1,0 +1,133 @@
+{
+  "loadFailed": "Could not load the calendar. Reload the page.",
+  "views": {
+    "label": "Calendar view",
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "list": "List"
+  },
+  "previous": "Previous period",
+  "next": "Next period",
+  "today": "Today",
+  "sets": {
+    "label": "Quick sets",
+    "all": "All",
+    "expenses": "Actual expenses",
+    "income": "Income",
+    "due": "To pay",
+    "subscriptions": "Subscriptions",
+    "credits": "Credits",
+    "auto": "Car",
+    "taxes": "Taxes"
+  },
+  "filters": {
+    "open": "Filters",
+    "reset": "Reset filters",
+    "done": "Done",
+    "any": "All",
+    "remove": "Remove the «{label}» filter",
+    "entry": "Fact or plan",
+    "kinds": "Type",
+    "direction": "Direction",
+    "states": "State",
+    "source_types": "Source",
+    "source_id": "One source",
+    "category_ids": "Category",
+    "account_ids": "Account",
+    "currencies": "Currency",
+    "min_amount_minor": "Amount from",
+    "max_amount_minor": "Amount to",
+    "amountHint": "In the space's base currency",
+    "q": "Search",
+    "qHint": "Title, counterparty or note",
+    "saveTitle": "Own set",
+    "saveName": "Set name",
+    "save": "Save the set",
+    "saved": "Set saved"
+  },
+  "entryType": {
+    "fact": "Fact",
+    "plan": "Plan"
+  },
+  "direction": {
+    "in": "Incoming",
+    "out": "Outgoing"
+  },
+  "kind": {
+    "expense": "Expense",
+    "income": "Income",
+    "refund": "Refund",
+    "transfer_out": "Transfer",
+    "debt_in": "Debt · not income",
+    "debt_out": "Debt · not an expense",
+    "adjustment": "Adjustment"
+  },
+  "state": {
+    "fact": "Fact",
+    "plan": "Plan",
+    "partial": "Partly paid",
+    "unconfirmed": "Not confirmed",
+    "paid": "Paid",
+    "cancelled": "Cancelled"
+  },
+  "source": {
+    "manual": "Planned payment",
+    "subscription": "Subscription",
+    "credit": "Credit",
+    "debt": "Debt",
+    "big_expense": "Big expense",
+    "auto_plan": "Car",
+    "tax": "Tax",
+    "income_plan": "Expected income"
+  },
+  "legend": {
+    "expense": "Expenses",
+    "income": "Income",
+    "transfer": "Transfers",
+    "subscription": "Subscriptions",
+    "credit": "Credits",
+    "debt": "Debts",
+    "big_expense": "Big expenses",
+    "auto_plan": "Car",
+    "tax": "Taxes"
+  },
+  "summary": {
+    "income": "Income",
+    "expense": "Expenses",
+    "result": "Result",
+    "plan": "Still planned until {date}",
+    "count": "{count, plural, =0 {No entries} one {# entry} other {# entries}}",
+    "unknown": "{count, plural, one {# entry without a base-currency amount is not counted} other {# entries without a base-currency amount are not counted}}"
+  },
+  "more": "{count} more",
+  "day": {
+    "fact": "Fact",
+    "plan": "Plan",
+    "noEntries": "No entries",
+    "noExpenses": "No expenses",
+    "factSum": "Fact <amount></amount>",
+    "planSum": "Plan <amount></amount>",
+    "hint": "The calendar does not confirm a payment: the fact appears after «Paid».",
+    "add": "Add an entry on {date}",
+    "plannedOn": "Planned date {date}",
+    "paidOf": "Paid <paid></paid> of <planned></planned>",
+    "open": "Open the day {date}"
+  },
+  "actions": {
+    "pay": "Paid",
+    "move": "Change the date",
+    "source": {
+      "subscription": "To the subscription",
+      "credit": "To the credit",
+      "debt": "To the debt",
+      "other": "To payments"
+    }
+  },
+  "listTitle": "{period} · newest first",
+  "empty": {
+    "title": "Nothing matches the filter",
+    "text": "Nothing was found in this period. Change or reset the filters.",
+    "period": "No entries in this period"
+  }
+}

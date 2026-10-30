@@ -4,6 +4,7 @@ import {
   monthRange,
   type OverviewAccountRow,
   sumMonth,
+  sumOpenDebts,
   toAvailableObligation,
   toOverviewAccount,
   toUpcoming,
@@ -182,6 +183,66 @@ describe('obligation mappers', () => {
       title: 'Rent',
       sourceType: 'manual',
       remainingMinor: null,
+    })
+  })
+})
+
+describe('sumOpenDebts', () => {
+  it('sums what is left per direction in the base currency; an overpaid or rateless debt adds nothing', () => {
+    const debts = [
+      {
+        id: 'd1',
+        direction: 'owed_to_me',
+        principal_minor: 200_000,
+        currency: 'UAH',
+      },
+      {
+        id: 'd2',
+        direction: 'i_owe',
+        principal_minor: 10_000,
+        currency: 'EUR',
+      },
+      {
+        id: 'd3',
+        direction: 'owed_to_me',
+        principal_minor: 50_000,
+        currency: 'UAH',
+      },
+      {
+        id: 'd4',
+        direction: 'i_owe',
+        principal_minor: 10_000,
+        currency: 'USD',
+      },
+    ]
+    const repayments = [
+      {
+        debt_id: 'd1',
+        amount_minor: 50_000,
+      },
+      {
+        debt_id: 'd3',
+        amount_minor: 60_000,
+      },
+    ]
+    const context = {
+      baseCurrency: 'UAH',
+      rates: [
+        {
+          baseCurrency: 'EUR',
+          quoteCurrency: 'UAH',
+          rate: '41.5',
+          rateOn: '2026-10-01',
+          source: 'manual' as const,
+        },
+      ],
+      today: '2026-10-30',
+    }
+
+    expect(sumOpenDebts(debts, repayments, context)).toEqual({
+      owedToMeMinor: 150_000,
+      iOweMinor: 415_000,
+      unknownCount: 1,
     })
   })
 })
