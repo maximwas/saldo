@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v5
         with: { node-version: 26, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      # GitHub runs static checks and unit tests only; pgTAP and Playwright e2e run locally (pnpm check, pnpm test:e2e)
+      # GitHub runs static checks and unit tests only; pgTAP and Playwright e2e run locally (pnpm test:db, pnpm test:e2e)
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm deps

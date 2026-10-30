@@ -26,7 +26,8 @@
   (чи явно перевіряє `auth.uid()`), має `set search_path = ''`, повні імена й `revoke execute … from public, anon`.
 - **Тести RLS на двох людях**: кожна міграція з новою таблицею має pgTAP у `supabase/tests/<table>.test.sql`:
   owner і editor пишуть, viewer читає й отримує `42501` на запис, чужий бачить 0 рядків і не вставляє рядок у чужий
-  `ledger_id`; складений FK не дає послатися на рядок іншого простору. `supabase test db` — у `pnpm check` і CI.
+  `ledger_id`; складений FK не дає послатися на рядок іншого простору. pgTAP запускає `pnpm test:db` той, хто зараз
+  володіє локальною БД (одна спільна на всі worktree); у `pnpm check` і CI його немає.
 - **Клієнт**: ключі запитів `[root, ledgerId, …]` (§4.1), кожен запит має явний `.eq('ledger_id', ledgerId)`,
   кожна мутація несе `ledger_id`; `ledgerId` і `role` — лише з `useLedger()` (`src/contexts/ledger.context.tsx`).
 - **Публічний репозиторій** (ADR 22): у git — лише вигадані дані (сід, фікстури, приклади в доках); суми й назви з
@@ -885,13 +886,14 @@ pre-commit:
   "test:db": "supabase test db",
   "test:e2e": "playwright test",
   "test:e2e:ui": "playwright test --ui",
-  "check": "biome check . && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run && supabase test db",
+  "check": "biome check . && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run",
   "db:types": "supabase gen types typescript --local > src/types/database.types.ts"
 }
 ```
 
 `next typegen` перед `tsc` генерує глобальні `LayoutProps` / `PageProps` і типи `typedRoutes` у `.next/types`.
-`supabase test db` у `check` потребує запущеного локального стеку (`supabase start`).
+`pnpm test:db` (pgTAP) окремо від `check`: він іде в єдиний локальний стек (`supabase start`), спільний для всіх
+worktree, тож його запускає лише власник БД на цей момент (той, хто робить `supabase db reset`).
 
 `pnpm check` e2e не запускає: він повільний (збірка + браузер). E2E — лише `pnpm test:e2e` локально перед кожним PR, у CI
 його немає (Максим, 30.10.2026: «e2e запускаємо тільки на компі», «на гіту тільки юніт»).
@@ -970,7 +972,7 @@ WebKit і Firefox не запускаються: iOS перевіряється 
 | Рівень | Що | Де | Команда |
 |---|---|---|---|
 | unit | чисте ядро: гроші, курси, повторення, «Доступно», резерви, податки, схеми, мапінг помилок | `src/**/*.test.ts` | `pnpm test` (у `pnpm check`) |
-| БД | RLS кожної таблиці на чотирьох ролях, інваріанти RPC (`42501`, `PT409`, складені FK) | `supabase/tests/*.test.sql` | `pnpm test:db` (у `pnpm check`) |
+| БД | RLS кожної таблиці на чотирьох ролях, інваріанти RPC (`42501`, `PT409`, складені FK) | `supabase/tests/*.test.sql` | `pnpm test:db` (власник локальної БД) |
 | e2e | головні потоки кожної фази через UI: дві людини, ролі в інтерфейсі, офлайн | `e2e/**/*.e2e.ts` | `pnpm test:e2e` (окремо) |
 
 Межа: перестановки прав (хто що бачить у кожній таблиці) — лише pgTAP; e2e бере по одному сценарію «UI ховає дію
