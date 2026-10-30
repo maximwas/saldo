@@ -71,6 +71,34 @@ export default async function globalSetup() {
         role: 'viewer',
       },
     ]),
+    // editor and viewer open the shared space, not their own one (user_settings.last_ledger_id is the default)
+    admin
+      .from('user_settings')
+      .update({ last_ledger_id: ownerLedgerId })
+      .in('user_id', [userIds.editor, userIds.viewer]),
+    // two hryvnia accounts of docs/design/demo-data.md: the phase 1 specs add operations to them
+    admin.from('accounts').insert([
+      {
+        ledger_id: ownerLedgerId,
+        name: DEMO.cardName,
+        kind: 'bank',
+        currency: 'UAH',
+        opening_balance_minor: DEMO.cardOpeningMinor,
+        opening_balance_on: '2026-01-01',
+        created_by: userIds.owner,
+        sort_order: 1,
+      },
+      {
+        ledger_id: ownerLedgerId,
+        name: DEMO.cashName,
+        kind: 'cash',
+        currency: 'UAH',
+        opening_balance_minor: DEMO.cashOpeningMinor,
+        opening_balance_on: '2026-01-01',
+        created_by: userIds.owner,
+        sort_order: 2,
+      },
+    ]),
   ])
   const failed = steps.find((step) => step.error)
 
