@@ -21,11 +21,18 @@
   https://supabase.com/pricing · https://supabase.com/docs/guides/storage/uploads/file-limits
 - Пауза після 7 днів без активності; «кілька запитів на день» тримають; resume з Dashboard повертає дані
   (до року). Чи рахується pg_cron — не перевірено. https://supabase.com/docs/guides/platform/free-project-pausing
-- pg_cron (до щосекунди), pg_net (лише POST JSON, beta). Доступність саме на Free — не перевірено.
+- pg_cron (до щосекунди), pg_net (лише POST JSON, beta). На Free доступні (Supabase MCP `list_extensions` на прод-проєкті
+  `mlgcnbtnkrwspzvnuhmz`, 30.10.2026): `pg_cron` 1.6.4, `pg_net` 0.20.4, `citext` 1.6, `pg_trgm` 1.6, `pgtap` 1.3.3,
+  `pg_tle` 1.4.0; міграція `…_foundation.sql` ставить перші чотири (локально перевірено `supabase start`).
   https://supabase.com/docs/guides/cron · https://supabase.com/docs/guides/database/extensions/pg_net
 - Бекапи: на Free немає; офіційний гайд GitHub Actions + `supabase db dump` (тригер `schedule:` додати).
   https://supabase.com/docs/guides/deployment/ci/backups
 - Auth: перемикач «Allow new users to sign up» вимикає реєстрацію (свій акаунт створити до того).
+  Перевірено локально (CLI 2.122.0, 30.10.2026): з `[auth] enable_signup = false` `auth.signUp` → 422
+  `signup_disabled`, а `auth.admin.createUser({ email_confirm: true })` (secret-ключ) працює й тригер дає простір.
+  Пастка: `[auth.email] enable_signup = false` вимикає весь email-провайдер — вхід паролем падає з «Email logins
+  are disabled»; він лишається `true`. MFA TOTP: `mfa.enroll({ factorType: 'totp' })` працює локально; у
+  Supabase TOTP безкоштовний на всіх планах (платний лише Phone MFA) — на проді перевірить фаза D.
   Вбудований SMTP — 2 листи/год і лише на адреси команди організації: для одного власника вистачає.
   https://supabase.com/docs/guides/auth/general-configuration · https://supabase.com/docs/guides/auth/auth-smtp
 - RLS: `using ((select auth.uid()) = user_id)` + індекс на `user_id`.
@@ -64,6 +71,11 @@
   https://developers.google.com/identity/protocols/oauth2#expiration · https://developers.google.com/workspace/calendar/api/guides/sync
 - iCloud: CalDAV з app-specific password, без push (лише опитування); tsdav з
   `serverUrl: https://caldav.icloud.com/`, `defaultAccountType: "caldav"` (issue #238). Пошуку за UID немає.
+
+## PT409 (спайк 0.19, 30.10.2026)
+Функція `raise exception 'version conflict' using errcode = 'PT409'`, виклик `supabase.rpc(…)` з supabase-js 2.118.0
+проти локального стеку: `status: 409`, `error: { code: 'PT409', message: 'version conflict' }`. Клієнт ловить
+конфлікт за `error.code === 'PT409'` (`src/lib/supabase/pg-error.utils.ts`). Функція спайку в схему не потрапила.
 
 ## Не перевірено
 Ліміт викликів функцій Vercel Hobby; Google Drive API; passkeys на Supabase Free; RRULE-винятки в iCloud;
