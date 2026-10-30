@@ -75,6 +75,10 @@ async function Providers({ children }: { children: React.ReactNode }) {
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="uk" suppressHydrationWarning>
+      {/* Streamed metadata lands in <body> under cacheComponents and Chrome only reads a manifest link from <head> */}
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+      </head>
       <body className={`${fixelText.variable} ${fixelDisplay.variable}`}>
         <ThemeProvider attribute="data-theme">
           <ServiceWorker>
