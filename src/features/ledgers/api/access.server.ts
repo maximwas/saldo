@@ -90,6 +90,25 @@ export async function getPendingInvites(ledgerId: string, now: Date): Promise<Pe
   }))
 }
 
+// The signed-in member's own name in the space; null = not set (the access list falls back to the email prefix)
+export async function getMyDisplayName(ledgerId: string, userId: string): Promise<string | null> {
+  const supabase = await getServerSupabase()
+  const { data, error } = await supabase
+    .from('ledger_members')
+    .select('display_name')
+    .eq('ledger_id', ledgerId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) {
+    logPgError(log, error, 'own display name lookup failed')
+
+    throw new Error('Own display name lookup failed')
+  }
+
+  return data?.display_name ?? null
+}
+
 export async function getLedgerSettings(ledgerId: string): Promise<LedgerSettings> {
   const supabase = await getServerSupabase()
   const { data, error } = await supabase

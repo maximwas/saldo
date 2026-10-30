@@ -1,12 +1,13 @@
 import { getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
 import { Card } from '@/components/ui/card.component'
-import { getLedgerSettings } from '@/features/ledgers/api/access.server'
+import { getLedgerSettings, getMyDisplayName } from '@/features/ledgers/api/access.server'
+import { DisplayNameForm } from '@/features/ledgers/components/display-name-form.component'
 import { SpaceSettingsForm } from '@/features/ledgers/components/space-settings-form.component'
 import { HideAmountsSwitch } from '@/features/settings/components/hide-amounts-switch.component'
 import { LocaleSwitcher } from '@/features/settings/components/locale-switcher.component'
 import { ThemeSwitcher } from '@/features/settings/components/theme-switcher.component'
-import { getActiveLedger } from '@/lib/auth/dal.server'
+import { getActiveLedger, verifySession } from '@/lib/auth/dal.server'
 
 // Figma «Saldo» → Settings, General tab, frame 11:72807: cards 11:73032 (theme) and 11:73055 (language), gap 24;
 // a Card has padding 24, gap 20, radius card, shadow-card, title text/card-title; its body is the hint (text/label,
@@ -29,10 +30,24 @@ export default async function SettingsPage() {
         <HideAmountsSwitch />
       </Card>
       <Suspense>
+        <MyName />
         <SpaceSettings />
       </Suspense>
     </div>
   )
+}
+
+// every member names themselves in the active space, whatever their role
+async function MyName() {
+  const [ledger, session] = await Promise.all([getActiveLedger(), verifySession()])
+
+  if (!ledger) {
+    return null
+  }
+
+  const name = await getMyDisplayName(ledger.ledgerId, session.userId)
+
+  return <DisplayNameForm key={`${ledger.ledgerId}:${name}`} ledgerId={ledger.ledgerId} name={name} />
 }
 
 // the active space and its row are request data: read inside <Suspense> so the cards above stay instant
