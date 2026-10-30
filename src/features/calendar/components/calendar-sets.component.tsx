@@ -34,7 +34,7 @@ function Chip({ pressed, onClick, children }: ChipProps) {
       aria-pressed={pressed}
       onClick={onClick}
       className={cn(
-        'inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-label font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
+        'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-label font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
         pressed
           ? 'bg-primary-soft text-primary-text'
           : 'border border-border-strong bg-card text-text-primary hover:bg-subtle',
@@ -102,7 +102,7 @@ export function CalendarSets() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <fieldset className="flex min-w-0 flex-wrap gap-2">
+        <fieldset className="-mx-5 flex min-w-0 gap-2 overflow-x-auto px-5 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
           <legend className="sr-only">{translate('sets.label')}</legend>
           {QUICK_SETS.map((set) => (
             <Chip key={set.key} pressed={quickSet === set.key} onClick={() => void setUrl(typeKeysOf(set.filter))}>

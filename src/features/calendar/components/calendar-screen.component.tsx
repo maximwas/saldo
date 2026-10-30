@@ -70,17 +70,19 @@ function CalendarBody() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-4 lg:items-start lg:gap-6">
-      <div className="lg:col-span-3">
+    <div className="grid gap-4 lg:grid-cols-7 lg:items-start lg:gap-6">
+      <div className="lg:col-span-5">
         <CalendarMonth />
       </div>
-      <DayPanel />
+      <div className="lg:col-span-2">
+        <DayPanel />
+      </div>
     </div>
   )
 }
 
 // Figma «Saldo» → Calendar 2:66941: toolbar, quick sets, period totals, then the month grid with the day panel (desktop
-// side by side, mobile one under the other), the week / list card or the day. Everything the screen shows is in the URL.
+// side by side, 800 / 320 as 5 / 7 and 2 / 7, mobile one under the other), the week / list card or the day. Everything the screen shows is in the URL.
 export function CalendarScreen() {
   return (
     <div className="flex flex-col gap-4 lg:gap-6">

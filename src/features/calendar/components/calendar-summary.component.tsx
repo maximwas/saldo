@@ -15,6 +15,11 @@ export function CalendarSummary() {
   const { baseCurrency } = useLedger()
   const { params, totals } = useCalendarData()
   const sum = sumTotals(totals.data ?? [])
+
+  if (totals.isPending) {
+    return <div aria-busy className="h-32 rounded-card bg-subtle" />
+  }
+
   const until = format.dateTime(dayDate(params.to), {
     timeZone: 'UTC',
     day: '2-digit',

@@ -15,12 +15,15 @@ function usePeriodTitle() {
   if (view === 'week') {
     const { from, to } = periodRange('week', date)
 
-    return format.dateTimeRange(dayDate(from), dayDate(to), {
-      timeZone: 'UTC',
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
+    // two plain dates, not dateTimeRange: Node and the browser put different spaces around its dash (hydration mismatch)
+    const short = (day: string) =>
+      format.dateTime(dayDate(day), {
+        timeZone: 'UTC',
+        day: 'numeric',
+        month: 'short',
+      })
+
+    return `${short(from)} – ${short(to)} ${to.slice(0, 4)}`
   }
 
   if (view === 'day') {
