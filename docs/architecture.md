@@ -858,6 +858,10 @@ text)` (security definer, Vault). `revoke execute … from anon, authenticated`.
   `42501` → «немає права на запис у цьому просторі».
 - **Auth.** `@supabase/ssr`; `src/proxy.ts` оновлює токени й робить оптимістичний редирект на `/login`;
   `src/lib/auth/dal.server.ts` — `verifySession()` у React `cache` через `getClaims()`. Межа безпеки — RLS.
+  `getServerSupabase()` спершу чекає `await connection()`: з `cacheComponents` + `partialPrefetching` префетч App
+  Shell уже бачить `cookies()`, але забороняє `Date.now()`, а клієнт `@supabase/ssr` читає його, коли вантажить
+  сесію (`onAuthStateChange` → `_emitInitialSession`). Тож кожне читання Supabase на сервері — лише в справжньому
+  запиті, всередині `<Suspense>`.
   Реєстрація вимкнена; новий акаунт — лише через запрошення (§3.8). `(auth)/invite/[token]/page.tsx` — прийняття.
 - **Вкладення.** browser-image-compression (до ~1600 px, JPEG/WebP) → `storage.from('attachments').upload` →
   рядок `attachments`. Показ — `createSignedUrl` на 5 хв. Офлайн-фото тримається в IndexedDB до синхронізації.
