@@ -19,7 +19,10 @@ const buttonVariants = cva(
         s: 'h-9 px-3 text-label',
       },
     },
-    defaultVariants: { variant: 'primary', size: 'm' },
+    defaultVariants: {
+      variant: 'primary',
+      size: 'm',
+    },
   },
 )
 
@@ -27,5 +30,17 @@ type ButtonProps = Omit<ButtonPrimitive.Props, 'className'> &
   VariantProps<typeof buttonVariants> & { className?: string }
 
 export function Button({ className, variant, size, ...props }: ButtonProps) {
-  return <ButtonPrimitive data-slot="button" className={cn(buttonVariants({ variant, size }), className)} {...props} />
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      className={cn(
+        buttonVariants({
+          variant,
+          size,
+        }),
+        className,
+      )}
+      {...props}
+    />
+  )
 }

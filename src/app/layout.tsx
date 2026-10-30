@@ -12,22 +12,39 @@ import './globals.css'
 // Fixel by MacPaw (OFL, src/app/fonts/OFL.txt); the variables override --font-sans / --font-display from theme.css
 const fixelText = localFont({
   src: [
-    { path: './fonts/FixelText-Regular.woff2', weight: '400' },
-    { path: './fonts/FixelText-Medium.woff2', weight: '500' },
-    { path: './fonts/FixelText-SemiBold.woff2', weight: '600' },
+    {
+      path: './fonts/FixelText-Regular.woff2',
+      weight: '400',
+    },
+    {
+      path: './fonts/FixelText-Medium.woff2',
+      weight: '500',
+    },
+    {
+      path: './fonts/FixelText-SemiBold.woff2',
+      weight: '600',
+    },
   ],
   variable: '--font-sans',
 })
 
 const fixelDisplay = localFont({
-  src: [{ path: './fonts/FixelDisplay-SemiBold.woff2', weight: '600' }],
+  src: [
+    {
+      path: './fonts/FixelDisplay-SemiBold.woff2',
+      weight: '600',
+    },
+  ],
   variable: '--font-display',
 })
 
 export async function generateMetadata(): Promise<Metadata> {
   const translate = await getTranslations('common')
 
-  return { title: translate('brand'), description: translate('description') }
+  return {
+    title: translate('brand'),
+    description: translate('description'),
+  }
 }
 
 // Reads cookies (space, locale), so it renders per request inside the Suspense boundary (cacheComponents)

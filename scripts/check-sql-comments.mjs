@@ -9,7 +9,10 @@ function sqlFiles(directory) {
     return []
   }
 
-  return readdirSync(directory, { recursive: true, encoding: 'utf8' })
+  return readdirSync(directory, {
+    recursive: true,
+    encoding: 'utf8',
+  })
     .filter((name) => name.endsWith('.sql'))
     .map((name) => join(directory, name))
 }

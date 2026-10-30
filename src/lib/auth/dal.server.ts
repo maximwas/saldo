@@ -13,7 +13,12 @@ const getSession = cache(async () => {
   const supabase = await getServerSupabase()
   const { data } = await supabase.auth.getClaims()
 
-  return data?.claims ? { userId: data.claims.sub, email: data.claims.email ?? null } : null
+  return data?.claims
+    ? {
+        userId: data.claims.sub,
+        email: data.claims.email ?? null,
+      }
+    : null
 })
 
 export async function verifySession() {
@@ -75,6 +80,10 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
     ledgerId: membership.ledger_id,
     role: membership.role as LedgerRole,
     timeZone: membership.ledgers?.time_zone ?? 'Europe/Kyiv',
-    ledgers: rows.map((row) => ({ id: row.ledger_id, name: row.ledgers?.name ?? '', role: row.role as LedgerRole })),
+    ledgers: rows.map((row) => ({
+      id: row.ledger_id,
+      name: row.ledgers?.name ?? '',
+      role: row.role as LedgerRole,
+    })),
   }
 })

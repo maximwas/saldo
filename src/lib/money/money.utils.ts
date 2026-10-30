@@ -1,5 +1,9 @@
 const currencyFormat = (currency: string, locale: string) =>
-  new Intl.NumberFormat(locale, { style: 'currency', currency, currencyDisplay: 'narrowSymbol' })
+  new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    currencyDisplay: 'narrowSymbol',
+  })
 
 /** minor units → «1 234,56 ₴» in the active locale; Intl gets a decimal string, so no float ever touches the sum */
 export function formatMinor(minor: bigint | number, currency: string, locale: string): string {

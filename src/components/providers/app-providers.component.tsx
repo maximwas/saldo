@@ -11,7 +11,12 @@ import { makeQueryClient } from '@/lib/query/query-client'
 
 const DEFAULT_TIME_ZONE = 'Europe/Kyiv'
 
-export function AppProviders({ ledger, children }: { ledger: ActiveLedger | null; children: React.ReactNode }) {
+type AppProvidersProps = {
+  ledger: ActiveLedger | null
+  children: React.ReactNode
+}
+
+export function AppProviders({ ledger, children }: AppProvidersProps) {
   const [queryClient] = useState(makeQueryClient)
   const locale = useLocale()
 

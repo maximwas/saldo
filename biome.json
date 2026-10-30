@@ -1,9 +1,19 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "includes": ["src/**", "e2e/**", "*.ts", "!src/types/database.types.ts", "!e2e/.auth"] },
+  "files": {
+    "includes": [
+      "src/**",
+      "e2e/**",
+      "scripts/**",
+      "*.{ts,mjs,cjs}",
+      ".dependency-cruiser.cjs",
+      "!src/types/database.types.ts",
+      "!e2e/.auth"
+    ]
+  },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
-  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
+  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded", "expand": "auto" } },
   "css": { "parser": { "tailwindDirectives": true } },
   "linter": {
     "rules": {

@@ -13,7 +13,12 @@ describe('toPgError', () => {
   })
 
   it('maps PT409 to conflict', () => {
-    expect(toPgError({ code: 'PT409', message: 'version conflict' }).kind).toBe('conflict')
+    expect(
+      toPgError({
+        code: 'PT409',
+        message: 'version conflict',
+      }).kind,
+    ).toBe('conflict')
   })
 
   it('takes the constraint name of a check violation', () => {
@@ -22,10 +27,21 @@ describe('toPgError', () => {
       message: 'new row for relation "ledgers" violates check constraint "ledgers_base_currency_check"',
     })
 
-    expect(error).toMatchObject({ kind: 'invalid', constraint: 'ledgers_base_currency_check' })
+    expect(error).toMatchObject({
+      kind: 'invalid',
+      constraint: 'ledgers_base_currency_check',
+    })
   })
 
   it('falls back to unknown', () => {
-    expect(toPgError({ code: null, message: null })).toMatchObject({ kind: 'unknown', constraint: null })
+    expect(
+      toPgError({
+        code: null,
+        message: null,
+      }),
+    ).toMatchObject({
+      kind: 'unknown',
+      constraint: null,
+    })
   })
 })

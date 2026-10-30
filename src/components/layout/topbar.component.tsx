@@ -24,7 +24,12 @@ export function Topbar() {
   const canWrite = ledger.role !== 'viewer'
   const titleKey = pageTitleKey(pathname)
   // the space's zone, not the browser's: «today» is the same for both people in a shared space
-  const today = formatter.dateTime(now(), { weekday: 'long', day: 'numeric', month: 'long', timeZone })
+  const today = formatter.dateTime(now(), {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone,
+  })
 
   return (
     <header className="flex items-center justify-between gap-4 bg-app px-5 py-3 lg:px-8 lg:py-6">

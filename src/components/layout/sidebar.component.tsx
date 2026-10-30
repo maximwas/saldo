@@ -17,8 +17,13 @@ import { activeHref } from './navigation.utils'
 import { SpaceSwitcher } from './space-switcher.component'
 import { SyncStatus } from './sync-status.component'
 
+type NavItemProps = {
+  section: NavSection
+  active: boolean
+}
+
 // Figma «Saldo» → NavItem 2:8110: 44 high, icon 20, Default / Hover (subtle) / Active (primary-soft)
-function NavItem({ section, active }: { section: NavSection; active: boolean }) {
+function NavItem({ section, active }: NavItemProps) {
   const translate = useTranslations('nav')
   const Icon = section.icon
 
@@ -37,8 +42,13 @@ function NavItem({ section, active }: { section: NavSection; active: boolean }) 
   )
 }
 
+type NavSubItemProps = {
+  link: NavLink
+  active: boolean
+}
+
 // Figma «Saldo» → NavSubItem 2:11282: 36 high, a 20 indent in place of the icon, Active has no fill
-function NavSubItem({ link, active }: { link: NavLink; active: boolean }) {
+function NavSubItem({ link, active }: NavSubItemProps) {
   const translate = useTranslations('nav')
 
   return (

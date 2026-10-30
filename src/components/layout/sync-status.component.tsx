@@ -5,11 +5,31 @@ type SyncState = 'synced' | 'pending' | 'error' | 'offline' | 'conflict'
 
 // Figma «Saldo» → SyncStatus 2:11328, Platform=Sidebar (the only one the shell uses so far)
 const STATES = {
-  synced: { icon: CircleCheck, iconClass: 'text-positive', boxClass: 'text-text-secondary' },
-  pending: { icon: RefreshCw, iconClass: 'text-primary', boxClass: 'text-text-secondary' },
-  error: { icon: TriangleAlert, iconClass: 'text-warning', boxClass: 'bg-warning-soft text-warning-text' },
-  offline: { icon: CloudOff, iconClass: 'text-text-secondary', boxClass: 'bg-subtle text-text-secondary' },
-  conflict: { icon: Copy, iconClass: 'text-warning', boxClass: 'bg-warning-soft text-warning-text' },
+  synced: {
+    icon: CircleCheck,
+    iconClass: 'text-positive',
+    boxClass: 'text-text-secondary',
+  },
+  pending: {
+    icon: RefreshCw,
+    iconClass: 'text-primary',
+    boxClass: 'text-text-secondary',
+  },
+  error: {
+    icon: TriangleAlert,
+    iconClass: 'text-warning',
+    boxClass: 'bg-warning-soft text-warning-text',
+  },
+  offline: {
+    icon: CloudOff,
+    iconClass: 'text-text-secondary',
+    boxClass: 'bg-subtle text-text-secondary',
+  },
+  conflict: {
+    icon: Copy,
+    iconClass: 'text-warning',
+    boxClass: 'bg-warning-soft text-warning-text',
+  },
 } as const
 
 type SyncStatusProps = {

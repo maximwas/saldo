@@ -3,8 +3,14 @@ import type { NavLink } from '@/constants/navigation.constants'
 import { activeHref, isMoreActive, pageTitleKey } from './navigation.utils'
 
 const OPERATIONS_LINKS: NavLink[] = [
-  { key: 'operationsAll', href: '/operations' },
-  { key: 'accounts', href: '/operations/accounts' },
+  {
+    key: 'operationsAll',
+    href: '/operations',
+  },
+  {
+    key: 'accounts',
+    href: '/operations/accounts',
+  },
 ]
 
 describe('activeHref', () => {
@@ -18,8 +24,22 @@ describe('activeHref', () => {
   })
 
   it('matches the root only exactly', () => {
-    expect(activeHref('/', [{ key: 'overview', href: '/' }])).toBe('/')
-    expect(activeHref('/calendar', [{ key: 'overview', href: '/' }])).toBeNull()
+    expect(
+      activeHref('/', [
+        {
+          key: 'overview',
+          href: '/',
+        },
+      ]),
+    ).toBe('/')
+    expect(
+      activeHref('/calendar', [
+        {
+          key: 'overview',
+          href: '/',
+        },
+      ]),
+    ).toBeNull()
   })
 })
 

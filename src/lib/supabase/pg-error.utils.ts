@@ -2,7 +2,10 @@
 // follow `<table>_<rule>` (conventions §7), so forms map `constraint` to a field.
 type PgErrorKind = 'forbidden' | 'conflict' | 'duplicate' | 'invalid' | 'reference' | 'unknown'
 
-export type PgError = { kind: PgErrorKind; constraint: string | null }
+export type PgError = {
+  kind: PgErrorKind
+  constraint: string | null
+}
 
 const KIND_BY_CODE: Record<string, PgErrorKind> = {
   '42501': 'forbidden', // RLS: viewer writes, foreign space
@@ -13,9 +16,17 @@ const KIND_BY_CODE: Record<string, PgErrorKind> = {
   '23503': 'reference',
 }
 
-export function toPgError(error: { code?: string | null; message?: string | null }): PgError {
+type PgErrorSource = {
+  code?: string | null
+  message?: string | null
+}
+
+export function toPgError(error: PgErrorSource): PgError {
   const kind = KIND_BY_CODE[error.code ?? ''] ?? 'unknown'
   const constraint = error.message?.match(/constraint "([^"]+)"/)?.[1] ?? null
 
-  return { kind, constraint }
+  return {
+    kind,
+    constraint,
+  }
 }
