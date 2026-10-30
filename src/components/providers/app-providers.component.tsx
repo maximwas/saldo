@@ -12,6 +12,7 @@ import type { AppTheme } from '@/constants/theme.constants'
 import { ClockProvider } from '@/contexts/clock.context'
 import { type ActiveLedger, LedgerProvider } from '@/contexts/ledger.context'
 import { makeQueryClient } from '@/lib/query/query-client'
+import { useUiStore } from '@/store/ui.store'
 
 const DEFAULT_TIME_ZONE = 'Europe/Kyiv'
 // default for every motion/react animation; reducedMotion="user" drops transform and layout motion under
@@ -43,6 +44,11 @@ export function AppProviders({ ledger, theme, children }: AppProvidersProps) {
       setTheme(theme)
     }
   }, [theme, setTheme])
+
+  // the device's «hide amounts» choice lives in localStorage, which the server cannot read
+  useEffect(() => {
+    void useUiStore.persist.rehydrate()
+  }, [])
 
   // <html lang> renders outside the Suspense boundary that reads the locale (cacheComponents), so it follows here
   useEffect(() => {

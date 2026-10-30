@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { acceptInviteRequestSchema } from '../schemas/ledger.schema'
-import { type InviteFacts, inviteStatus, inviteStatusFromError, isInviteToken } from './invite.utils'
+import {
+  createInviteToken,
+  hashInviteToken,
+  type InviteFacts,
+  inviteStatus,
+  inviteStatusFromError,
+  isInviteToken,
+} from './invite.utils'
 
 const NOW = new Date('2026-10-30T12:00:00Z')
 const TOKEN = `${'a'.repeat(42)}_`
@@ -146,5 +153,19 @@ describe('acceptInviteRequestSchema', () => {
         password: 'correct horse',
       }).success,
     ).toBe(false)
+  })
+})
+
+describe('invite token', () => {
+  it('is 43 base64url characters, and two tokens differ', () => {
+    const token = createInviteToken()
+
+    expect(isInviteToken(token)).toBe(true)
+    expect(createInviteToken()).not.toBe(token)
+  })
+
+  it('hashes like accept_ledger_invite: SHA-256 of the UTF-8 string as bytea hex', async () => {
+    // sha256("abc")
+    expect(await hashInviteToken('abc')).toBe('\\xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad')
   })
 })

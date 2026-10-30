@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { useLocale } from 'next-intl'
 import { currencySymbol, formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
+import { useUiStore } from '@/store/ui.store'
 
 // Figma «Saldo» → Amount 2:7789 (Kind × Size S 16 / M 22 / L 28 / XL 44); figures are tabular
 const amountVariants = cva('whitespace-nowrap tabular-nums', {
@@ -32,13 +33,14 @@ type AmountProps = VariantProps<typeof amountVariants> & {
   minor: bigint | number | null
   /** ISO 4217 code: UAH, EUR, USD */
   currency: string
-  /** the «hide amounts» setting */
+  /** overrides the device's «hide amounts» setting */
   hidden?: boolean
   className?: string
 }
 
-export function Amount({ minor, currency, hidden = false, kind, size, className }: AmountProps) {
+export function Amount({ minor, currency, hidden, kind, size, className }: AmountProps) {
   const locale = useLocale()
+  const hideAmounts = useUiStore((state) => state.hideAmounts)
   const symbol = currencySymbol(currency, locale)
 
   return (
@@ -52,7 +54,11 @@ export function Amount({ minor, currency, hidden = false, kind, size, className 
         className,
       )}
     >
-      {hidden ? `•••• ${symbol}` : minor === null ? `? ${symbol}` : formatMinor(minor, currency, locale)}
+      {(hidden ?? hideAmounts)
+        ? `•••• ${symbol}`
+        : minor === null
+          ? `? ${symbol}`
+          : formatMinor(minor, currency, locale)}
     </span>
   )
 }
