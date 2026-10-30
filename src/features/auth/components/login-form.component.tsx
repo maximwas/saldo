@@ -3,11 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { type SubmitEvent, useId, useState } from 'react'
+import { Brand } from '@/components/layout/brand.component'
 import { Button } from '@/components/ui/button.component'
 import { Input } from '@/components/ui/input.component'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { safeNextPath } from '../utils/safe-next.utils'
-import { Brand } from './brand.component'
 
 type Step = 'password' | 'code'
 

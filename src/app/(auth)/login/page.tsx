@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { useTranslations } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
-import { Brand } from '@/features/auth/components/brand.component'
+import { Brand } from '@/components/layout/brand.component'
 import { LoginForm } from '@/features/auth/components/login-form.component'
 
 export async function generateMetadata(): Promise<Metadata> {
