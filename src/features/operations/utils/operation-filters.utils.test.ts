@@ -5,6 +5,7 @@ const URL_DEFAULTS = {
   period: null,
   account: null,
   category: null,
+  who: null,
   type: 'all' as const,
 }
 
@@ -48,6 +49,7 @@ describe('resolveFilters', () => {
           period: 'all',
           account: 'a1',
           category: 'c1',
+          who: 'u1',
           type: 'expense',
         },
         '2026-10-30',
@@ -57,6 +59,7 @@ describe('resolveFilters', () => {
       to: null,
       accountId: 'a1',
       categoryId: 'c1',
+      createdBy: 'u1',
       type: 'expense',
     })
   })

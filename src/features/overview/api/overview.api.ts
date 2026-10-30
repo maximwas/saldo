@@ -3,7 +3,8 @@ import {
   type AvailableMoneyInput,
   computeAvailableMoney,
 } from '@/lib/finance/available-money.utils'
-import { convertAt, type FxRate } from '@/lib/money/fx.utils'
+import { getLedgerRates } from '@/lib/finance/ledger-fx.api'
+import { convertAt } from '@/lib/money/fx.utils'
 import { localDate } from '@/lib/utils/clock.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import { type MonthTotals, monthRange, sumMonth } from '../utils/overview.utils'
@@ -121,13 +122,7 @@ export async function getOverview(
       .is('archived_at', null)
       .order('sort_order'),
     supabase.from('account_balances').select('account_id, balance_minor').eq('ledger_id', ledgerId),
-    // shortcut: all rates of the ledger, newest first; page them by currency pair once a ledger has thousands
-    supabase
-      .from('fx_rates')
-      .select('base_currency, quote_currency, rate, rate_on, source')
-      .eq('ledger_id', ledgerId)
-      .order('rate_on', { ascending: false })
-      .limit(1000),
+    getLedgerRates(supabase, ledgerId),
     supabase
       .from('obligation_states')
       .select('obligation_id, direction, due_on, remaining_minor, currency, state')
@@ -152,20 +147,14 @@ export async function getOverview(
     getMonthTotals(supabase, ledgerId, today),
   ])
 
-  for (const result of [accounts, balances, rates, due, upcoming, overdue]) {
+  for (const result of [accounts, balances, due, upcoming, overdue]) {
     if (result.error) {
       throw result.error
     }
   }
 
   const baseCurrency = ledger.data.base_currency
-  const fxRates: FxRate[] = (rates.data ?? []).map((row) => ({
-    baseCurrency: row.base_currency,
-    quoteCurrency: row.quote_currency,
-    rate: row.rate,
-    rateOn: row.rate_on,
-    source: row.source as FxRate['source'],
-  }))
+  const fxRates = rates
   const balanceOf = new Map((balances.data ?? []).map((row) => [row.account_id, row.balance_minor]))
   // account_balances has a row for every visible account; the opening balance is what it holds before any operation
   const rows = (accounts.data ?? []).map((account) => ({

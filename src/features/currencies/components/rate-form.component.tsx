@@ -1,6 +1,5 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button.component'
@@ -12,6 +11,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
+import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { localDate } from '@/lib/utils/clock.utils'
 import { useSaveRate } from '../hooks/currencies.hook'
 import { type RateFormValues, rateFormSchema, toSaveRateInput } from '../schemas/rate-form.schema'
@@ -30,7 +30,7 @@ export function RateForm({ baseCurrency }: RateFormProps) {
   const foreign = CURRENCIES.filter((currency) => currency !== baseCurrency)
   const today = localDate(clock.now(), clock.timeZone)
   const form = useForm<RateFormValues>({
-    resolver: zodResolver(rateFormSchema),
+    resolver: useZodResolver(rateFormSchema),
     defaultValues: {
       currency: foreign[0],
       rate: '',

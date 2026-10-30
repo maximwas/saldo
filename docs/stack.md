@@ -42,7 +42,7 @@
 | @supabase/ssr | 0.12.7 | cookie-сесія для Next | — |
 | @tanstack/react-query, -devtools, -persist-client, query-async-storage-persister | 5.105.0 | серверний стан, офлайн-черга мутацій | SWR (немає черги мутацій) |
 | idb-keyval | 6.3.0 | IndexedDB для persister і чернеток | localStorage (ліміт 5 МБ, синхронний) |
-| zustand | 5.0.16 | UI-стан у `src/store` | — |
+| zustand | 5.0.16 | UI-стан у `src/store` (вже вживається: `useUiStore`, «сховати суми») | — |
 | nuqs | 2.10.2 | фільтри й шторки в URL | — |
 | react-hook-form | 7.91.0 | форми | @tanstack/react-form 1.33.5 (alternative) |
 | @hookform/resolvers | 6.0.2 | zodResolver | — |
@@ -59,7 +59,8 @@
 |---|---|---|---|
 | decimal.js | 10.6.0 | курси, відсотки податку, явне округлення | big.js 7.0.1, dinero.js 2.0.2 (зайва модель грошей) |
 | date-fns, @date-fns/tz | 4.4.0, 1.5.0 | повторення, короткі місяці, часовий пояс користувача | rrule 2.8.1 (3 роки без релізів) |
-| browser-image-compression | 2.0.2 | стиснення фото чека | — (старий, заміни немає; переглянути у фазі 1) |
+| compressorjs | 1.4.0 (MIT, оновлено 2026-10-01) | стиснення фото чека | browser-image-compression 2.0.2 (без релізів із 2023) |
+| uint8array-extras | 1.6.0 | токени запрошень: hex / base64 з `Uint8Array` | власні хелпери |
 
 ## PWA, сповіщення, інтеграції
 

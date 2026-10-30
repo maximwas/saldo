@@ -53,12 +53,7 @@
     "none": "None",
     "save": "Save",
     "cancel": "Cancel",
-    "saved": "Payment saved",
-    "errors": {
-      "titleRequired": "Enter a title",
-      "dueOnRequired": "Pick a date",
-      "amountInvalid": "Enter an amount above zero or leave it empty"
-    }
+    "saved": "Payment saved"
   },
   "pay": {
     "title": "Confirm payment",
@@ -77,11 +72,7 @@
     "cancel": "Cancel",
     "done": "Payment confirmed",
     "linked": "Operation linked",
-    "alreadyPaid": "Someone else just updated this payment — nothing was doubled. Data is refreshed, check the state and try again.",
-    "errors": {
-      "amountInvalid": "Enter an amount above zero",
-      "accountRequired": "Pick an account"
-    }
+    "alreadyPaid": "Someone else just updated this payment — nothing was doubled. Data is refreshed, check the state and try again."
   },
   "cancelPayment": {
     "title": "Cancel the payment?",
@@ -93,5 +84,6 @@
     "confirm": "Cancel payment",
     "done": "Payment cancelled",
     "empty": "No payments"
-  }
+  },
+  "confirmedBy": "Confirmed by {name} · {date}"
 }

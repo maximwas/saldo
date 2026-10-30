@@ -1,9 +1,10 @@
+import { getLedgerRates } from '@/lib/finance/ledger-fx.api'
+import { listAccountOptions, listCategoryOptions } from '@/lib/finance/ledger-options.api'
 import type { FxRate } from '@/lib/money/fx.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import type {
   AccountOption,
   CategoryOption,
-  Currency,
   OperationFilters,
   OperationRow,
   OperationsData,
@@ -55,6 +56,10 @@ export async function listOperations(client: SaldoClient, { ledgerId, filters }:
 
   if (filters.categoryId) {
     query = query.eq('category_id', filters.categoryId)
+  }
+
+  if (filters.createdBy) {
+    query = query.eq('created_by', filters.createdBy)
   }
 
   if (filters.type === 'expense') {
@@ -145,57 +150,18 @@ export type FormOptions = {
   rates: FxRate[]
 }
 
-/** accounts, categories and FX rates the forms and the list need; kept here because features do not import each other */
+/** accounts, categories and FX rates the forms and the list need (shared loaders: features do not import each other) */
 export async function getFormOptions(client: SaldoClient, ledgerId: string): Promise<FormOptions> {
   const [accounts, categories, rates] = await Promise.all([
-    client.from('accounts').select('id, name, currency, archived_at').eq('ledger_id', ledgerId).order('sort_order'),
-    client
-      .from('categories')
-      .select('id, name, kind, color, parent_id, archived_at')
-      .eq('ledger_id', ledgerId)
-      .order('sort_order'),
-    client
-      .from('fx_rates')
-      .select('base_currency, quote_currency, rate, rate_on, source')
-      .eq('ledger_id', ledgerId)
-      .order('rate_on', { ascending: false })
-      .limit(500),
+    listAccountOptions(client, ledgerId),
+    listCategoryOptions(client, ledgerId),
+    getLedgerRates(client, ledgerId),
   ])
 
-  if (accounts.error) {
-    throw accounts.error
-  }
-
-  if (categories.error) {
-    throw categories.error
-  }
-
-  if (rates.error) {
-    throw rates.error
-  }
-
   return {
-    accounts: accounts.data.map((account) => ({
-      id: account.id,
-      name: account.name,
-      currency: account.currency as Currency,
-      archived: account.archived_at !== null,
-    })),
-    categories: categories.data.map((category) => ({
-      id: category.id,
-      name: category.name,
-      kind: category.kind === 'income' ? 'income' : 'expense',
-      color: category.color,
-      parentId: category.parent_id,
-      archived: category.archived_at !== null,
-    })),
-    rates: rates.data.map((rate) => ({
-      baseCurrency: rate.base_currency,
-      quoteCurrency: rate.quote_currency,
-      rate: rate.rate,
-      rateOn: rate.rate_on,
-      source: rate.source === 'manual' ? 'manual' : 'reference',
-    })),
+    accounts,
+    categories,
+    rates,
   }
 }
 

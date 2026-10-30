@@ -26,5 +26,6 @@
   "accountRequired": "Pick an account",
   "oneOperationSource": "Pick a new operation or an existing one, not both",
   "kindDirection": "The operation type does not match its direction",
-  "required": "Fill in this field"
+  "required": "Fill in this field",
+  "amountOptionalInvalid": "Enter an amount above zero or leave it empty"
 }

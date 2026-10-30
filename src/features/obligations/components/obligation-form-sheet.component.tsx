@@ -1,6 +1,5 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
@@ -16,6 +15,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
+import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localDate } from '@/lib/utils/clock.utils'
@@ -27,7 +27,6 @@ import {
   toCreateObligationInput,
   toUpdateObligationInput,
 } from '../schemas/obligation-form.schema'
-import { withTranslatedErrors } from '../utils/form-resolver.utils'
 
 type ObligationFormSheetProps = {
   /** null = create */
@@ -47,9 +46,7 @@ export function ObligationFormSheet({ obligation, options, onClose }: Obligation
   const create = useCreateObligation()
   const update = useUpdateObligation()
   const form = useForm<z.input<typeof obligationFormSchema>, unknown, ObligationFormValues>({
-    resolver: withTranslatedErrors(zodResolver(obligationFormSchema), (key) =>
-      translate(`form.errors.${key}` as 'form.errors.titleRequired'),
-    ),
+    resolver: useZodResolver(obligationFormSchema),
     defaultValues: {
       title: obligation?.title ?? '',
       direction: obligation?.direction ?? 'out',

@@ -22,6 +22,7 @@ export function useOperationFilters() {
         period: null,
         account: null,
         category: null,
+        who: null,
         type: null,
       }),
   }

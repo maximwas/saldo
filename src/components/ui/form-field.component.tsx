@@ -1,4 +1,3 @@
-import { useTranslations } from 'next-intl'
 import { type Control, Controller, type ControllerRenderProps, type FieldPath, type FieldValues } from 'react-hook-form'
 import { Field, type FieldControlProps } from './field.component'
 
@@ -11,7 +10,7 @@ type FormFieldProps<Values extends FieldValues, Name extends FieldPath<Values>> 
   render: (field: ControllerRenderProps<Values, Name>) => React.ReactElement<FieldControlProps>
 }
 
-// react-hook-form glue: Controller + Field in one tag, so every form shows the schema error under its control
+// react-hook-form glue: Controller + Field in one tag; messages arrive translated from useZodResolver (src/lib/forms)
 export function FormField<Values extends FieldValues, Name extends FieldPath<Values>>({
   control,
   name,
@@ -19,19 +18,12 @@ export function FormField<Values extends FieldValues, Name extends FieldPath<Val
   hint,
   render,
 }: FormFieldProps<Values, Name>) {
-  // schema messages are keys of the errors namespace (docs/conventions §3b); translated here once for every form
-  const translateErrors = useTranslations('errors')
-
   return (
     <Controller
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <Field
-          label={label}
-          hint={hint}
-          error={fieldState.error?.message ? translateErrors(fieldState.error.message as never) : undefined}
-        >
+        <Field label={label} hint={hint} error={fieldState.error?.message}>
           {render(field)}
         </Field>
       )}

@@ -19,5 +19,6 @@
   "toast": {
     "retry": "Retry",
     "undo": "Undo"
-  }
+  },
+  "author": "Author: {name}"
 }
