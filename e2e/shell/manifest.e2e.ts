@@ -46,3 +46,13 @@ test('the favicon and the Apple touch icon are public', async ({ request }) => {
     expect(file.status(), name).toBe(200)
   }
 })
+
+test('the manifest link sits in <head>, where Chrome looks for it to offer install', async ({ page }) => {
+  await page.goto('/login')
+
+  const parents = await page.locator('link[rel="manifest"]').evaluateAll((links) => {
+    return links.map((link) => link.parentElement?.tagName)
+  })
+
+  expect(parents).toContain('HEAD')
+})
