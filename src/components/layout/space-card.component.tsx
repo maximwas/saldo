@@ -49,7 +49,7 @@ export function SpaceCard() {
             variant="ghost"
             render={<Link href="/settings" />}
             nativeButton={false}
-            className="flex-1 cursor-pointer gap-1.5 bg-primary-soft text-label font-semibold"
+            className="min-w-0 flex-1 shrink basis-0 cursor-pointer gap-1.5 bg-primary-soft text-label font-semibold"
           >
             <UserPlus aria-hidden size={16} />
             {translate('space.invite')}

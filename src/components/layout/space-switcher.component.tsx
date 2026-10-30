@@ -73,7 +73,7 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
   if (platform === 'button') {
     return (
       <Menu.Root>
-        <Menu.Trigger className="flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-subtle text-label font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <Menu.Trigger className="flex h-11 min-w-0 flex-1 basis-0 cursor-pointer items-center whitespace-nowrap justify-center gap-1.5 rounded-md bg-subtle text-label font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary">
           {translate('space.switch')}
           <ChevronDown aria-hidden size={16} />
         </Menu.Trigger>
