@@ -6,6 +6,7 @@ const CARD = '0b6f7a52-1d2e-4c3b-9a8f-1e2d3c4b5a69'
 const EURO = '1c7a8b63-2e3f-4d4c-8b9a-2f3e4d5c6b7a'
 const LEDGER = '7c1d2e3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f'
 const TRANSFER = '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b'
+const BANK_FEES = '4f5a6b7c-8d9e-4f0a-9b1c-2d3e4f5a6b7d'
 
 const clock = {
   timeZone: 'Europe/Kyiv',
@@ -20,6 +21,7 @@ const exchange: TransferFormValues = {
   toAmount: '800',
   toCurrency: 'EUR',
   fee: '',
+  feeCategoryId: null,
   occurredOn: '2026-10-30',
   note: '',
 }
@@ -62,6 +64,7 @@ describe('toCreateTransferInput', () => {
       {
         ...exchange,
         fee: '15',
+        feeCategoryId: BANK_FEES,
       },
       clock,
       ids,
@@ -73,6 +76,7 @@ describe('toCreateTransferInput', () => {
       from_amount_minor: 3_320_000,
       to_amount_minor: 80_000,
       fee_minor: 1_500,
+      fee_category_id: BANK_FEES,
       note: null,
     })
   })
@@ -83,6 +87,7 @@ describe('toCreateTransferInput', () => {
         ...exchange,
         toCurrency: 'UAH',
         toAmount: '',
+        feeCategoryId: BANK_FEES,
       },
       clock,
       ids,
@@ -90,5 +95,6 @@ describe('toCreateTransferInput', () => {
 
     expect(input.to_amount_minor).toBe(3_320_000)
     expect(input.fee_minor).toBeNull()
+    expect(input.fee_category_id).toBeNull()
   })
 })

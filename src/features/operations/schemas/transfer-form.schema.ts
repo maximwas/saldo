@@ -19,6 +19,8 @@ export const transferFormSchema = z
     toCurrency: z.enum(CURRENCIES),
     /** empty = no fee */
     fee: z.string(),
+    /** expense category of the fee */
+    feeCategoryId: z.uuid().nullable(),
     occurredOn: z.iso.date(),
     note: z.string().max(500),
   })
@@ -70,6 +72,7 @@ export function toCreateTransferInput(
       values.toAmount.trim() === '' ? fromAmountMinor : validatedMinor(values.toAmount, values.toCurrency),
     to_currency: values.toCurrency,
     fee_minor: values.fee.trim() === '' ? null : validatedMinor(values.fee, values.fromCurrency),
+    fee_category_id: values.fee.trim() === '' ? null : values.feeCategoryId,
     occurred_at: toOccurredAt(values.occurredOn, clock),
     occurred_on: values.occurredOn,
     note: values.note.trim() || null,
