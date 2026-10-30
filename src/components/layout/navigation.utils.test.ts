@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { NavLink } from '@/constants/navigation.constants'
-import { activeHref, isMoreActive, pageTitleKey } from './navigation.utils'
+import { activeHref, isSpaceActive, pageTitleKey } from './navigation.utils'
 
 const OPERATIONS_LINKS: NavLink[] = [
   {
@@ -53,10 +53,10 @@ describe('pageTitleKey', () => {
   })
 })
 
-describe('isMoreActive', () => {
-  it('is active on the sections the «Ще» page lists', () => {
-    expect(isMoreActive('/budget/goals')).toBe(true)
-    expect(isMoreActive('/more')).toBe(true)
-    expect(isMoreActive('/calendar')).toBe(false)
+describe('isSpaceActive', () => {
+  it('is active on the sections the Space tab covers', () => {
+    expect(isSpaceActive('/budget/goals')).toBe(true)
+    expect(isSpaceActive('/space')).toBe(true)
+    expect(isSpaceActive('/calendar')).toBe(false)
   })
 })

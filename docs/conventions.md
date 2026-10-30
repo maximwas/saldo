@@ -102,7 +102,7 @@ saldo/
         settings/calendars/page.tsx
         settings/data/page.tsx           офлайн, експорт, видалення
         settings/security/page.tsx
-        more/page.tsx                    mobile «Ще»
+        space/page.tsx                   mobile «Простір»
       api/
         cron/reminders/route.ts
         cron/calendar-sync/route.ts

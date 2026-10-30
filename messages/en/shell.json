@@ -10,5 +10,23 @@
     "owner": "Owner",
     "editor": "Editor",
     "viewer": "Viewer"
+  },
+  "space": {
+    "switch": "Switch space",
+    "invite": "Invite",
+    "sections": "Sections",
+    "signedInAs": "Saldo · signed in as {email}",
+    "tiles": {
+      "accounts": "Accounts",
+      "budget": "Budget",
+      "subscriptions": "Subscriptions",
+      "credits": "Credits",
+      "debts": "Debts",
+      "auto": "Auto",
+      "taxes": "Taxes",
+      "statistics": "Statistics",
+      "categories": "Categories",
+      "settings": "Settings"
+    }
   }
 }

@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils/cn.utils'
 type SpaceSwitcherProps = {
   spaces: readonly LedgerSummary[]
   currentId: string
-  /** Sidebar: avatar 32, name and role, border; Topbar: avatar 24 and name only */
-  platform: 'sidebar' | 'topbar'
+  /** Sidebar: avatar 32, name and role, border; Topbar: avatar 24 and name only; button: the Space page's switch button */
+  platform: 'sidebar' | 'topbar' | 'button'
   /** *Action: Next's name for a function prop a server parent may pass to a client component */
   onSelectAction?: (spaceId: string) => void
 }
@@ -45,6 +45,43 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
     return null
   }
 
+  const popup = (
+    <Menu.Portal>
+      <Menu.Positioner align="start" className="z-50">
+        <Menu.Popup className="flex flex-col gap-0.5 rounded-inner border border-border bg-raised p-1.5 shadow-float outline-none">
+          {spaces.map((space) => (
+            <Menu.Item
+              key={space.id}
+              onClick={() => onSelectAction?.(space.id)}
+              className="flex h-14 w-72 items-center gap-3 rounded-sm px-3 outline-none data-highlighted:bg-subtle"
+            >
+              <SpaceAvatar name={space.name} size="md" />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-body font-medium text-text-primary">{space.name}</span>
+                <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
+              </span>
+              {space.id === current.id && (
+                <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
+              )}
+            </Menu.Item>
+          ))}
+        </Menu.Popup>
+      </Menu.Positioner>
+    </Menu.Portal>
+  )
+
+  if (platform === 'button') {
+    return (
+      <Menu.Root>
+        <Menu.Trigger className="flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-subtle text-label font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          {translate('space.switch')}
+          <ChevronDown aria-hidden size={16} />
+        </Menu.Trigger>
+        {popup}
+      </Menu.Root>
+    )
+  }
+
   const sidebar = platform === 'sidebar'
   const canSwitch = spaces.length > 1
 
@@ -75,28 +112,7 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
       <Menu.Trigger className={cn(boxClass, 'outline-none focus-visible:ring-2 focus-visible:ring-primary')}>
         {body}
       </Menu.Trigger>
-      <Menu.Portal>
-        <Menu.Positioner align="start" className="z-50">
-          <Menu.Popup className="flex flex-col gap-0.5 rounded-inner border border-border bg-raised p-1.5 shadow-float outline-none">
-            {spaces.map((space) => (
-              <Menu.Item
-                key={space.id}
-                onClick={() => onSelectAction?.(space.id)}
-                className="flex h-14 w-72 items-center gap-3 rounded-sm px-3 outline-none data-highlighted:bg-subtle"
-              >
-                <SpaceAvatar name={space.name} size="md" />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-body font-medium text-text-primary">{space.name}</span>
-                  <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
-                </span>
-                {space.id === current.id && (
-                  <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
-                )}
-              </Menu.Item>
-            ))}
-          </Menu.Popup>
-        </Menu.Positioner>
-      </Menu.Portal>
+      {popup}
     </Menu.Root>
   )
 }
