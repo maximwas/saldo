@@ -4,3 +4,4 @@ allowBuilds:
   unrs-resolver: false
 minimumReleaseAgeExclude:
   - knip@6.44.0
+  - lucide-react@1.65.0
