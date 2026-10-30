@@ -37,7 +37,7 @@ saldo/
   CLAUDE.md
   biome.json  .dependency-cruiser.cjs  knip.json  lefthook.yml  vitest.config.ts  playwright.config.ts  vercel.json
   next.config.ts  tsconfig.json  package.json  .env.example
-  .github/workflows/backup.yml  .github/workflows/ci.yml   (ci.yml: jobs check і e2e)
+  .github/workflows/backup.yml  .github/workflows/ci.yml   (ci.yml: jobs check і gitleaks)
   docs/                                  spec, research, design, architecture, plan, stack, conventions
   e2e/                                   Playwright (§6.3); не імпортується з src/
     global-setup.ts                      supabase db reset, 4 користувачі через admin API, вигадані демо-дані
@@ -259,6 +259,25 @@ async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
   return <p className="text-body text-text-secondary">{translate('stub', { title: translateNav(titleKey) })}</p>
 }
 ```
+
+## 3a1. Рух / анімації (ADR 28, `docs/architecture.md`)
+
+- Тривалості й криві — лише токени з `docs/design/theme.css`: `--duration-fast` 150 мс (кольори, hover, focus),
+  `--duration-base` 240 мс (плашка, поява сторінки), `--duration-slow` 360 мс (шторки, діалоги); `--ease-standard`
+  (зміна стану на місці) і `--ease-emphasized` (те, що рухається чи з'являється). У Figma руху немає, тож токени —
+  джерело правди. `transition-*` у Tailwind уже бере fast + standard; інша тривалість — `duration-(--duration-base)`.
+  Сирих `duration-200`, `ease-[…]` і чисел у `transition={{ … }}` немає.
+- JS-анімації — `motion/react` (`motion` 14.3.0). Числа — лише з `MOTION` у `src/constants/motion.constants.ts`
+  (дзеркало токенів у секундах). `MotionConfig` в `AppProviders` задає типовий перехід (base + emphasized), тож
+  компонент зазвичай не передає `transition` взагалі.
+- Анімуються лише `transform` і `opacity` (і layout через `layoutId`); не `width`/`height`/`top`.
+- `prefers-reduced-motion: reduce`: CSS-токени тривалості стають 0 мс; `MotionConfig reducedMotion="user"` вимикає
+  зсув і layout-рух, лишає opacity. Нова анімація перевіряється з емуляцією reduced motion.
+- Перемикач із кількох варіантів — `SegmentedControl` (`src/components/ui/segmented-control.component.tsx`): плашка
+  ковзає між варіантами сама. Новий перемикач не малює свою плашку.
+- Перехід між сторінками — лише контент усередині `PageTransition` у `src/app/(app)/layout.tsx`: поява без exit.
+  Оболонка (Sidebar, Topbar, TabBar, FAB) не анімується; зміна лише query (`?add=`, `?pay=`) не анімується;
+  жодних `AnimatePresence` навколо сторінок і FrozenRouter.
 
 ## 3b. Локалізація (ADR 25, `docs/architecture.md`)
 
@@ -872,8 +891,8 @@ pre-commit:
 `next typegen` перед `tsc` генерує глобальні `LayoutProps` / `PageProps` і типи `typedRoutes` у `.next/types`.
 `supabase test db` у `check` потребує запущеного локального стеку (`supabase start`).
 
-`pnpm check` e2e не запускає: він повільний (збірка + браузер). E2E — `pnpm test:e2e` локально перед PR фази й
-окремий job `e2e` у CI.
+`pnpm check` e2e не запускає: він повільний (збірка + браузер). E2E — лише `pnpm test:e2e` локально перед кожним PR, у CI
+його немає (Максим, 30.10.2026: «e2e запускаємо тільки на компі», «на гіту тільки юніт»).
 
 ### 5.6 Playwright
 
@@ -1065,40 +1084,9 @@ worker). У WebKit `setOffline` ламає навігацію під service wor
 сповіщень рівно один раз. Доставку через APNs/FCM, показ сповіщення при закритій вкладці й iOS Home Screen —
 лише вручну (Готово, коли фази 3): headless-браузер не отримує push від реальних сервісів.
 
-**CI.** Job `e2e` у `ci.yml` (без secrets, `permissions: contents: read`), паралельно з `check`:
-
-```yaml
-e2e:
-  runs-on: ubuntu-latest
-  timeout-minutes: 20
-  steps:
-    - uses: actions/checkout@v5
-    - uses: pnpm/action-setup@v4
-    - uses: actions/setup-node@v5
-      with: { node-version: 26, cache: pnpm }
-    - run: pnpm install --frozen-lockfile
-    - uses: supabase/setup-cli@v1
-      with: { version: 2.122.0 }
-    - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
-    - id: pw
-      run: echo "version=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-    - uses: actions/cache@v4
-      id: pw-cache
-      with: { path: ~/.cache/ms-playwright, key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }} }
-    - if: steps.pw-cache.outputs.cache-hit != 'true'
-      run: pnpm exec playwright install --with-deps chromium
-    - if: steps.pw-cache.outputs.cache-hit == 'true'
-      run: pnpm exec playwright install-deps chromium
-    - run: pnpm test:e2e
-    - if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: playwright-report
-        retention-days: 7
-        path: |
-          playwright-report/
-          test-results/
-```
+**CI.** E2E у CI не запускаються (Максим, 30.10.2026). GitHub Actions ганяє лише статичні перевірки й Vitest
+(job `check`) та gitleaks; pgTAP (`pnpm test:db`) і Playwright (`pnpm test:e2e`) — локально перед PR, звіт про запуск
+у описі PR.
 
 `supabase start` (а не `supabase db start`) — інакше Auth і ключі не підіймуться (supabase discussion #32522).
 Оцінка часу: стек 2–3 хв (образи Docker), install ~0,5 хв, `next build` 1–2 хв, Chromium ~1 хв (з кешем ~10 с),

@@ -25,7 +25,7 @@
 | sonner | 2.0.8 | тости | — |
 | cmdk | 1.1.1 | пошук ⌘K | — |
 | react-day-picker | 10.0.2 | вибір дати | — |
-| motion | 14.8.0 | анімації лише як відповідь на дію | — |
+| motion | 14.3.0 (MIT, 15.10.2026; 14.4+ молодші за два тижні) | анімації лише як відповідь на дію: плашка SegmentedControl (`layoutId`), поява сторінки (`useAnimate`), `MotionConfig reducedMotion="user"` (ADR 28) | View Transitions (`<ViewTransition>` + `experimental.viewTransition` — експериментальні в Next 16.4); лише CSS (ширина плашки потребує вимірювання); next-transition-router |
 | class-variance-authority | 0.7.1 | варіанти компонентів | — |
 | cn | 0.5.0 (MIT, shadcn) | `cn()` через `createCn` з токенами теми; shadcn CLI 4.23 генерує саме його | clsx + tailwind-merge (cn — їх drop-in заміна) |
 | tw-animate-css | 1.4.0 | анімації shadcn | — |
@@ -80,10 +80,10 @@
 | lefthook | 2.2.2 | pre-commit |
 | knip | 6.44.0 | невикористані файли, експорти, залежності |
 | dependency-cruiser | 18.7.0 (MIT) | правило «фічі не імпортують одна одну», `api-is-portable` |
-| @playwright/test | 1.64.1 (Apache-2.0) | e2e проти локального Supabase і `next start`, лише Chromium; `pnpm test:e2e`, окремий CI-job |
+| @playwright/test | 1.64.1 (Apache-2.0) | e2e проти локального Supabase і `next start`, лише Chromium; `pnpm test:e2e`, лише локально |
 | supabase (CLI) | 2.122.0 | міграції, локальна БД, `gen types`, `db dump` |
 | Vercel | — | деплой, `regions: ["fra1"]`, cron раз на добу; домен `saldo.maksymvasianin.com` (Cloudflare CNAME, DNS only) |
-| GitHub Actions | — | нічний бекап, CI на PR без secrets: job `check` (`pnpm check` + `supabase test db`), `gitleaks` і `e2e` (оцінка 7–12 хв; локально `pnpm test:e2e` — 59 тестів за 54 с разом із `next build`, 30.10.2026) |
+| GitHub Actions | — | нічний бекап, CI на PR без secrets: job `check` (lint, typecheck, depcruise, knip, Vitest) і `gitleaks`; pgTAP і e2e лише локально (30.10.2026; `pnpm test:e2e` — 60 тестів ≈ 1 хв разом із `next build`) |
 | gitleaks | 8.30 (MIT; лише security-патчі, drop-in заміна — betterleaks) | пошук секретів у lefthook pre-commit і CI |
 | age | 1.3 (BSD-3-Clause, apt на ubuntu-latest) | шифрування бекапу на публічний ключ |
 | pgTAP | 1.3.3 (у стеку Supabase) | тести RLS просторів (`supabase test db`); вхід ролями — хелпер `pg_temp.login`, без basejump/dbdev (`docs/conventions.md` §6.2) |

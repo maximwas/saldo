@@ -108,11 +108,11 @@ export function LoginForm() {
   if (step === 'code') {
     return (
       <form onSubmit={submitCode} className="flex flex-col gap-4">
-        <span className="flex size-10 items-center justify-center rounded-full bg-cat-blue-soft">
+        <span className="flex size-10 items-center justify-center self-center rounded-full bg-cat-blue-soft">
           <ShieldCheckIcon />
         </span>
-        <h1 className="font-display text-number text-text-primary">{translate('codeTitle')}</h1>
-        <p className="text-body text-text-secondary">{translate('codeHint')}</p>
+        <h1 className="text-center font-display text-number text-text-primary">{translate('codeTitle')}</h1>
+        <p className="text-center text-body text-text-secondary">{translate('codeHint')}</p>
         <div className="flex flex-col gap-1.5">
           <label htmlFor={ids.code} className="text-label font-medium text-text-secondary">
             {translate('code')}
@@ -146,8 +146,8 @@ export function LoginForm() {
 
   return (
     <form onSubmit={submitPassword} className="flex flex-col gap-4 md:gap-5">
-      <Brand className="hidden md:flex" />
-      <div className="flex flex-col gap-1">
+      <Brand className="hidden self-center md:flex" />
+      <div className="flex flex-col items-center gap-1 text-center">
         <h1 className="font-display text-number text-text-primary md:text-page-title">{translate('title')}</h1>
         <p className="hidden text-body text-text-secondary md:block">{translate('subtitle')}</p>
       </div>
@@ -179,9 +179,12 @@ export function LoginForm() {
       <Button type="submit" className="w-full" disabled={isPending}>
         {translate('submit')}
       </Button>
-      <div className="hidden gap-2 border-t border-border pt-4 md:flex">
-        <InfoIcon />
-        <p className="flex-1 text-caption text-text-secondary">
+      <div className="hidden gap-2 border-t border-border pt-4 text-caption md:flex">
+        {/* icon box = one text line (h-lh), so the icon is centred on the first line, however many lines follow */}
+        <span className="flex h-lh items-center">
+          <InfoIcon />
+        </span>
+        <p className="flex-1 text-text-secondary">
           {translate('inviteOnly')} {translate('twoStepNote')}
         </p>
       </div>
