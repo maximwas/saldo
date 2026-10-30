@@ -1,4 +1,4 @@
-import type { FxRate } from '@/lib/money/fx.utils'
+import { type FxRate, toFxRate } from '@/lib/money/fx.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 
 export type LedgerFx = {
@@ -20,13 +20,7 @@ export async function getLedgerRates(supabase: SaldoClient, ledgerId: string): P
     throw error
   }
 
-  return data.map((row) => ({
-    baseCurrency: row.base_currency,
-    quoteCurrency: row.quote_currency,
-    rate: row.rate,
-    rateOn: row.rate_on,
-    source: row.source as FxRate['source'],
-  }))
+  return data.map(toFxRate)
 }
 
 /** the space's base currency and its FX rates */

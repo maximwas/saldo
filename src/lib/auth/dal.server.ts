@@ -3,11 +3,11 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import type { AppTheme } from '@/constants/theme.constants'
+import { pickMembership, toActiveLedger } from '@/lib/auth/active-ledger.utils'
 import { logger } from '@/lib/logger/logger.server'
 import { logPgError } from '@/lib/supabase/pg-error.server'
 import { getServerSupabase } from '@/lib/supabase/server-client'
 import type { ActiveLedger } from '@/store/ledger.store'
-import type { LedgerRole } from '@/types/supabase.types'
 
 export const LEDGER_COOKIE = 'saldo-ledger'
 
@@ -97,25 +97,7 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   }
 
   const rows = memberships.data ?? []
-  const preferred = [cookieStore.get(LEDGER_COOKIE)?.value, settings?.last_ledger_id]
-  const membership =
-    preferred.map((ledgerId) => rows.find((row) => row.ledger_id === ledgerId)).find(Boolean) ??
-    rows.find((row) => row.role === 'owner') ??
-    rows[0]
+  const membership = pickMembership(rows, [cookieStore.get(LEDGER_COOKIE)?.value, settings?.last_ledger_id])
 
-  if (!membership) {
-    return null
-  }
-
-  return {
-    ledgerId: membership.ledger_id,
-    role: membership.role as LedgerRole,
-    timeZone: membership.ledgers?.time_zone ?? 'Europe/Kyiv',
-    baseCurrency: membership.ledgers?.base_currency ?? 'UAH',
-    ledgers: rows.map((row) => ({
-      id: row.ledger_id,
-      name: row.ledgers?.name ?? '',
-      role: row.role as LedgerRole,
-    })),
-  }
+  return membership ? toActiveLedger(membership, rows) : null
 })

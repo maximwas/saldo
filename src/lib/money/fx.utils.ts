@@ -12,6 +12,23 @@ export type FxRate = {
   source: 'manual' | 'reference'
 }
 
+/** the columns of `fx_rates` the app reads */
+export type FxRateRow = {
+  base_currency: string
+  quote_currency: string
+  rate: string | number
+  rate_on: string
+  source: string
+}
+
+export const toFxRate = (row: FxRateRow): FxRate => ({
+  baseCurrency: row.base_currency,
+  quoteCurrency: row.quote_currency,
+  rate: row.rate,
+  rateOn: row.rate_on,
+  source: row.source as FxRate['source'],
+})
+
 /** the same names as the rounding column of tax rules; half_up rounds half away from zero, like Postgres round() */
 export type RoundingMode = 'half_up' | 'half_even' | 'down'
 
@@ -24,19 +41,25 @@ const DECIMAL_ROUNDING: Record<RoundingMode, Decimal.Rounding> = {
 // enough significant digits for numeric(20,10) multiplied twice (cross rate) and a bigint amount
 const Exact = Decimal.clone({ precision: 60 })
 
+function isPair(row: FxRate, from: string, target: string, date: string) {
+  return row.baseCurrency === from && row.quoteCurrency === target && row.rateOn <= date
+}
+
+/** a candidate beats the best so far when it is newer, or equally new and manual */
+function beats(candidate: FxRate, best: FxRate | null) {
+  if (best === null || candidate.rateOn > best.rateOn) {
+    return true
+  }
+
+  return candidate.rateOn === best.rateOn && candidate.source === 'manual'
+}
+
 /** the newest rate of the exact pair on or before `on`; manual beats reference on the same day */
 function directRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
   let best: FxRate | null = null
 
   for (const row of rates) {
-    if (row.baseCurrency !== from || row.quoteCurrency !== target || row.rateOn > date) {
-      continue
-    }
-
-    const newer = best === null || row.rateOn > best.rateOn
-    const manualSameDay = best !== null && row.rateOn === best.rateOn && row.source === 'manual'
-
-    if (newer || manualSameDay) {
+    if (isPair(row, from, target, date) && beats(row, best)) {
       best = row
     }
   }
@@ -68,17 +91,18 @@ export function findRate(rates: FxRate[], from: string, target: string, date: st
     return direct
   }
 
+  return crossRate(rates, from, target, date)
+}
+
+/** from → bridge → target through the first currency both legs are known for */
+function crossRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
   const bridges = new Set(rates.flatMap((row) => [row.baseCurrency, row.quoteCurrency]))
 
   for (const bridge of bridges) {
-    if (bridge === from || bridge === target) {
-      continue
-    }
-
     const first = pairRate(rates, from, bridge, date)
     const second = first && pairRate(rates, bridge, target, date)
 
-    if (first && second) {
+    if (bridge !== from && bridge !== target && first && second) {
       return first.times(second)
     }
   }

@@ -45,16 +45,36 @@ export async function findInvite(token: string): Promise<InviteRecord | null> {
     admin.auth.admin.getUserById(data.created_by),
   ])
 
-  return {
-    ledgerId: data.ledger_id,
-    ledgerName: data.ledgers?.name ?? '',
-    role: data.role as LedgerRole,
-    email: data.email,
+  return toInviteRecord(data, {
     inviterName: member.data?.display_name ?? null,
     inviterEmail: inviter.data.user?.email ?? null,
-    expiresAt: data.expires_at,
-    acceptedAt: data.accepted_at,
-    acceptedBy: data.accepted_by,
-    revokedAt: data.revoked_at,
-  }
+  })
 }
+
+type InviteRow = {
+  ledger_id: string
+  ledgers: { name: string } | null
+  role: string
+  email: string
+  expires_at: string
+  accepted_at: string | null
+  accepted_by: string | null
+  revoked_at: string | null
+}
+
+type Inviter = {
+  inviterName: string | null
+  inviterEmail: string | null
+}
+
+const toInviteRecord = (row: InviteRow, inviter: Inviter): InviteRecord => ({
+  ledgerId: row.ledger_id,
+  ledgerName: row.ledgers?.name ?? '',
+  role: row.role as LedgerRole,
+  email: row.email,
+  ...inviter,
+  expiresAt: row.expires_at,
+  acceptedAt: row.accepted_at,
+  acceptedBy: row.accepted_by,
+  revokedAt: row.revoked_at,
+})

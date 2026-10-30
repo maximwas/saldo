@@ -263,6 +263,44 @@ async function Stub({ params }: Pick<PageProps<'/[...slug]'>, 'params'>) {
 }
 ```
 
+## 3a2. Функції (Максим, 30.10.2026)
+
+Код поза компонентами складається з малих іменованих функцій, і кожна робить одне. Api-функція читається як
+«запит → перевірка помилки → мапінг».
+
+- Рядок БД → доменний об'єкт іде через іменований мапер (`toAccount(row, context)`), а не через довгу стрілку в `.map`.
+- Похідні значення — малі чисті функції в `utils/*.utils.ts` (або `src/lib/**`), кожна з Vitest-тестом.
+- Жодних вкладених тернарників і повторюваних умов в об'єктних літералах (Biome `noNestedTernary`).
+- Ліміти для файлів не-компонентів (ESLint, `eslint.config.mjs`): `complexity` 8, `max-lines-per-function` 40
+  (без порожніх рядків і коментарів), `max-depth` 3. Компоненти, `page.tsx`, `layout.tsx` і тести виключені: JSX
+  довгий за природою.
+- Гроші лишаються в `src/lib/money`; невідоме — `null`, ніколи не 0.
+
+Було (`getAccounts`, вкладені тернарники й умова `row.currency === base` двічі всередині літералу):
+
+```ts
+accounts: accounts.data.map((row) => {
+  const rate = row.currency === base ? null : findRate(rates, row.currency, base, today)
+
+  return {
+    id: row.id,
+    // ... ще 14 полів
+    baseMinor: row.currency === base ? balanceMinor : rate && convertMinor(balanceMinor, row.currency, base, rate, 'half_up'),
+    rate: rate?.toFixed() ?? null,
+  }
+})
+```
+
+Стало (мапер `toAccount` у `accounts.utils.ts`, похідні `accountRate` / `accountBaseMinor` у
+`src/lib/finance/base-balance.utils.ts`, усе з тестами):
+
+```ts
+return {
+  baseCurrency: ledgerFx.baseCurrency,
+  accounts: accounts.data.map((row) => toAccount(row, context)),
+}
+```
+
 ## 3a1. Рух / анімації (ADR 28, `docs/architecture.md`)
 
 - Тривалості й криві — лише токени з `docs/design/theme.css`: `--duration-fast` 150 мс (кольори, hover, focus),

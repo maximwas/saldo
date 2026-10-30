@@ -1,5 +1,4 @@
 import { getLedgerFx } from '@/lib/finance/ledger-fx.api'
-import { convertMinor, findRate } from '@/lib/money/fx.utils'
 import { versionConflict } from '@/lib/supabase/version-conflict.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import {
@@ -8,7 +7,7 @@ import {
   type UpdateAccountInput,
   updateAccountInputSchema,
 } from '../schemas/account-input.schema'
-import type { AccountKind, AccountView } from '../utils/accounts.utils'
+import { type AccountView, toAccount } from '../utils/accounts.utils'
 
 type AccountsParams = {
   ledgerId: string
@@ -44,39 +43,16 @@ export async function getAccounts(supabase: SaldoClient, { ledgerId, today }: Ac
     throw balances.error
   }
 
-  const balanceOf = new Map(balances.data.map((row) => [row.account_id, row.balance_minor]))
+  const context = {
+    balanceOf: new Map(balances.data.map((row) => [row.account_id, row.balance_minor])),
+    baseCurrency: ledgerFx.baseCurrency,
+    rates: ledgerFx.rates,
+    today,
+  }
 
   return {
     baseCurrency: ledgerFx.baseCurrency,
-    accounts: accounts.data.map((row) => {
-      const balanceMinor = balanceOf.get(row.id) ?? row.opening_balance_minor
-      const rate =
-        row.currency === ledgerFx.baseCurrency
-          ? null
-          : findRate(ledgerFx.rates, row.currency, ledgerFx.baseCurrency, today)
-
-      return {
-        id: row.id,
-        name: row.name,
-        kind: row.kind as AccountKind,
-        currency: row.currency,
-        color: row.color,
-        icon: row.icon,
-        openingBalanceMinor: row.opening_balance_minor,
-        openingBalanceOn: row.opening_balance_on,
-        includeInTotal: row.include_in_total,
-        includeInAvailable: row.include_in_available,
-        sortOrder: row.sort_order,
-        archivedAt: row.archived_at,
-        version: row.version,
-        balanceMinor,
-        baseMinor:
-          row.currency === ledgerFx.baseCurrency
-            ? balanceMinor
-            : rate && convertMinor(balanceMinor, row.currency, ledgerFx.baseCurrency, rate, 'half_up'),
-        rate: rate?.toFixed() ?? null,
-      }
-    }),
+    accounts: accounts.data.map((row) => toAccount(row, context)),
   }
 }
 

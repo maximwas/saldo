@@ -7,7 +7,7 @@ import {
   type UpdateCategoryInput,
   updateCategoryInputSchema,
 } from '../schemas/category-input.schema'
-import type { CategoryKind, CategoryView, SortChange } from '../utils/categories.utils'
+import { type CategoryView, type SortChange, toCategory } from '../utils/categories.utils'
 
 /** every category of the space, active and archived; the tree is built from the flat list (categories.utils) */
 export async function getCategories(supabase: SaldoClient, ledgerId: string): Promise<CategoryView[]> {
@@ -21,17 +21,7 @@ export async function getCategories(supabase: SaldoClient, ledgerId: string): Pr
     throw error
   }
 
-  return data.map((row) => ({
-    id: row.id,
-    kind: row.kind as CategoryKind,
-    parentId: row.parent_id,
-    name: row.name,
-    color: row.color,
-    icon: row.icon,
-    sortOrder: row.sort_order,
-    archivedAt: row.archived_at,
-    version: row.version,
-  }))
+  return data.map(toCategory)
 }
 
 type CountOperationsParams = {

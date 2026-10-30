@@ -81,49 +81,43 @@ function sumInBase(
   return total
 }
 
+const accountMoney = (account: AvailableAccount): Money => ({
+  amountMinor: account.balanceMinor,
+  currency: account.currency,
+})
+
+const obligationMoney = (obligation: AvailableObligation): Money => ({
+  amountMinor: obligation.remainingMinor,
+  currency: obligation.currency,
+})
+
+/** null when either part is unknown, never 0 */
+const minusOrNull = (first: number | null, second: number | null) =>
+  first === null || second === null ? null : first - second
+
+/** open obligations due by untilOn, the earliest first */
+function dueObligations({ obligations, untilOn }: AvailableMoneyInput) {
+  return obligations
+    .filter((obligation) => OPEN_STATES.has(obligation.state) && obligation.dueOn <= untilOn)
+    .sort((first, second) => first.dueOn.localeCompare(second.dueOn))
+}
+
 /** "available until a date" (§3) without reserves yet: included balances − unpaid obligations due by untilOn */
 export function computeAvailableMoney(input: AvailableMoneyInput): AvailableMoney {
   const today = localDate(input.now, input.timeZone)
   const unknownRates = new Set<string>()
-  const due = input.obligations
-    .filter((obligation) => OPEN_STATES.has(obligation.state) && obligation.dueOn <= input.untilOn)
-    .sort((first, second) => first.dueOn.localeCompare(second.dueOn))
+  const due = dueObligations(input)
   const outgoing = due.filter((obligation) => obligation.direction === 'out')
   const incoming = due.filter((obligation) => obligation.direction === 'in')
-
-  const balancesMinor = sumInBase(
-    input.accounts.map((account) => ({
-      amountMinor: account.balanceMinor,
-      currency: account.currency,
-    })),
-    input,
-    today,
-    unknownRates,
-  )
-  const obligationsMinor = sumInBase(
-    outgoing.map((obligation) => ({
-      amountMinor: obligation.remainingMinor,
-      currency: obligation.currency,
-    })),
-    input,
-    today,
-    unknownRates,
-  )
-  const expectedIncomeMinor = sumInBase(
-    incoming.map((obligation) => ({
-      amountMinor: obligation.remainingMinor,
-      currency: obligation.currency,
-    })),
-    input,
-    today,
-    unknownRates,
-  )
+  const sum = (items: Money[]) => sumInBase(items, input, today, unknownRates)
+  const balancesMinor = sum(input.accounts.map(accountMoney))
+  const obligationsMinor = sum(outgoing.map(obligationMoney))
 
   return {
-    availableMinor: balancesMinor === null || obligationsMinor === null ? null : balancesMinor - obligationsMinor,
+    availableMinor: minusOrNull(balancesMinor, obligationsMinor),
     balancesMinor,
     obligationsMinor,
-    expectedIncomeMinor,
+    expectedIncomeMinor: sum(incoming.map(obligationMoney)),
     obligationIds: outgoing.map((obligation) => obligation.id),
     unknownAmountIds: outgoing
       .filter((obligation) => obligation.remainingMinor === null)

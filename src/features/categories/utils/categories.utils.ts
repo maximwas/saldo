@@ -83,3 +83,28 @@ export function moveWithinSiblings(
 /** next sort_order among the siblings a new category joins */
 export const nextCategorySortOrder = (siblings: readonly Pick<CategoryView, 'sortOrder'>[]) =>
   siblings.reduce((max, sibling) => Math.max(max, sibling.sortOrder), 0) + 1
+
+/** the columns getCategories selects from `categories` */
+export type CategoryRow = {
+  id: string
+  kind: string
+  parent_id: string | null
+  name: string
+  color: string | null
+  icon: string | null
+  sort_order: number
+  archived_at: string | null
+  version: number
+}
+
+export const toCategory = (row: CategoryRow): CategoryView => ({
+  id: row.id,
+  kind: row.kind as CategoryKind,
+  parentId: row.parent_id,
+  name: row.name,
+  color: row.color,
+  icon: row.icon,
+  sortOrder: row.sort_order,
+  archivedAt: row.archived_at,
+  version: row.version,
+})
