@@ -4,6 +4,12 @@
     "signInFailed": "Could not sign in. Please try again",
     "invalidCode": "Wrong code. Please try again"
   },
+  "nameRequired": "Enter a name",
+  "nameTooLong": "The name is too long: 80 characters at most",
+  "amountRequired": "Enter an amount (0 for a zero balance)",
+  "dateInvalid": "Enter a date",
+  "rateInvalid": "Enter a rate as a number above zero, up to 10 decimal places",
+  "sameCurrency": "A rate is for another currency, not the base one",
   "db": {
     "forbidden": "You don't have permission to do this",
     "conflict": "This record was changed on another device or by another person. Refresh and try again",

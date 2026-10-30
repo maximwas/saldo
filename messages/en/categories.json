@@ -1,0 +1,91 @@
+{
+  "loadFailed": "Could not load categories. Refresh the page.",
+  "kindLabel": "Category kind",
+  "tabs": {
+    "expense": "Expenses · {count}",
+    "income": "Income · {count}"
+  },
+  "title": {
+    "expense": "Expenses",
+    "income": "Income"
+  },
+  "kind": {
+    "expense": "Expenses",
+    "income": "Income"
+  },
+  "new": "New category",
+  "empty": "No categories yet",
+  "subcategories": "{count, plural, one {# subcategory} other {# subcategories}}",
+  "archiveTitle": "Archive · {count}",
+  "archivedBadge": "Archived",
+  "menu": {
+    "label": "Category actions",
+    "up": "Move up",
+    "down": "Move down",
+    "edit": "Edit",
+    "addSub": "Add subcategory",
+    "archive": "Archive",
+    "restore": "Restore from archive"
+  },
+  "form": {
+    "createTitle": "New category",
+    "editTitle": "Edit category",
+    "name": "Name",
+    "kind": "Kind",
+    "parent": "Parent category",
+    "noParent": "None (a top-level category)",
+    "color": "Colour",
+    "icon": "Icon",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Category saved"
+  },
+  "colors": {
+    "neutral": "Neutral",
+    "blue": "Blue",
+    "cyan": "Cyan",
+    "green": "Green",
+    "lime": "Lime",
+    "orange": "Orange",
+    "pink": "Pink",
+    "purple": "Purple",
+    "red": "Red",
+    "teal": "Teal",
+    "yellow": "Yellow"
+  },
+  "icons": {
+    "credit-card": "Card",
+    "banknote": "Money",
+    "piggy-bank": "Piggy bank",
+    "house": "Home",
+    "shopping-basket": "Basket",
+    "coffee": "Coffee",
+    "bus": "Transport",
+    "car": "Car",
+    "repeat": "Subscription",
+    "heart-pulse": "Health",
+    "package": "Purchases",
+    "plane": "Travel",
+    "landmark": "Taxes",
+    "tag": "Tag",
+    "gift": "Gift",
+    "briefcase": "Work"
+  },
+  "archive": {
+    "title": "Archive «{name}»?",
+    "summary": "{count, plural, =0 {This category has no operations.} one {The category and its subcategories have # operation.} other {The category and its subcategories have # operations.}}",
+    "moveTo": "Move operations to",
+    "moveHint": "Operations are never destroyed: move them or keep them in the archived category.",
+    "keep": "Do not move",
+    "info": "An archived category leaves the pickers, while history and statistics stay. Subcategories are archived with it.",
+    "confirm": "Archive",
+    "done": "Category archived"
+  },
+  "howTitle": "How it works",
+  "how": {
+    "order": "Change the order from the row menu: «Move up» and «Move down». Forms list categories the same way.",
+    "delete": "Deleting never destroys operations: move them to another category or archive.",
+    "archive": "An archived category leaves the pickers, while history and statistics stay.",
+    "taxes": "The «Taxes» category does not define a tax base — that is a separate setting."
+  }
+}
