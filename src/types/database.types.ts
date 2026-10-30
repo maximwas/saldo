@@ -1305,6 +1305,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      list_orphan_attachments: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       pay_obligation: {
         Args: {
           p_amount_minor: number

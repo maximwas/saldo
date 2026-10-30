@@ -2,7 +2,7 @@
 -- Composite FKs keep every reference inside one space; RPCs are idempotent by client id and raise PT409 on a stale
 -- version. Fictional data only.
 begin;
-select plan(68);
+select plan(74);
 
 create function pg_temp.login(p_user uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_user, 'role', 'authenticated')::text, true);
@@ -203,6 +203,34 @@ select is(
      pg_temp.op('b0000000-0000-4000-8000-000000000005', 'expense', 'a0000000-0000-4000-8000-000000000002', 300, 'USD'))),
   12450::bigint, 'a USD payment of a UAH obligation is converted by the space rate');
 
+-- editing a paying operation keeps the payment and the obligation consistent (update_operation)
+insert into public.obligations (id, ledger_id, title, occurrence_on, due_on, planned_amount_minor, currency)
+values ('d0000000-0000-4000-8000-000000000004', pg_temp.space('shared'), 'Електрика', current_date + 5, current_date + 5,
+  20000, 'UAH');
+select is(
+  (select state from public.pay_obligation('e0000000-0000-4000-8000-000000000007', 'd0000000-0000-4000-8000-000000000004', 1, 20000,
+     pg_temp.op('b0000000-0000-4000-8000-000000000008', 'expense', 'a0000000-0000-4000-8000-000000000001', 20000, 'UAH'))),
+  'paid', 'an operation pays the electricity in full');
+select throws_ok(
+  $$ select public.update_operation('b0000000-0000-4000-8000-000000000008', 1, '{"amount_minor": 15000}') $$,
+  '23514', null, 'a paying operation cannot go below the part it paid');
+select throws_ok(
+  $$ select public.update_operation('b0000000-0000-4000-8000-000000000008', 1,
+       '{"account_id": "a0000000-0000-4000-8000-000000000002", "currency": "USD", "amount_minor": 500}') $$,
+  '22023', null, 'a paying operation keeps its currency');
+select is(
+  (public.update_operation('b0000000-0000-4000-8000-000000000008', 1, '{"amount_minor": 25000}')).amount_minor,
+  25000::bigint, 'a paying operation can grow');
+select is((select state from public.obligation_states where obligation_id = 'd0000000-0000-4000-8000-000000000004'), 'paid',
+  'raising the paying operation keeps the obligation paid');
+
+-- «duplicate» (plan 1.8) keeps the link to the operation it copies
+select is(
+  (public.create_operation(pg_temp.op('b0000000-0000-4000-8000-000000000009', 'expense',
+     'a0000000-0000-4000-8000-000000000001', 25000, 'UAH')
+     || '{"duplicated_from_id": "b0000000-0000-4000-8000-000000000008"}')).duplicated_from_id,
+  'b0000000-0000-4000-8000-000000000008'::uuid, 'a duplicate stores the operation it was copied from');
+
 -- archive with a move
 select lives_ok(
   $$ select public.create_operation(pg_temp.op('b0000000-0000-4000-8000-000000000006', 'expense', 'a0000000-0000-4000-8000-000000000001',
@@ -232,7 +260,7 @@ reset role;
 
 -- editor
 select pg_temp.login('00000000-0000-4000-8000-000000000102');
-select is((select count(*)::int from public.operations where ledger_id = pg_temp.space('shared')), 5, 'editor sees the shared operations');
+select is((select count(*)::int from public.operations where ledger_id = pg_temp.space('shared')), 7, 'editor sees the shared operations');
 select lives_ok(
   $$ select public.create_operation(pg_temp.op('b0000000-0000-4000-8000-000000000007', 'income', 'a0000000-0000-4000-8000-000000000001',
        5000, 'UAH', pg_temp.cat('Фриланс', 'income'))) $$,

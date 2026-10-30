@@ -11,6 +11,7 @@ import { updateOperationInputSchema } from './update-operation-input.schema'
 const ACCOUNT = '0b6f7a52-1d2e-4c3b-9a8f-1e2d3c4b5a69'
 const LEDGER = '7c1d2e3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f'
 const OPERATION = '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b'
+const SOURCE = '5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d'
 
 // Friday 30.10.2026, 14:00 in Kyiv
 const clock = {
@@ -81,8 +82,19 @@ describe('toCreateOperationInput', () => {
       counterparty: 'Сільпо',
       note: null,
       refund_of_id: null,
+      duplicated_from_id: null,
     })
     expect(createOperationInputSchema.parse(input)).toEqual(input)
+  })
+
+  it('keeps the link to the operation a duplicate copies (plan 1.8)', () => {
+    const input = toCreateOperationInput(expense, clock, {
+      id: OPERATION,
+      ledgerId: LEDGER,
+      duplicatedFromId: SOURCE,
+    })
+
+    expect(createOperationInputSchema.parse(input).duplicated_from_id).toBe(SOURCE)
   })
 
   it('puts a past date at local noon, so the day never shifts', () => {

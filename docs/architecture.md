@@ -499,7 +499,9 @@ Postgres 15+ у схемі `public`. Спільні правила для кож
 
 ### 5.0 Простори, учасники, запрошення (ADR 19, 20)
 
-**ledgers** — `name text not null` · `base_currency` check UAH/USD/EUR · `time_zone text not null default
+**ledgers** — `name text not null` · `base_currency` check UAH/USD/EUR (змінюється, лише доки в просторі немає
+операцій: тригер `ledgers_lock_base_currency`, `23514` / `ledgers_base_currency_locked`; суми в базовій валюті — знімок
+свого дня, §21, і перерахунку специфікація не задає) · `time_zone text not null default
 'Europe/Kyiv'` (дати зобов'язань і нагадувань простору) · `week_starts_on smallint default 1` · `next_income_on date
 null` (§3; суми очікуваного доходу немає: специфікація задає лише дату, а очікувані надходження — це зобов'язання з `direction = 'in'`; змінює лише owner через RLS `ledgers_write`, пишуть її `setNextIncomeOn` в `overview.api.ts` і `updateLedgerSettings` в `access.api.ts` — якщо дозволити editor, це буде RPC, і міняються лише ці дві функції та перевірка ролі в `hero-available.component.tsx`) · `subscription_defaults jsonb` (§8) · `reminder_defaults jsonb` · `created_by uuid null` (лише аудит: `on delete set
 null`, змінити вручну не можна — тригер `keep_created_by`) · `version`.
@@ -606,7 +608,10 @@ to_account_id)`), `from_amount_minor`, `from_currency`, `to_amount_minor`, `to_c
 0`, `currency`. Утримання не є операцією й не змінює залишок (§17, §23).
 
 **attachments** — `owner_type check in ('operation','tax_liability','service')`, `owner_id uuid`, `storage_path text
-unique` (`{ledger_id}/{owner_type}/{owner_id}/{uuid}.{ext}`), `mime`, `size_bytes check (<= 52428800)`.
+unique` (`{ledger_id}/{owner_type}/{owner_id}/{uuid}.{ext}`), `mime`, `size_bytes check (<= 52428800)`. FK на
+власника немає: рядки операції видаляє тригер `operations_remove_attachments` (будь-яке видалення операції), файли —
+браузер одразу після RPC (best effort) і `api/cron/daily` через Storage API (`list_orphan_attachments`, лише
+service_role: об'єкти без рядка, старші за добу, до 1000 за запуск).
 
 ### 5.3 Планові платежі
 
@@ -900,7 +905,7 @@ text)` (security definer, Vault). `revoke execute … from anon, authenticated`.
 |---|---|---|
 | `api/cron/reminders` | pg_cron + pg_net кожні 5–15 хв, заголовок `x-cron-secret` | нагадування → notifications → Web Push |
 | `api/cron/calendar-sync` | pg_cron кожні 15 хв | `claim_sync_jobs`, push у Google/iCloud, опитування iCloud |
-| `api/cron/daily` | Vercel cron раз на добу, `Authorization: Bearer CRON_SECRET` | матеріалізація зобов'язань до +13 міс. (той самий `recurrence.utils.ts`), довідкові курси, поновлення каналів `events.watch`, страховий sync; тримає БД активною |
+| `api/cron/daily` | Vercel cron раз на добу, `Authorization: Bearer CRON_SECRET` | прибирання файлів `attachments` без рядка (фаза 1), матеріалізація зобов'язань до +13 міс. (той самий `recurrence.utils.ts`), довідкові курси, поновлення каналів `events.watch`, страховий sync; тримає БД активною |
 | `api/invites/accept` | запрошена людина без акаунта | перевірка токена (hash, строк, не прийнято) → `auth.admin.createUser` з email запрошення → відповідь; саме прийняття — rpc `accept_ledger_invite` уже від імені нового користувача |
 | `api/integrations/google/start` | учасник простору | OAuth redirect зі `state` (cookie) |
 | `api/integrations/google/callback` | Google | обмін коду, refresh token → Vault, створення каналу |

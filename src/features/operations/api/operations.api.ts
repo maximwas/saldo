@@ -189,8 +189,14 @@ type DeleteOperationParams = {
   expectedVersion: number
 }
 
-/** the RPC first (a stale version must not cost the receipts), then the receipts: no FK ties them to the operation */
+/** the RPC deletes the receipt rows with the operation, so their paths are read first; the files go after the RPC (a
+ * stale version must not cost the receipts) */
 export async function deleteOperation(client: SaldoClient, { id, expectedVersion }: DeleteOperationParams) {
+  const receipts = await client
+    .from('attachments')
+    .select('storage_path')
+    .eq('owner_type', 'operation')
+    .eq('owner_id', id)
   const { error } = await client.rpc('delete_operation', {
     p_id: id,
     p_expected_version: expectedVersion,
@@ -200,22 +206,9 @@ export async function deleteOperation(client: SaldoClient, { id, expectedVersion
     throw error
   }
 
-  const receipts = await client
-    .from('attachments')
-    .select('id, storage_path')
-    .eq('owner_type', 'operation')
-    .eq('owner_id', id)
-
-  // best effort: the operation is already gone, so a failure here leaves an orphan file, not a wrong balance
+  // best effort: a file left here (or a transfer leg's receipt) is removed by the daily cron
   if (!receipts.error && receipts.data.length > 0) {
     await client.storage.from(RECEIPT_BUCKET).remove(receipts.data.map((receipt) => receipt.storage_path))
-    await client
-      .from('attachments')
-      .delete()
-      .in(
-        'id',
-        receipts.data.map((receipt) => receipt.id),
-      )
   }
 }
 

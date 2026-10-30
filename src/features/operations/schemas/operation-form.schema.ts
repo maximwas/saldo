@@ -30,11 +30,14 @@ export const operationFormSchema = z
 
 export type OperationFormValues = z.infer<typeof operationFormSchema>
 
-type OperationFields = Omit<CreateOperationInput, 'id' | 'ledger_id'>
+// shared by create and update; duplicated_from_id is set once at create, so an edit never clears it
+type OperationFields = Omit<CreateOperationInput, 'id' | 'ledger_id' | 'duplicated_from_id'>
 
 type CreateOperationIds = {
   id: string
   ledgerId: string
+  /** «duplicate» (plan 1.8): the operation this one copies */
+  duplicatedFromId?: string
 }
 
 type UpdateOperationTarget = {
@@ -82,6 +85,7 @@ export const toCreateOperationInput = (
   id: ids.id,
   ledger_id: ids.ledgerId,
   ...toOperationFields(values, clock),
+  duplicated_from_id: ids.duplicatedFromId ?? null,
 })
 
 export const toUpdateOperationInput = (

@@ -110,11 +110,12 @@ export function OperationsScreen() {
                 : current,
             )
           }
-          onDuplicateAction={({ occurredOn: _date, ...defaults }) =>
+          onDuplicateAction={({ occurredOn: _date, ...defaults }, sourceId) =>
             openEditor({
               mode: 'create',
               kind: defaults.kind === 'income' ? 'income' : 'expense',
               defaults,
+              duplicatedFromId: sourceId,
             })
           }
         />
