@@ -1,0 +1,6 @@
+allowBuilds:
+  lefthook: true
+  sharp: false
+  unrs-resolver: false
+minimumReleaseAgeExclude:
+  - knip@6.44.0
