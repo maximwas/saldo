@@ -1,0 +1,83 @@
+{
+  "filters": { "period": "Period", "bucket": "Group by", "who": "Who", "allMembers": "Everyone", "view": "View" },
+  "periods": { "3m": "Last 3 months", "6m": "Last 6 months", "12m": "Last 12 months" },
+  "buckets": { "day": "By day", "week": "By week", "month": "By month", "year": "By year" },
+  "views": { "chart": "Chart", "table": "Table" },
+  "summary": {
+    "income": "Income",
+    "expense": "Expenses",
+    "result": "Result",
+    "note": "{count, plural, one {# operation} other {# operations}} in the period. Transfers, loans and adjustments are not included; a refund reduces expenses.",
+    "unknown": "Not counted, no known rate: {count}."
+  },
+  "noData": "no data",
+  "noCategory": "No category",
+  "total": "Total",
+  "unknownBadge": "no rate: {count}",
+  "unknownNote": "Records without a known rate or amount, not counted: {count}.",
+  "toOperations": "To operations",
+  "state": {
+    "offline": "No network. The statistics will appear as soon as the connection is back.",
+    "error": "Could not load.",
+    "stale": "No network. Showing data as of {time}: new operations appear after sync."
+  },
+  "empty": {
+    "operations": "No operations in this period.",
+    "categories": "No expenses in this period.",
+    "budget": "No budget set for this period.",
+    "subscriptions": "No subscriptions.",
+    "credits": "No credits.",
+    "forecast": "The coming months are empty: no payment schedules entered."
+  },
+  "cashflow": {
+    "title": "Income vs expenses",
+    "period": "Period",
+    "summary": "Bars of income and expenses, periods: {count}; the same sums are in the table"
+  },
+  "categories": {
+    "title": "Expenses by category",
+    "category": "Category",
+    "share": "Share",
+    "amount": "Amount",
+    "summary": "Donut chart of expenses by category, categories: {count}; the same sums are in the table"
+  },
+  "budget": {
+    "title": "Budget: plan and fact",
+    "plan": "Limit with carry-over",
+    "fact": "Fact in limited categories",
+    "incomePlan": "Income, plan",
+    "incomeFact": "Income, fact",
+    "limit": "Limits",
+    "carried": "Carried in",
+    "limitedFact": "Fact in limits",
+    "allExpenses": "All expenses",
+    "open": "To budget",
+    "summary": "Limits and expense fact, months: {count}; the same sums are in the table"
+  },
+  "subscriptions": {
+    "title": "Subscriptions",
+    "name": "Subscription",
+    "fact": "Paid",
+    "plan": "Scheduled",
+    "average": "Per month",
+    "open": "All subscriptions",
+    "months": "The monthly average covers months of the period: {count}."
+  },
+  "credits": {
+    "title": "Credits",
+    "name": "Credit",
+    "paid": "Installments paid",
+    "remaining": "Remaining",
+    "next": "Next installment",
+    "payoff": "Payoff",
+    "inPeriod": "Paid in period",
+    "open": "All credits"
+  },
+  "forecast": {
+    "title": "Forecast from schedules",
+    "out": "Planned payments",
+    "in": "Planned receipts",
+    "note": "Only the entered obligation schedules: no expected income and no average spending.",
+    "summary": "Planned payments for the months ahead: {count}; the same sums are in the table"
+  }
+}
