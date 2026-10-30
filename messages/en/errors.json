@@ -28,5 +28,6 @@
   "kindDirection": "The operation type does not match its direction",
   "required": "Fill in this field",
   "amountOptionalInvalid": "Enter an amount above zero or leave it empty",
-  "purchaseRequired": "Choose a purchase"
+  "purchaseRequired": "Choose a purchase",
+  "countInvalid": "Enter a whole number from 1 to 999"
 }

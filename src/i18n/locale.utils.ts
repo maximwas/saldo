@@ -22,6 +22,7 @@ export const MESSAGE_NAMESPACES = [
   'operations',
   'obligations',
   'debts',
+  'subscriptions',
 ] as const
 
 type LocaleSources = {

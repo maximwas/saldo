@@ -19,6 +19,8 @@ type SegmentedControlProps<Value extends string> = {
   onValueChange: (value: Value) => void
   /** disables the options and marks the group busy while a change is saved */
   pending?: boolean
+  /** below lg the control fills its row and the options share it (Figma mobile list rows); natural width from lg */
+  stretch?: boolean
 }
 
 // Figma «Saldo» → SegmentedControl 2:7681: track subtle, padding 4, gap 4, radius md; the selected option is a card
@@ -30,11 +32,16 @@ export function SegmentedControl<Value extends string>({
   value,
   onValueChange,
   pending = false,
+  stretch = false,
 }: SegmentedControlProps<Value>) {
   const pillId = useId()
 
   return (
-    <fieldset aria-label={label} aria-busy={pending} className="flex w-fit items-center gap-1 rounded-md bg-subtle p-1">
+    <fieldset
+      aria-label={label}
+      aria-busy={pending}
+      className={cn('flex items-center gap-1 rounded-md bg-subtle p-1', stretch ? 'w-full lg:w-fit' : 'w-fit')}
+    >
       {options.map((option) => {
         const selected = option.value === value
 
@@ -47,7 +54,8 @@ export function SegmentedControl<Value extends string>({
             disabled={pending}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              'relative flex items-center justify-center rounded-logo-md px-4 py-2 text-label outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
+              'relative flex items-center justify-center rounded-logo-md py-2 text-label outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
+              stretch ? 'min-w-0 flex-1 px-2 lg:flex-none lg:px-4' : 'px-4',
               selected ? 'font-semibold text-text-primary' : 'font-medium text-text-secondary',
             )}
           >
