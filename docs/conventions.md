@@ -1075,7 +1075,7 @@ e2e:
     - uses: actions/checkout@v5
     - uses: pnpm/action-setup@v4
     - uses: actions/setup-node@v5
-      with: { node-version: 24, cache: pnpm }
+      with: { node-version: 26, cache: pnpm }
     - run: pnpm install --frozen-lockfile
     - uses: supabase/setup-cli@v1
       with: { version: 2.122.0 }
