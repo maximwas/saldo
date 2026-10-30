@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { convertAt, convertMinor, type FxRate, findRate, toFxRate } from './fx.utils'
+import { convertAt, convertMinor, type FxRate, findRate, scaleMinor, toFxRate } from './fx.utils'
 
 type RateArgs = {
   pair: string
@@ -101,5 +101,25 @@ describe('toFxRate', () => {
       rateOn: '2026-10-01',
       source: 'reference',
     })
+  })
+})
+
+describe('scaleMinor', () => {
+  it('divides exactly: 300.00 / 3 is 100.00, not 99.99 from a rounded 1/3', () => {
+    expect(scaleMinor(30_000, 1, 3, 'down')).toBe(10_000)
+  })
+
+  it('applies the requested rounding mode once', () => {
+    expect(scaleMinor(10_000, 1, 3, 'down')).toBe(3_333)
+    expect(scaleMinor(5, 1, 2, 'half_up')).toBe(3)
+    expect(scaleMinor(5, 1, 2, 'half_even')).toBe(2)
+  })
+
+  it('multiplies before it divides', () => {
+    expect(scaleMinor(8_400, '365.2425', 84, 'half_up')).toBe(36_524)
+  })
+
+  it('refuses to divide by 0', () => {
+    expect(() => scaleMinor(100, 1, 0, 'down')).toThrow(RangeError)
   })
 })

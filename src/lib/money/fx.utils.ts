@@ -127,6 +127,26 @@ export function convertMinor(
     .toNumber()
 }
 
+/** amountMinor × numerator ÷ denominator in the same currency, rounded once with the given mode (installments, monthly averages) */
+export function scaleMinor(
+  amountMinor: bigint | number,
+  numerator: Decimal.Value,
+  denominator: Decimal.Value,
+  rounding: RoundingMode,
+): number {
+  const divisor = new Exact(denominator)
+
+  if (divisor.isZero()) {
+    throw new RangeError('scaleMinor: the denominator is 0')
+  }
+
+  return new Exact(amountMinor.toString())
+    .times(numerator)
+    .dividedBy(divisor)
+    .toDecimalPlaces(0, DECIMAL_ROUNDING[rounding])
+    .toNumber()
+}
+
 /** convert with the rate known on the date; null when no rate links the currencies, never 0 */
 export function convertAt(
   amountMinor: bigint | number,
