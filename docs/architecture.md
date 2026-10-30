@@ -201,7 +201,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  participant Cron as pg_cron, кожні 5–15 хв
+  participant Cron as pg_cron, кожні 10 хв
   participant Net as pg_net
   participant R as /api/cron/reminders (Node)
   participant PG as Postgres (service role)
@@ -209,7 +209,7 @@ sequenceDiagram
   participant SW as Service worker
   participant NC as Центр сповіщень
 
-  Cron->>Net: net.http_post(url, x-cron-secret з Vault)
+  Cron->>Net: net.http_post(url і Bearer CRON_SECRET з Vault)
   Net->>R: POST
   R->>R: порівняння секрету (timingSafeEqual)
   R->>PG: select * from due_reminder_fires(now())
@@ -778,19 +778,26 @@ Unique `tax_liabilities_period_unique (tax_type_id, period_from, period_to) wher
 
 ### 5.8 Нагадування, сповіщення, інтеграції, інше
 
-**reminder_rules** — `source_type`, `source_id` (серія або конкретне зобов'язання, `target check in
-('series','obligation','tax_filing')`), `offsets_days int[] not null` (напр. `{3,2}`, §25), `at_time time`,
-`time_zone text`, `channels text[]` (`in_app`, `push`), `text_template`, `stop_when_paid bool default true`,
-`enabled`. Стандарти з `ledgers.reminder_defaults` копіюються при створенні джерела; зміна стандартів не
-перезаписує наявні правила (§8). Правило належить простору (одне на платіж для всіх), а кому надсилати — вирішує
-`ledger_members.notify_channels` кожного учасника: `due_reminder_fires` повертає рядок на кожного учасника з
-перетином `channels` правила і його `notify_channels`.
-**notifications** (особиста, `user_id` + `ledger_id`) — `reminder_rule_id null`, `obligation_id null`,
-`tax_liability_id null`, `fire_key text`, unique `notifications_fire_unique (user_id, fire_key)`
-(`{rule_id}:{occurrence_on}:{offset}`), `title`, `body`, `link_path` (з `?ledger=`), `read_at null` (прочитане в
-кожного своє), `delivery_status check in ('pending','sent','failed','no_subscription')`, `delivered_at`.
-**push_subscriptions** (особиста, `user_id`) — `endpoint text unique`, `p256dh`, `auth`, `user_agent`,
-`last_success_at`. Пристрій належить людині, а не простору: push з усіх її просторів іде на ті самі пристрої.
+**reminder_rules** — `source_type check in ('subscription','credit','debt','obligation')` + `source_id` (серія
+джерела або одне зобов'язання за id), unique `(ledger_id, source_type, source_id)`, `offsets_days int[] not null`
+(днів до `due_on`, 0 = у день; 1–5 значень 0–60; напр. `{3,2}`, §25), `at_time time default '09:00'` (у
+`ledgers.time_zone` простору), `channels text[]` (`in_app`, `push`), `custom_text` (замість стандартного тексту),
+`stop_when_paid bool default true`, `enabled`, `version`. Стандарти §25 (підписки `{3,2}`, кредити `{0}`, борги —
+без правила) або `ledgers.reminder_defaults` (`{"subscription": [3, 2], "credit": [0]}`) вставляє тригер
+`after insert` на `subscriptions` / `credits` / `debts`; зміна стандартів не перезаписує наявні правила (§8).
+Строк звітності (`tax_filing`) додасться з податками. Правило належить простору (одне на платіж для всіх), а
+кому надсилати — вирішує `ledger_members.notify_channels` кожного учасника (свої змінює RPC
+`set_my_notify_channels`): `due_reminder_fires` повертає рядок на кожного учасника з перетином `channels` правила
+і його `notify_channels`.
+**notifications** (особиста, `user_id` + `ledger_id`; пише лише крон, учасник змінює тільки `read_at`) —
+`reminder_rule_id null`, `obligation_id null` (`tax_liability_id` — з податками), `fire_key text`, unique
+`notifications_fire_unique (user_id, fire_key)` (`{rule_id}:{occurrence_on}:{due_on}:{days_before}`: перенесений
+платіж нагадується знову, переписаний графік кредиту з тими самими датами — ні), `title`, `body` (мовою
+`user_settings.locale` отримувача), `link_path` (`/payments?pay={obligation_id}&ledger={ledger_id}`), `read_at null`
+(прочитане в кожного своє), `delivery_status null check in ('pending','sent','failed','no_subscription')` (`null` =
+без push: канал вимкнено або немає VAPID-ключів), `delivered_at`.
+**push_subscriptions** (особиста, `user_id`) — `endpoint text unique check (endpoint like 'https://%')`, `p256dh`,
+`auth`, `user_agent`. Пристрій належить людині, а не простору: push з усіх її просторів іде на ті самі пристрої.
 
 **calendar_connections** (особиста: `user_id` + `ledger_id`; кожен учасник підключає свій Google / iCloud до
 простору; читає й змінює лише власник підключення, токени — у Vault) — `provider check in ('google','icloud')`, `account_label`, `calendar_id`, `direction check
@@ -879,6 +886,7 @@ definer`, бо ці таблиці клієнтам лише
 | `create_ledger_invite(p_id uuid, p_ledger_id uuid, p_email text, p_role text, p_token_hash bytea)` | запрошення | лише owner; роль не `owner` |
 | `accept_ledger_invite(p_token text)` — `security definer` | прийняття | hash = SHA-256 UTF-8 рядка токена з посилання; hash є, не прийнято, не відкликано, не прострочено, `email = auth.jwt() ->> 'email'` (без регістру); insert `ledger_members` on conflict do nothing; повтор тією самою людиною безпечний. Помилки: `P0002` немає, `PT410` прострочене / відкликане / використане іншим, `42501` чужий email |
 | `set_member_role(p_ledger_id uuid, p_user_id uuid, p_role text)`, `remove_member(p_ledger_id uuid, p_user_id uuid)` | ролі, відкликання, «Вийти» | лише owner (себе — будь-хто, крім owner); owner не видаляється й не понижується |
+| `set_my_notify_channels(p_ledger_id uuid, p_channels text[])` | «Нагадування цього простору мені» (Доступ) | `security definer`; лише `notify_channels` власного рядка, будь-яка роль; `{}` вимикає; канал поза `in_app`, `push` → `22023`, не учасник → `42501` |
 | `set_my_display_name(p_ledger_id uuid, p_name text)` | своє ім'я в просторі (Налаштування → Загальні) | `security definer`; лише `display_name` власного рядка `(p_ledger_id, auth.uid())`, будь-яка роль; trim, порожнє → `null`, > 60 символів → `22023`, не учасник → `42501`; роль не змінює |
 
 Усі RPC запису беруть `ledger_id` з рядка (`p_operation->>'ledger_id'` або простір батьківського запису), не з
@@ -937,7 +945,7 @@ text)` (security definer, Vault). `revoke execute … from anon, authenticated`.
 
 | Маршрут | Виклик | Робота |
 |---|---|---|
-| `api/cron/reminders` | pg_cron + pg_net кожні 5–15 хв, заголовок `x-cron-secret` | нагадування → notifications → Web Push |
+| `api/cron/reminders` | pg_cron + pg_net кожні 10 хв (POST), `Authorization: Bearer CRON_SECRET` | нагадування → notifications → Web Push |
 | `api/cron/calendar-sync` | pg_cron кожні 15 хв | `claim_sync_jobs`, push у Google/iCloud, опитування iCloud |
 | `api/cron/daily` | Vercel cron раз на добу, `Authorization: Bearer CRON_SECRET` | прибирання файлів `attachments` без рядка (фаза 1), матеріалізація зобов'язань до +13 міс. (той самий `recurrence.utils.ts`), довідкові курси, поновлення каналів `events.watch`, страховий sync; тримає БД активною |
 | `api/invites/accept` | запрошена людина без акаунта | перевірка токена (hash, строк, не прийнято) → `auth.admin.createUser` з email запрошення → відповідь; саме прийняття — rpc `accept_ledger_invite` уже від імені нового користувача |
@@ -962,13 +970,19 @@ Server Actions для даних не використовуються; вихі
 - VAPID subject: `https://saldo.maksymvasianin.com` (або `mailto:` Максима) у `web-push.server.ts`.
 - MCP (фаза 10): URL `https://saldo.maksymvasianin.com/api/mcp`, `/.well-known/oauth-protected-resource` і
   `/.well-known/oauth-authorization-server` на тому самому домені; `resource` у PRM = URL MCP.
-- pg_net крон-виклики (`api/cron/*`) — URL у Vault-секреті, не в міграції.
+- pg_net крон-виклики (`api/cron/*`) — URL у Vault-секреті, не в міграції. Реліз, один раз на середовище (SQL
+  Editor): `select vault.create_secret('https://saldo.maksymvasianin.com/api/cron/reminders', 'reminders_cron_url');`
+  і `select vault.create_secret('<CRON_SECRET того ж середовища>', 'cron_secret');`. Задача `reminders` (міграція
+  `reminders.sql`) без обох секретів нічого не шле, тож локальна й preview БД не викликають production.
+- VAPID: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` і `VAPID_PRIVATE_KEY` (JWK JSON, `npx @pushforge/builder vapid`) у Vercel;
+  без них нагадування лише в застосунку, push пропускається з попередженням у лозі.
 Секрети (`SUPABASE_SECRET_KEY`, `CRON_SECRET`, `VAPID_PRIVATE_KEY`, `GOOGLE_CLIENT_SECRET`) — лише в модулях
 `*.server.ts` з `import 'server-only'` і в `server`-частині `@t3-oss/env-nextjs`.
 
-Нагадування: `due_reminder_fires` повертає пари (правило, зобов'язання, offset), для яких локальний час
-`due_on − offset` + `at_time` у `time_zone` правила ≤ `now()`, зобов'язання `active`, не оплачене при
-`stop_when_paid`, і `fire_key` ще немає. Тип «строк звітності» (§19) — правило `target = 'tax_filing'` на
+Нагадування: `due_reminder_fires` повертає рядок на кожного учасника для трійки (правило, зобов'язання, offset),
+для якої локальний час `due_on − offset` + `at_time` у `ledgers.time_zone` ≤ `p_now` і не старший за добу
+(пропуск крону наздоганяється, нове правило не повторює минуле), зобов'язання `active`, не оплачене при
+`stop_when_paid`, і в учасника ще немає сповіщення з цим `fire_key`. Тип «строк звітності» (§19) — правило `target = 'tax_filing'` на
 `filing_due_on`, без зобов'язання й витрати. Канал `calendar` не дублює push мовчки: при увімкненій
 синхронізації сповіщення календарної події вимкнені, доки користувач не вибере інакше (§19).
 
@@ -1059,7 +1073,7 @@ Server Actions для даних не використовуються; вихі
    автоповтор із підміною даних.
 2. **Google refresh token у production без верифікації** — довговічність не підтверджена (platform.md). Пом'якшення:
    стан `revoked` із кнопкою «перепідключити», зв'язки й історія лишаються.
-3. **Supabase Free:** пауза після 7 днів, pg_cron/pg_net на Free не перевірені, немає PITR. Пом'якшення: щоденний
+3. **Supabase Free:** пауза після 7 днів, pg_cron 1.6.4 і pg_net 0.20.4 на Free є (preview, 30.10.2026), немає PITR. Пом'якшення: щоденний
    Vercel cron і нічний бекап, перевірка pg_net у фазі 0; якщо недоступний — нагадування рідше (Vercel cron 1/добу)
    або зовнішній планувальник.
 4. **Податки без визначеної юрисдикції.** Модуль може виявитися надлишковим або недостатнім. Пом'якшення: фаза

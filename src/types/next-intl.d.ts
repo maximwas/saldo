@@ -8,6 +8,7 @@ import type currencies from '../../messages/uk/currencies.json'
 import type debts from '../../messages/uk/debts.json'
 import type errors from '../../messages/uk/errors.json'
 import type nav from '../../messages/uk/nav.json'
+import type notifications from '../../messages/uk/notifications.json'
 import type obligations from '../../messages/uk/obligations.json'
 import type operations from '../../messages/uk/operations.json'
 import type overview from '../../messages/uk/overview.json'
@@ -29,6 +30,7 @@ declare module 'next-intl' {
       debts: typeof debts
       errors: typeof errors
       nav: typeof nav
+      notifications: typeof notifications
       operations: typeof operations
       obligations: typeof obligations
       overview: typeof overview
