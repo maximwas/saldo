@@ -83,7 +83,7 @@ PWA-маніфест, нічний бекап.
 - [ ] 1.1 Міграція: `accounts`, `categories` (+ сід стандартних категорій §6), `fx_rates`, `operations`, `transfers`, `attachments`, view `account_balances`.
 - [ ] 1.2 Міграція: `obligations`, `obligation_payments`, view `obligation_states` (часовий пояс із `ledgers.time_zone`).
 - [ ] 1.3 RPC: `create_operation`, `update_operation`, `delete_operation`, `create_transfer`, `pay_obligation`, `delete_obligation_payment`, `archive_category`.
-- [ ] 1.4 `src/lib/money/money.utils.ts` (toMinor, fromMinor, format з «−» і ₴ $ €), `fx.utils.ts` (convert з decimal.js і режимом округлення).
+- [x] 1.4 `src/lib/money/money.utils.ts` (toMinor, fromMinor, format з «−» і ₴ $ €), `fx.utils.ts` (convert з decimal.js і режимом округлення).
 - [ ] 1.5 Фіча `accounts`: список, створення (початковий залишок + дата), архів, картка рахунку.
 - [ ] 1.6 Фіча `categories`: дерево доходів/витрат, підкатегорії, колір (`--color-c-*`), порядок, архів із перенесенням.
 - [ ] 1.7 Фіча `currencies`: базова валюта, ручний курс із датою; знімок курсу в операції; `null` при невідомому.
@@ -92,10 +92,12 @@ PWA-маніфест, нічний бекап.
 - [ ] 1.10 Вкладення чека: стиснення, приватний бакет `attachments`, політика Storage, signed URL.
 - [ ] 1.11 Фіча `obligations`: ручний плановий платіж, «Найближчі» з групами §7, діалог «Оплачено» (`?pay=`), прив'язка наявної операції.
 - [ ] 1.12 `src/lib/finance/available-money.utils.ts` (без резервів поки) + Огляд: залишки, місяць (дохід/витрата/результат), найближчі, «Доступно до дати» з розкриттям складових.
+  - [x] чиста частина: `computeAvailableMoney` (складові, невідома сума / курс → `null`, очікуваний дохід не додається)
 - [ ] 1.13 `src/store/ui.store.ts`: приховати суми; Налаштування: тема, мова (особисті, `user_settings`); часовий пояс, початок тижня, дата наступного доходу — налаштування простору (`ledgers`, змінює owner/editor).
 - [ ] 1.14 Глобальний «Додати» (дохід / витрата / переказ) через `?add=`.
-- [ ] 1.15 (для MCP) Кожна дія запису має input-схему `<action>-input.schema.ts` (мінорні одиниці, `id: z.uuid()`, без `transform`), а форма — чисту `to<Action>Input(values, clock)`; функції `*.api.ts` отримують `db: SaldoClient` першим параметром і роблять `parse` перед `rpc()`.
+- [x] 1.15 (для MCP) Кожна дія запису має input-схему `<action>-input.schema.ts` (мінорні одиниці, `id: z.uuid()`, без `transform`), а форма — чисту `to<Action>Input(values, clock)`; функції `*.api.ts` отримують `db: SaldoClient` першим параметром і роблять `parse` перед `rpc()`.
 - [ ] 1.16 (для MCP) Огляд і «Доступно» читаються функціями `*.api.ts` + `available-money.utils.ts` з `now`/`timeZone` параметрами; хук лише склеює. Тест: та сама функція без React дає ті самі складові.
+  - [x] чиста частина: `available-money.utils.ts` бере `now`/`timeZone` параметрами (`src/lib/utils/clock.utils.ts`)
 - [ ] 1.17 Фіча `ledgers`, RPC: `create_ledger`, `create_ledger_invite`, `accept_ledger_invite` (security definer, email з JWT), `set_member_role`, `remove_member`; pgTAP: прострочене / чуже / повторне запрошення, editor не запрошує.
 - [ ] 1.18 Налаштування → «Доступ»: учасники з роллю, «Запросити» (email, роль; токен у браузері, у БД — SHA-256; «Копіювати посилання»), зміна ролі, «Відкликати», «Вийти з простору»; налаштування простору (назва, базова валюта, часовий пояс).
 - [ ] 1.19 Прийняття запрошення: `(auth)/invite/[token]`, `api/invites/accept` (`auth.admin.createUser` лише за дійсним токеном), вхід з `?next=`, після прийняття — перемикання на простір.
