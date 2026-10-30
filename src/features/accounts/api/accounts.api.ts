@@ -1,3 +1,4 @@
+import { type CreateOperationInput, createOperationInputSchema } from '@/lib/finance/create-operation-input.schema'
 import { getLedgerFx } from '@/lib/finance/ledger-fx.api'
 import { versionConflict } from '@/lib/supabase/version-conflict.utils'
 import type { SaldoClient } from '@/types/supabase.types'
@@ -111,5 +112,14 @@ export async function updateAccount(supabase: SaldoClient, input: UpdateAccountI
 
   if (!data) {
     throw versionConflict()
+  }
+}
+
+/** a balance adjustment (§5) is an operation: create_operation writes it, idempotent on the client id */
+export async function adjustBalance(supabase: SaldoClient, input: CreateOperationInput): Promise<void> {
+  const { error } = await supabase.rpc('create_operation', { p_operation: createOperationInputSchema.parse(input) })
+
+  if (error) {
+    throw error
   }
 }

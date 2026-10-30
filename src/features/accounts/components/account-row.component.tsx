@@ -17,12 +17,13 @@ type AccountRowProps = {
   account: AccountView
   onEditAction: (account: AccountView) => void
   onArchiveAction: (account: AccountView) => void
+  onAdjustAction: (account: AccountView) => void
 }
 
 // Figma «Saldo» → 2:21073 / 2:21278: row padding 16/0, gap 16, border-bottom; icon 40, name body-medium + meta
 // label, «In balance» 160 and «In available» 180 switches, balance 180 right-aligned (number-sm) with the
 // converted line under a foreign balance, a 44 «···» menu. On mobile the switches drop under the row, full width, the name wraps, the «···» menu goes under them.
-export function AccountRow({ account, onEditAction, onArchiveAction }: AccountRowProps) {
+export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAction }: AccountRowProps) {
   const translate = useTranslations('accounts')
   const translateCurrency = useTranslations('currencies')
   const locale = useLocale()
@@ -53,6 +54,10 @@ export function AccountRow({ account, onEditAction, onArchiveAction }: AccountRo
         },
       ]
     : [
+        {
+          label: translate('menu.adjust'),
+          onSelect: () => onAdjustAction(account),
+        },
         {
           label: translate('menu.edit'),
           onSelect: () => onEditAction(account),

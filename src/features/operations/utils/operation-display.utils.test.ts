@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CategoryOption, OperationItem, OperationRow } from '../operations.types'
-import { categoryOptions, displayAmount } from './operation-display.utils'
+import { categoryOptions, displayAmount, refundableMinor } from './operation-display.utils'
 
 const base: OperationRow = {
   id: 'op',
@@ -17,6 +17,7 @@ const base: OperationRow = {
   occurredAt: '2026-10-22T10:00:00Z',
   occurredOn: '2026-10-22',
   transferId: null,
+  refundOfId: null,
   version: 1,
   createdBy: null,
 }
@@ -126,5 +127,12 @@ describe('categoryOptions', () => {
 
   it('keeps an archived category the row already uses', () => {
     expect(categoryOptions(categories, 'expense', 'old').map((option) => option.value)).toContain('old')
+  })
+})
+
+describe('refundableMinor', () => {
+  it('leaves what earlier refunds did not return, never below zero', () => {
+    expect(refundableMinor(52_000, 26_000)).toBe(26_000)
+    expect(refundableMinor(52_000, 52_000)).toBe(0)
   })
 })

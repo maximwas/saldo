@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { type AccountRow, type AccountView, nextSortOrder, toAccount, totalInBase } from './accounts.utils'
+import {
+  type AccountRow,
+  type AccountView,
+  adjustmentOf,
+  nextSortOrder,
+  toAccount,
+  totalInBase,
+} from './accounts.utils'
 
 const account = (patch: Partial<AccountView>): AccountView => ({
   id: 'a',
@@ -146,5 +153,22 @@ describe('toAccount', () => {
       baseMinor: null,
       rate: null,
     })
+  })
+})
+
+describe('adjustmentOf', () => {
+  it('writes the gap between Saldo and the actual balance as an in or out adjustment (§5)', () => {
+    expect(adjustmentOf(240_000, 300_000)).toEqual({
+      direction: 'in',
+      amountMinor: 60_000,
+    })
+    expect(adjustmentOf(240_000, 220_050)).toEqual({
+      direction: 'out',
+      amountMinor: 19_950,
+    })
+  })
+
+  it('has nothing to write when the balances are equal', () => {
+    expect(adjustmentOf(240_000, 240_000)).toBeNull()
   })
 })
