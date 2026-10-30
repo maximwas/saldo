@@ -2,7 +2,7 @@
 -- operation date, keeps the rate it used, leaves null without a rate and never rewrites a snapshot for a newer rate.
 -- Fictional data only.
 begin;
-select plan(14);
+select plan(17);
 
 create function pg_temp.login(p_user uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_user, 'role', 'authenticated')::text, true);
@@ -124,6 +124,25 @@ select pg_temp.login('00000000-0000-4000-8000-000000000304');
 select is(
   (select count(*)::int from public.operations where ledger_id = pg_temp.space()), 0,
   'a stranger sees none of it');
+
+-- the base currency changes only while the space has no operations (migration storage_and_guards)
+with u as (
+  update public.ledgers set base_currency = 'EUR'
+  where id = (select id from public.ledgers where created_by = '00000000-0000-4000-8000-000000000304')
+  returning base_currency
+)
+select is(min(base_currency), 'EUR', 'an owner changes the base currency of a space with no operations') from u;
+reset role;
+select pg_temp.login('00000000-0000-4000-8000-000000000301');
+select throws_ok(
+  $$ update public.ledgers set base_currency = 'EUR' where id = pg_temp.space() $$,
+  '23514', 'new row for relation "ledgers" violates check constraint "ledgers_base_currency_locked"',
+  'a space with operations keeps its base currency: old base amounts would mix with new ones');
+with u as (
+  update public.ledgers set name = 'Спільний бюджет', base_currency = 'UAH' where id = pg_temp.space() returning 1
+)
+select is(count(*)::int, 1, 'saving the settings with the same base currency still works') from u;
+reset role;
 
 select * from finish();
 rollback;

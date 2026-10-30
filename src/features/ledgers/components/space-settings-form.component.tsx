@@ -28,6 +28,9 @@ const WEEK_DAYS = [0, 1, 2, 3, 4, 5, 6]
 // 2026-10-25 is a Sunday: index n is the weekday with week_starts_on = n
 const SUNDAY = new Date(2026, 9, 25)
 
+// ledgers_lock_base_currency: a space with operations keeps its base currency (migration storage_and_guards)
+const BASE_CURRENCY_LOCKED = 'ledgers_base_currency_locked'
+
 // ICU still lists Europe/Kiev, while the database default (and the IANA name) is Europe/Kyiv
 const canonicalZone = (zone: string) => (zone === 'Europe/Kiev' ? 'Europe/Kyiv' : zone)
 
@@ -94,7 +97,16 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
       notify.success(translate('saved'))
       router.refresh()
     } catch (caught) {
-      setError(translateError(toPgError(caught as { code?: string }).kind))
+      const pgError = toPgError(
+        caught as {
+          code?: string
+          message?: string
+        },
+      )
+
+      setError(
+        pgError.constraint === BASE_CURRENCY_LOCKED ? translate('baseCurrencyLocked') : translateError(pgError.kind),
+      )
     } finally {
       setIsPending(false)
     }

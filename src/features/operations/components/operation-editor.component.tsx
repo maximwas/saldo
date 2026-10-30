@@ -40,6 +40,8 @@ export type EditorTarget =
       kind: AddKind
       /** a duplicate starts from the values of another operation */
       defaults?: Partial<OperationFormValues>
+      /** and keeps a link to it (operations.duplicated_from_id) */
+      duplicatedFromId?: string
     }
   | {
       mode: 'edit'
@@ -52,7 +54,7 @@ type OperationEditorProps = {
   onOpenChangeAction: (open: boolean) => void
   /** the global «Add» mirrors the kind into ?add= */
   onKindChangeAction?: (kind: AddKind) => void
-  onDuplicateAction?: (defaults: Partial<OperationFormValues>) => void
+  onDuplicateAction?: (defaults: Partial<OperationFormValues>, sourceId: string) => void
 }
 
 const FORM_ID = 'operation-editor-form'
@@ -230,6 +232,7 @@ export function OperationEditor({
         toCreateOperationInput(values, clock, {
           id: newId,
           ledgerId,
+          duplicatedFromId: target.mode === 'create' ? target.duplicatedFromId : undefined,
         }),
       )
       await uploadPending(newId)
@@ -313,7 +316,7 @@ export function OperationEditor({
           type="button"
           variant="secondary"
           disabled={pending}
-          onClick={() => onDuplicateAction?.(toFormValues(item))}
+          onClick={() => onDuplicateAction?.(toFormValues(item), item.row.id)}
         >
           {translate('form.duplicate')}
         </Button>

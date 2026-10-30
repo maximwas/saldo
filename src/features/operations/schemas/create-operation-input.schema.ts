@@ -38,6 +38,9 @@ export const adjustmentHasNote = (row: OperationRowLike) => row.kind !== 'adjust
 
 /** p_operation of create_operation; amounts in minor units, the id comes from the client */
 export const createOperationInputSchema = operationRowSchema
+  .extend({
+    duplicated_from_id: z.uuid().nullable(),
+  })
   .refine(kindMatchesDirection, {
     path: ['direction'],
     message: 'kindDirection',

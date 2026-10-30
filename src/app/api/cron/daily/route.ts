@@ -8,33 +8,54 @@ const log = logger.child({
   module: 'cron',
 })
 
-// Phase 0: one cheap query a day keeps the Free project from pausing; later phases add the daily jobs (architecture §7)
+const ATTACHMENTS_BUCKET = 'attachments'
+
+// Daily jobs (architecture §7). The orphan lookup is also the one query a day that keeps the Free project from pausing.
 export async function GET(request: Request) {
   if (!isCronAuthorized(request.headers.get('authorization'), env.CRON_SECRET)) {
     return new Response(null, { status: 401 })
   }
 
   const startedAt = performance.now()
+  const elapsed = () => Math.round(performance.now() - startedAt)
+  const admin = getAdminSupabase()
 
   log.info('cron/daily started')
 
-  const { error } = await getAdminSupabase()
-    .from('ledgers')
-    .select('id', {
-      head: true,
-      count: 'exact',
-    })
-    .limit(1)
-
-  const durationMs = Math.round(performance.now() - startedAt)
+  // files left without an attachments row (a deleted operation or space), at most 1000: one Storage remove call.
+  // Through the Storage API only: an SQL delete on storage.objects would leave the file in the bucket.
+  const { data: paths, error } = await admin.rpc('list_orphan_attachments')
 
   if (error) {
-    logPgError(log.child({ durationMs }), error, 'cron/daily failed: database ping')
+    logPgError(log.child({ durationMs: elapsed() }), error, 'cron/daily failed: orphan attachments lookup')
 
     return Response.json({ ok: false }, { status: 500 })
   }
 
-  log.info({ durationMs }, 'cron/daily finished')
+  if (paths.length > 0) {
+    const removal = await admin.storage.from(ATTACHMENTS_BUCKET).remove(paths)
+
+    if (removal.error) {
+      log.error(
+        {
+          err: removal.error,
+          count: paths.length,
+          durationMs: elapsed(),
+        },
+        'cron/daily failed: orphan attachments removal',
+      )
+
+      return Response.json({ ok: false }, { status: 500 })
+    }
+  }
+
+  log.info(
+    {
+      orphansRemoved: paths.length,
+      durationMs: elapsed(),
+    },
+    'cron/daily finished',
+  )
 
   return Response.json({ ok: true })
 }
