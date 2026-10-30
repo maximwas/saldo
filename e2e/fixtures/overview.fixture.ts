@@ -21,6 +21,7 @@ export async function availableMinor(page: Page) {
 
   await expect(term).toBeVisible()
 
+  // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText, its line breaks split the tile and row text
   return minorOf(await nextValue(term).innerText())
 }
 
@@ -29,6 +30,7 @@ export async function monthExpenseMinor(page: Page) {
 
   await expect(term).toBeVisible()
 
+  // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText, its line breaks split the tile and row text
   return Math.abs(minorOf(await nextValue(term).innerText()))
 }
 
@@ -37,6 +39,7 @@ export async function accountBalanceMinor(page: Page, name: string) {
 
   await expect(row).toBeVisible()
 
+  // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText, its line breaks split the tile and row text
   const text = await row.innerText()
 
   // the balance is the last amount of the row; the kind line before it has no amount with a comma
