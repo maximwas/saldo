@@ -3,6 +3,7 @@ import type auth from '../../messages/uk/auth.json'
 import type common from '../../messages/uk/common.json'
 import type errors from '../../messages/uk/errors.json'
 import type nav from '../../messages/uk/nav.json'
+import type overview from '../../messages/uk/overview.json'
 import type settings from '../../messages/uk/settings.json'
 import type shell from '../../messages/uk/shell.json'
 
@@ -15,6 +16,7 @@ declare module 'next-intl' {
       common: typeof common
       errors: typeof errors
       nav: typeof nav
+      overview: typeof overview
       settings: typeof settings
       shell: typeof shell
     }

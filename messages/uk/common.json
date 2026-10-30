@@ -4,5 +4,20 @@
   "languages": {
     "uk": "Українська",
     "en": "English"
+  },
+  "close": "Закрити",
+  "select": {
+    "placeholder": "Оберіть значення"
+  },
+  "datePicker": {
+    "placeholder": "Оберіть дату",
+    "today": "Сьогодні",
+    "clear": "Очистити",
+    "previousMonth": "Попередній місяць",
+    "nextMonth": "Наступний місяць"
+  },
+  "toast": {
+    "retry": "Повторити",
+    "undo": "Скасувати"
   }
 }

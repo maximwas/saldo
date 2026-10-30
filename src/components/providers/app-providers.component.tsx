@@ -6,7 +6,7 @@ import { useLocale } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { useEffect, useRef, useState } from 'react'
-import { Toaster } from 'sonner'
+import { Toaster } from '@/components/ui/toaster.component'
 import { MOTION } from '@/constants/motion.constants'
 import type { AppTheme } from '@/constants/theme.constants'
 import { ClockProvider } from '@/contexts/clock.context'
@@ -57,7 +57,7 @@ export function AppProviders({ ledger, theme, children }: AppProvidersProps) {
             <MotionConfig reducedMotion="user" transition={MOTION_DEFAULTS}>
               {children}
             </MotionConfig>
-            <Toaster position="top-center" />
+            <Toaster />
           </ClockProvider>
         </LedgerProvider>
       </NuqsAdapter>
