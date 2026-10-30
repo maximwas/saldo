@@ -27,13 +27,14 @@ type AmountProps = VariantProps<typeof amountVariants> & {
   value: string | null
   /** currency sign for the unknown and hidden states */
   symbol: string
-  /** «приховати суми» */
+  /** the «hide amounts» setting */
   hidden?: boolean
   className?: string
 }
 
 export function Amount({ value, symbol, hidden = false, kind, size, className }: AmountProps) {
   const unknown = value === null
+
   return (
     <span className={cn(amountVariants({ kind, size }), unknown && 'text-text-tertiary', className)}>
       {hidden ? `•••• ${symbol}` : unknown ? `? ${symbol}` : value}

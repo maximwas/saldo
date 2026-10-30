@@ -191,7 +191,7 @@ src/features/subscriptions/
   `utils/`, `*.types.ts`; фічі й `src/lib` не імпортують `src/mcp`.
 
 Правила під MCP — з першого рядка коду (`docs/architecture.md` §12):
-- `*.api.ts` не імпортує React, TanStack, `next/*` і не створює клієнт сам: перший параметр — `db: SaldoClient`
+- `*.api.ts` не імпортує React, TanStack, `next/*` і не створює клієнт сам: перший параметр — `supabase: SaldoClient`
   (`SupabaseClient<Database>` з `src/types/supabase.types.ts`). Браузерний клієнт передає `*.mutations.ts`/`*.queries.ts`.
 - Ввід кожної дії запису — окрема zod-схема `<action>-input.schema.ts` у грошах мінорних одиниць (`amountMinor: z.int()`,
   `currency`, `id: z.uuid()`), без `transform`; `*.api.ts` робить `parse` перед `rpc()`. Форма має свою схему
@@ -200,6 +200,38 @@ src/features/subscriptions/
   хук лише викликає їх. Чисті функції отримують `now` і `timeZone` параметрами, не з контексту.
 - Будь-який запис у БД — лише через функцію `*.api.ts` (RPC або одна таблиця); жодних прямих `from().insert` у
   компонентах, хуках чи маршрутах.
+
+## 3a. Стиль коду (Максим, 30.10.2026)
+
+- Тіло `if`, `else`, `for` і `while` завжди в `{}`, навіть один рядок; однорядкових `if (…) x()` немає
+  (Biome `style.useBlockStatements: "error"`).
+- Логічні блоки розділяє порожній рядок: оголошення, потім guard і перевірки, потім `return`
+  (ESLint `@stylistic/padding-line-between-statements`, автофікс: перед `return`, після блоку `const`/`let`, до й
+  після `if` / `for` / `while` / `try` / `switch`).
+- Жодних ідентифікаторів з однієї-двох літер і скорочень: `(href) =>`, а не `(h) =>`; `index`, а не `i`; `event`,
+  а не `e`; `error`, а не `err`; `element`, а не `el`; `callback`, а не `cb`; `translate`, а не `t`; generic —
+  `TValue`, а не `T`. Виняток — ключі, які диктує зовнішня форма даних (колонка `id`, значення `'uk'` / `'en'`) і
+  `cn` (ім'я експорту пакета `cn`). ESLint `id-length` (`min: 3`, `properties: 'never'`).
+- Коментарі — англійською, лише «чому», а не «що». Українська — лише в текстах інтерфейсу (поки в
+  `src/constants/*.constants.ts`, далі `messages/uk`). TS/TSX — локальне правило ESLint `saldo/english-comments`
+  (`eslint.config.mjs`), SQL — `pnpm lint:comments` (`scripts/check-sql-comments.mjs`).
+- Хто що перевіряє: Biome — лінтер і форматер (основний); ESLint (`eslint.config.mjs`) — лише три правила вище, без
+  пресетів і без форматування. `pnpm lint` = Biome + ESLint + коментарі SQL, `pnpm format` = `biome check --write` +
+  `eslint --fix`; усе входить у `pnpm check` і lefthook. VS Code: `.vscode/settings.json` (Biome форматує при
+  збереженні, ESLint і Biome виправляють), `.vscode/extensions.json`.
+
+```tsx
+async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
+  const { slug } = await params
+  const path = `/${(slug ?? []).join('/')}`
+
+  if (!STUB_HREFS.some((href) => href === path)) {
+    notFound()
+  }
+
+  return <p className="text-body text-text-secondary">{SHELL_TEXT.stub(pageTitle(path))}</p>
+}
+```
 
 ## 4. Патерни
 
@@ -283,8 +315,8 @@ import type { SaldoClient } from '@/types/supabase.types'
 import type { Operation } from '../operations.types'
 import { type OperationInsert, operationInsertSchema } from '../schemas/create-operation-input.schema'
 
-export async function createOperation(db: SaldoClient, input: OperationInsert): Promise<Operation> {
-  const { data, error } = await db.rpc('create_operation', { p_operation: operationInsertSchema.parse(input) })
+export async function createOperation(supabase: SaldoClient, input: OperationInsert): Promise<Operation> {
+  const { data, error } = await supabase.rpc('create_operation', { p_operation: operationInsertSchema.parse(input) })
   if (error) throw error
   return data
 }
@@ -294,10 +326,10 @@ export async function createOperation(db: SaldoClient, input: OperationInsert): 
 
 ```ts
 // src/features/obligations/api/obligations.api.ts
-// db — браузерний клієнт із mutations.ts або клієнт із JWT власника з src/mcp (фаза 10)
-export async function payObligation(db: SaldoClient, raw: PayObligationInput) {
+// supabase — браузерний клієнт із mutations.ts або клієнт із JWT власника з src/mcp (фаза 10)
+export async function payObligation(supabase: SaldoClient, raw: PayObligationInput) {
   const input = payObligationInputSchema.parse(raw) // schemas/pay-obligation-input.schema.ts
-  const { data, error } = await db.rpc('pay_obligation', {
+  const { data, error } = await supabase.rpc('pay_obligation', {
     p_payment_id: input.paymentId,          // UUID клієнта
     p_obligation_id: input.obligationId,
     p_amount_minor: input.amountMinor,
@@ -513,7 +545,8 @@ describe('computeAvailable', () => {
     "rules": {
       "preset": "recommended",
       "style": {
-        "useFilenamingConvention": { "level": "error", "options": { "filenameCases": ["kebab-case"], "requireAscii": true } }
+        "useFilenamingConvention": { "level": "error", "options": { "filenameCases": ["kebab-case"], "requireAscii": true } },
+        "useBlockStatements": "error"
       },
       "performance": { "noBarrelFile": "error", "noReExportAll": "error" }
     }

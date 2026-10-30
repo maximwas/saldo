@@ -69,6 +69,7 @@
 | Пакет / інструмент | Версія | Навіщо |
 |---|---|---|
 | @biomejs/biome | 2.6.4 | lint + format (`next lint` прибрано в Next 16) |
+| eslint, @stylistic/eslint-plugin, typescript-eslint | 10.13.0, 5.10.0, 8.72.1 (MIT) | лише правила стилю, яких немає в Biome 2.6: `id-length`, `padding-line-between-statements`, коментарі англійською (conventions §3a) |
 | vitest, @vitest/coverage-v8 | 5.0.5 | unit-тести чистого ядра |
 | lefthook | 2.2.2 | pre-commit |
 | knip | 6.44.0 | невикористані файли, експорти, залежності |

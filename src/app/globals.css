@@ -5,4 +5,25 @@
   body {
     @apply bg-app font-sans text-body text-text-primary antialiased;
   }
+
+  /* Tailwind v4 preflight resets buttons to cursor: default; every clickable thing points (Maxim, 30.10.2026).
+     Base UI triggers render <button> or carry these roles. */
+  button:not(:disabled),
+  [role="button"],
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="option"],
+  [role="tab"],
+  a[href],
+  label[for],
+  select,
+  summary {
+    cursor: pointer;
+  }
+
+  :disabled,
+  [aria-disabled="true"],
+  [data-disabled] {
+    cursor: not-allowed;
+  }
 }

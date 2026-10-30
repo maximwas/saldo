@@ -7,12 +7,13 @@ import { cn } from '@/lib/utils/cn.utils'
 // Plan → plan · Unknown → unknown · Unconfirmed → warning · Paid/Active/Returned → positive · Partial/Trial → info ·
 // Reserve → reserve · Shortfall → negative · Estimate/Withheld/Paused → neutral · Archive/Cancelled/Written off → muted
 const badgeVariants = cva(
-  'inline-flex w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-transparent px-2 py-0.5 text-caption font-medium',
+  // padding 2/10, text/caption-medium; only Plan and Unknown carry a 1px border (24 high, the rest 22)
+  'inline-flex w-fit shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-caption font-medium',
   {
     variants: {
       tone: {
-        plan: 'border-border-strong text-text-secondary',
-        unknown: 'border-dashed border-border-strong bg-card text-text-secondary',
+        plan: 'border border-border-strong text-text-secondary',
+        unknown: 'border border-dashed border-border-strong bg-card text-text-secondary',
         warning: 'bg-warning-soft text-warning-text',
         positive: 'bg-positive-soft text-positive-text',
         info: 'bg-primary-soft text-primary-text',

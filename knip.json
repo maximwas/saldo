@@ -1,12 +1,16 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
+    "src/proxy.ts",
+    "src/lib/env.ts",
+    "src/app/sw.ts",
     "src/lib/supabase/admin-client.server.ts",
     "src/lib/auth/dal.server.ts",
     "src/contexts/*.context.tsx"
   ],
   "ignore": [
-    "src/types/database.types.ts"
+    "src/types/database.types.ts",
+    "src/components/ui/**"
   ],
   "ignoreBinaries": [
     "gitleaks"

@@ -2,6 +2,8 @@ pre-commit:
   parallel: true
   commands:
     biome: { glob: '*.{ts,tsx,json,css}', run: 'pnpm biome check --staged --no-errors-on-unmatched {staged_files}' }
+    eslint: { glob: '*.{ts,tsx}', run: 'pnpm eslint --fix {staged_files}', stage_fixed: true }
+    comments: { run: 'pnpm lint:comments' }
     types: { run: 'pnpm typecheck' }
     deps: { run: 'pnpm depcruise src --config .dependency-cruiser.cjs' }
     secrets: { run: 'gitleaks git --pre-commit --staged --redact' }

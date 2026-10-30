@@ -7,6 +7,7 @@ import type { SaldoClient } from '@/types/supabase.types'
 
 export async function getServerSupabase(): Promise<SaldoClient> {
   const cookieStore = await cookies()
+
   return createServerClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll: () => cookieStore.getAll(),

@@ -12,7 +12,8 @@
         "useFilenamingConvention": {
           "level": "error",
           "options": { "filenameCases": ["kebab-case"], "requireAscii": true }
-        }
+        },
+        "useBlockStatements": "error"
       },
       "performance": { "noBarrelFile": "error", "noReExportAll": "error" }
     }
