@@ -260,6 +260,25 @@ async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
 }
 ```
 
+## 3a1. Рух / анімації (ADR 28, `docs/architecture.md`)
+
+- Тривалості й криві — лише токени з `docs/design/theme.css`: `--duration-fast` 150 мс (кольори, hover, focus),
+  `--duration-base` 240 мс (плашка, поява сторінки), `--duration-slow` 360 мс (шторки, діалоги); `--ease-standard`
+  (зміна стану на місці) і `--ease-emphasized` (те, що рухається чи з'являється). У Figma руху немає, тож токени —
+  джерело правди. `transition-*` у Tailwind уже бере fast + standard; інша тривалість — `duration-(--duration-base)`.
+  Сирих `duration-200`, `ease-[…]` і чисел у `transition={{ … }}` немає.
+- JS-анімації — `motion/react` (`motion` 14.3.0). Числа — лише з `MOTION` у `src/constants/motion.constants.ts`
+  (дзеркало токенів у секундах). `MotionConfig` в `AppProviders` задає типовий перехід (base + emphasized), тож
+  компонент зазвичай не передає `transition` взагалі.
+- Анімуються лише `transform` і `opacity` (і layout через `layoutId`); не `width`/`height`/`top`.
+- `prefers-reduced-motion: reduce`: CSS-токени тривалості стають 0 мс; `MotionConfig reducedMotion="user"` вимикає
+  зсув і layout-рух, лишає opacity. Нова анімація перевіряється з емуляцією reduced motion.
+- Перемикач із кількох варіантів — `SegmentedControl` (`src/components/ui/segmented-control.component.tsx`): плашка
+  ковзає між варіантами сама. Новий перемикач не малює свою плашку.
+- Перехід між сторінками — лише контент усередині `PageTransition` у `src/app/(app)/layout.tsx`: поява без exit.
+  Оболонка (Sidebar, Topbar, TabBar, FAB) не анімується; зміна лише query (`?add=`, `?pay=`) не анімується;
+  жодних `AnimatePresence` навколо сторінок і FrozenRouter.
+
 ## 3b. Локалізація (ADR 25, `docs/architecture.md`)
 
 - next-intl без i18n-маршрутизації: URL однакові для всіх мов. Локалі — `LOCALES` у `src/i18n/locale.utils.ts`
