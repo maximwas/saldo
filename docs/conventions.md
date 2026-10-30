@@ -37,7 +37,7 @@ saldo/
   CLAUDE.md
   biome.json  .dependency-cruiser.cjs  knip.json  lefthook.yml  vitest.config.ts  playwright.config.ts  vercel.json
   next.config.ts  tsconfig.json  package.json  .env.example
-  .github/workflows/backup.yml  .github/workflows/ci.yml   (ci.yml: jobs check і e2e)
+  .github/workflows/backup.yml  .github/workflows/ci.yml   (ci.yml: jobs check і gitleaks)
   docs/                                  spec, research, design, architecture, plan, stack, conventions
   e2e/                                   Playwright (§6.3); не імпортується з src/
     global-setup.ts                      supabase db reset, 4 користувачі через admin API, вигадані демо-дані
@@ -891,8 +891,8 @@ pre-commit:
 `next typegen` перед `tsc` генерує глобальні `LayoutProps` / `PageProps` і типи `typedRoutes` у `.next/types`.
 `supabase test db` у `check` потребує запущеного локального стеку (`supabase start`).
 
-`pnpm check` e2e не запускає: він повільний (збірка + браузер). E2E — `pnpm test:e2e` локально перед PR фази й
-окремий job `e2e` у CI.
+`pnpm check` e2e не запускає: він повільний (збірка + браузер). E2E — лише `pnpm test:e2e` локально перед кожним PR, у CI
+його немає (Максим, 30.10.2026: «e2e запускаємо тільки на компі», «на гіту тільки юніт»).
 
 ### 5.6 Playwright
 
@@ -1084,40 +1084,9 @@ worker). У WebKit `setOffline` ламає навігацію під service wor
 сповіщень рівно один раз. Доставку через APNs/FCM, показ сповіщення при закритій вкладці й iOS Home Screen —
 лише вручну (Готово, коли фази 3): headless-браузер не отримує push від реальних сервісів.
 
-**CI.** Job `e2e` у `ci.yml` (без secrets, `permissions: contents: read`), паралельно з `check`:
-
-```yaml
-e2e:
-  runs-on: ubuntu-latest
-  timeout-minutes: 20
-  steps:
-    - uses: actions/checkout@v5
-    - uses: pnpm/action-setup@v4
-    - uses: actions/setup-node@v5
-      with: { node-version: 26, cache: pnpm }
-    - run: pnpm install --frozen-lockfile
-    - uses: supabase/setup-cli@v1
-      with: { version: 2.122.0 }
-    - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
-    - id: pw
-      run: echo "version=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-    - uses: actions/cache@v4
-      id: pw-cache
-      with: { path: ~/.cache/ms-playwright, key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }} }
-    - if: steps.pw-cache.outputs.cache-hit != 'true'
-      run: pnpm exec playwright install --with-deps chromium
-    - if: steps.pw-cache.outputs.cache-hit == 'true'
-      run: pnpm exec playwright install-deps chromium
-    - run: pnpm test:e2e
-    - if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: playwright-report
-        retention-days: 7
-        path: |
-          playwright-report/
-          test-results/
-```
+**CI.** E2E у CI не запускаються (Максим, 30.10.2026). GitHub Actions ганяє лише статичні перевірки й Vitest
+(job `check`) та gitleaks; pgTAP (`pnpm test:db`) і Playwright (`pnpm test:e2e`) — локально перед PR, звіт про запуск
+у описі PR.
 
 `supabase start` (а не `supabase db start`) — інакше Auth і ключі не підіймуться (supabase discussion #32522).
 Оцінка часу: стек 2–3 хв (образи Docker), install ~0,5 хв, `next build` 1–2 хв, Chromium ~1 хв (з кешем ~10 с),
