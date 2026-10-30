@@ -1180,7 +1180,7 @@ worker). У WebKit `setOffline` ламає навігацію під service wor
 
 ### Гілки й релізи
 
-- `main` — гілка за замовчуванням на GitHub і продакшн (Vercel). `develop` — інтеграційна гілка, preview.
+- `main` — гілка за замовчуванням на GitHub і продакшн (Vercel). `develop` — інтеграційна гілка, preview. Vercel деплоїть лише `main` і `develop` (`git.deploymentEnabled` у `vercel.json`): гілки фіч не збирає, бо Hobby дає 100 деплоїв на добу, і пуші агентів вичерпали їх за вечір 30.10.2026.
 - Кожен пункт або група пунктів — своя гілка від `develop` → PR у `develop` (`gh pr create --base develop`: база за
   замовчуванням тепер `main`). Агенти працюють у worktree від `develop` (`.claude/settings.local.json`:
   `worktree.baseRef: "head"`).
