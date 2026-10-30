@@ -1,25 +1,24 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
-import { useLedger } from '@/contexts/ledger.context'
+import { useToday } from '@/contexts/clock.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
 import { formatMinor } from '@/lib/money/money.utils'
-import type { AccountOption, CategoryOption, OperationItem } from '../operations.types'
+import { operationQueries } from '../api/operations.queries'
+import type { OperationItem } from '../operations.types'
 import { displayAmount, showsOriginal } from '../utils/operation-display.utils'
 import { dayLabelKind, groupByDay, summarize } from '../utils/operation-items.utils'
 import { formatRate, impliedRate } from '../utils/rate.utils'
 
 type OperationListProps = {
   items: OperationItem[]
-  accounts: AccountOption[]
-  categories: CategoryOption[]
   receiptIds: ReadonlySet<string>
-  baseCurrency: string
-  today: string
   onSelectAction: (item: OperationItem) => void
 }
 
@@ -28,19 +27,17 @@ const ROW_BUTTON = 'cursor-pointer rounded-xs text-left outline-none focus-visib
 // Figma Saldo file → Operations 2:11403: a table (desktop) with day group rows (44, app fill) and 64 high rows; 2:13681: a card
 // per day on mobile, the day sum on the right of its header. A transfer is one neutral line «−800,00 € → +33 200,00 ₴».
 // shortcut: no "Planned" group (planned payments are 1.11), no hover quick actions: a click opens the sheet
-export function OperationList({
-  items,
-  accounts,
-  categories,
-  receiptIds,
-  baseCurrency,
-  today,
-  onSelectAction,
-}: OperationListProps) {
+export function OperationList({ items, receiptIds, onSelectAction }: OperationListProps) {
   const translate = useTranslations('operations')
   const formatter = useFormatter()
   const locale = useLocale()
-  const { timeZone } = useLedger()
+  const timeZone = useLedgerStore((ledger) => ledger.timeZone)
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const today = useToday()
+  const options = useQuery(operationQueries.options(ledgerId))
+  const accounts = options.data?.accounts ?? []
+  const categories = options.data?.categories ?? []
   const names = useMemberNames()
   const groups = groupByDay(items)
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? ''

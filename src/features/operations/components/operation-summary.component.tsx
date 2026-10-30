@@ -1,15 +1,16 @@
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import type { Totals } from '../utils/operation-items.utils'
 
 type OperationSummaryProps = {
   totals: Totals
-  baseCurrency: string
 }
 
 // Figma «Saldo» → SummaryStrip 2:10084 (Desktop 2:16059 / Mobile): a card with three blocks, subtle fill, radius md,
 // padding 12/16, label text-label in secondary, the sum below it. The planned-payments block waits for 1.11.
-export function OperationSummary({ totals, baseCurrency }: OperationSummaryProps) {
+export function OperationSummary({ totals }: OperationSummaryProps) {
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const translate = useTranslations('operations.totals')
   const blocks = [
     {

@@ -1,7 +1,8 @@
-import type { ActiveLedger } from '@/contexts/ledger.context'
+import type { ActiveLedger } from '@/store/ledger.store'
 import type { LedgerRole } from '@/types/supabase.types'
 
 const DEFAULT_TIME_ZONE = 'Europe/Kyiv'
+const DEFAULT_BASE_CURRENCY = 'UAH'
 
 /** a ledger_members row with its space */
 export type MembershipRow = {
@@ -10,6 +11,7 @@ export type MembershipRow = {
   ledgers: {
     name: string
     time_zone: string
+    base_currency: string
   } | null
 }
 
@@ -29,6 +31,7 @@ export function toActiveLedger(membership: MembershipRow, rows: readonly Members
     ledgerId: membership.ledger_id,
     role: membership.role as LedgerRole,
     timeZone: membership.ledgers?.time_zone ?? DEFAULT_TIME_ZONE,
+    baseCurrency: membership.ledgers?.base_currency ?? DEFAULT_BASE_CURRENCY,
     ledgers: rows.map((row) => ({
       id: row.ledger_id,
       name: row.ledgers?.name ?? '',

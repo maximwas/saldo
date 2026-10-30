@@ -100,7 +100,6 @@ export function CategoriesScreen() {
                   key={node.id}
                   category={node}
                   subcategoryCount={node.children.length}
-                  canWrite={canWrite}
                   canMoveUp={position > 0}
                   canMoveDown={position < nodes.length - 1}
                   onMoveAction={(direction) => move(nodes, node.id, direction)}
@@ -125,7 +124,6 @@ export function CategoriesScreen() {
                     key={child.id}
                     category={child}
                     nested
-                    canWrite={canWrite}
                     canMoveUp={childPosition > 0}
                     canMoveDown={childPosition < node.children.length - 1}
                     onMoveAction={(direction) => move(node.children, child.id, direction)}
@@ -153,7 +151,6 @@ export function CategoriesScreen() {
                     key={row.id}
                     category={row}
                     nested={row.parentId !== null}
-                    canWrite={canWrite}
                     archived
                     restoreDisabled={parentArchived(row)}
                     onRestoreAction={() => restore(row)}
@@ -173,8 +170,8 @@ export function CategoriesScreen() {
           </ul>
         </aside>
       </div>
-      <CategoryFormSheet target={form} categories={data} onCloseAction={() => setForm(null)} />
-      <ArchiveCategorySheet category={archiving} categories={data} onCloseAction={() => setArchiving(null)} />
+      <CategoryFormSheet target={form} onCloseAction={() => setForm(null)} />
+      <ArchiveCategorySheet category={archiving} onCloseAction={() => setArchiving(null)} />
     </>
   )
 }

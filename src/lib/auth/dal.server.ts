@@ -3,11 +3,11 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import type { AppTheme } from '@/constants/theme.constants'
-import type { ActiveLedger } from '@/contexts/ledger.context'
 import { pickMembership, toActiveLedger } from '@/lib/auth/active-ledger.utils'
 import { logger } from '@/lib/logger/logger.server'
 import { logPgError } from '@/lib/supabase/pg-error.server'
 import { getServerSupabase } from '@/lib/supabase/server-client'
+import type { ActiveLedger } from '@/store/ledger.store'
 
 export const LEDGER_COOKIE = 'saldo-ledger'
 
@@ -85,7 +85,10 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   const supabase = await getServerSupabase()
   const [cookieStore, memberships, settings] = await Promise.all([
     cookies(),
-    supabase.from('ledger_members').select('ledger_id, role, ledgers(name, time_zone)').eq('user_id', session.userId),
+    supabase
+      .from('ledger_members')
+      .select('ledger_id, role, ledgers(name, time_zone, base_currency)')
+      .eq('user_id', session.userId),
     getUserSettings(),
   ])
 

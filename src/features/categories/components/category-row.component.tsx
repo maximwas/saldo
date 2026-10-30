@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { Menu, type MenuItem } from '@/components/ui/menu.component'
+import { useCanWrite } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import type { CategoryView } from '../utils/categories.utils'
 
@@ -12,7 +13,6 @@ type CategoryRowProps = {
   /** a subcategory: indented, small icon, no «add subcategory» */
   nested?: boolean
   subcategoryCount?: number
-  canWrite: boolean
   archived?: boolean
   /** a subcategory of an archived category cannot come back alone */
   restoreDisabled?: boolean
@@ -31,7 +31,6 @@ export function CategoryRow({
   category,
   nested = false,
   subcategoryCount = 0,
-  canWrite,
   archived = false,
   restoreDisabled = false,
   canMoveUp = false,
@@ -43,6 +42,7 @@ export function CategoryRow({
   onRestoreAction,
 }: CategoryRowProps) {
   const translate = useTranslations('categories')
+  const canWrite = useCanWrite()
 
   const items: MenuItem[] = archived
     ? [

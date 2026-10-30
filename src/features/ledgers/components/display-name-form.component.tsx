@@ -8,19 +8,20 @@ import { Card } from '@/components/ui/card.component'
 import { Field } from '@/components/ui/field.component'
 import { Input } from '@/components/ui/input.component'
 import { notify } from '@/components/ui/toaster.component'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { setMyDisplayName } from '../api/access.api'
 
 type DisplayNameFormProps = {
-  ledgerId: string
   name: string | null
 }
 
 // The member's own name in the active space, for every role (set_my_display_name). No Figma frame: the same Card + Field +
 // Input as the space form next to it.
-export function DisplayNameForm({ ledgerId, name: initialName }: DisplayNameFormProps) {
+export function DisplayNameForm({ name: initialName }: DisplayNameFormProps) {
   const router = useRouter()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const translate = useTranslations('settings.myName')
   const translateError = useTranslations('errors.db')
   const [name, setName] = useState(initialName ?? '')

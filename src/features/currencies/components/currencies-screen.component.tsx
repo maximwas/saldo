@@ -2,10 +2,9 @@
 
 import { useLocale, useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge.component'
-import { useClock } from '@/contexts/clock.context'
-import { useCanWrite, useLedger } from '@/contexts/ledger.context'
+import { useToday } from '@/contexts/clock.context'
+import { useCanWrite } from '@/contexts/ledger.context'
 import { currencySymbol } from '@/lib/money/money.utils'
-import { localDate } from '@/lib/utils/clock.utils'
 import { useRates } from '../hooks/currencies.hook'
 import { currentRates } from '../utils/currencies.utils'
 import { RateForm } from './rate-form.component'
@@ -17,9 +16,8 @@ const CARD_CLASS = 'flex flex-col gap-5 rounded-card bg-card p-5 shadow-card lg:
 export function CurrenciesScreen() {
   const translate = useTranslations('currencies')
   const locale = useLocale()
-  const clock = useClock()
   const canWrite = useCanWrite()
-  const { timeZone } = useLedger()
+  const today = useToday()
   const { data, isPending, isError } = useRates()
 
   if (isPending) {
@@ -34,7 +32,6 @@ export function CurrenciesScreen() {
     )
   }
 
-  const today = localDate(clock.now(), timeZone)
   const formatRate = (rate: string) =>
     new Intl.NumberFormat(locale, {
       minimumFractionDigits: 2,
@@ -78,7 +75,7 @@ export function CurrenciesScreen() {
       {canWrite ? (
         <section className={CARD_CLASS}>
           <h2 className="text-card-title text-text-primary">{translate('form.title')}</h2>
-          <RateForm baseCurrency={data.baseCurrency} />
+          <RateForm />
         </section>
       ) : null}
       <section className={CARD_CLASS}>

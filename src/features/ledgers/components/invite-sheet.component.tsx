@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input.component'
 import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { createLedgerInvite } from '../api/access.api'
@@ -20,15 +21,15 @@ type InviteRole = (typeof INVITE_ROLES)[number]
 type InviteSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  ledgerId: string
-  ledgerName: string
 }
 
 // Figma «Saldo» → Settings · Invite (Dialog 2:36155 / BottomSheet 2:45017): Email (hint under it), Role select,
 // a subtle box that explains the roles, footer «Cancel» + primary. The link step after it has no frame: it reuses the
 // same fields (a read-only Input) and one «Copy link» button.
-export function InviteSheet({ open, onOpenChange, ledgerId, ledgerName }: InviteSheetProps) {
+export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
   const router = useRouter()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const ledgerName = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const translate = useTranslations('settings.access')
   const translateError = useTranslations('errors.db')
   const [email, setEmail] = useState('')

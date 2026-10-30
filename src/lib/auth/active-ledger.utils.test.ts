@@ -7,6 +7,7 @@ const member = (ledgerId: string, role = 'editor'): MembershipRow => ({
   ledgers: {
     name: `Space ${ledgerId}`,
     time_zone: 'Europe/Warsaw',
+    base_currency: 'PLN',
   },
 })
 
@@ -36,6 +37,7 @@ describe('toActiveLedger', () => {
       ledgerId: 'b',
       role: 'owner',
       timeZone: 'Europe/Warsaw',
+      baseCurrency: 'PLN',
       ledgers: [
         {
           id: 'a',
@@ -56,7 +58,7 @@ describe('toActiveLedger', () => {
     })
   })
 
-  it('uses Kyiv time and an empty name when the space is not readable', () => {
+  it('uses Kyiv time, UAH and an empty name when the space is not readable', () => {
     const hidden: MembershipRow = {
       ledger_id: 'x',
       role: 'viewer',
@@ -65,6 +67,7 @@ describe('toActiveLedger', () => {
 
     expect(toActiveLedger(hidden, [hidden])).toMatchObject({
       timeZone: 'Europe/Kyiv',
+      baseCurrency: 'UAH',
       ledgers: [{ name: '' }],
     })
   })

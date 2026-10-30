@@ -10,7 +10,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
-import { useCanWrite, useLedger } from '@/contexts/ledger.context'
+import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { formatMinor, fromMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import {
@@ -86,7 +86,7 @@ export function OperationEditor({
   const locale = useLocale()
   const formatter = useFormatter()
   const clock = useClock()
-  const { ledgerId } = useLedger()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const canWrite = useCanWrite()
   const queryClient = useQueryClient()
   const options = useQuery(operationQueries.options(ledgerId))
@@ -108,17 +108,60 @@ export function OperationEditor({
   // is deleted whole and created again, a refund and an adjustment have their own flows)
   const editable =
     item !== null && canWrite && !item.row.transferId && (item.kind === 'income' || item.kind === 'expense')
-  const mode = target.mode === 'create' ? 'create' : editable ? 'edit' : 'details'
+  const mode = pickMode()
   const accounts = options.data?.accounts ?? []
   const categories = options.data?.categories ?? []
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? '…'
   const categoryName = (id: string | null) => categories.find((category) => category.id === id)?.name ?? null
-  const title =
-    confirmingDelete && item
-      ? translate(item.kind === 'transfer' ? 'form.deleteTransferTitle' : 'form.deleteTitle')
-      : mode === 'create'
-        ? translate(kind === 'transfer' ? 'form.transferTitle' : 'form.newTitle')
-        : translate(item?.kind === 'transfer' ? 'form.transferTitle' : 'form.editTitle')
+  const title = pickTitle()
+
+  function pickMode() {
+    if (target.mode === 'create') {
+      return 'create'
+    }
+
+    return editable ? 'edit' : 'details'
+  }
+
+  function pickTitle() {
+    const isTransfer = item?.kind === 'transfer'
+
+    if (confirmingDelete && item) {
+      return translate(isTransfer ? 'form.deleteTransferTitle' : 'form.deleteTitle')
+    }
+
+    if (mode === 'create') {
+      return translate(kind === 'transfer' ? 'form.transferTitle' : 'form.newTitle')
+    }
+
+    return translate(isTransfer ? 'form.transferTitle' : 'form.editTitle')
+  }
+
+  function renderCreateForm() {
+    if (options.isPending) {
+      return <div aria-busy className="h-64 rounded-md bg-subtle" />
+    }
+
+    if (kind === 'transfer') {
+      return <TransferForm formId={FORM_ID} onSubmitAction={saveTransfer} />
+    }
+
+    return (
+      <OperationForm
+        formId={FORM_ID}
+        kind={kind}
+        defaults={target.mode === 'create' ? target.defaults : undefined}
+        onSubmitAction={saveOperation}
+      >
+        <ReceiptField operationId={null} file={receipt} onFileChangeAction={setReceipt} canEdit />
+      </OperationForm>
+    )
+  }
+
+  function changeKind(next: AddKind) {
+    setKind(next)
+    onKindChangeAction?.(next)
+  }
 
   function fail(caught: unknown) {
     const pgError = toPgError(
@@ -351,33 +394,9 @@ export function OperationEditor({
             label: translate(`add.${value}`),
           }))}
           value={kind}
-          onValueChange={(next) => {
-            setKind(next)
-            onKindChangeAction?.(next)
-          }}
+          onValueChange={changeKind}
         />
-        {options.isPending ? (
-          <div aria-busy className="h-64 rounded-md bg-subtle" />
-        ) : kind === 'transfer' ? (
-          <TransferForm
-            formId={FORM_ID}
-            accounts={accounts}
-            categories={categories}
-            rates={options.data?.rates ?? []}
-            onSubmitAction={saveTransfer}
-          />
-        ) : (
-          <OperationForm
-            formId={FORM_ID}
-            kind={kind}
-            accounts={accounts}
-            categories={categories}
-            defaults={target.mode === 'create' ? target.defaults : undefined}
-            onSubmitAction={saveOperation}
-          >
-            <ReceiptField operationId={null} file={receipt} onFileChangeAction={setReceipt} canEdit />
-          </OperationForm>
-        )}
+        {renderCreateForm()}
       </>
     )
   } else if (mode === 'edit' && item) {
@@ -387,8 +406,6 @@ export function OperationEditor({
       <OperationForm
         formId={FORM_ID}
         kind={item.kind as 'expense' | 'income'}
-        accounts={accounts}
-        categories={categories}
         defaults={toFormValues(item)}
         onSubmitAction={saveOperation}
       >

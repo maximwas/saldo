@@ -15,14 +15,13 @@ import { Sheet } from '@/components/ui/sheet.component'
 import { Switch } from '@/components/ui/switch.component'
 import { notify } from '@/components/ui/toaster.component'
 import { isMoneyQuery } from '@/constants/query-roots.constants'
-import { useClock } from '@/contexts/clock.context'
-import { useLedger } from '@/contexts/ledger.context'
+import { useClock, useToday } from '@/contexts/clock.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
-import { localDate } from '@/lib/utils/clock.utils'
 import type { ObligationOptions, ObligationRow } from '../api/obligations.api'
-import { useCandidateOperations, usePayObligation } from '../hooks/obligations.hook'
+import { useCandidateOperations, useObligationOptions, usePayObligation } from '../hooks/obligations.hook'
 import {
   type PayObligationFormValues,
   payObligationFormSchema,
@@ -31,20 +30,26 @@ import {
 
 type PayObligationSheetProps = {
   obligation: ObligationRow
-  options: ObligationOptions
   onClose: () => void
 }
 
 const FORM_ID = 'pay-obligation-form'
 
+// the screen mounts the sheet only after the options are loaded; the cache returns the same data here
+const NO_OPTIONS: ObligationOptions = {
+  accounts: [],
+  categories: [],
+}
+
 // Figma «Saldo» → Confirm payment 2:15014 / 2:15535: summary line, Amount, Payment date, Account (hint: creates one
 // actual operation), «Link an existing operation» rows with a Link button, footer Cancel + Paid.
-export function PayObligationSheet({ obligation, options, onClose }: PayObligationSheetProps) {
+export function PayObligationSheet({ obligation, onClose }: PayObligationSheetProps) {
   const translate = useTranslations('obligations')
   const translateErrors = useTranslations('errors')
   const format = useFormatter()
   const clock = useClock()
-  const { ledgerId } = useLedger()
+  const today = useToday()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const queryClient = useQueryClient()
   const pay = usePayObligation()
   // ids are made once per open sheet: a retry after a lost answer replays the same payment instead of paying twice
@@ -53,7 +58,7 @@ export function PayObligationSheet({ obligation, options, onClose }: PayObligati
     operationId: crypto.randomUUID(),
   }))
   const candidates = useCandidateOperations(obligation.direction, true)
-  const today = localDate(clock.now(), clock.timeZone)
+  const options = useObligationOptions().data ?? NO_OPTIONS
   const account =
     options.accounts.find((item) => item.id === obligation.accountId) ??
     options.accounts.find((item) => item.currency === obligation.currency) ??

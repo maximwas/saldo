@@ -1,5 +1,6 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
@@ -9,11 +10,11 @@ import { Input } from '@/components/ui/input.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { Select } from '@/components/ui/select.component'
 import { Textarea } from '@/components/ui/textarea.component'
-import { useClock } from '@/contexts/clock.context'
+import { useToday } from '@/contexts/clock.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
-import { localDate } from '@/lib/utils/clock.utils'
-import type { AccountOption, CategoryOption } from '../operations.types'
+import { operationQueries } from '../api/operations.queries'
 import { type OperationFormValues, operationFormSchema } from '../schemas/operation-form.schema'
 import { accountOptions, categoryOptions } from '../utils/operation-display.utils'
 
@@ -23,8 +24,6 @@ type OperationFormProps = {
   formId: string
   /** income or expense: the kind of the sheet's switch (an edited row keeps its own) */
   kind: 'expense' | 'income'
-  accounts: AccountOption[]
-  categories: CategoryOption[]
   defaults?: Partial<OperationFormValues>
   disabled?: boolean
   onSubmitAction: (values: OperationFormValues) => void
@@ -37,15 +36,18 @@ type OperationFormProps = {
 export function OperationForm({
   formId,
   kind,
-  accounts,
-  categories,
   defaults,
   disabled = false,
   onSubmitAction,
   children,
 }: OperationFormProps) {
   const translate = useTranslations('operations.form')
-  const clock = useClock()
+  const today = useToday()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  // the editor mounts the form after the options are loaded; the query cache hands the same data over
+  const options = useQuery(operationQueries.options(ledgerId))
+  const accounts = options.data?.accounts ?? []
+  const categories = options.data?.categories ?? []
   const resolver = useZodResolver(operationFormSchema)
   const firstAccount = accounts.find((account) => !account.archived)
   const form = useForm<OperationFormValues>({
@@ -57,7 +59,7 @@ export function OperationForm({
       currency: firstAccount?.currency ?? 'UAH',
       accountId: firstAccount?.id ?? '',
       categoryId: null,
-      occurredOn: localDate(clock.now(), clock.timeZone),
+      occurredOn: today,
       counterparty: '',
       note: '',
       ...defaults,
@@ -141,7 +143,7 @@ export function OperationForm({
         render={(field) => (
           <DatePicker
             value={field.value}
-            onValueChange={(value) => field.onChange(value ?? localDate(clock.now(), clock.timeZone))}
+            onValueChange={(value) => field.onChange(value ?? today)}
             disabled={disabled}
             onBlur={field.onBlur}
           />

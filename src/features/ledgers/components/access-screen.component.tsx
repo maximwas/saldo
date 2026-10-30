@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { Select } from '@/components/ui/select.component'
 import { notify } from '@/components/ui/toaster.component'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { cn } from '@/lib/utils/cn.utils'
-import type { LedgerRole } from '@/types/supabase.types'
 import { cancelLedgerInvite, removeMember, setMemberRole } from '../api/access.api'
 import type { Member, PendingInvite } from '../api/access.server'
 import { INVITE_ROLES } from '../schemas/access.schema'
@@ -19,9 +19,6 @@ import { ConfirmSheet } from './confirm-sheet.component'
 import { InviteSheet } from './invite-sheet.component'
 
 type AccessScreenProps = {
-  ledgerId: string
-  ledgerName: string
-  role: LedgerRole
   currentUserId: string
   members: Member[]
   invites: PendingInvite[]
@@ -71,7 +68,10 @@ function Avatar({ name, index }: AvatarProps) {
 // Figma «Saldo» → Settings, Access tab 2:30818: Card Members (intro + Invite, rows: avatar, name + email,
 // role 200, action 180) and Card Pending invites; to the right Card Roles (400). The viewer frame
 // 2:46979 adds an info line on top and Leave space in place of Invite.
-export function AccessScreen({ ledgerId, ledgerName, role, currentUserId, members, invites }: AccessScreenProps) {
+export function AccessScreen({ currentUserId, members, invites }: AccessScreenProps) {
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const role = useLedgerStore((ledger) => ledger.role)
+  const ledgerName = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const router = useRouter()
   const translate = useTranslations('settings.access')
   const translateError = useTranslations('errors.db')
@@ -320,7 +320,7 @@ export function AccessScreen({ ledgerId, ledgerName, role, currentUserId, member
           </dl>
         </Card>
       </div>
-      <InviteSheet open={inviteOpen} onOpenChange={setInviteOpen} ledgerId={ledgerId} ledgerName={ledgerName} />
+      <InviteSheet open={inviteOpen} onOpenChange={setInviteOpen} />
       <ConfirmSheet
         open={dialog?.kind === 'revoke'}
         onOpenChange={(open) => !open && closeDialog()}

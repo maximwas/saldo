@@ -10,9 +10,9 @@ import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CATEGORY_COLORS } from '@/constants/category-colors.constants'
-import { useLedger } from '@/contexts/ledger.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { useCreateCategory, useUpdateCategory } from '../hooks/categories.hook'
+import { useCategories, useCreateCategory, useUpdateCategory } from '../hooks/categories.hook'
 import {
   type CategoryFormValues,
   categoryFormSchema,
@@ -36,18 +36,21 @@ export type CategoryFormTarget = {
   parentId: string | null
 }
 
+// the screen shows the sheet only after the categories are loaded; the query cache hands the same rows over
+const NO_CATEGORIES: readonly CategoryView[] = []
+
 type CategoryFormSheetProps = {
   /** null = the sheet is closed */
   target: CategoryFormTarget | null
-  categories: readonly CategoryView[]
   onCloseAction: () => void
 }
 
 // no Figma frame for the category form: it is the accounts edit Dialog ( · 5:106946) with the
 // fields of §6 — name, kind and parent on create, colour and icon always
-export function CategoryFormSheet({ target, categories, onCloseAction }: CategoryFormSheetProps) {
+export function CategoryFormSheet({ target, onCloseAction }: CategoryFormSheetProps) {
   const translate = useTranslations('categories')
-  const { ledgerId } = useLedger()
+  const categories = useCategories().data ?? NO_CATEGORIES
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const create = useCreateCategory()
   const update = useUpdateCategory()
   const pending = create.isPending || update.isPending
@@ -109,19 +112,19 @@ export function CategoryFormSheet({ target, categories, onCloseAction }: Categor
         </>
       }
     >
-      {target ? <CategoryForm target={target} categories={categories} onSubmitAction={submit} /> : null}
+      {target ? <CategoryForm target={target} onSubmitAction={submit} /> : null}
     </Sheet>
   )
 }
 
 type CategoryFormProps = {
   target: CategoryFormTarget
-  categories: readonly CategoryView[]
   onSubmitAction: (values: CategoryFormValues, newId: string) => void
 }
 
-function CategoryForm({ target, categories, onSubmitAction }: CategoryFormProps) {
+function CategoryForm({ target, onSubmitAction }: CategoryFormProps) {
   const translate = useTranslations('categories')
+  const categories = useCategories().data ?? NO_CATEGORIES
   const { category } = target
   // one id per opened form: a double click on «Save» sends the same id, so it is one category
   const [newId] = useState(() => crypto.randomUUID())
