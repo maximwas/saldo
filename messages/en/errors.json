@@ -30,5 +30,6 @@
   "amountOptionalInvalid": "Enter an amount above zero or leave it empty",
   "installmentsCountInvalid": "From 1 to 360 instalments",
   "scheduleRequired": "Add 1 to 360 instalments",
-  "purchaseRequired": "Choose a purchase"
+  "purchaseRequired": "Choose a purchase",
+  "countInvalid": "Enter a whole number from 1 to 999"
 }
