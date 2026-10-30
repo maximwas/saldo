@@ -7,6 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
+    "icons": "pwa-assets-generator",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -58,6 +59,7 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vite-pwa/assets-generator": "2.0.0",
     "dependency-cruiser": "18.7.0",
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
