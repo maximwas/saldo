@@ -38,10 +38,24 @@ type AmountProps = VariantProps<typeof amountVariants> & {
   className?: string
 }
 
+// masked («•••• ₴»), unknown («? ₴») or the formatted sum
+function amountText(minor: AmountProps['minor'], currency: string, locale: string, masked: boolean) {
+  const symbol = currencySymbol(currency, locale)
+
+  if (masked) {
+    return `•••• ${symbol}`
+  }
+
+  if (minor === null) {
+    return `? ${symbol}`
+  }
+
+  return formatMinor(minor, currency, locale)
+}
+
 export function Amount({ minor, currency, hidden, kind, size, className }: AmountProps) {
   const locale = useLocale()
   const hideAmounts = useUiStore((state) => state.hideAmounts)
-  const symbol = currencySymbol(currency, locale)
 
   return (
     <span
@@ -56,11 +70,7 @@ export function Amount({ minor, currency, hidden, kind, size, className }: Amoun
         className,
       )}
     >
-      {(hidden ?? hideAmounts)
-        ? `•••• ${symbol}`
-        : minor === null
-          ? `? ${symbol}`
-          : formatMinor(minor, currency, locale)}
+      {amountText(minor, currency, locale, hidden ?? hideAmounts)}
     </span>
   )
 }

@@ -24,14 +24,6 @@
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "overrides": [
     {
-      "includes": [
-        "src/components/ui/amount.component.tsx",
-        "src/features/operations/components/operation-editor.component.tsx",
-        "src/features/operations/components/receipt-field.component.tsx"
-      ],
-      "linter": { "rules": { "style": { "noNestedTernary": "off" } } }
-    },
-    {
       "includes": ["src/types/database.types.ts"],
       "javascript": { "formatter": { "expand": "always" } },
       "linter": { "enabled": false },

@@ -9,6 +9,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useDeleteReceipt } from '../api/operations.mutations'
 import { operationQueries } from '../api/operations.queries'
+import type { Receipt } from '../operations.types'
 import { isReceiptType, RECEIPT_MAX_BYTES } from '../utils/receipt-compress.utils'
 
 type ReceiptFieldProps = {
@@ -59,26 +60,7 @@ export function ReceiptField({ operationId, file, onFileChangeAction, canEdit }:
         <ul className="flex flex-wrap gap-3">
           {saved.data.map((receipt) => (
             <li key={receipt.id} className="relative">
-              {receipt.mime === 'application/pdf' ? (
-                <a
-                  href={receipt.url ?? undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex size-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-border bg-subtle text-caption text-text-secondary"
-                >
-                  <FileText aria-hidden size={20} />
-                  {translate('receiptOpenPdf')}
-                </a>
-              ) : receipt.url ? (
-                <a href={receipt.url} target="_blank" rel="noreferrer" className="block cursor-pointer">
-                  {/* biome-ignore lint/performance/noImgElement: a signed Storage URL, not an optimised next/image source */}
-                  <img
-                    src={receipt.url}
-                    alt={translate('receiptImageAlt')}
-                    className="size-20 rounded-md border border-border object-cover"
-                  />
-                </a>
-              ) : null}
+              <ReceiptPreview receipt={receipt} />
               {canEdit ? (
                 <button
                   type="button"
@@ -129,5 +111,39 @@ export function ReceiptField({ operationId, file, onFileChangeAction, canEdit }:
         </div>
       ) : null}
     </div>
+  )
+}
+
+// a PDF opens in a new tab; a photo shows as a thumbnail; nothing while its signed URL is missing
+function ReceiptPreview({ receipt }: { receipt: Receipt }) {
+  const translate = useTranslations('operations.form')
+
+  if (receipt.mime === 'application/pdf') {
+    return (
+      <a
+        href={receipt.url ?? undefined}
+        target="_blank"
+        rel="noreferrer"
+        className="flex size-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-border bg-subtle text-caption text-text-secondary"
+      >
+        <FileText aria-hidden size={20} />
+        {translate('receiptOpenPdf')}
+      </a>
+    )
+  }
+
+  if (!receipt.url) {
+    return null
+  }
+
+  return (
+    <a href={receipt.url} target="_blank" rel="noreferrer" className="block cursor-pointer">
+      {/* biome-ignore lint/performance/noImgElement: a signed Storage URL, not an optimised next/image source */}
+      <img
+        src={receipt.url}
+        alt={translate('receiptImageAlt')}
+        className="size-20 rounded-md border border-border object-cover"
+      />
+    </a>
   )
 }
