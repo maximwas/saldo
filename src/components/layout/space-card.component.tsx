@@ -19,6 +19,8 @@ export function SpaceCard() {
     return null
   }
 
+  const canInvite = current.role === 'owner'
+
   return (
     <section className="flex flex-col gap-4 rounded-card bg-card p-5 shadow-card">
       <div className="flex items-start gap-3">
@@ -36,7 +38,7 @@ export function SpaceCard() {
           <SyncStatus state="synced" label={translate('synced')} className="h-7 rounded-full bg-subtle" />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className={canInvite ? 'grid grid-cols-2 gap-2' : 'grid gap-2'}>
         <SpaceSwitcher
           spaces={ledger.ledgers}
           currentId={ledger.ledgerId}
@@ -44,7 +46,7 @@ export function SpaceCard() {
           onSelectAction={switchLedger}
         />
         {/* shortcut: Invite opens Settings until the access tab (plan 1.18) exists */}
-        {current.role === 'owner' && (
+        {canInvite && (
           <Button
             variant="ghost"
             render={<Link href="/settings" />}
