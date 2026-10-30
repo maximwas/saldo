@@ -10,6 +10,7 @@ const OWN_PAGES = [
   '/space',
   '/settings',
   '/payments',
+  '/payments/credits',
   '/operations',
   '/operations/accounts',
   '/operations/categories',

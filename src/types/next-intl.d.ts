@@ -3,6 +3,7 @@ import type accounts from '../../messages/uk/accounts.json'
 import type auth from '../../messages/uk/auth.json'
 import type categories from '../../messages/uk/categories.json'
 import type common from '../../messages/uk/common.json'
+import type credits from '../../messages/uk/credits.json'
 import type currencies from '../../messages/uk/currencies.json'
 import type debts from '../../messages/uk/debts.json'
 import type errors from '../../messages/uk/errors.json'
@@ -23,6 +24,7 @@ declare module 'next-intl' {
       auth: typeof auth
       categories: typeof categories
       common: typeof common
+      credits: typeof credits
       currencies: typeof currencies
       debts: typeof debts
       errors: typeof errors
