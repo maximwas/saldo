@@ -11,12 +11,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // Figma "Saldo", login 4:79954 (desktop: centred 440px card) and 4:79982 (mobile: brand above the card, note below);
-// brand, title and subtitle are centred (Maxim, 2026-10-30)
+// brand, title and subtitle are centred; the mobile group is centred vertically, safe-center falls back to the top
+// when it does not fit (short screen, keyboard open) so the form stays reachable (Maxim, 2026-10-30)
 export default function LoginPage() {
   const translate = useTranslations('auth')
 
   return (
-    <main className="flex min-h-dvh flex-col gap-6 bg-app px-5 pt-12 pb-8 md:items-center md:justify-center md:p-0">
+    <main className="flex min-h-dvh flex-col justify-center-safe gap-6 bg-app px-5 pt-12 pb-8 md:items-center md:justify-center md:p-0">
       <Brand className="self-center md:hidden" />
       <div className="flex flex-col rounded-card bg-card p-5 shadow-card md:w-110 md:p-8">
         <LoginForm />
