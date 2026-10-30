@@ -1118,8 +1118,9 @@ e2e:
 
 ## 8. Коміти
 
-- Conventional Commits: `feat(operations): переказ із комісією`, `fix(recurrence): лютий для правила skip`,
-  `chore(db): міграція obligations`.
+- Conventional Commits лише англійською: `feat(operations): transfer with a fee`,
+  `fix(recurrence): February for the skip rule`, `chore(db): obligations migration`. Англійською також назви гілок,
+  заголовки й описи PR. Кирилицю в повідомленні коміту відхиляє lefthook `commit-msg` (`scripts/check-commit-msg.mjs`).
 - Один коміт — одна логічна зміна; `pnpm check` зелений.
 - Без `Co-Authored-By: Claude`, без «Generated with Claude Code» і будь-яких згадок AI у комітах і PR.
 - Секрети, `.env*`, дампи БД у git не потрапляють. Репозиторій публічний: gitleaks у pre-commit і push protection

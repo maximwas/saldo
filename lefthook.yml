@@ -7,3 +7,7 @@ pre-commit:
     types: { run: 'pnpm typecheck' }
     deps: { run: 'pnpm depcruise src --config .dependency-cruiser.cjs' }
     secrets: { run: 'gitleaks git --pre-commit --staged --redact' }
+
+commit-msg:
+  commands:
+    english: { run: 'node scripts/check-commit-msg.mjs {1}' }

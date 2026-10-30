@@ -38,4 +38,5 @@
 - `pnpm db:types` (`supabase gen types typescript`) · `supabase migration new <name>` · `supabase db push`
 
 ## Git
-Коміти — Conventional Commits українською або англійською, без будь-якої атрибуції Claude / AI.
+Коміти, назви гілок, заголовки й описи PR — лише англійською (Conventional Commits), без будь-якої атрибуції
+Claude / AI. Кирилицю в повідомленні коміту відхиляє lefthook `commit-msg` (`scripts/check-commit-msg.mjs`).
