@@ -3,10 +3,10 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import type { AppTheme } from '@/constants/theme.constants'
-import type { ActiveLedger } from '@/contexts/ledger.context'
 import { logger } from '@/lib/logger/logger.server'
 import { logPgError } from '@/lib/supabase/pg-error.server'
 import { getServerSupabase } from '@/lib/supabase/server-client'
+import type { ActiveLedger } from '@/store/ledger.store'
 import type { LedgerRole } from '@/types/supabase.types'
 
 export const LEDGER_COOKIE = 'saldo-ledger'
@@ -85,7 +85,10 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   const supabase = await getServerSupabase()
   const [cookieStore, memberships, settings] = await Promise.all([
     cookies(),
-    supabase.from('ledger_members').select('ledger_id, role, ledgers(name, time_zone)').eq('user_id', session.userId),
+    supabase
+      .from('ledger_members')
+      .select('ledger_id, role, ledgers(name, time_zone, base_currency)')
+      .eq('user_id', session.userId),
     getUserSettings(),
   ])
 
@@ -108,6 +111,7 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
     ledgerId: membership.ledger_id,
     role: membership.role as LedgerRole,
     timeZone: membership.ledgers?.time_zone ?? 'Europe/Kyiv',
+    baseCurrency: membership.ledgers?.base_currency ?? 'UAH',
     ledgers: rows.map((row) => ({
       id: row.ledger_id,
       name: row.ledgers?.name ?? '',

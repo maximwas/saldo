@@ -4,8 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
-import { useLedger } from '@/contexts/ledger.context'
-import { useMemberNames } from '@/lib/members/member-names.hook'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { operationQueries } from '../api/operations.queries'
 import { useOperationFilters } from '../hooks/operation-filters.hook'
 import type { OperationItem } from '../operations.types'
@@ -19,11 +18,10 @@ import { OperationSummary } from './operation-summary.component'
 // Adding goes through the global «Add» (?add=), here only a row opens the sheet (edit / view) or a duplicate of it.
 export function OperationsScreen() {
   const translate = useTranslations('operations')
-  const { ledgerId } = useLedger()
-  const { today, url, filters, period, active, setUrl, reset } = useOperationFilters()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const { url, filters, period, active, setUrl, reset } = useOperationFilters()
   const list = useQuery(operationQueries.list(ledgerId, filters))
   const options = useQuery(operationQueries.options(ledgerId))
-  const members = useMemberNames()
   // `key` changes with every target, so a row, then its duplicate, each get a fresh form and fresh ids
   const [editor, setEditor] = useState<{
     open: boolean
@@ -33,7 +31,6 @@ export function OperationsScreen() {
   const items = useMemo(() => (list.data ? buildItems(list.data.rows, list.data.transfers) : []), [list.data])
   const receiptIds = useMemo(() => new Set(list.data?.receiptIds ?? []), [list.data])
   const totals = useMemo(() => summarize(items), [items])
-  const baseCurrency = list.data?.rows[0]?.baseCurrency ?? 'UAH'
 
   const openEditor = (target: EditorTarget) =>
     setEditor((current) => ({
@@ -78,19 +75,11 @@ export function OperationsScreen() {
   } else {
     content = (
       <>
-        <OperationSummary totals={totals} baseCurrency={baseCurrency} />
+        <OperationSummary totals={totals} />
         {list.data.truncated ? (
           <p className="text-caption text-text-tertiary">{translate('truncated', { count: list.data.rows.length })}</p>
         ) : null}
-        <OperationList
-          items={items}
-          accounts={options.data.accounts}
-          categories={options.data.categories}
-          receiptIds={receiptIds}
-          baseCurrency={baseCurrency}
-          today={today}
-          onSelectAction={select}
-        />
+        <OperationList items={items} receiptIds={receiptIds} onSelectAction={select} />
       </>
     )
   }
@@ -98,15 +87,11 @@ export function OperationsScreen() {
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       <OperationFilters
-        today={today}
         period={period}
         accountId={url.account}
         categoryId={url.category}
         createdBy={url.who}
-        members={members}
         type={url.type}
-        accounts={options.data?.accounts ?? []}
-        categories={options.data?.categories ?? []}
         onChangeAction={(change) => void setUrl(change)}
       />
       {content}

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useAccounts } from '../hooks/accounts.hook'
-import { type AccountView, nextSortOrder, totalInBase } from '../utils/accounts.utils'
+import { type AccountView, totalInBase } from '../utils/accounts.utils'
 import { AccountFormSheet } from './account-form-sheet.component'
 import { AccountRow } from './account-row.component'
 import { ArchiveAccountSheet } from './archive-account-sheet.component'
@@ -100,8 +100,6 @@ export function AccountsScreen() {
                   <AccountRow
                     key={account.id}
                     account={account}
-                    baseCurrency={data.baseCurrency}
-                    canWrite={canWrite}
                     onEditAction={(target) => setForm({ account: target })}
                     onArchiveAction={setArchiving}
                   />
@@ -139,8 +137,6 @@ export function AccountsScreen() {
           }
         }}
         account={form?.account ?? null}
-        baseCurrency={data.baseCurrency}
-        sortOrder={nextSortOrder(data.accounts)}
       />
       <ArchiveAccountSheet account={archiving} onCloseAction={() => setArchiving(null)} />
     </>

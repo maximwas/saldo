@@ -13,14 +13,13 @@ import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
-import { useClock } from '@/contexts/clock.context'
-import { useLedger } from '@/contexts/ledger.context'
+import { useToday } from '@/contexts/clock.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
-import { localDate } from '@/lib/utils/clock.utils'
 import type { ObligationOptions, ObligationRow } from '../api/obligations.api'
-import { useCreateObligation, useUpdateObligation } from '../hooks/obligations.hook'
+import { useCreateObligation, useObligationOptions, useUpdateObligation } from '../hooks/obligations.hook'
 import {
   type ObligationFormValues,
   obligationFormSchema,
@@ -31,18 +30,24 @@ import {
 type ObligationFormSheetProps = {
   /** null = create */
   obligation: ObligationRow | null
-  options: ObligationOptions
   onClose: () => void
 }
 
 const FORM_ID = 'obligation-form'
 
+// the screen mounts the sheet only after the options are loaded; the cache returns the same data here
+const NO_OPTIONS: ObligationOptions = {
+  accounts: [],
+  categories: [],
+}
+
 // No Figma frame for create / edit yet ( has Confirm payment only): built from the form primitives.
-export function ObligationFormSheet({ obligation, options, onClose }: ObligationFormSheetProps) {
+export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheetProps) {
   const translate = useTranslations('obligations')
   const translateErrors = useTranslations('errors')
-  const { ledgerId } = useLedger()
-  const clock = useClock()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const today = useToday()
+  const options = useObligationOptions().data ?? NO_OPTIONS
   const create = useCreateObligation()
   const update = useUpdateObligation()
   const form = useForm<z.input<typeof obligationFormSchema>, unknown, ObligationFormValues>({
@@ -52,7 +57,7 @@ export function ObligationFormSheet({ obligation, options, onClose }: Obligation
       direction: obligation?.direction ?? 'out',
       amount: obligation?.plannedMinor == null ? '' : fromMinor(obligation.plannedMinor, obligation.currency),
       currency: (obligation?.currency ?? options.accounts[0]?.currency ?? 'UAH') as ObligationFormValues['currency'],
-      dueOn: obligation?.dueOn ?? localDate(clock.now(), clock.timeZone),
+      dueOn: obligation?.dueOn ?? today,
       accountId: obligation?.accountId ?? null,
       categoryId: obligation?.categoryId ?? null,
     },

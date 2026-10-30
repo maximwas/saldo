@@ -5,9 +5,8 @@ import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
-import { useClock } from '@/contexts/clock.context'
+import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
-import { localDate } from '@/lib/utils/clock.utils'
 import type { ObligationRow } from '../api/obligations.api'
 import { useObligationOptions, useObligations } from '../hooks/obligations.hook'
 import { BUCKETS, groupByBucket } from '../utils/obligation-groups.utils'
@@ -22,8 +21,8 @@ type FormState = { obligation: ObligationRow | null } | null
 // date passed, not confirmed. The Paid sheet is the ?pay=<obligation id> state of the page (plan 1.11).
 export function ObligationsScreen() {
   const translate = useTranslations('obligations')
-  const clock = useClock()
   const canWrite = useCanWrite()
+  const today = useToday()
   const { data, isPending, isError } = useObligations()
   const options = useObligationOptions()
   const [payId, setPayId] = useQueryState('pay', parseAsString)
@@ -32,7 +31,6 @@ export function ObligationsScreen() {
   // the row as it was when the sheet opened: if someone else pays meanwhile, submitting gets PT409 with a clear message
   // instead of the sheet vanishing under the hands
   const [opened, setOpened] = useState<ObligationRow | null>(null)
-  const today = localDate(clock.now(), clock.timeZone)
 
   if (isPending || options.isPending) {
     return <div aria-busy className="h-64 rounded-card bg-subtle" />
@@ -47,7 +45,6 @@ export function ObligationsScreen() {
   }
 
   const groups = groupByBucket(data.open, today)
-  const accountName = new Map(options.data.accounts.map((account) => [account.id, account.name]))
   const everything = [...data.open, ...data.paid]
   const paying = opened?.id === payId ? opened : everything.find((row) => row.id === payId && row.state !== 'paid')
   const cancelling = everything.find((row) => row.id === cancelId)
@@ -56,9 +53,6 @@ export function ObligationsScreen() {
     <ObligationRowItem
       key={row.id}
       obligation={row}
-      today={today}
-      accountName={row.accountId ? (accountName.get(row.accountId) ?? null) : null}
-      canWrite={canWrite}
       onPay={() => {
         setOpened(row)
         setPayId(row.id)
@@ -97,12 +91,8 @@ export function ObligationsScreen() {
           <ul className="flex flex-col gap-4">{data.paid.map(renderRow)}</ul>
         </section>
       )}
-      {paying && (
-        <PayObligationSheet key={paying.id} obligation={paying} options={options.data} onClose={() => setPayId(null)} />
-      )}
-      {form && (
-        <ObligationFormSheet obligation={form.obligation} options={options.data} onClose={() => setForm(null)} />
-      )}
+      {paying && <PayObligationSheet key={paying.id} obligation={paying} onClose={() => setPayId(null)} />}
+      {form && <ObligationFormSheet obligation={form.obligation} onClose={() => setForm(null)} />}
       {cancelling && <CancelPaymentSheet obligation={cancelling} onClose={() => setCancelId(null)} />}
     </div>
   )

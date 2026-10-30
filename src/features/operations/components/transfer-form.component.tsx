@@ -1,5 +1,6 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
@@ -8,12 +9,12 @@ import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { Select } from '@/components/ui/select.component'
 import { Textarea } from '@/components/ui/textarea.component'
-import { useClock } from '@/contexts/clock.context'
+import { useToday } from '@/contexts/clock.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { type FxRate, findRate } from '@/lib/money/fx.utils'
+import { findRate } from '@/lib/money/fx.utils'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
-import { localDate } from '@/lib/utils/clock.utils'
-import type { AccountOption, CategoryOption } from '../operations.types'
+import { operationQueries } from '../api/operations.queries'
 import { type TransferFormValues, transferFormSchema } from '../schemas/transfer-form.schema'
 import { accountOptions, categoryOptions } from '../utils/operation-display.utils'
 import { formatRate, impliedRate } from '../utils/rate.utils'
@@ -22,18 +23,21 @@ const NO_CATEGORY = '__none__'
 
 type TransferFormProps = {
   formId: string
-  accounts: AccountOption[]
-  categories: CategoryOption[]
-  rates: FxRate[]
   onSubmitAction: (values: TransferFormValues) => void
 }
 
 // Figma Saldo file → Transfer 2:22322 / 2:22558: info banner, from + sent, to + received, the rate under them, fee + date,
 // comment. Both amounts are the real ones of each account: the rate is only shown, never used to fit them (§5).
-export function TransferForm({ formId, accounts, categories, rates, onSubmitAction }: TransferFormProps) {
+export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
   const translate = useTranslations('operations.form')
   const locale = useLocale()
-  const clock = useClock()
+  const today = useToday()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  // the editor mounts the form after the options are loaded; the query cache hands the same data over
+  const options = useQuery(operationQueries.options(ledgerId))
+  const accounts = options.data?.accounts ?? []
+  const categories = options.data?.categories ?? []
+  const rates = options.data?.rates ?? []
   const resolver = useZodResolver(transferFormSchema)
   const active = accounts.filter((account) => !account.archived)
   const [source, target] = [active[0], active[1] ?? active[0]]
@@ -48,7 +52,7 @@ export function TransferForm({ formId, accounts, categories, rates, onSubmitActi
       toCurrency: target?.currency ?? 'UAH',
       fee: '',
       feeCategoryId: null,
-      occurredOn: localDate(clock.now(), clock.timeZone),
+      occurredOn: today,
       note: '',
     },
   })
@@ -176,7 +180,7 @@ export function TransferForm({ formId, accounts, categories, rates, onSubmitActi
           render={(field) => (
             <DatePicker
               value={field.value}
-              onValueChange={(value) => field.onChange(value ?? localDate(clock.now(), clock.timeZone))}
+              onValueChange={(value) => field.onChange(value ?? today)}
               onBlur={field.onBlur}
             />
           )}

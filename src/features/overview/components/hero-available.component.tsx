@@ -4,7 +4,7 @@ import { Info } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
-import { useLedger } from '@/contexts/ledger.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
 import type { Overview } from '../api/overview.api'
 import { isoToDate } from '../utils/overview.utils'
@@ -51,7 +51,7 @@ export function HeroAvailable({ overview }: HeroAvailableProps) {
   const { available, baseCurrency, untilOn } = overview
   const [editing, setEditing] = useState(false)
   // ledgers.next_income_on is a space setting: RLS lets only the owner change it
-  const isOwner = useLedger().role === 'owner'
+  const isOwner = useLedgerStore((ledger) => ledger.role) === 'owner'
   const hasDate = untilOn !== null
   const untilLabel = hasDate
     ? format.dateTime(isoToDate(untilOn), {

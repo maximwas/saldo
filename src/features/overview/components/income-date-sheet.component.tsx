@@ -7,7 +7,7 @@ import { DatePicker } from '@/components/ui/date-picker.component'
 import { Field } from '@/components/ui/field.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
-import { useLedger } from '@/contexts/ledger.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { useSetIncomeDate } from '../hooks/overview.hook'
 
@@ -22,7 +22,7 @@ type IncomeDateSheetProps = {
 export function IncomeDateSheet({ untilOn, ledgerVersion, onClose }: IncomeDateSheetProps) {
   const translate = useTranslations('overview')
   const translateErrors = useTranslations('errors')
-  const { ledgerId } = useLedger()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const save = useSetIncomeDate()
   const [value, setValue] = useState<string | null>(untilOn)
 

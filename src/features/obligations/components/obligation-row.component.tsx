@@ -4,15 +4,14 @@ import { Amount } from '@/components/ui/amount.component'
 import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
-import { useLedger } from '@/contexts/ledger.context'
+import { useToday } from '@/contexts/clock.context'
+import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
 import type { ObligationRow } from '../api/obligations.api'
+import { useObligationOptions } from '../hooks/obligations.hook'
 
 type ObligationRowItemProps = {
   obligation: ObligationRow
-  today: string
-  accountName: string | null
-  canWrite: boolean
   onPay: () => void
   onEdit: () => void
   onCancelPayment: () => void
@@ -27,19 +26,15 @@ const STATE_TONE = {
 
 // Figma «Saldo» → Upcoming payments 2:12142 / 2:13276: title, «source · account» + state pill, amount and date on the
 // right, desktop Paid button; on mobile the row itself opens the confirm sheet (no room for the button).
-export function ObligationRowItem({
-  obligation,
-  today,
-  accountName,
-  canWrite,
-  onPay,
-  onEdit,
-  onCancelPayment,
-}: ObligationRowItemProps) {
+export function ObligationRowItem({ obligation, onPay, onEdit, onCancelPayment }: ObligationRowItemProps) {
   const translate = useTranslations('obligations')
   const format = useFormatter()
   const names = useMemberNames()
-  const { timeZone } = useLedger()
+  const timeZone = useLedgerStore((ledger) => ledger.timeZone)
+  const canWrite = useCanWrite()
+  const today = useToday()
+  const options = useObligationOptions()
+  const accountName = options.data?.accounts.find((account) => account.id === obligation.accountId)?.name ?? null
   const confirmer = obligation.confirmedBy ? names[obligation.confirmedBy] : null
   const open = obligation.state !== 'paid'
   const hasPayments = obligation.paidMinor > 0
