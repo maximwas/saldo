@@ -50,7 +50,10 @@ function QueueRow({ write, onResolveAction, onRetryAction, onDiscardAction }: Qu
           </span>
         </div>
         {fields.currency && fields.amountMinor !== null ? (
-          <Amount minor={fields.amountMinor} currency={fields.currency} />
+          <span className="text-body font-medium text-text-primary">
+            {fields.direction === 'out' ? '−' : ''}
+            <Amount minor={fields.amountMinor} currency={fields.currency} />
+          </span>
         ) : null}
       </div>
       {write.state === 'pending' ? null : (

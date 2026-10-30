@@ -6,6 +6,7 @@ const ALIASES = {
   accountId: ['account_id', 'accountId'],
   note: ['note'],
   label: ['counterparty', 'title', 'name'],
+  direction: ['direction'],
 } as const
 
 export type WriteFields = {
@@ -15,6 +16,7 @@ export type WriteFields = {
   accountId: string | null
   note: string | null
   label: string | null
+  direction: string | null
 }
 
 const asRecord = (value: unknown) =>

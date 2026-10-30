@@ -31,7 +31,8 @@ export function OfflineBanner() {
           className="mb-4 flex items-start gap-2 rounded-md bg-warning-soft px-4 py-3 text-label text-warning-text lg:mb-6"
         >
           <TriangleAlert aria-hidden size={16} className="mt-0.5 shrink-0" />
-          <span>
+          <span className="lg:hidden">{translate('offlineShort')}</span>
+          <span className="hidden lg:inline">
             {translate('offline')} {asOf}
           </span>
         </p>

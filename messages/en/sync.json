@@ -10,7 +10,8 @@
   },
   "banner": {
     "offline": "No network. Keep going: new records are saved on this device and sent as soon as you are back online.",
-    "asOf": "Data as of {time}."
+    "asOf": "Data as of {time}.",
+    "offlineShort": "No network. New records are saved on this device."
   },
   "savedOffline": "Saved on this device. It will be sent once you are online.",
   "queue": {
