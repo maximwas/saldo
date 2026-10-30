@@ -883,6 +883,8 @@ Server Actions для даних не використовуються; вихі
 - Vercel: домен у проєкті Saldo (`regions: ["fra1"]`); `*.vercel.app` лишається для preview.
 - Supabase Auth → URL Configuration: Site URL = домен; Redirect URLs: `https://saldo.maksymvasianin.com/**` і
   `http://localhost:3000/**` (посилання запрошень `/invite/{token}`, `?next=` після входу, `/oauth/consent`).
+  Preview-проєкт: Site URL `https://saldo-git-develop-maximwas-projects.vercel.app`, Redirect URLs — він же,
+  `https://*-maximwas-projects.vercel.app/**` і `http://localhost:3000/**`.
 - Google OAuth-клієнт: authorized JavaScript origin = домен, redirect URI
   `https://saldo.maksymvasianin.com/api/integrations/google/callback`; домен — у authorized domains екрана згоди.
 - Канал Google `events.watch`: `address` = `https://saldo.maksymvasianin.com/api/integrations/google/webhook`.
@@ -937,9 +939,11 @@ Server Actions для даних не використовуються; вихі
 - Публічний репозиторій (ADR 22): особисті файли — лише в `.gitignore`-теках; `seed.sql` і фікстури тестів —
   вигадані дані, не з §25. gitleaks (`gitleaks git --pre-commit --staged --redact`) у lefthook pre-commit; у
   GitHub увімкнені secret scanning і push protection. `.env.example` — лише назви змінних.
-- GitHub Actions: `ci.yml` на `pull_request` без жодного secret, два jobs: `check` (локальний стек `supabase start`,
-  pgTAP, `pnpm check`) і `e2e` (свій `supabase start`, `next build && next start`, Playwright Chromium; звіт і
+- GitHub Actions: `ci.yml` на `pull_request` у `develop`/`main` і `push` у `develop` без жодного secret, три jobs:
+  `check` (`supabase db start`, pgTAP, `pnpm check`), `gitleaks` (діапазон комітів PR чи push) і `e2e` (свій `supabase start`, `next build && next start`, Playwright Chromium; звіт і
   трейси — артефакт лише при падінні, 7 днів; дані в них лише вигадані, `docs/conventions.md` §6.3); `backup.yml` лише `schedule` + `workflow_dispatch`, тож PR із форку його не запускає;
+  `preview-db.yml` (`push` у `develop` зі змінами в `supabase/migrations`, щотижня й вручну) — `supabase db push` у
+  preview-проєкт, заодно тримає Free-проєкт активним;
   `pull_request_target` не використовується; Settings → Actions: «Require approval for all external
   contributors», `permissions: contents: read` за замовчуванням. Логи без даних: `supabase db dump` пише у файл,
   кроки не роблять `cat`/`echo` даних, `set +x`, секрети лише через `env:` (GitHub маскує їх у логах).
@@ -956,7 +960,9 @@ Server Actions для даних не використовуються; вихі
   `actions/upload-artifact` з `retention-days: 30`; незашифровані файли видаляються в тому самому кроці. Не в git.
 - Репозиторій публічний, тож артефакт може завантажити будь-хто з акаунтом GitHub — тому шифрування на публічний
   ключ: `AGE_RECIPIENT` (публічний, у repo variables), приватний ключ `age-keygen` зберігає Максим офлайн (менеджер
-  паролів + друга копія). Workflow бачить лише `SUPABASE_DB_URL` (secret); розшифрувати бекап у CI нічим.
+  паролів + друга копія). Workflow бачить лише secrets `SUPABASE_ACCESS_TOKEN` і `SUPABASE_PROD_DB_PASSWORD`
+  (`supabase link` + `db dump --linked`: CLI сам іде через pooler, бо прямий хост БД — лише IPv6); розшифрувати
+  бекап у CI нічим.
   `age` 1.3 (BSD-3-Clause) — з apt на `ubuntu-latest`.
 - Розшифрування: `age -d -i key.txt backup.tar.age | tar x` — частина навчання з відновлення.
 - Файли Storage — у повному експорті застосунку (JSON + вкладення архівом).

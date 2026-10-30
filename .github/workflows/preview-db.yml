@@ -1,0 +1,33 @@
+name: Preview database
+
+# Migrations reach the preview project after a merge into develop; the weekly run keeps the Free project awake
+on:
+  push:
+    branches: [develop]
+    paths: ['supabase/migrations/**']
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-db
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: supabase/setup-cli@v1
+        with: { version: 2.122.0 }
+      # db push connects to the database even when nothing is pending, which counts as activity
+      - env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_PREVIEW_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref kwzskdqswlqnbsboqqbl > /dev/null
+          supabase db push --linked --yes
