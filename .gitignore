@@ -17,3 +17,11 @@ coverage/
 supabase/.temp/
 supabase/.branches/
 .DS_Store
+next-env.d.ts
+/out/
+/build/
+.pnp
+.pnp.*
+*.pem
+npm-debug.log*
+.pnpm-debug.log*

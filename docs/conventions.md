@@ -511,7 +511,7 @@ describe('computeAvailable', () => {
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
   "linter": {
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useFilenamingConvention": { "level": "error", "options": { "filenameCases": ["kebab-case"], "requireAscii": true } }
       },
@@ -543,7 +543,8 @@ module.exports = {
       comment: '*.api.ts викликається і з браузера, і з MCP-сервера (фаза 10)',
       severity: 'error',
       from: { path: '^src/features/[^/]+/api/[^/]+\\.api\\.ts$' },
-      to: { path: '^(node_modules/(react|react-dom|next|@tanstack)/|src/lib/supabase/browser-client)' },
+      // no ^ before node_modules: pnpm resolves to node_modules/.pnpm/<pkg>@<v>/node_modules/<pkg>/
+      to: { path: '(node_modules/(react|react-dom|next|@tanstack)/|^src/lib/supabase/browser-client)' },
     },
   ],
   options: { tsConfig: { fileName: 'tsconfig.json' }, doNotFollow: { path: 'node_modules' } },
@@ -586,7 +587,7 @@ pre-commit:
   parallel: true
   commands:
     biome: { glob: '*.{ts,tsx,json,css}', run: 'pnpm biome check --staged --no-errors-on-unmatched {staged_files}' }
-    types: { run: 'pnpm tsc --noEmit' }
+    types: { run: 'pnpm typecheck' }
     deps: { run: 'pnpm depcruise src --config .dependency-cruiser.cjs' }
     secrets: { run: 'gitleaks git --pre-commit --staged --redact' }
 ```
@@ -597,16 +598,19 @@ pre-commit:
 {
   "lint": "biome check .",
   "format": "biome format --write .",
-  "typecheck": "tsc --noEmit",
+  "typecheck": "next typegen && tsc --noEmit",
   "deps": "depcruise src --config .dependency-cruiser.cjs",
   "test": "vitest run",
   "test:db": "supabase test db",
   "test:e2e": "playwright test",
   "test:e2e:ui": "playwright test --ui",
-  "check": "biome check . && tsc --noEmit && depcruise src --config .dependency-cruiser.cjs && knip && vitest run && supabase test db",
+  "check": "biome check . && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run && supabase test db",
   "db:types": "supabase gen types typescript --local > src/types/database.types.ts"
 }
 ```
+
+`next typegen` перед `tsc` генерує глобальні `LayoutProps` / `PageProps` і типи `typedRoutes` у `.next/types`.
+TODO(0.10b): у `package.json` поки немає `test:db` і `&& supabase test db` у `check` — додаються разом із Supabase.
 
 `pnpm check` e2e не запускає: він повільний (збірка + браузер). E2E — `pnpm test:e2e` локально перед PR фази й
 окремий job `e2e` у CI.
