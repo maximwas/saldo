@@ -2,7 +2,7 @@
 
 import { Menu } from '@base-ui/react/menu'
 import { Check, ChevronDown } from 'lucide-react'
-import { ROLE_LABELS, SHELL_TEXT } from '@/constants/shell.constants'
+import { useTranslations } from 'next-intl'
 import type { LedgerSummary } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 
@@ -33,6 +33,7 @@ function SpaceAvatar({ name, size }: { name: string; size: 'md' | 'sm' }) {
 // Figma «Saldo» → SpaceSwitcher 2:24192 (Sidebar / Topbar); menu items SpaceMenuItem 2:24191 in the Menu 2:10341 popup.
 // With one space the switcher is just the name (design brief, shared access).
 export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: SpaceSwitcherProps) {
+  const translate = useTranslations('shell')
   const current = spaces.find((space) => space.id === currentId) ?? spaces[0]
 
   if (!current) {
@@ -48,7 +49,7 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
       {sidebar ? (
         <span className="flex min-w-0 flex-1 flex-col text-left">
           <span className="truncate text-label font-semibold text-text-primary">{current.name}</span>
-          <span className="truncate text-caption text-text-tertiary">{ROLE_LABELS[current.role]}</span>
+          <span className="truncate text-caption text-text-tertiary">{translate(`roles.${current.role}`)}</span>
         </span>
       ) : (
         <span className="truncate text-label font-semibold text-text-primary">{current.name}</span>
@@ -81,10 +82,10 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
                 <SpaceAvatar name={space.name} size="md" />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-body font-medium text-text-primary">{space.name}</span>
-                  <span className="truncate text-caption text-text-tertiary">{ROLE_LABELS[space.role]}</span>
+                  <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
                 </span>
                 {space.id === current.id && (
-                  <Check aria-label={SHELL_TEXT.currentSpace} size={20} className="text-text-primary" />
+                  <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
                 )}
               </Menu.Item>
             ))}

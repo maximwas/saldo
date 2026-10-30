@@ -1,0 +1,15 @@
+{
+  "auth": {
+    "invalidCredentials": "Wrong email or password",
+    "signInFailed": "Could not sign in. Please try again",
+    "invalidCode": "Wrong code. Please try again"
+  },
+  "db": {
+    "forbidden": "You don't have permission to do this",
+    "conflict": "This record was changed on another device or by another person. Refresh and try again",
+    "duplicate": "This record already exists",
+    "invalid": "Check the data you entered",
+    "reference": "The linked record was not found or cannot be changed",
+    "unknown": "Could not save. Please try again"
+  }
+}

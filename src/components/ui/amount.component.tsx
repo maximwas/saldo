@@ -1,4 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
+import { useLocale } from 'next-intl'
+import { currencySymbol, formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
 
 // Figma «Saldo» → Amount 2:7789 (Kind × Size S 16 / M 22 / L 28 / XL 44); figures are tabular
@@ -23,21 +25,22 @@ const amountVariants = cva('whitespace-nowrap tabular-nums', {
 })
 
 type AmountProps = VariantProps<typeof amountVariants> & {
-  /** already formatted by src/lib/money; null = unknown sum, shown as «? ₴», never 0 */
-  value: string | null
-  /** currency sign for the unknown and hidden states */
-  symbol: string
+  /** integer minor units (kopecks, cents); null = unknown sum, shown as «? ₴», never 0 */
+  minor: bigint | number | null
+  /** ISO 4217 code: UAH, EUR, USD */
+  currency: string
   /** the «hide amounts» setting */
   hidden?: boolean
   className?: string
 }
 
-export function Amount({ value, symbol, hidden = false, kind, size, className }: AmountProps) {
-  const unknown = value === null
+export function Amount({ minor, currency, hidden = false, kind, size, className }: AmountProps) {
+  const locale = useLocale()
+  const symbol = currencySymbol(currency, locale)
 
   return (
-    <span className={cn(amountVariants({ kind, size }), unknown && 'text-text-tertiary', className)}>
-      {hidden ? `•••• ${symbol}` : unknown ? `? ${symbol}` : value}
+    <span className={cn(amountVariants({ kind, size }), minor === null && 'text-text-tertiary', className)}>
+      {hidden ? `•••• ${symbol}` : minor === null ? `? ${symbol}` : formatMinor(minor, currency, locale)}
     </span>
   )
 }

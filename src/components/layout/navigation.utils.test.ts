@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { NavLink } from '@/constants/navigation.constants'
-import { activeHref, isMoreActive, pageTitle } from './navigation.utils'
+import { activeHref, isMoreActive, pageTitleKey } from './navigation.utils'
 
 const OPERATIONS_LINKS: NavLink[] = [
-  { label: 'Усі операції', href: '/operations' },
-  { label: 'Рахунки', href: '/operations/accounts' },
+  { key: 'operationsAll', href: '/operations' },
+  { key: 'accounts', href: '/operations/accounts' },
 ]
 
 describe('activeHref', () => {
@@ -18,17 +18,18 @@ describe('activeHref', () => {
   })
 
   it('matches the root only exactly', () => {
-    expect(activeHref('/', [{ label: 'Огляд', href: '/' }])).toBe('/')
-    expect(activeHref('/calendar', [{ label: 'Огляд', href: '/' }])).toBeNull()
+    expect(activeHref('/', [{ key: 'overview', href: '/' }])).toBe('/')
+    expect(activeHref('/calendar', [{ key: 'overview', href: '/' }])).toBeNull()
   })
 })
 
-describe('pageTitle', () => {
-  it('uses the section label on its first page and the sub label deeper', () => {
-    expect(pageTitle('/')).toBe('Огляд')
-    expect(pageTitle('/auto')).toBe('Авто')
-    expect(pageTitle('/operations/accounts/42')).toBe('Рахунки')
-    expect(pageTitle('/notifications')).toBe('Сповіщення')
+describe('pageTitleKey', () => {
+  it('uses the section key on its first page and the sub key deeper', () => {
+    expect(pageTitleKey('/')).toBe('overview')
+    expect(pageTitleKey('/auto')).toBe('auto')
+    expect(pageTitleKey('/operations/accounts/42')).toBe('accounts')
+    expect(pageTitleKey('/notifications')).toBe('notifications')
+    expect(pageTitleKey('/unknown')).toBeNull()
   })
 })
 

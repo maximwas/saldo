@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { type FormEvent, useId, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Input } from '@/components/ui/input.component'
@@ -16,6 +17,8 @@ const CODE_LENGTH = 6
 
 export function LoginForm() {
   const router = useRouter()
+  const translate = useTranslations('auth')
+  const translateError = useTranslations('errors.auth')
   const ids = { email: useId(), password: useId(), passwordHint: useId(), code: useId(), codeHint: useId() }
   const [step, setStep] = useState<Step>('password')
   const [factorId, setFactorId] = useState<string | null>(null)
@@ -45,11 +48,7 @@ export function LoginForm() {
 
     if (signInError) {
       setIsPending(false)
-      setError(
-        signInError.code === 'invalid_credentials'
-          ? 'Невірний email або пароль'
-          : 'Не вдалося увійти. Спробуйте ще раз',
-      )
+      setError(translateError(signInError.code === 'invalid_credentials' ? 'invalidCredentials' : 'signInFailed'))
 
       return
     }
@@ -82,7 +81,7 @@ export function LoginForm() {
 
     if (verifyError) {
       setIsPending(false)
-      setError('Невірний код. Спробуйте ще раз')
+      setError(translateError('invalidCode'))
 
       return
     }
@@ -103,11 +102,11 @@ export function LoginForm() {
         <span className="flex size-10 items-center justify-center rounded-full bg-cat-blue-soft">
           <ShieldCheckIcon />
         </span>
-        <h1 className="font-display text-number text-text-primary">Код підтвердження</h1>
-        <p className="text-body text-text-secondary">Введіть 6 цифр із застосунку-автентифікатора.</p>
+        <h1 className="font-display text-number text-text-primary">{translate('codeTitle')}</h1>
+        <p className="text-body text-text-secondary">{translate('codeHint')}</p>
         <div className="flex flex-col gap-1.5">
           <label htmlFor={ids.code} className="text-label font-medium text-text-secondary">
-            Код
+            {translate('code')}
           </label>
           <Input
             id={ids.code}
@@ -127,10 +126,10 @@ export function LoginForm() {
           ) : null}
         </div>
         <Button type="submit" className="w-full" disabled={code.length !== CODE_LENGTH || isPending}>
-          Підтвердити
+          {translate('confirm')}
         </Button>
         <Button type="button" variant="ghost" className="w-full" onClick={backToLogin}>
-          Назад до входу
+          {translate('backToLogin')}
         </Button>
       </form>
     )
@@ -140,18 +139,18 @@ export function LoginForm() {
     <form onSubmit={submitPassword} className="flex flex-col gap-4 md:gap-5">
       <Brand className="hidden md:flex" />
       <div className="flex flex-col gap-1">
-        <h1 className="font-display text-number text-text-primary md:text-page-title">Вхід</h1>
-        <p className="hidden text-body text-text-secondary md:block">Email і пароль вашого акаунта</p>
+        <h1 className="font-display text-number text-text-primary md:text-page-title">{translate('title')}</h1>
+        <p className="hidden text-body text-text-secondary md:block">{translate('subtitle')}</p>
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor={ids.email} className="text-label font-medium text-text-secondary">
-          Email
+          {translate('email')}
         </label>
         <Input id={ids.email} name="email" type="email" autoComplete="email" required />
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor={ids.password} className="text-label font-medium text-text-secondary">
-          Пароль
+          {translate('password')}
         </label>
         <Input
           id={ids.password}
@@ -169,13 +168,12 @@ export function LoginForm() {
         ) : null}
       </div>
       <Button type="submit" className="w-full" disabled={isPending}>
-        Увійти
+        {translate('submit')}
       </Button>
       <div className="hidden gap-2 border-t border-border pt-4 md:flex">
         <InfoIcon />
         <p className="flex-1 text-caption text-text-secondary">
-          Реєстрації немає: акаунт створюється лише за запрошенням власника простору. Якщо ввімкнено двоетапний вхід,
-          далі попросимо код.
+          {translate('inviteOnly')} {translate('twoStepNote')}
         </p>
       </div>
     </form>

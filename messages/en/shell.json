@@ -1,0 +1,14 @@
+{
+  "navLabel": "Sections",
+  "search": "Search transactions",
+  "notifications": "Notifications",
+  "add": "Add",
+  "currentSpace": "Current",
+  "synced": "Synced",
+  "stub": "The “{title}” section is coming soon.",
+  "roles": {
+    "owner": "Owner",
+    "editor": "Editor",
+    "viewer": "Viewer"
+  }
+}
