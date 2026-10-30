@@ -217,7 +217,29 @@ src/features/subscriptions/
 - Коментарі — англійською, лише «чому», а не «що». Українська — лише в текстах інтерфейсу
   (`messages/<locale>/*.json`, §3b). TS/TSX — локальне правило ESLint `saldo/english-comments`
   (`eslint.config.mjs`), SQL — `pnpm lint:comments` (`scripts/check-sql-comments.mjs`).
-- Хто що перевіряє: Biome — лінтер і форматер (основний); ESLint (`eslint.config.mjs`) — лише три правила вище, без
+- Об'єкти й об'єктні типи (`type`, `interface`, літерал об'єкта) з двома й більше полями — кожне поле в окремому
+  рядку, дужки на своїх рядках; ніколи не згортаються в один рядок. Об'єкт з одним полем може лишитися в рядку;
+  деструктуризація й списки імпорту/експорту — як їх друкує Biome (переносяться лише за `lineWidth` 120). ESLint
+  `@stylistic/object-curly-newline` (`minProperties: 2`, `consistent`) + `@stylistic/object-property-newline`
+  (автофікс), Biome `javascript.formatter.expand: "auto"` тримає розгорнутий об'єкт розгорнутим. Тип параметра
+  функції з кількох полів завжди має ім'я (`type NavItemProps = { … }`): єдиний параметр Biome «обіймає» й згортає
+  його inline-тип у рядок (так само Prettier), тож ESLint `no-restricted-syntax` забороняє такий inline-тип.
+
+  ```ts
+  export type LedgerSummary = {
+    id: string
+    name: string
+    role: LedgerRole
+  }
+
+  type LedgerProviderProps = {
+    ledger: ActiveLedger | null
+    children: React.ReactNode
+  }
+
+  export function LedgerProvider({ ledger, children }: LedgerProviderProps) {
+  ```
+- Хто що перевіряє: Biome — лінтер і форматер (основний); ESLint (`eslint.config.mjs`) — лише правила вище, без
   пресетів і без форматування. `pnpm lint` = Biome + ESLint + коментарі SQL, `pnpm format` = `biome check --write` +
   `eslint --fix`; усе входить у `pnpm check` і lefthook. VS Code: `.vscode/settings.json` (Biome форматує при
   збереженні, ESLint і Biome виправляють), `.vscode/extensions.json`.
@@ -563,9 +585,11 @@ describe('computeAvailable', () => {
 {
   "$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "includes": ["src/**", "e2e/**", "*.ts", "!src/types/database.types.ts", "!e2e/.auth"] },
+  "files": {
+    "includes": ["src/**", "e2e/**", "scripts/**", "*.{ts,mjs,cjs}", ".dependency-cruiser.cjs", "!src/types/database.types.ts", "!e2e/.auth"]
+  },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
-  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
+  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded", "expand": "auto" } },
   "linter": {
     "rules": {
       "preset": "recommended",
