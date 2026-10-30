@@ -13,6 +13,12 @@
     "src/types/database.types.ts",
     "src/components/ui/**"
   ],
+  "ignoreDependencies": [
+    "react-day-picker",
+    "react-hook-form",
+    "react-number-format",
+    "@hookform/resolvers"
+  ],
   "ignoreBinaries": [
     "gitleaks"
   ],

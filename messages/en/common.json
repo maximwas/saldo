@@ -4,5 +4,20 @@
   "languages": {
     "uk": "Українська",
     "en": "English"
+  },
+  "close": "Close",
+  "select": {
+    "placeholder": "Select a value"
+  },
+  "datePicker": {
+    "placeholder": "Pick a date",
+    "today": "Today",
+    "clear": "Clear",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
+  "toast": {
+    "retry": "Retry",
+    "undo": "Undo"
   }
 }
