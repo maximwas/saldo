@@ -280,6 +280,42 @@ async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
   `new Intl.DateTimeFormat('uk')` у компонентах немає.
 - `<html lang>` рендериться поза Suspense, де читається локаль (cacheComponents), тому його оновлює `AppProviders`.
 
+## 3c. Логи (ADR 26, `docs/architecture.md`)
+
+- Лише сервер: `import { logger } from '@/lib/logger/logger.server'`, у модулі — `const log = logger.child({ module:
+  'ledgers' })` на рівні файлу. `console.*` у серверному коді не пишемо; у браузері логів немає.
+- Що логувати: помилки й відмови (`error` — збій, який користувач бачить як помилку; `warn` — відмова чи підозрілий
+  запит, який сервер обробив; `info` — старт і кінець cron із тривалістю; `debug` — лише локально). Щасливий шлях
+  кожного запиту не логуємо.
+- Приватність (репозиторій публічний, дані фінансові): ніколи не логуємо суми, назви рахунків, категорій і просторів,
+  нотатки, email, токени, cookie, заголовки авторизації й `message` помилок Postgres (у ньому значення рядків).
+  Логуємо id, `kind`, коди, constraint, тривалість. `redact` у `logger.utils.ts` — страховка для відомих ключів, а не
+  дозвіл передавати в лог цілі об'єкти. Назви полів — `ledgerName`, `accountName`, а не `name`: `*.name` редакція
+  не ховає, бо так зветься тип помилки (`err.name`).
+- Помилка Postgres: `logPgError(log, error, 'locale update failed')` пише `code`, `kind`, `constraint` і повертає
+  `PgError` для UI (`errors.db.<kind>`). Необроблені помилки сторінок, Route Handlers і Server Actions пише
+  `onRequestError` у `src/instrumentation.ts` — ловити їх, щоб лише залогувати, не треба.
+- Рівень — env `LOG_LEVEL` (`.env.example`), за замовчуванням `debug` у dev і `info` у проді. Прод — JSON-рядки,
+  які показують Vercel Runtime Logs; dev — `pino-pretty`. Транспорти pino (worker thread) не використовуємо.
+
+```ts
+const log = logger.child({
+  module: 'ledgers',
+})
+
+if (!membership) {
+  log.warn(
+    {
+      ledgerId,
+      userId: session.userId,
+    },
+    'switch to a space without membership',
+  )
+
+  throw new Error('Not a member of this space')
+}
+```
+
 ## 4. Патерни
 
 ### 4.1 Ключі й `queryOptions`
