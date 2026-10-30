@@ -297,22 +297,22 @@ PWA-маніфест, нічний бекап.
 
 **Мета:** повний офлайн-режим §22 поверх уже офлайн-сумісних мутацій.
 
-- [ ] 8.1 `PersistQueryClientProvider` + idb-keyval, `buster` = версія схеми, `gcTime >= maxAge`.
-- [ ] 8.2 Реєстрація `setMutationDefaults` усіх фіч до гідрації, `resumePausedMutations` після; спайк `networkMode: 'offlineFirst'` після reload.
-- [ ] 8.3 Serwist: прекеш оболонки, офлайн-сторінка, без кешування `/rest/` і `/storage/`.
-- [ ] 8.4 Стани записів draft / pending / synced / error / conflict у списках і `SyncStatus`; екран черги з діями.
-- [ ] 8.5 Чернетки форм у `drafts.store.ts`; офлайн-фото чека в IndexedDB до завантаження.
-- [ ] 8.6 Конфлікт `PT409`: показ обох версій, вибір, без мовчазного перезапису.
-- [ ] 8.7 Вихід очищає IndexedDB і кеші.
-- [ ] 8.8 Дві людини офлайн: кеш розділений за `ledgerId`; `42501` у черзі (доступ відкликали) → стан error з діями; живий тест: два телефони офлайн оплачують один платіж → одна оплата, один конфлікт.
-- [ ] 8.9 E2E (`e2e/offline/`, Chromium, прод-збірка): `setOffline(true)` → витрата → `SyncStatus` «Очікує (1)» → `reload()` офлайн відкриває оболонку з кешем і чергою → `setOffline(false)` → «Синхронізовано», owner бачить один рядок; конфлікт `PT409`: owner онлайн і editor офлайн оплачують один платіж → одна оплата, у editor стан «Конфлікт» із «Підтвердив(ла) …»; вихід очищає IndexedDB (`indexedDB.databases()` порожній); відкликаний editor із чергою отримує стан error. Спершу перевірити, що `setOffline` у Chromium блокує й запити service worker (microsoft/playwright#2311).
+- [x] 8.1 `PersistQueryClientProvider` + idb-keyval, `buster` = версія схеми, `gcTime >= maxAge`. Зроблено: `src/components/providers/app-writes.mutations.ts` (`devicePersistOptions`), `src/lib/offline/device-storage.ts`; `@tanstack/react-query-persist-client` + `query-async-storage-persister` 5.105.0, `idb-keyval` 6.3.0; ключ `query-cache:<userId>`, `maxAge` = `gcTime` = 20 днів (більше за 24,8 дня таймер переповнюється), `buster` — ручний `DEVICE_CACHE_VERSION` (його зміна скидає й неодіслані записи, тож не на кожну міграцію).
+- [x] 8.2 Реєстрація `setMutationDefaults` усіх фіч до гідрації, `resumePausedMutations` після; спайк `networkMode: 'offlineFirst'` після reload. Зроблено: `defineWrites` / `registerWrites` (`src/lib/query/ledger-writes.mutations.ts`) для всіх фіч і нагадувань, реєстрація в `makeAppQueryClient` до відновлення; `resumeWrites` продовжує й записи, перервані закриттям вкладки (pending, не paused). Спайк: `offlineFirst` після reload працює — перша спроба падає мережевою помилкою й стає на паузу, повтор лише мережевих помилок (e2e `e2e/offline` (а)).
+- [x] 8.3 Serwist: прекеш оболонки, офлайн-сторінка, без кешування `/rest/` і `/storage/`. Зроблено: `src/app/sw.ts` — `NetworkOnly` для Supabase `/(rest|storage|auth|functions|realtime)/v1/`, fallback `/~offline` (прекеш, публічний у `proxy.ts`), оболонка — маніфест збірки (71 запис); `reloadOnOnline={false}`: перезавантаження при поверненні мережі обривало чергу.
+- [x] 8.4 Стани записів draft / pending / synced / error / conflict у списках і `SyncStatus`; екран черги з діями. Зроблено: `SyncIndicator` (Sidebar, «Простір», на mobile — під банером) з часом оновлення й лічильником, банер «Немає мережі», бейджі «Очікує / Помилка / Конфлікт» у списку операцій (`useQueuedOperations` + `mergeQueued`), «Черга синхронізації» з «Повторити / Відкинути / Розв'язати / Синхронізувати зараз»; помилка, яку людина вже бачила у формі, з черги прибирається.
+- [x] 8.5 Чернетки форм у `drafts.store.ts`; офлайн-фото чека в IndexedDB до завантаження. Зроблено: `src/store/drafts.store.ts` + `useFormDraft` (нова операція: «Відновлено чернетку · Очистити»); фото чека — у IndexedDB (`keepReceipt`), завантаження — запис черги `uploadKeptReceipt`.
+- [x] 8.6 Конфлікт `PT409`: показ обох версій, вибір, без мовчазного перезапису. Зроблено: `src/features/sync/components/conflict-view.component.tsx` — обидві версії (серверна з `getServerVersion`), «Взяти їхню», «Залишити мою» (та сама зміна проти поточної версії), для оплати — «Лишити як окрему витрату»; без вибору нічого не пишеться. Не зроблено: «Об'єднати вручну».
+- [x] 8.7 Вихід очищає IndexedDB і кеші. Зроблено: `src/components/layout/sign-out.component.tsx` (Налаштування → Загальні, «Простір»): рядок `push_subscriptions` цього пристрою → `signOut({ scope: 'local' })` → усі бази IndexedDB і Cache Storage → `/login`; з неодісланими змінами — підтвердження з їх кількістю.
+- [ ] 8.8 Дві людини офлайн: кеш розділений за `ledgerId`; `42501` у черзі (доступ відкликали) → стан error з діями; живий тест: два телефони офлайн оплачують один платіж → одна оплата, один конфлікт. Зроблено: кеш розділений ключами `[root, ledgerId, …]` і IndexedDB за користувачем; `42501` у черзі — стан error «доступ до простору відкликано» з «Повторити / Відкинути». Не зроблено: «скопіювати у свій простір»; живий тест двох телефонів — вручну (Максим).
+- [x] 8.9 E2E (`e2e/offline/`, Chromium, прод-збірка): `setOffline(true)` → витрата → `SyncStatus` «Очікує (1)» → `reload()` офлайн відкриває оболонку з кешем і чергою → `setOffline(false)` → «Синхронізовано», owner бачить один рядок; конфлікт `PT409`: owner онлайн і editor офлайн оплачують один платіж → одна оплата, у editor стан «Конфлікт» із «Підтвердив(ла) …»; вихід очищає IndexedDB (`indexedDB.databases()` порожній); відкликаний editor із чергою отримує стан error. Спершу перевірити, що `setOffline` у Chromium блокує й запити service worker (microsoft/playwright#2311). Зроблено: `e2e/offline/offline.e2e.ts`, 3 тести на прод-збірці; `setOffline` у Chromium (Playwright 1.64.1) блокує й запити service worker — перевірка в тесті (а) (`fetch` до `/rest/v1/` відхилено). Стан error для відкликаного editor — Vitest (`recordState`), не e2e.
 
-Тести: допоміжні функції черги (стан запису з мутації, злиття оптимістичного рядка з серверним за `id`).
+Тести: допоміжні функції черги (стан запису з мутації, злиття оптимістичного рядка з серверним за `id`). Зроблено: `src/lib/query/sync-queue.utils.test.ts`, `src/features/sync/utils/write-fields.utils.test.ts`, `src/lib/query/query-client.test.ts`.
 
 Готово, коли (§26):
-- [ ] офлайн-витрата після перезавантаження пристрою синхронізується одним записом;
-- [ ] повторна відправка не дає дублів; конфлікт не затирається;
-- [ ] показано останнє оновлення й кількість очікуваних змін.
+- [x] офлайн-витрата після перезавантаження пристрою синхронізується одним записом; (e2e `e2e/offline` (а))
+- [x] повторна відправка не дає дублів; конфлікт не затирається; (UUID клієнта в RPC; e2e (б): одна оплата, у editor «Конфлікт»)
+- [x] показано останнє оновлення й кількість очікуваних змін. (`SyncIndicator`, банер «Дані станом на …»)
 
 ---
 

@@ -929,7 +929,7 @@ text)` (security definer, Vault). `revoke execute … from anon, authenticated`.
   (`src/lib/query/ledger-writes.mutations.ts`), ключ мутації `[feature, ім'я функції]`;
   `src/components/providers/app-writes.mutations.ts` реєструє всі (`setMutationDefaults`) до відновлення кешу.
   Повтор — лише мережевої помилки; кеш і черга — у IndexedDB `saldo` під ключем `query-cache:<userId>`
-  (`maxAge` = `gcTime` = 30 днів, `buster` — ручна версія: її зміна скидає й неодіслані записи); чернетки й офлайн-фото —
+  (`maxAge` = `gcTime` = 20 днів — довший таймер переповнюється, `buster` — ручна версія: її зміна скидає й неодіслані записи); чернетки й офлайн-фото —
   там само. Офлайн `useLedgerWrite` закриває форму одразу, черга й конфлікти — у `SyncStatus` → «Черга синхронізації».
 - **URL-стан.** nuqs: фільтри списків і календаря, період, режим календаря, `?pay=`, `?add=`, `?entry=`.
 - **UI-стан.** Zustand у `src/store/`: `ui.store.ts` (приховати суми, згорнутий sidebar), `drafts.store.ts`.
