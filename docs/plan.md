@@ -58,7 +58,7 @@ PWA-маніфест, нічний бекап.
 
 Тести: `pg-error.utils.test.ts`, `env`-схема (zod); pgTAP `ledgers.test.sql` (0.10b); e2e 0.21.
 - [x] 0.25 Логотип A2 «Градієнт у дугах» (Максим, 30.10.2026): Figma-компонент `Brand/Mark` 10:71281 у Mark-фреймах Sidebar і входу; `Brand` перенесено в `src/components/layout/brand.component.tsx` (inline SVG, стопи градієнта — токени `--brand-arc-*` у `globals.css`, темна тема — «A2 dark»); іконки з `public/favicon.svg` генерує `pnpm icons` (`@vite-pwa/assets-generator` 2.0.0, preset minimal-2023): `favicon.ico` 48, `favicon.svg`, `pwa-64/192/512`, `maskable-icon-512` і `apple-touch-icon-180` на суцільному `--color-primary`; `manifest.ts` і `metadata.icons`; e2e `manifest.e2e.ts` перевіряє розміри, maskable, 200 і content-type без сесії.
-- [x] 0.26 Рух (Максим, 30.10.2026): токени `--duration-*` / `--ease-*` у theme.css + `MOTION`, `motion` 14.3.0; плашка SegmentedControl ковзає (`layoutId`), контент сторінки з'являється (fade + 8 px) при навігації, оболонка нерухома; `prefers-reduced-motion` — без руху (ADR 27, conventions §3a1).
+- [x] 0.26 Рух (Максим, 30.10.2026): токени `--duration-*` / `--ease-*` у theme.css + `MOTION`, `motion` 14.3.0; плашка SegmentedControl ковзає (`layoutId`), контент сторінки з'являється (fade + 8 px) при навігації, оболонка нерухома; `prefers-reduced-motion` — без руху (ADR 28, conventions §3a1).
 
 Готово, коли:
 - [ ] прод-URL відкривається, вхід лише для наявних акаунтів, реєстрація відмовляє;

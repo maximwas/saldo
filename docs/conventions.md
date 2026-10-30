@@ -260,7 +260,7 @@ async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
 }
 ```
 
-## 3a1. Рух / анімації (ADR 27, `docs/architecture.md`)
+## 3a1. Рух / анімації (ADR 28, `docs/architecture.md`)
 
 - Тривалості й криві — лише токени з `docs/design/theme.css`: `--duration-fast` 150 мс (кольори, hover, focus),
   `--duration-base` 240 мс (плашка, поява сторінки), `--duration-slow` 360 мс (шторки, діалоги); `--ease-standard`
