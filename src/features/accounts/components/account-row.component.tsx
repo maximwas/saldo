@@ -22,7 +22,7 @@ type AccountRowProps = {
 
 // Figma «Saldo» → 2:21073 / 2:21278: row padding 16/0, gap 16, border-bottom; icon 40, name body-medium + meta
 // label, «In balance» 160 and «In available» 180 switches, balance 180 right-aligned (number-sm) with the
-// converted line under a foreign balance, a 44 «···» menu. On mobile the switches drop under the row, full width.
+// converted line under a foreign balance, a 44 «···» menu. On mobile the switches drop under the row, full width, the name wraps, the «···» menu goes under them.
 export function AccountRow({ account, baseCurrency, canWrite, onEditAction, onArchiveAction }: AccountRowProps) {
   const translate = useTranslations('accounts')
   const translateCurrency = useTranslations('currencies')
@@ -64,12 +64,12 @@ export function AccountRow({ account, baseCurrency, canWrite, onEditAction, onAr
       ]
 
   return (
-    <li className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border py-4 lg:flex-nowrap">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-0 border-b border-border py-4 lg:flex-nowrap">
       <CategoryIcon icon={account.icon ?? style.icon} color={account.color ?? style.color} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <Link
           href={`/operations/accounts/${account.id}` as Route}
-          className="cursor-pointer truncate rounded-xs text-body font-medium text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="cursor-pointer wrap-break-word rounded-xs lg:truncate text-body font-medium text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           {account.name}
         </Link>
@@ -97,7 +97,7 @@ export function AccountRow({ account, baseCurrency, canWrite, onEditAction, onAr
           />
         </div>
       )}
-      <div className="flex flex-col items-end gap-0.5 lg:w-45">
+      <div className="flex shrink-0 flex-col items-end gap-0.5 lg:w-45">
         <Amount minor={account.balanceMinor} currency={account.currency} size="m" />
         {foreign ? (
           <span className="text-caption text-text-tertiary">
@@ -113,7 +113,9 @@ export function AccountRow({ account, baseCurrency, canWrite, onEditAction, onAr
           </span>
         ) : null}
       </div>
-      {canWrite ? <Menu label={translate('menu.label')} items={items} /> : null}
+      {canWrite ? (
+        <Menu label={translate('menu.label')} items={items} className="order-last ml-auto lg:order-0" />
+      ) : null}
     </li>
   )
 }
