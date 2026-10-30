@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import { pageTitle } from '@/components/layout/navigation.utils'
 import { EXTRA_TITLES, SIDEBAR_FOOTER_SECTION, SIDEBAR_SECTIONS } from '@/constants/navigation.constants'
 import { SHELL_TEXT } from '@/constants/shell.constants'
@@ -13,7 +14,16 @@ export function generateStaticParams() {
   return STUB_HREFS.map((href) => ({ slug: href === '/' ? [] : href.slice(1).split('/') }))
 }
 
-export default async function StubPage({ params }: PageProps<'/[[...slug]]'>) {
+// params are URL data: read inside <Suspense> so the shell stays instant (cacheComponents)
+export default function StubPage({ params }: PageProps<'/[[...slug]]'>) {
+  return (
+    <Suspense>
+      <Stub params={params} />
+    </Suspense>
+  )
+}
+
+async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
   const { slug } = await params
   const path = `/${(slug ?? []).join('/')}`
   if (!STUB_HREFS.some((href) => href === path)) notFound()
