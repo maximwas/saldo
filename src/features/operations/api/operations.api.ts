@@ -151,7 +151,7 @@ export async function getFormOptions(client: SaldoClient, ledgerId: string): Pro
     client.from('accounts').select('id, name, currency, archived_at').eq('ledger_id', ledgerId).order('sort_order'),
     client
       .from('categories')
-      .select('id, name, kind, color, parent_id, archived_at')
+      .select('id, name, kind, color, icon, parent_id, archived_at')
       .eq('ledger_id', ledgerId)
       .order('sort_order'),
     client
@@ -186,6 +186,7 @@ export async function getFormOptions(client: SaldoClient, ledgerId: string): Pro
       name: category.name,
       kind: category.kind === 'income' ? 'income' : 'expense',
       color: category.color,
+      icon: category.icon,
       parentId: category.parent_id,
       archived: category.archived_at !== null,
     })),

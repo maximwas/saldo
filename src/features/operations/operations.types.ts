@@ -71,6 +71,8 @@ export type CategoryOption = {
   kind: 'income' | 'expense'
   /** a token name from theme.css (blue … lime) or null */
   color: string | null
+  /** a key of CATEGORY_ICONS or null */
+  icon: string | null
   parentId: string | null
   archived: boolean
 }

@@ -60,6 +60,18 @@
   --color-cat-red: #f04438;     --color-cat-red-soft: #feeceb;     --color-cat-red-text: #b42318;
   --color-cat-cyan: #0ba5ec;    --color-cat-cyan-soft: #e6f6fd;    --color-cat-cyan-text: #026aa2;
   --color-cat-lime: #66a80f;    --color-cat-lime-soft: #f0f9e6;    --color-cat-lime-text: #3f6212;
+  --color-cat-brown: #995033;   --color-cat-brown-soft: #f9f1ee;    --color-cat-brown-text: #80452e;
+  --color-cat-sand: #9f8341;    --color-cat-sand-soft: #f9f6ee;     --color-cat-sand-text: #67562c;
+  --color-cat-olive: #8b8f19;   --color-cat-olive-soft: #fafaed;    --color-cat-olive-text: #5b5d13;
+  --color-cat-forest: #267330;  --color-cat-forest-soft: #eff8f0;   --color-cat-forest-text: #215e2a;
+  --color-cat-indigo: #4545c9;  --color-cat-indigo-soft: #eaeafd;   --color-cat-indigo-text: #3030a6;
+  --color-cat-violet: #a14dcb;  --color-cat-violet-soft: #f7eafd;   --color-cat-violet-text: #78319b;
+  --color-cat-magenta: #cc33bf; --color-cat-magenta-soft: #fdeafc;  --color-cat-magenta-text: #8c2684;
+  --color-cat-wine: #b31938;    --color-cat-wine-soft: #fdeaee;     --color-cat-wine-text: #991a33;
+  --color-cat-slate: #5689b3;   --color-cat-slate-soft: #eff4f8;    --color-cat-slate-text: #375a76;
+  --color-cat-graphite: #4b4744;--color-cat-graphite-soft: #f5f4f2; --color-cat-graphite-text: #3d3b38;
+  /* behind sheets and dialogs */
+  --color-scrim: rgba(16, 24, 40, 0.4);
 
   /* type: Fixel by MacPaw (OFL), next/font/local in the app; amounts use tabular-nums */
   --font-sans: "Fixel Text", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -157,6 +169,17 @@
   --color-cat-red: #f26b60;     --color-cat-red-soft: #3a1e24;     --color-cat-red-text: #ff928a;
   --color-cat-cyan: #3bb8f2;    --color-cat-cyan-soft: #122c40;    --color-cat-cyan-text: #72cdf7;
   --color-cat-lime: #8cc63f;    --color-cat-lime-soft: #222f17;    --color-cat-lime-text: #aad86c;
+  --color-cat-brown: #c97d5e;   --color-cat-brown-soft: #2c201c;    --color-cat-brown-text: #deae9c;
+  --color-cat-sand: #c1a667;    --color-cat-sand-soft: #2d271b;     --color-cat-sand-text: #d1bd8f;
+  --color-cat-olive: #dadf49;   --color-cat-olive-soft: #2e2e19;    --color-cat-olive-text: #dfe363;
+  --color-cat-forest: #5ec96d;  --color-cat-forest-soft: #1d2b1e;   --color-cat-forest-text: #79d285;
+  --color-cat-indigo: #7373de;  --color-cat-indigo-soft: #151533;   --color-cat-indigo-text: #a8a8eb;
+  --color-cat-violet: #b26dd5;  --color-cat-violet-soft: #291533;   --color-cat-violet-text: #cfa4e5;
+  --color-cat-magenta: #d454c9; --color-cat-magenta-soft: #331530;  --color-cat-magenta-text: #e8a1e2;
+  --color-cat-wine: #e44464;    --color-cat-wine-soft: #32151b;     --color-cat-wine-text: #f19dae;
+  --color-cat-slate: #729dc0;   --color-cat-slate-soft: #1d242b;    --color-cat-slate-text: #a4bfd6;
+  --color-cat-graphite: #99948f;--color-cat-graphite-soft: #252422; --color-cat-graphite-text: #bebab7;
+  --color-scrim: rgba(0, 0, 0, 0.64);
 
   /* the light shadows are a 4% tint, invisible on dark: cards separate by surface, floating layers keep a deeper black shadow */
   --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.24);
