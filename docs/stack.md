@@ -25,7 +25,7 @@
 | sonner | 2.0.8 | тости | — |
 | cmdk | 1.1.1 | пошук ⌘K | — |
 | react-day-picker | 10.0.2 | вибір дати | — |
-| motion | 14.8.0 | анімації лише як відповідь на дію | — |
+| motion | 14.3.0 (MIT, 15.10.2026; 14.4+ молодші за два тижні) | анімації лише як відповідь на дію: плашка SegmentedControl (`layoutId`), поява сторінки (`useAnimate`), `MotionConfig reducedMotion="user"` (ADR 27) | View Transitions (`<ViewTransition>` + `experimental.viewTransition` — експериментальні в Next 16.4); лише CSS (ширина плашки потребує вимірювання); next-transition-router |
 | class-variance-authority | 0.7.1 | варіанти компонентів | — |
 | cn | 0.5.0 (MIT, shadcn) | `cn()` через `createCn` з токенами теми; shadcn CLI 4.23 генерує саме його | clsx + tailwind-merge (cn — їх drop-in заміна) |
 | tw-animate-css | 1.4.0 | анімації shadcn | — |

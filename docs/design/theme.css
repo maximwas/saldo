@@ -98,11 +98,20 @@
   --shadow-card: 0 4px 16px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.04);
   --shadow-float: 0 16px 32px -4px rgb(16 24 40 / 0.12), 0 4px 8px -2px rgb(16 24 40 / 0.08);
 
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* motion: Figma «Saldo» has no motion values, so these tokens are the source of truth;
+     src/constants/motion.constants.ts mirrors them for motion/react */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);       /* state changes in place: colours, hover, focus */
+  --ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1); /* things that move or arrive: pills, page content, sheets */
+  --default-transition-duration: var(--duration-fast);
+  --default-transition-timing-function: var(--ease-standard);
 }
 
 :root {
   color-scheme: light;
+  /* Tailwind has no duration namespace: use duration-(--duration-base); transition-* utilities default to fast */
+  --duration-fast: 150ms; /* colours, hover, focus */
+  --duration-base: 240ms; /* segmented pill, page content */
+  --duration-slow: 360ms; /* sheets, dialogs */
   --sidebar-w: 232px;    /* desktop sidebar */
   --content-max: 1144px; /* main column at 1440: 1208 minus 32 padding each side */
   --topbar-h: 112px;     /* desktop topbar, padding 24/32; mobile topbar hugs (82) */
@@ -152,4 +161,13 @@
   /* the light shadows are a 4% tint, invisible on dark: cards separate by surface, floating layers keep a deeper black shadow */
   --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.24);
   --shadow-float: 0 16px 32px -4px rgb(0 0 0 / 0.48), 0 4px 8px -2px rgb(0 0 0 / 0.32);
+}
+
+/* reduced motion: every CSS duration collapses to instant; motion/react follows through MotionConfig reducedMotion="user" */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
 }
