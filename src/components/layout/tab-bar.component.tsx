@@ -13,7 +13,7 @@ export function TabBar() {
   const pathname = usePathname()
   const current = activeHref(
     pathname,
-    TAB_BAR_SECTIONS.filter((s) => s !== MORE_SECTION),
+    TAB_BAR_SECTIONS.filter((section) => section !== MORE_SECTION),
   )
 
   return (

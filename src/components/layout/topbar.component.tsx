@@ -15,7 +15,7 @@ type TopbarProps = { spaces: readonly Space[]; currentSpaceId: string }
 // shortcut: no date subtitle until ClockProvider (P0-B) gives a prerender-safe «today»
 export function Topbar({ spaces, currentSpaceId }: TopbarProps) {
   const pathname = usePathname()
-  const canWrite = spaces.find((s) => s.id === currentSpaceId)?.role !== 'viewer'
+  const canWrite = spaces.find((space) => space.id === currentSpaceId)?.role !== 'viewer'
 
   return (
     <header className="flex items-center justify-between gap-4 bg-app px-5 py-3 lg:px-8 lg:py-6">

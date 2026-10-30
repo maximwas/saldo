@@ -6,9 +6,12 @@ import { SHELL_TEXT } from '@/constants/shell.constants'
 
 // shortcut: one catch-all stub for every §2 page; each feature adds its own page.tsx (a static route wins over this)
 const STUB_HREFS = [
-  ...[...SIDEBAR_SECTIONS, SIDEBAR_FOOTER_SECTION].flatMap((s) => [s.href, ...(s.children ?? []).map((c) => c.href)]),
-  ...EXTRA_TITLES.map((l) => l.href),
-].filter((href, i, all) => href !== '/more' && all.indexOf(href) === i)
+  ...[...SIDEBAR_SECTIONS, SIDEBAR_FOOTER_SECTION].flatMap((section) => [
+    section.href,
+    ...(section.children ?? []).map((child) => child.href),
+  ]),
+  ...EXTRA_TITLES.map((extra) => extra.href),
+].filter((href, index, hrefs) => href !== '/more' && hrefs.indexOf(href) === index)
 
 export function generateStaticParams() {
   return STUB_HREFS.map((href) => ({ slug: href === '/' ? [] : href.slice(1).split('/') }))

@@ -191,7 +191,7 @@ src/features/subscriptions/
   `utils/`, `*.types.ts`; фічі й `src/lib` не імпортують `src/mcp`.
 
 Правила під MCP — з першого рядка коду (`docs/architecture.md` §12):
-- `*.api.ts` не імпортує React, TanStack, `next/*` і не створює клієнт сам: перший параметр — `db: SaldoClient`
+- `*.api.ts` не імпортує React, TanStack, `next/*` і не створює клієнт сам: перший параметр — `supabase: SaldoClient`
   (`SupabaseClient<Database>` з `src/types/supabase.types.ts`). Браузерний клієнт передає `*.mutations.ts`/`*.queries.ts`.
 - Ввід кожної дії запису — окрема zod-схема `<action>-input.schema.ts` у грошах мінорних одиниць (`amountMinor: z.int()`,
   `currency`, `id: z.uuid()`), без `transform`; `*.api.ts` робить `parse` перед `rpc()`. Форма має свою схему
@@ -206,6 +206,9 @@ src/features/subscriptions/
 - Тіло `if`, `else`, `for` і `while` завжди в `{}`, навіть один рядок; однорядкових `if (…) x()` немає
   (Biome `style.useBlockStatements: "error"`).
 - Логічні блоки розділяє порожній рядок: оголошення, потім guard і перевірки, потім `return`.
+- Жодних ідентифікаторів з однієї-двох літер і скорочень: `(href) =>`, а не `(h) =>`; `index`, а не `i`; `event`,
+  а не `e`; `error`, а не `err`; `element`, а не `el`; `callback`, а не `cb`; `translate`, а не `t`; generic —
+  `TValue`, а не `T`. Виняток — ключі, які диктує зовнішня форма даних (колонка `id`, значення `'uk'` / `'en'`).
 
 ```tsx
 async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
@@ -302,8 +305,8 @@ import type { SaldoClient } from '@/types/supabase.types'
 import type { Operation } from '../operations.types'
 import { type OperationInsert, operationInsertSchema } from '../schemas/create-operation-input.schema'
 
-export async function createOperation(db: SaldoClient, input: OperationInsert): Promise<Operation> {
-  const { data, error } = await db.rpc('create_operation', { p_operation: operationInsertSchema.parse(input) })
+export async function createOperation(supabase: SaldoClient, input: OperationInsert): Promise<Operation> {
+  const { data, error } = await supabase.rpc('create_operation', { p_operation: operationInsertSchema.parse(input) })
   if (error) throw error
   return data
 }
@@ -313,10 +316,10 @@ export async function createOperation(db: SaldoClient, input: OperationInsert): 
 
 ```ts
 // src/features/obligations/api/obligations.api.ts
-// db — браузерний клієнт із mutations.ts або клієнт із JWT власника з src/mcp (фаза 10)
-export async function payObligation(db: SaldoClient, raw: PayObligationInput) {
+// supabase — браузерний клієнт із mutations.ts або клієнт із JWT власника з src/mcp (фаза 10)
+export async function payObligation(supabase: SaldoClient, raw: PayObligationInput) {
   const input = payObligationInputSchema.parse(raw) // schemas/pay-obligation-input.schema.ts
-  const { data, error } = await db.rpc('pay_obligation', {
+  const { data, error } = await supabase.rpc('pay_obligation', {
     p_payment_id: input.paymentId,          // UUID клієнта
     p_obligation_id: input.obligationId,
     p_amount_minor: input.amountMinor,

@@ -27,15 +27,15 @@ const ALL_SECTIONS: readonly NavSection[] = [...SIDEBAR_SECTIONS, SIDEBAR_FOOTER
 
 /** Topbar title: the sub-item's label inside a section (Рахунки), the section's on its own first page (Огляд) */
 export function pageTitle(pathname: string): string {
-  const section = ALL_SECTIONS.find((s) => s.href === activeHref(pathname, ALL_SECTIONS))
+  const section = ALL_SECTIONS.find((candidate) => candidate.href === activeHref(pathname, ALL_SECTIONS))
 
   if (section) {
-    const sub = section.children?.find((c) => c.href === activeHref(pathname, section.children ?? []))
+    const subItem = section.children?.find((child) => child.href === activeHref(pathname, section.children ?? []))
 
-    return sub && sub.href !== section.href ? sub.label : section.label
+    return subItem && subItem.href !== section.href ? subItem.label : section.label
   }
 
-  return EXTRA_TITLES.find((l) => l.href === activeHref(pathname, EXTRA_TITLES))?.label ?? 'Saldo'
+  return EXTRA_TITLES.find((extra) => extra.href === activeHref(pathname, EXTRA_TITLES))?.label ?? 'Saldo'
 }
 
 /** «Ще» in the TabBar is active on its own page and on every section it lists */
