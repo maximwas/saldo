@@ -29,33 +29,37 @@ const FORM_ID = 'debt-form'
 type DebtFormSheetProps = {
   /** the debt being edited; null = a new one */
   debt: DebtRow | null
-  onClose: () => void
+  onCloseAction: () => void
 }
 
 // Figma «Saldo» → Personal debts, edit state, Desktop 2:64688 (edit); a new debt has no frame of its own and is
 // built from the same primitives: origin (money moves / old debt / purchase share), person, amount, account, dates.
-export function DebtFormSheet({ debt, onClose }: DebtFormSheetProps) {
-  return debt ? <EditDebtSheet debt={debt} onClose={onClose} /> : <CreateDebtSheet onClose={onClose} />
+export function DebtFormSheet({ debt, onCloseAction }: DebtFormSheetProps) {
+  return debt ? (
+    <EditDebtSheet debt={debt} onCloseAction={onCloseAction} />
+  ) : (
+    <CreateDebtSheet onCloseAction={onCloseAction} />
+  )
 }
 
 type DebtSheetFrameProps = {
   title: string
   pending: boolean
-  onClose: () => void
+  onCloseAction: () => void
   children: React.ReactNode
 }
 
-function DebtSheetFrame({ title, pending, onClose, children }: DebtSheetFrameProps) {
+function DebtSheetFrame({ title, pending, onCloseAction, children }: DebtSheetFrameProps) {
   const translate = useTranslations('debts')
 
   return (
     <Sheet
       open
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open) => !open && onCloseAction()}
       title={title}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onClose}>
+          <Button variant="secondary" type="button" onClick={onCloseAction}>
             {translate('form.cancel')}
           </Button>
           <Button type="submit" form={FORM_ID} disabled={pending}>
@@ -71,10 +75,10 @@ function DebtSheetFrame({ title, pending, onClose, children }: DebtSheetFramePro
 
 type EditDebtSheetProps = {
   debt: DebtRow
-  onClose: () => void
+  onCloseAction: () => void
 }
 
-function EditDebtSheet({ debt, onClose }: EditDebtSheetProps) {
+function EditDebtSheet({ debt, onCloseAction }: EditDebtSheetProps) {
   const translate = useTranslations('debts')
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const save = useSaveDebt()
@@ -93,12 +97,12 @@ function EditDebtSheet({ debt, onClose }: EditDebtSheetProps) {
     save.mutate(toEditDebtInput(values, debt, ledgerId), {
       onSuccess: () => {
         notify.success(translate('form.saved'))
-        onClose()
+        onCloseAction()
       },
     })
 
   return (
-    <DebtSheetFrame title={translate('form.editTitle')} pending={save.isPending} onClose={onClose}>
+    <DebtSheetFrame title={translate('form.editTitle')} pending={save.isPending} onCloseAction={onCloseAction}>
       <p className="text-label text-text-secondary">{translate('form.editHint')}</p>
       <FormProvider {...methods}>
         <form id={FORM_ID} noValidate onSubmit={methods.handleSubmit(submit)} className="flex flex-col gap-4">
@@ -111,7 +115,7 @@ function EditDebtSheet({ debt, onClose }: EditDebtSheetProps) {
   )
 }
 
-function CreateDebtSheet({ onClose }: { onClose: () => void }) {
+function CreateDebtSheet({ onCloseAction }: { onCloseAction: () => void }) {
   const translate = useTranslations('debts')
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
@@ -149,13 +153,13 @@ function CreateDebtSheet({ onClose }: { onClose: () => void }) {
       {
         onSuccess: () => {
           notify.success(translate('form.saved'))
-          onClose()
+          onCloseAction()
         },
       },
     )
 
   return (
-    <DebtSheetFrame title={translate('form.createTitle')} pending={save.isPending} onClose={onClose}>
+    <DebtSheetFrame title={translate('form.createTitle')} pending={save.isPending} onCloseAction={onCloseAction}>
       <FormProvider {...methods}>
         <form id={FORM_ID} noValidate onSubmit={methods.handleSubmit(submit)} className="flex flex-col gap-4">
           <OriginFields />
@@ -305,7 +309,7 @@ function AmountFields() {
         <DebtAccountField
           label={translate(origin === 'new_movement' ? 'form.accountNew' : 'form.account')}
           optional={origin !== 'new_movement'}
-          onPicked={(account) =>
+          onPickedAction={(account) =>
             origin === 'new_movement' && setValue('currency', account.currency as DebtFormValues['currency'])
           }
         />

@@ -26,12 +26,12 @@ type RepaymentSheetProps = {
   debt: DebtRow
   /** closing a debt: the amount starts as the whole remaining, and the debt is closed after it is paid */
   closing: boolean
-  onClose: () => void
+  onCloseAction: () => void
 }
 
 // Figma «Saldo» → Personal debts, partial repayment state, Desktop 2:63002 and close state, Desktop 2:63360: debt
 // line, Amount, Date, Account (hint), result line «after the repayment …», footer Cancel + Repay.
-export function RepaymentSheet({ debt, closing, onClose }: RepaymentSheetProps) {
+export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetProps) {
   const translate = useTranslations('debts')
   const locale = useLocale()
   const clock = useClock()
@@ -65,7 +65,7 @@ export function RepaymentSheet({ debt, closing, onClose }: RepaymentSheetProps) 
     })
     const done = () => {
       notify.success(translate(closing ? 'repay.closed' : 'repay.done'))
-      onClose()
+      onCloseAction()
     }
 
     if (closing) {
@@ -86,11 +86,11 @@ export function RepaymentSheet({ debt, closing, onClose }: RepaymentSheetProps) 
   return (
     <Sheet
       open
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open) => !open && onCloseAction()}
       title={translate(closing ? 'repay.titleClose' : 'repay.title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onClose}>
+          <Button variant="secondary" type="button" onClick={onCloseAction}>
             {translate('form.cancel')}
           </Button>
           <Button type="submit" form={FORM_ID} disabled={pending}>

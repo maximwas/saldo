@@ -45,10 +45,10 @@ type DebtAccountFieldProps = {
   optional: boolean
   /** only the accounts of this currency; undefined = all */
   currency?: string
-  onPicked?: (account: PickedAccount) => void
+  onPickedAction?: (account: PickedAccount) => void
 }
 
-export function DebtAccountField({ label, hint, optional, currency, onPicked }: DebtAccountFieldProps) {
+export function DebtAccountField({ label, hint, optional, currency, onPickedAction }: DebtAccountFieldProps) {
   const translate = useTranslations('debts')
   const accounts = useDebtAccounts().data ?? []
   const { control } = useFormContext<DebtEditFormValues>()
@@ -85,7 +85,7 @@ export function DebtAccountField({ label, hint, optional, currency, onPicked }: 
             const picked = accounts.find((account) => account.id === next)
 
             if (picked) {
-              onPicked?.(picked)
+              onPickedAction?.(picked)
             }
           }}
           onBlur={field.onBlur}

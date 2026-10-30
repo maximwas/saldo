@@ -15,12 +15,12 @@ type DebtStatusSheetProps = {
   debt: DebtRow
   /** settled: a debt already repaid in full is marked closed; written_off: what is left is forgiven */
   status: 'settled' | 'written_off'
-  onClose: () => void
+  onCloseAction: () => void
 }
 
 // Figma «Saldo» → Personal debts, write-off state, Desktop 2:63716: a confirmation with the remaining amount; no money
 // moves, so no account changes. A fully repaid debt is closed through the same confirmation.
-export function DebtStatusSheet({ debt, status, onClose }: DebtStatusSheetProps) {
+export function DebtStatusSheet({ debt, status, onCloseAction }: DebtStatusSheetProps) {
   const translate = useTranslations('debts')
   const locale = useLocale()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -31,18 +31,18 @@ export function DebtStatusSheet({ debt, status, onClose }: DebtStatusSheetProps)
     save.mutate(toStatusInput(debt, status, ledgerId), {
       onSuccess: () => {
         notify.success(translate(writeOff ? 'status.writtenOff' : 'status.closed'))
-        onClose()
+        onCloseAction()
       },
     })
 
   return (
     <Sheet
       open
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open) => !open && onCloseAction()}
       title={translate(writeOff ? 'status.writeOffTitle' : 'status.closeTitle')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onClose}>
+          <Button variant="secondary" type="button" onClick={onCloseAction}>
             {translate('status.cancel')}
           </Button>
           <Button type="button" onClick={confirm} disabled={save.isPending}>

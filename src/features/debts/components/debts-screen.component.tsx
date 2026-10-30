@@ -151,9 +151,9 @@ export function DebtsScreen() {
           </div>
         </>
       )}
-      {sheet?.kind === 'form' && <DebtFormSheet debt={sheet.debt} onClose={close} />}
-      {sheet?.kind === 'repay' && <RepaymentSheet debt={sheet.debt} closing={sheet.closing} onClose={close} />}
-      {sheet?.kind === 'status' && <DebtStatusSheet debt={sheet.debt} status={sheet.status} onClose={close} />}
+      {sheet?.kind === 'form' && <DebtFormSheet debt={sheet.debt} onCloseAction={close} />}
+      {sheet?.kind === 'repay' && <RepaymentSheet debt={sheet.debt} closing={sheet.closing} onCloseAction={close} />}
+      {sheet?.kind === 'status' && <DebtStatusSheet debt={sheet.debt} status={sheet.status} onCloseAction={close} />}
     </div>
   )
 }
