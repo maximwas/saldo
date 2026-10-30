@@ -135,7 +135,7 @@ PWA-маніфест, нічний бекап.
 
 **Мета:** серії планових платежів із правилами повторення, графіки кредитів, особисті борги, головний календар.
 
-- [ ] 2.1 `src/lib/recurrence/recurrence.utils.ts`: `generateOccurrences({ unit, count, firstOn, shortMonthRule, from, until })`, плюс робота з `@date-fns/tz`.
+- [x] 2.1 `src/lib/recurrence/recurrence.utils.ts`: `generateOccurrences({ unit, count, firstOn, shortMonthRule, from, until })`, плюс робота з `@date-fns/tz`.
 - [ ] 2.2 Міграція: `subscriptions`, `subscription_prices`, `credits`, `debts`, `debt_movements`, `calendar_saved_filters`; RPC `upsert_series_obligations`, `set_subscription_price`, `save_credit`, `replace_credit_schedule`, `save_debt`, `add_debt_movement`.
 - [ ] 2.3 Фіча `subscriptions`: список з фільтрами станів, два підсумки (план місяця / нормалізована середньомісячна), картка (Огляд / Історія / Налаштування), ціна з датою чинності, стани скасування, оцінка, стандартні налаштування без перезапису наявних.
 - [ ] 2.4 Фіча `credits`: три способи введення (повний графік, рівні внески, наявний кредит за наступною датою й залишком), `features/credits/utils/installments.utils.ts`, точність графіка, дострокове погашення з підтвердженням (`replace_credit_schedule`).
