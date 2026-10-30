@@ -1,4 +1,10 @@
 {
+  "title": "Settings",
+  "tabsLabel": "Settings sections",
+  "tabs": {
+    "general": "General",
+    "access": "Access"
+  },
   "themeTitle": "Theme",
   "themeHint": "Light, dark or as on the device. Saved to your account.",
   "themes": {
@@ -7,5 +13,90 @@
     "system": "System"
   },
   "languageTitle": "Language",
-  "languageHint": "The language of the interface, dates and amounts. Saved to your account."
+  "languageHint": "The language of the interface, dates and amounts. Saved to your account.",
+  "privacy": {
+    "title": "Privacy",
+    "hint": "Amounts on screen are replaced with dots. Applies to this device only.",
+    "hideAmounts": "Hide amounts"
+  },
+  "space": {
+    "title": "Space",
+    "ownerOnly": "Only the owner can change the space's name, currency and time zone.",
+    "name": "Name",
+    "baseCurrency": "Base currency",
+    "baseCurrencyHint": "Totals are counted in it. Operations already entered keep their own currency.",
+    "timeZone": "Time zone",
+    "timeZoneHint": "It decides what «today», the end of the month and a payment date are.",
+    "weekStartsOn": "Week starts on",
+    "nextIncomeOn": "Next income",
+    "nextIncomeHint": "«Available» is counted up to this date. Without a date the amount is not calculated.",
+    "save": "Save",
+    "saved": "Space settings saved",
+    "nameRequired": "Enter a name, up to 60 characters"
+  },
+  "access": {
+    "membersTitle": "Members",
+    "ownerIntro": "Who sees the space «{space}» and what they can change. Access can be revoked at any time.",
+    "memberIntro": "You can see the members of the space «{space}», but you cannot change them.",
+    "notice": "Your role in the space «{space}» is «{role}». Only the owner, {owner}, can invite people and change roles.",
+    "you": "{name} · you",
+    "since": "{email} · since {date}",
+    "roles": {
+      "owner": "Owner",
+      "editor": "Can edit",
+      "viewer": "View only"
+    },
+    "roleLabel": "{name}'s role",
+    "invite": "Invite",
+    "leave": "Leave space",
+    "revoke": "Revoke access",
+    "pendingTitle": "Waiting for a reply",
+    "pendingMeta": "{role} · sent {sent}, link valid until {until}",
+    "cancelInvite": "Cancel invite",
+    "rolesCardTitle": "What each role can do",
+    "roleHints": {
+      "owner": "Everything an editor can, plus invites people, changes roles, revokes access and deletes the space.",
+      "editor": "Enters operations, marks payments, changes categories and plans. Sees who entered what.",
+      "viewer": "Sees the space's accounts, operations and payments, changes nothing."
+    },
+    "inviteSheet": {
+      "title": "Invite someone to «{space}»",
+      "email": "Email",
+      "emailHint": "The link is valid for 7 days and works once. Send it to the person yourself.",
+      "emailInvalid": "Enter a valid address",
+      "role": "Role",
+      "roleNote": "You can change the role or revoke access at any time.",
+      "cancel": "Cancel",
+      "submit": "Create link",
+      "doneTitle": "Link for {email}",
+      "doneHint": "It is shown once and stored nowhere. Copy it and send it to the person: they open it with this address.",
+      "linkLabel": "Link",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "copyFailed": "Could not copy. Select the link and copy it by hand",
+      "done": "Done"
+    },
+    "revokeSheet": {
+      "title": "Revoke {name}'s access?",
+      "body": "{name} will no longer see the space «{space}» and cannot enter operations. Everything already entered stays, marked as entered by {name}.",
+      "again": "You can invite {name} again at any time.",
+      "keep": "Keep",
+      "confirm": "Revoke access",
+      "done": "Access revoked"
+    },
+    "cancelSheet": {
+      "title": "Cancel the invite for {email}?",
+      "body": "The link will stop working. You can invite the person again at any time.",
+      "keep": "Keep",
+      "confirm": "Cancel invite",
+      "done": "Invite cancelled"
+    },
+    "leaveSheet": {
+      "title": "Leave the space «{space}»?",
+      "body": "You will no longer see this space's accounts and operations. What you entered stays. You can return only with a new invite from {owner}.",
+      "keep": "Stay",
+      "confirm": "Leave"
+    },
+    "roleChanged": "Role changed"
+  }
 }

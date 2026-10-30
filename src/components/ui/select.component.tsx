@@ -19,6 +19,8 @@ type SelectProps = FieldControlProps & {
   name?: string
   onBlur?: () => void
   className?: string
+  /** names the control where there is no visible label, e.g. a role picker inside a list row */
+  'aria-label'?: string
 }
 
 // Figma «Saldo» → Select 2:9397: trigger 48 high, padding 0/16, gap 8, 20px chevron (up while open); Default 1px
@@ -36,6 +38,7 @@ export function Select({
   id,
   'aria-describedby': describedBy,
   'aria-invalid': invalid,
+  'aria-label': ariaLabel,
 }: SelectProps) {
   const translate = useTranslations('common')
 
@@ -43,6 +46,7 @@ export function Select({
     <SelectPrimitive.Root items={options} value={value} onValueChange={onValueChange} disabled={disabled} name={name}>
       <SelectPrimitive.Trigger
         id={id}
+        aria-label={ariaLabel}
         aria-describedby={describedBy}
         aria-invalid={invalid}
         onBlur={onBlur}
