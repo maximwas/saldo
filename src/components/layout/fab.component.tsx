@@ -3,12 +3,14 @@
 import { Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useAddParam } from '@/features/operations/hooks/add-operation.hook'
 
 // Figma «Saldo» → FAB 2:8233: 56, primary, radius full, shadow/float; on Overview mobile 2:8735 right 20, bottom 100 (over the TabBar)
-// shortcut: opens nothing until the ?add= sheet exists (operations feature)
+// opens the «Add» sheet through ?add= (AddOperationHost in the app layout)
 export function Fab() {
   const canWrite = useCanWrite()
   const translate = useTranslations('shell')
+  const [, setAdd] = useAddParam()
 
   if (!canWrite) {
     return null
@@ -18,6 +20,7 @@ export function Fab() {
     <button
       type="button"
       aria-label={translate('add')}
+      onClick={() => void setAdd('expense')}
       className="fixed right-5 bottom-25 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-float outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
     >
       <Plus aria-hidden size={24} />

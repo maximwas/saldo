@@ -13,5 +13,12 @@
     "invalid": "Check the data you entered",
     "reference": "The linked record was not found or cannot be changed",
     "unknown": "Could not save. Please try again"
-  }
+  },
+  "amountInvalid": "Enter an amount above zero",
+  "adjustmentNote": "An adjustment needs a comment",
+  "sameAccount": "Pick a different account",
+  "accountRequired": "Pick an account",
+  "oneOperationSource": "Pick a new operation or an existing one, not both",
+  "kindDirection": "The operation type does not match its direction",
+  "required": "Fill in this field"
 }

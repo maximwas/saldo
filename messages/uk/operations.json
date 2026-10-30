@@ -1,0 +1,134 @@
+{
+  "typeLabel": "Тип операції",
+  "types": {
+    "all": "Усі",
+    "expense": "Витрати",
+    "income": "Доходи",
+    "transfer": "Перекази"
+  },
+  "kinds": {
+    "income": "Дохід",
+    "expense": "Витрата",
+    "refund": "Повернення",
+    "adjustment": "Коригування",
+    "transfer": "Переказ",
+    "debt": "Борг"
+  },
+  "filters": {
+    "period": "Період",
+    "allTime": "Весь час",
+    "account": "Рахунок",
+    "allAccounts": "Усі рахунки",
+    "category": "Категорія",
+    "allCategories": "Усі категорії",
+    "reset": "Скинути фільтри"
+  },
+  "totals": {
+    "income": "Доходи",
+    "expenses": "Витрати",
+    "result": "Результат",
+    "unknownRate": "Без курсу: {count}"
+  },
+  "table": {
+    "date": "Дата",
+    "description": "Опис",
+    "category": "Категорія",
+    "account": "Рахунок",
+    "amount": "Сума"
+  },
+  "day": {
+    "today": "Сьогодні, {date}",
+    "yesterday": "Учора, {date}",
+    "count": "{count, plural, one {# операція} few {# операції} many {# операцій} other {# операцій}}"
+  },
+  "row": {
+    "receipt": "Є чек",
+    "rate": "курс {rate}",
+    "rateUnknown": "курс невідомий",
+    "noCategory": "Без категорії",
+    "fee": "Комісія переказу"
+  },
+  "empty": {
+    "title": "Операцій поки немає",
+    "hint": "Додайте першу витрату чи дохід кнопкою «Додати».",
+    "filtered": "За цим фільтром операцій немає"
+  },
+  "loadFailed": "Не вдалося завантажити операції",
+  "truncated": "Показано останні {count} операцій. Звузьте період або фільтр.",
+  "form": {
+    "newTitle": "Нова операція",
+    "editTitle": "Операція",
+    "transferTitle": "Переказ між рахунками",
+    "deleteTitle": "Видалити операцію?",
+    "deleteTransferTitle": "Видалити переказ?",
+    "amount": "Сума",
+    "account": "Рахунок",
+    "category": "Категорія",
+    "noCategory": "Без категорії",
+    "date": "Дата",
+    "counterparty": "Одержувач",
+    "counterpartyHint": "Як у виписці банку",
+    "note": "Коментар",
+    "noteHint": "До 500 символів",
+    "save": "Зберегти",
+    "saveTransfer": "Зберегти переказ",
+    "cancel": "Скасувати",
+    "close": "Закрити",
+    "delete": "Видалити",
+    "duplicate": "Дублювати",
+    "receipt": "Чек",
+    "addReceipt": "Додати чек",
+    "receiptHint": "Фото або PDF, необов’язково",
+    "receiptRemove": "Прибрати чек",
+    "receiptDelete": "Видалити чек",
+    "receiptOpenPdf": "Відкрити PDF",
+    "receiptImageAlt": "Чек до операції",
+    "receiptFailed": "Операцію збережено, але чек не завантажено",
+    "receiptBadType": "Підійде фото або PDF",
+    "receiptTooBig": "Файл завеликий: до 10 МБ",
+    "transferNote": "Переказ не є ні витратою, ні доходом: гроші лише переходять між вашими рахунками.",
+    "from": "Звідки",
+    "to": "Куди",
+    "fromAmount": "Списано",
+    "toAmount": "Зараховано",
+    "fee": "Комісія",
+    "feeHint": "Окрема витрата, не частина переказу",
+    "feeCategory": "Категорія комісії",
+    "rate": "Курс за сумами {rate} за 1 {currency}",
+    "rateReference": "довідковий {rate}",
+    "rateNote": "Фактичні суми не мусять збігатися з довідковим курсом.",
+    "viewOnly": "Лише перегляд",
+    "details": {
+      "type": "Тип",
+      "amount": "Сума",
+      "account": "Рахунок",
+      "category": "Категорія",
+      "date": "Дата",
+      "counterparty": "Одержувач",
+      "note": "Коментар",
+      "from": "Звідки",
+      "to": "Куди",
+      "fee": "Комісія",
+      "rate": "Курс"
+    }
+  },
+  "deleteConfirm": {
+    "balanceUp": "Залишок «{account}» зросте на {amount}, суми за період перерахуються.",
+    "balanceDown": "Залишок «{account}» зменшиться на {amount}, суми за період перерахуються.",
+    "transfer": "Буде видалено переказ повністю: обидві частини й комісію. Залишки обох рахунків повернуться."
+  },
+  "toast": {
+    "created": "Операцію збережено",
+    "updated": "Зміни збережено",
+    "deleted": "Операцію видалено",
+    "transferCreated": "Переказ збережено"
+  },
+  "conflict": "Цю операцію змінила інша людина. Оновіть дані й відкрийте її знову.",
+  "refresh": "Оновити",
+  "add": {
+    "typeLabel": "Тип запису",
+    "expense": "Витрата",
+    "income": "Дохід",
+    "transfer": "Переказ"
+  }
+}

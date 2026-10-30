@@ -1,14 +1,15 @@
 'use client'
 
-import { Bell, Plus, Search } from 'lucide-react'
+import { Bell, Search } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
-import { Button } from '@/components/ui/button.component'
+import { Suspense } from 'react'
 import { useClock } from '@/contexts/clock.context'
-import { useCanWrite, useLedger } from '@/contexts/ledger.context'
+import { useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { cn } from '@/lib/utils/cn.utils'
+import { AddButton } from './add-button.component'
 import { pageTitleKey } from './navigation.utils'
 import { SpaceSwitcher } from './space-switcher.component'
 
@@ -22,7 +23,6 @@ export function Topbar() {
   const translateNav = useTranslations('nav')
   const translateCommon = useTranslations('common')
   const formatter = useFormatter()
-  const canWrite = useCanWrite()
   const titleKey = pageTitleKey(pathname)
   // Figma 11:73245: the mobile Topbar is the title and the bell only, the space card below says the rest
   const spacePage = pathname === '/space'
@@ -74,13 +74,10 @@ export function Topbar() {
         >
           <Bell aria-hidden size={20} />
         </Link>
-        {/* shortcut: Add opens the ?add= sheet once the operations feature exists */}
-        {canWrite && (
-          <Button className="hidden lg:inline-flex">
-            <Plus aria-hidden size={20} />
-            {translate('add')}
-          </Button>
-        )}
+        {/* nuqs reads the URL, so the button waits in Suspense while the shell stays static */}
+        <Suspense fallback={null}>
+          <AddButton />
+        </Suspense>
       </div>
     </header>
   )
