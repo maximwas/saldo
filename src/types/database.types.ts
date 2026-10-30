@@ -794,6 +794,104 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          delivered_at: string | null
+          delivery_status: string | null
+          fire_key: string
+          id: string
+          ledger_id: string
+          link_path: string | null
+          obligation_id: string | null
+          read_at: string | null
+          reminder_rule_id: string | null
+          title: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          body: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
+          fire_key: string
+          id?: string
+          ledger_id: string
+          link_path?: string | null
+          obligation_id?: string | null
+          read_at?: string | null
+          reminder_rule_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
+          fire_key?: string
+          id?: string
+          ledger_id?: string
+          link_path?: string | null
+          obligation_id?: string | null
+          read_at?: string | null
+          reminder_rule_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
+              'id',
+            ]
+          },
+          {
+            foreignKeyName: 'notifications_obligation_fkey'
+            columns: [
+              'ledger_id',
+              'obligation_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'obligation_states'
+            referencedColumns: [
+              'ledger_id',
+              'obligation_id',
+            ]
+          },
+          {
+            foreignKeyName: 'notifications_obligation_fkey'
+            columns: [
+              'ledger_id',
+              'obligation_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'obligations'
+            referencedColumns: [
+              'ledger_id',
+              'id',
+            ]
+          },
+          {
+            foreignKeyName: 'notifications_reminder_rule_id_fkey'
+            columns: [
+              'reminder_rule_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'reminder_rules'
+            referencedColumns: [
+              'id',
+            ]
+          },
+        ]
+      }
       obligation_payments: {
         Row: {
           amount_minor: number
@@ -1210,6 +1308,101 @@ export type Database = {
             referencedRelation: 'transfers'
             referencedColumns: [
               'ledger_id',
+              'id',
+            ]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reminder_rules: {
+        Row: {
+          at_time: string
+          channels: string[]
+          created_at: string
+          created_by: string | null
+          custom_text: string | null
+          enabled: boolean
+          id: string
+          ledger_id: string
+          offsets_days: number[]
+          source_id: string
+          source_type: string
+          stop_when_paid: boolean
+          updated_at: string
+          version: number
+        }
+        ComputedFields: never
+        Insert: {
+          at_time?: string
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          custom_text?: string | null
+          enabled?: boolean
+          id?: string
+          ledger_id: string
+          offsets_days: number[]
+          source_id: string
+          source_type: string
+          stop_when_paid?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          at_time?: string
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          custom_text?: string | null
+          enabled?: boolean
+          id?: string
+          ledger_id?: string
+          offsets_days?: number[]
+          source_id?: string
+          source_type?: string
+          stop_when_paid?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'reminder_rules_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
               'id',
             ]
           },
@@ -1923,6 +2116,27 @@ export type Database = {
         }
         Returns: undefined
       }
+      due_reminder_fires: {
+        Args: {
+          p_now: string
+        }
+        Returns: {
+          amount_minor: number
+          channels: string[]
+          currency: string
+          custom_text: string
+          days_before: number
+          direction: string
+          due_on: string
+          fire_key: string
+          ledger_id: string
+          locale: string
+          obligation_id: string
+          reminder_rule_id: string
+          title: string
+          user_id: string
+        }[]
+      }
       list_orphan_attachments: {
         Args: Record<PropertyKey, never>
         Returns: string[]
@@ -2091,6 +2305,13 @@ export type Database = {
         Args: {
           p_ledger_id: string
           p_name: string
+        }
+        Returns: undefined
+      }
+      set_my_notify_channels: {
+        Args: {
+          p_channels: string[]
+          p_ledger_id: string
         }
         Returns: undefined
       }

@@ -168,14 +168,14 @@ PWA-маніфест, нічний бекап.
 
 **Мета:** серверні нагадування незалежно від відкритої вкладки, Web Push, центр сповіщень.
 
-- [ ] 3.1 Міграція: `reminder_rules`, `notifications`, `push_subscriptions`; функція `due_reminder_fires(p_now)` лише для service_role.
-- [ ] 3.2 VAPID-ключі (env), subject `https://saldo.maksymvasianin.com`, `src/features/notifications/api/web-push.server.ts` на `@pushforge/builder`.
-- [ ] 3.3 `api/cron/reminders`: секрет, вибірка, `insert … on conflict do nothing returning`, push, 404/410 → видалення підписки.
-- [ ] 3.4 pg_cron: `cron.schedule('reminders', '*/10 * * * *', …net.http_post…)` з секретом із Vault.
-- [ ] 3.5 Service worker: обробник `push` (завжди `showNotification`), `notificationclick` → `link_path`.
+- [x] 3.1 Міграція: `reminder_rules`, `notifications`, `push_subscriptions`; функція `due_reminder_fires(p_now)` лише для service_role.
+- [x] 3.2 VAPID-ключі (env), subject `https://saldo.maksymvasianin.com`, `src/features/notifications/api/web-push.server.ts` на `@pushforge/builder`.
+- [x] 3.3 `api/cron/reminders`: секрет, вибірка, `insert … on conflict do nothing returning`, push, 404/410 → видалення підписки.
+- [x] 3.4 pg_cron: `cron.schedule('reminders', '*/10 * * * *', …net.http_post…)` з секретом із Vault. Задача в міграції `reminders.sql`; URL і секрет — Vault-секрети `reminders_cron_url` і `cron_secret`, які створює реліз (architecture §7); без них задача нічого не шле.
+- [x] 3.5 Service worker: обробник `push` (завжди `showNotification`), `notificationclick` → `link_path`.
 - [ ] 3.6 UI: дозвіл на push за жестом, центр сповіщень (нові / прочитані, дія, стан доставки), правила на підписці/кредиті/боргу, стандарти §25 (підписки за 3 і 2 дні, кредити — лише в день оплати).
 - [ ] 3.7 Пояснення в UI: на iOS push лише з Home Screen.
-- [ ] 3.8 Учасники: `due_reminder_fires` повертає рядок на кожного учасника простору за `ledger_members.notify_channels`; `notifications` і прочитане — в кожного свої; налаштування «Нагадування цього простору мені» в «Доступ»; pgTAP: viewer із вимкненими каналами не отримує.
+- [ ] 3.8 Учасники: `due_reminder_fires` повертає рядок на кожного учасника простору за `ledger_members.notify_channels`; `notifications` і прочитане — в кожного свої; налаштування «Нагадування цього простору мені» в «Доступ»; pgTAP: viewer із вимкненими каналами не отримує. БД готова (`due_reminder_fires`, RPC `set_my_notify_channels`, pgTAP); лишився перемикач у «Доступ».
 - [ ] 3.9 E2E (`e2e/notifications/`): виклик `/api/cron/reminders` з `CRON_SECRET` двічі — у центрі сповіщень одне сповіщення, «Прочитано» переносить його в прочитані; `grantPermissions(['notifications'])` + «Увімкнути» → рядок у `push_subscriptions`, відмова в дозволі → пояснення; після «Оплачено» наступний виклик крону нового сповіщення не дає. Доставка push (iOS Home Screen, закрита вкладка) — лише вручну.
 
 Тести: обчислення моменту спрацювання (offset, `at_time`, часовий пояс, DST), побудова `fire_key`.

@@ -1,0 +1,6 @@
+{
+  "reminder": {
+    "out": "{days, plural, =0 {Due today} one {Due in # day} other {Due in # days}}",
+    "in": "{days, plural, =0 {Expected today} one {Expected in # day} other {Expected in # days}}"
+  }
+}
