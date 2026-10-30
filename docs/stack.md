@@ -50,6 +50,8 @@
 | @t3-oss/env-nextjs | 0.13.11 | типізовані env, розділ server/client | — |
 | pino | 10.4.0 (MIT, 02.10.2026) | серверні логи: JSON у проді, `redact`, child-логери (ADR 26) | LogTape 2.4.2, consola 3.4.2 (без релізів з 03.2025), next-logger 5.0.2 |
 | pino-pretty | 13.2.0 (MIT, 04.10.2026) | читабельні логи в dev, потік у тому ж процесі (без transport) | — |
+| @vercel/analytics | 2.0.1 (MIT, 02.10.2026) | Vercel Web Analytics без cookies; `beforeSend` відрізає query string, Vercel бачить лише шлях | — |
+| @vercel/speed-insights | 2.0.0 (Apache-2.0, 03.07.2026) | Core Web Vitals з реальних пристроїв, той самий `beforeSend` | — |
 
 ## Домен
 
@@ -85,7 +87,7 @@
 | gitleaks | 8.30 (MIT; лише security-патчі, drop-in заміна — betterleaks) | пошук секретів у lefthook pre-commit і CI |
 | age | 1.3 (BSD-3-Clause, apt на ubuntu-latest) | шифрування бекапу на публічний ключ |
 | pgTAP | 1.3.3 (у стеку Supabase) | тести RLS просторів (`supabase test db`); вхід ролями — хелпер `pg_temp.login`, без basejump/dbdev (`docs/conventions.md` §6.2) |
-| pnpm | 12.14.0 (`packageManager`), Node ≥ 24 | менеджер пакетів |
+| pnpm | 12.14.0 (`packageManager`), Node 26.x LTS (`engines`, `.nvmrc`, CI, Vercel) | менеджер пакетів |
 
 ## Ліміти безкоштовних тарифів, що мають значення
 

@@ -6,6 +6,7 @@ import { ThemeProvider } from 'next-themes'
 import { Suspense } from 'react'
 import { AppProviders } from '@/components/providers/app-providers.component'
 import { ServiceWorker } from '@/components/providers/service-worker.component'
+import { VercelInsights } from '@/components/providers/vercel-insights.component'
 import { getActiveLedger } from '@/lib/auth/dal.server'
 import './globals.css'
 
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
             </Suspense>
           </ServiceWorker>
         </ThemeProvider>
+        <VercelInsights />
       </body>
     </html>
   )
