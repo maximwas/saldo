@@ -280,7 +280,7 @@ begin
     from public.categories c
     where c.ledger_id = p_ledger_id and c.name ilike v_like
     union all
-    select 'subscription', 3, s.id, s.name, s.status, '/payments/subscriptions?id=' || s.id, null, null, s.currency
+    select 'subscription', 3, s.id, s.name, s.status, '/payments/subscriptions?sub=' || s.id, null, null, s.currency
     from public.subscriptions s
     where s.ledger_id = p_ledger_id and (s.name ilike v_like or s.note ilike v_like)
     union all
