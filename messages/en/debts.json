@@ -1,0 +1,106 @@
+{
+  "title": "Personal debts",
+  "add": "Add debt",
+  "loadFailed": "Could not load debts. Reload the page.",
+  "empty": "No debts yet",
+  "emptyHint": "Add a debt to see who owes you and whom you owe.",
+  "note": "A debt and its repayments change the account balance, never income or expenses.",
+  "summary": {
+    "owedToMe": "Owed to me",
+    "iOwe": "I owe",
+    "count": "{count, plural, one {# open debt} other {# open debts}}",
+    "none": "No open debts"
+  },
+  "groups": {
+    "owedToMe": "Owed to me",
+    "iOwe": "I owe"
+  },
+  "groupEmpty": "Nothing here yet",
+  "state": {
+    "open": "Open",
+    "partial": "Partial",
+    "returned": "Returned",
+    "settled": "Closed",
+    "written_off": "Written off"
+  },
+  "row": {
+    "remaining": "Remaining",
+    "overpaid": "Overpaid {amount}",
+    "repaid": "Repaid {repaid} of {principal}",
+    "due": "Due {date}",
+    "noDue": "No due date",
+    "share": "Purchase share"
+  },
+  "actions": {
+    "repay": "Repayment",
+    "close": "Close debt",
+    "writeOff": "Write off",
+    "edit": "Edit"
+  },
+  "form": {
+    "createTitle": "New debt",
+    "editTitle": "Edit debt",
+    "editHint": "Repayments change the amount: here you can fix the person, reason, account, due date and note.",
+    "origin": "Where the debt comes from",
+    "origins": {
+      "new_movement": "Money moves now",
+      "existing_no_movement": "Old debt",
+      "purchase_share": "Purchase share"
+    },
+    "originHints": {
+      "new_movement": "Lent or borrowed right now: the account gets a money movement, not income or an expense.",
+      "existing_no_movement": "The debt already existed: no money moves, accounts stay as they are.",
+      "purchase_share": "The purchase stays a full expense; the other person's share is recorded as a debt owed to you."
+    },
+    "direction": "Direction",
+    "directions": {
+      "owed_to_me": "Owed to me",
+      "i_owe": "I owe"
+    },
+    "person": "Person",
+    "reason": "Reason",
+    "amount": "Debt amount",
+    "currency": "Currency",
+    "account": "Account",
+    "accountNew": "Account the money moves from (or to)",
+    "accountOptional": "No account",
+    "arisenOn": "Date",
+    "dueOn": "Due date",
+    "dueHint": "A due date becomes an obligation in Upcoming and the calendar.",
+    "purchase": "Purchase",
+    "purchaseHint": "The share is at most the purchase amount.",
+    "purchaseOwn": "Your share of the purchase:",
+    "purchaseEmpty": "No expenses yet: record the purchase in Operations first.",
+    "note": "Note",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saved": "Debt saved"
+  },
+  "repay": {
+    "title": "Partial repayment",
+    "titleClose": "Close debt",
+    "summary": "{person}: {remaining} remaining",
+    "amount": "Repayment amount",
+    "date": "Date",
+    "account": "Account",
+    "accountHint": "The money goes to (or from) the account. Without an account the repayment is only recorded.",
+    "result": "Remaining after the repayment:",
+    "resultDone": "The debt will be repaid in full",
+    "resultOver": "The overpayment of {amount} stays apart from the balance",
+    "confirm": "Repay",
+    "confirmClose": "Close debt",
+    "done": "Repayment recorded",
+    "closed": "Debt closed"
+  },
+  "status": {
+    "closeTitle": "Close debt",
+    "closeBody": "{person}'s debt is repaid in full. Mark it closed?",
+    "closeConfirm": "Close",
+    "writeOffTitle": "Write off debt",
+    "writeOffBody": "The remaining {remaining} ({person}) will be written off. No money moves, accounts stay as they are.",
+    "writeOffConfirm": "Write off",
+    "closed": "Debt closed",
+    "writtenOff": "Debt written off",
+    "cancel": "Cancel"
+  }
+}
