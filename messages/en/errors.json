@@ -28,5 +28,7 @@
   "kindDirection": "The operation type does not match its direction",
   "required": "Fill in this field",
   "amountOptionalInvalid": "Enter an amount above zero or leave it empty",
+  "installmentsCountInvalid": "From 1 to 360 instalments",
+  "scheduleRequired": "Add 1 to 360 instalments",
   "purchaseRequired": "Choose a purchase"
 }
