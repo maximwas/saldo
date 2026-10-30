@@ -10,13 +10,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check .",
-    "format": "biome format --write .",
+    "lint": "biome check . && eslint . && pnpm lint:comments",
+    "format": "biome check --write . && eslint --fix .",
     "typecheck": "next typegen && tsc --noEmit",
     "deps": "depcruise src --config .dependency-cruiser.cjs",
     "test": "vitest run",
-    "check": "biome check . && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run",
-    "prepare": "lefthook install"
+    "check": "biome check . && eslint . && pnpm lint:comments && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run",
+    "prepare": "lefthook install",
+    "lint:comments": "node scripts/check-sql-comments.mjs"
   },
   "//": "TODO(0.10b): append `&& supabase test db` to check and add test:db once Supabase is set up",
   "dependencies": {
@@ -33,15 +34,18 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
+    "@stylistic/eslint-plugin": "5.10.0",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dependency-cruiser": "18.7.0",
+    "eslint": "10.13.0",
     "knip": "6.44.0",
     "lefthook": "2.2.2",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
     "vitest": "5.0.5"
   },
   "packageManager": "pnpm@12.14.0"

@@ -56,14 +56,14 @@ const taxes = section('Податки', '/taxes', Landmark, [
 const statistics = section('Статистика', '/statistics', ChartColumn)
 const settings = section('Налаштування', '/settings', Settings)
 
-/** desktop Sidebar, top to bottom; Налаштування sits at the bottom, under SyncStatus */
+/** desktop Sidebar, top to bottom; settings sits at the bottom, under SyncStatus */
 export const SIDEBAR_SECTIONS = [overview, operations, payments, calendar, budget, auto, taxes, statistics] as const
 export const SIDEBAR_FOOTER_SECTION = settings
 
-/** mobile TabBar: Огляд | Операції | Календар | Платежі | Ще */
+/** mobile TabBar: overview, operations, calendar, payments, more (spec §2) */
 export const MORE_SECTION = section('Ще', '/more', Ellipsis)
 export const TAB_BAR_SECTIONS = [overview, operations, calendar, payments, MORE_SECTION] as const
-/** the «Ще» page lists these */
+/** the More page lists these */
 export const MORE_SECTIONS = [budget, auto, taxes, statistics, settings] as const
 
 /** pages outside the menu that still need a Topbar title */

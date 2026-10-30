@@ -32,7 +32,7 @@ function SpaceAvatar({ name, size }: { name: string; size: 'md' | 'sm' }) {
 }
 
 // Figma «Saldo» → SpaceSwitcher 2:24192 (Sidebar / Topbar); menu items SpaceMenuItem 2:24191 in the Menu 2:10341 popup.
-// With one space the switcher is just the name (brief, «Спільний доступ»).
+// With one space the switcher is just the name (design brief, shared access).
 export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: SpaceSwitcherProps) {
   const current = spaces.find((space) => space.id === currentId) ?? spaces[0]
 

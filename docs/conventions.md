@@ -205,10 +205,20 @@ src/features/subscriptions/
 
 - Тіло `if`, `else`, `for` і `while` завжди в `{}`, навіть один рядок; однорядкових `if (…) x()` немає
   (Biome `style.useBlockStatements: "error"`).
-- Логічні блоки розділяє порожній рядок: оголошення, потім guard і перевірки, потім `return`.
+- Логічні блоки розділяє порожній рядок: оголошення, потім guard і перевірки, потім `return`
+  (ESLint `@stylistic/padding-line-between-statements`, автофікс: перед `return`, після блоку `const`/`let`, до й
+  після `if` / `for` / `while` / `try` / `switch`).
 - Жодних ідентифікаторів з однієї-двох літер і скорочень: `(href) =>`, а не `(h) =>`; `index`, а не `i`; `event`,
   а не `e`; `error`, а не `err`; `element`, а не `el`; `callback`, а не `cb`; `translate`, а не `t`; generic —
-  `TValue`, а не `T`. Виняток — ключі, які диктує зовнішня форма даних (колонка `id`, значення `'uk'` / `'en'`).
+  `TValue`, а не `T`. Виняток — ключі, які диктує зовнішня форма даних (колонка `id`, значення `'uk'` / `'en'`) і
+  `cn` (ім'я експорту пакета `cn`). ESLint `id-length` (`min: 3`, `properties: 'never'`).
+- Коментарі — англійською, лише «чому», а не «що». Українська — лише в текстах інтерфейсу (поки в
+  `src/constants/*.constants.ts`, далі `messages/uk`). TS/TSX — локальне правило ESLint `saldo/english-comments`
+  (`eslint.config.mjs`), SQL — `pnpm lint:comments` (`scripts/check-sql-comments.mjs`).
+- Хто що перевіряє: Biome — лінтер і форматер (основний); ESLint (`eslint.config.mjs`) — лише три правила вище, без
+  пресетів і без форматування. `pnpm lint` = Biome + ESLint + коментарі SQL, `pnpm format` = `biome check --write` +
+  `eslint --fix`; усе входить у `pnpm check` і lefthook. VS Code: `.vscode/settings.json` (Biome форматує при
+  збереженні, ESLint і Biome виправляють), `.vscode/extensions.json`.
 
 ```tsx
 async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {

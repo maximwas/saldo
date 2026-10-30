@@ -11,7 +11,7 @@ const SPACES: readonly Space[] = [
 ]
 const CURRENT_SPACE_ID = 'demo-own'
 
-// Огляд desktop 2:8237: Sidebar 232 + Main (content padding 0 32 48); mobile 2:8735: content padding 4 20 32,
+// Overview desktop 2:8237: Sidebar 232 + Main (content padding 0 32 48); mobile 2:8735: content padding 4 20 32,
 // TabBar fixed at the bottom, FAB over it. Desktop starts at lg (Figma has no tablet frame).
 export default function AppLayout({ children }: LayoutProps<'/'>) {
   const canWrite = SPACES.find((space) => space.id === CURRENT_SPACE_ID)?.role !== 'viewer'

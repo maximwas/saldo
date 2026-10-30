@@ -10,7 +10,7 @@ import {
 const matches = (pathname: string, href: string) =>
   href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)
 
-/** the longest href that contains pathname, so /operations/accounts/42 picks Рахунки, not Усі операції */
+/** the longest href that contains pathname, so /operations/accounts/42 picks accounts, not all operations */
 export function activeHref(pathname: string, links: readonly NavLink[]): string | null {
   let best: string | null = null
 
@@ -25,7 +25,7 @@ export function activeHref(pathname: string, links: readonly NavLink[]): string 
 
 const ALL_SECTIONS: readonly NavSection[] = [...SIDEBAR_SECTIONS, SIDEBAR_FOOTER_SECTION]
 
-/** Topbar title: the sub-item's label inside a section (Рахунки), the section's on its own first page (Огляд) */
+/** Topbar title: the sub-item's label deeper in a section, the section's own on its first page */
 export function pageTitle(pathname: string): string {
   const section = ALL_SECTIONS.find((candidate) => candidate.href === activeHref(pathname, ALL_SECTIONS))
 
@@ -38,5 +38,5 @@ export function pageTitle(pathname: string): string {
   return EXTRA_TITLES.find((extra) => extra.href === activeHref(pathname, EXTRA_TITLES))?.label ?? 'Saldo'
 }
 
-/** «Ще» in the TabBar is active on its own page and on every section it lists */
+/** More in the TabBar is active on its own page and on every section it lists */
 export const isMoreActive = (pathname: string) => pathname === '/more' || activeHref(pathname, MORE_SECTIONS) !== null

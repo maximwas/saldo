@@ -20,6 +20,7 @@ describe('env schema', () => {
 
   it('rejects a secret key in the public variable', () => {
     const leaked = { ...validClient, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_secret_abc' }
+
     expect(client.safeParse(leaked).success).toBe(false)
   })
 

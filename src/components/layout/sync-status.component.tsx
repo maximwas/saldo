@@ -1,7 +1,7 @@
 import { CircleCheck, CloudOff, Copy, RefreshCw, TriangleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils/cn.utils'
 
-export type SyncState = 'synced' | 'pending' | 'error' | 'offline' | 'conflict'
+type SyncState = 'synced' | 'pending' | 'error' | 'offline' | 'conflict'
 
 // Figma «Saldo» → SyncStatus 2:11328, Platform=Sidebar (the only one the shell uses so far)
 const STATES = {
@@ -14,9 +14,9 @@ const STATES = {
 
 type SyncStatusProps = {
   state: SyncState
-  /** «Синхронізовано · 14:32», «Очікує · 2 зміни» … */
+  /** e.g. synced at 14:32, pending with 2 changes */
   label: string
-  /** «Повторити» for error, «Переглянути» for conflict */
+  /** retry for error, review for conflict */
   action?: React.ReactNode
 }
 

@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react'
 import { SHELL_TEXT } from '@/constants/shell.constants'
 
-// Figma «Saldo» → FAB 2:8233: 56, primary, radius full, shadow/float; on Огляд mobile 2:8735 right 20, bottom 100 (over the TabBar)
+// Figma «Saldo» → FAB 2:8233: 56, primary, radius full, shadow/float; on Overview mobile 2:8735 right 20, bottom 100 (over the TabBar)
 // shortcut: opens nothing until the ?add= sheet exists (operations feature)
 export function Fab() {
   return (

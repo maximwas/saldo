@@ -10,7 +10,7 @@ import { type Space, SpaceSwitcher } from './space-switcher.component'
 
 type TopbarProps = { spaces: readonly Space[]; currentSpaceId: string }
 
-// Figma «Saldo» → Topbar 2:8195. Desktop (lg): padding 24/32, page-title, search 280, bell 44, «Додати».
+// Figma «Saldo» → Topbar 2:8195. Desktop (lg): padding 24/32, page-title, search 280, bell 44, Add button.
 // Mobile: padding 12/20 on app, SpaceSwitcher over a display/number title, bell 40 with a 44 hit area.
 // shortcut: no date subtitle until ClockProvider (P0-B) gives a prerender-safe «today»
 export function Topbar({ spaces, currentSpaceId }: TopbarProps) {
@@ -43,7 +43,7 @@ export function Topbar({ spaces, currentSpaceId }: TopbarProps) {
         >
           <Bell aria-hidden size={20} />
         </Link>
-        {/* shortcut: «Додати» opens the ?add= sheet once the operations feature exists */}
+        {/* shortcut: Add opens the ?add= sheet once the operations feature exists */}
         {canWrite && (
           <Button className="hidden lg:inline-flex">
             <Plus aria-hidden size={20} />

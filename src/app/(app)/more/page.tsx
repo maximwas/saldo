@@ -2,8 +2,8 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { MORE_SECTIONS } from '@/constants/navigation.constants'
 
-// mobile «Ще» (spec §2): Бюджет, Авто, Податки, Статистика, Налаштування as NavItem 2:8110 rows (gap 4 as in Sidebar);
-// Figma has no «Ще» screen yet
+// mobile More page (spec §2) lists the sections the TabBar has no room for, as NavItem 2:8110 rows (gap 4 as in
+// Sidebar); Figma has no More screen yet
 export default function MorePage() {
   return (
     <nav className="flex flex-col gap-1">
