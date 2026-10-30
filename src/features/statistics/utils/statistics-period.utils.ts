@@ -4,7 +4,6 @@ export const BUCKETS = ['day', 'week', 'month', 'year'] as const
 export type Bucket = (typeof BUCKETS)[number]
 
 export const VIEWS = ['chart', 'table'] as const
-type View = (typeof VIEWS)[number]
 
 export type PeriodRange = {
   from: string

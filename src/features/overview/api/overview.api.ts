@@ -5,9 +5,11 @@ import type { SaldoClient } from '@/types/supabase.types'
 import {
   type MonthTotals,
   monthRange,
+  type OpenDebts,
   type OverviewAccount,
   type OverviewObligation,
   sumMonth,
+  sumOpenDebts,
   toAvailableAccount,
   toAvailableObligation,
   toOverviewAccount,
@@ -36,6 +38,8 @@ export type Overview = {
   available: AvailableMoney
   upcoming: OverviewObligation[]
   overdueCount: number
+  /** open personal debts, apart from the month's result and the shortfall of «Available» (§3) */
+  openDebts: OpenDebts
 }
 
 const PAGE = 1000
@@ -149,9 +153,32 @@ const overdueQuery = (supabase: SaldoClient, ledgerId: string) =>
     .eq('ledger_id', ledgerId)
     .eq('state', 'unconfirmed')
 
+/** open debts and every repayment of the space: what is left of each debt is principal minus its repayments */
+async function getDebtRows(supabase: SaldoClient, ledgerId: string) {
+  const [debts, repayments] = await Promise.all([
+    supabase
+      .from('debts')
+      .select('id, direction, principal_minor, currency')
+      .eq('ledger_id', ledgerId)
+      .eq('status', 'open'),
+    supabase.from('debt_movements').select('debt_id, amount_minor').eq('ledger_id', ledgerId).eq('kind', 'repayment'),
+  ])
+
+  for (const result of [debts, repayments]) {
+    if (result.error) {
+      throw result.error
+    }
+  }
+
+  return {
+    debts: debts.data ?? [],
+    repayments: repayments.data ?? [],
+  }
+}
+
 /** the reads behind the screen, in parallel; any error throws */
 async function getSources(supabase: SaldoClient, { ledgerId, today, horizon }: SourceParams) {
-  const [accounts, balances, rates, due, upcoming, overdue, month] = await Promise.all([
+  const [accounts, balances, rates, due, upcoming, overdue, month, debtRows] = await Promise.all([
     accountsQuery(supabase, ledgerId),
     supabase.from('account_balances').select('account_id, balance_minor').eq('ledger_id', ledgerId),
     getLedgerRates(supabase, ledgerId),
@@ -159,6 +186,7 @@ async function getSources(supabase: SaldoClient, { ledgerId, today, horizon }: S
     upcomingQuery(supabase, ledgerId),
     overdueQuery(supabase, ledgerId),
     getMonthTotals(supabase, ledgerId, today),
+    getDebtRows(supabase, ledgerId),
   ])
 
   for (const result of [accounts, balances, due, upcoming, overdue]) {
@@ -174,6 +202,7 @@ async function getSources(supabase: SaldoClient, { ledgerId, today, horizon }: S
     upcoming: upcoming.data ?? [],
     overdueCount: overdue.count ?? 0,
     month,
+    ...debtRows,
   }
 }
 
@@ -235,6 +264,7 @@ export async function getOverview(
     }),
     upcoming: sources.upcoming.map(toUpcoming),
     overdueCount: sources.overdueCount,
+    openDebts: sumOpenDebts(sources.debts, sources.repayments, rateContext),
   }
 }
 

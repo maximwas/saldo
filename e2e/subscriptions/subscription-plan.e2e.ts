@@ -1,20 +1,8 @@
-import { expect, type Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 import { test } from '../fixtures/roles.fixture'
+import { addSubscription, kyivToday } from '../fixtures/subscriptions.fixture'
 
-/** a monthly subscription from today through the form; the owner's first account is preselected */
-async function addSubscription(page: Page, name: string, amount: string) {
-  await page.goto('/payments/subscriptions')
-  await page.getByRole('button', { name: 'Додати підписку' }).first().click()
-
-  const form = page.getByRole('dialog')
-
-  await form.getByLabel('Назва').fill(name)
-  await form.getByLabel('Сума за період').fill(amount)
-  await form.getByRole('button', { name: 'Зберегти' }).click()
-  await expect(form).toBeHidden()
-}
-
-test('нова щомісячна підписка з’являється в «Найближчих» на свою дату', async ({ pageAs }) => {
+test('нова щомісячна підписка з’являється в «Найближчих» і в календарі на свою дату', async ({ pageAs }) => {
   const page = await pageAs('owner')
   const mark = `e2e-${crypto.randomUUID().slice(0, 8)}`
 
@@ -30,6 +18,14 @@ test('нова щомісячна підписка з’являється в «
   await expect(row).toContainText('120,00')
   // the series is planned 13 months ahead, one obligation per month
   await expect(page.getByRole('listitem').filter({ hasText: mark })).toHaveCount(14)
+
+  // the calendar shows the same plan on today's cell, its sum among the day's plan totals
+  await page.goto(`/calendar?q=${mark}`)
+
+  const day = page.locator(`[data-day="${kyivToday()}"]`)
+
+  await expect(day).toContainText(mark)
+  await expect(day).toContainText('−120,00')
 })
 
 test('зміна ціни з майбутньою датою не змінює вже оплачений платіж', async ({ pageAs }) => {

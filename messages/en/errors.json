@@ -21,7 +21,7 @@
     "unknown": "Could not save. Please try again"
   },
   "amountInvalid": "Enter an amount above zero",
-  "adjustmentNote": "An adjustment needs a comment",
+  "adjustmentNote": "Add a note: an adjustment cannot be recorded without one",
   "sameAccount": "Pick a different account",
   "accountRequired": "Pick an account",
   "oneOperationSource": "Pick a new operation or an existing one, not both",
@@ -31,5 +31,7 @@
   "installmentsCountInvalid": "From 1 to 360 instalments",
   "scheduleRequired": "Add 1 to 360 instalments",
   "purchaseRequired": "Choose a purchase",
-  "countInvalid": "Enter a whole number from 1 to 999"
+  "adjustmentNoChange": "The balance has not changed: nothing to adjust",
+  "countInvalid": "Enter a whole number from 1 to 999",
+  "limitInvalid": "The limit must be above 0. To remove a limit, delete it"
 }

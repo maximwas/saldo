@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createOperationInputSchema } from './create-operation-input.schema'
+import { createOperationInputSchema } from '@/lib/finance/create-operation-input.schema'
 import {
   type OperationFormValues,
   operationFormSchema,

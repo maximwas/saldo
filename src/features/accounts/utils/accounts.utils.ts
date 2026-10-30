@@ -142,3 +142,22 @@ export function toAccount(row: AccountRow, { balanceOf, baseCurrency, rates, tod
     rate: rate?.toFixed() ?? null,
   }
 }
+
+export type Adjustment = {
+  direction: 'in' | 'out'
+  amountMinor: number
+}
+
+/** the adjustment that turns the balance in Saldo into the actual one (§5); null = equal, nothing to write */
+export function adjustmentOf(currentMinor: number, actualMinor: number): Adjustment | null {
+  const difference = actualMinor - currentMinor
+
+  if (difference === 0) {
+    return null
+  }
+
+  return {
+    direction: difference > 0 ? 'in' : 'out',
+    amountMinor: Math.abs(difference),
+  }
+}
