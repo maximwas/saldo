@@ -47,7 +47,7 @@ export function CategoryIconPicker({ value, color, onChange, id, ...aria }: Cate
       ) : (
         <fieldset
           aria-label={translate('form.icon')}
-          className="flex max-h-60 min-w-0 flex-wrap gap-4 overflow-y-auto p-1"
+          className="flex max-h-60 min-w-0 flex-wrap gap-3 md:gap-4 overflow-y-auto p-1"
         >
           {names.map((name) => (
             <button
