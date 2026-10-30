@@ -5,6 +5,7 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { ReminderRuleCard } from '@/components/reminders/reminder-rule-card.component'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
@@ -182,6 +183,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
         <CreditSchedule credit={credit} className="lg:col-span-2" />
         <div className="flex flex-col gap-4 lg:gap-6">
           <CreditDetails credit={credit} />
+          <ReminderRuleCard sourceType="credit" sourceId={credit.id} />
           {writable && (
             <section className="flex flex-col gap-4 rounded-card bg-card p-5 shadow-card lg:p-6">
               <h2 className="text-card-title text-text-primary">{translate('card.manage')}</h2>

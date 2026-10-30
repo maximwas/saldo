@@ -108,3 +108,30 @@ export async function updateLedgerSettings(supabase: SaldoClient, input: UpdateL
     }
   }
 }
+
+// «Reminders of this space for me» (§19): the member's own channels; the RPC is the only way to change them
+export async function getMyNotifyChannels(supabase: SaldoClient, ledgerId: string, userId: string) {
+  const { data, error } = await supabase
+    .from('ledger_members')
+    .select('notify_channels')
+    .eq('ledger_id', ledgerId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return data?.notify_channels ?? []
+}
+
+export async function setMyNotifyChannels(supabase: SaldoClient, ledgerId: string, channels: string[]) {
+  const { error } = await supabase.rpc('set_my_notify_channels', {
+    p_ledger_id: ledgerId,
+    p_channels: channels,
+  })
+
+  if (error) {
+    throw error
+  }
+}

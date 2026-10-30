@@ -106,7 +106,12 @@
       "keep": "Stay",
       "confirm": "Leave"
     },
-    "roleChanged": "Role changed"
+    "roleChanged": "Role changed",
+    "reminders": {
+      "title": "Reminders",
+      "label": "Reminders of this space for me",
+      "hint": "Your own choice only: other members get reminders by their own settings. When off, none arrive in the app or as push."
+    }
   },
   "data": {
     "exportTitle": "Export",

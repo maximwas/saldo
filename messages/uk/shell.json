@@ -55,5 +55,6 @@
       "obligation": "Платежі",
       "operation": "Операції"
     }
-  }
+  },
+  "notificationsUnread": "Сповіщення, нових: {count}"
 }

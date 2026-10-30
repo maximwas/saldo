@@ -55,5 +55,6 @@
       "obligation": "Payments",
       "operation": "Operations"
     }
-  }
+  },
+  "notificationsUnread": "Notifications, {count} new"
 }
