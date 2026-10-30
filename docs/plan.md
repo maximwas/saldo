@@ -57,6 +57,7 @@ PWA-маніфест, нічний бекап.
 - [x] 0.24 Серверні логи (ADR 26): pino 10.4.0 + pino-pretty 13.2.0, `src/lib/logger/logger.server.ts` (JSON у проді, pretty в dev, `LOG_LEVEL`, `redact`, `logger.child({ module })`), `src/instrumentation.ts` → `onRequestError`, `logPgError` (код + constraint без `message`), логи в `switchLedger`, `setLocale` і DAL на помилках; тест редакції `logger.utils.test.ts`; conventions §3c. Cron `/api/cron/daily`: старт, фініш із `durationMs`, збій через `logPgError` (злито з гілкою D, 30.10.2026).
 
 Тести: `pg-error.utils.test.ts`, `env`-схема (zod); pgTAP `ledgers.test.sql` (0.10b); e2e 0.21.
+- [x] 0.25 Логотип A2 «Градієнт у дугах» (Максим, 30.10.2026): Figma-компонент `Brand/Mark` 10:71281 у Mark-фреймах Sidebar і входу; `Brand` перенесено в `src/components/layout/brand.component.tsx` (inline SVG, стопи градієнта — токени `--brand-arc-*` у `globals.css`, темна тема — «A2 dark»); іконки з `public/favicon.svg` генерує `pnpm icons` (`@vite-pwa/assets-generator` 2.0.0, preset minimal-2023): `favicon.ico` 48, `favicon.svg`, `pwa-64/192/512`, `maskable-icon-512` і `apple-touch-icon-180` на суцільному `--color-primary`; `manifest.ts` і `metadata.icons`; e2e `manifest.e2e.ts` перевіряє розміри, maskable, 200 і content-type без сесії.
 
 Готово, коли:
 - [ ] прод-URL відкривається, вхід лише для наявних акаунтів, реєстрація відмовляє;
