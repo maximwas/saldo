@@ -1,8 +1,12 @@
 import { z } from 'zod'
 import { CURRENCIES } from '@/constants/currencies.constants'
+import {
+  adjustmentHasNote,
+  type CreateOperationInput,
+  OPERATION_KINDS,
+} from '@/lib/finance/create-operation-input.schema'
 import { toMinor } from '@/lib/money/money.utils'
 import { type Clock, toOccurredAt } from '@/lib/utils/clock.utils'
-import { adjustmentHasNote, type CreateOperationInput, OPERATION_KINDS } from './create-operation-input.schema'
 import type { UpdateOperationInput } from './update-operation-input.schema'
 
 /** messages are keys of the errors namespace; the form translates them */
@@ -38,6 +42,8 @@ type CreateOperationIds = {
   ledgerId: string
   /** «duplicate» (plan 1.8): the operation this one copies */
   duplicatedFromId?: string
+  /** a refund: the purchase it returns (§5) */
+  refundOfId?: string
 }
 
 type UpdateOperationTarget = {
@@ -85,6 +91,7 @@ export const toCreateOperationInput = (
   id: ids.id,
   ledger_id: ids.ledgerId,
   ...toOperationFields(values, clock),
+  refund_of_id: ids.refundOfId ?? null,
   duplicated_from_id: ids.duplicatedFromId ?? null,
 })
 

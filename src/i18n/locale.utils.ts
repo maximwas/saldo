@@ -25,6 +25,7 @@ export const MESSAGE_NAMESPACES = [
   'debts',
   'subscriptions',
   'budget',
+  'calendar',
   'notifications',
 ] as const
 

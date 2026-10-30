@@ -61,6 +61,13 @@ export type ObligationPayment = {
   operation: CandidateOperation | null
 }
 
+type UpcomingParams = {
+  ledgerId: string
+  /** YYYY-MM-DD bounds of the open list (due_on); none = every open obligation, overdue ones included */
+  from?: string
+  to?: string
+}
+
 type CandidateParams = {
   ledgerId: string
   direction: 'in' | 'out'
@@ -155,15 +162,27 @@ async function withLatestPayments(supabase: SaldoClient, rows: ObligationRow[]):
   }))
 }
 
-/** open obligations (plan / partial / date passed) oldest first, plus the last paid ones so a payment can be cancelled */
-export async function listObligations(supabase: SaldoClient, ledgerId: string) {
+/** open obligations of every source, within the range when one is given */
+function openQuery(supabase: SaldoClient, { ledgerId, from, to }: UpcomingParams) {
+  let query = supabase
+    .from('obligation_states')
+    .select(STATE_COLUMNS)
+    .eq('ledger_id', ledgerId)
+    .in('state', OPEN_STATES)
+
+  if (from) {
+    query = query.gte('due_on', from)
+  }
+
+  return to ? query.lte('due_on', to) : query
+}
+
+/** open obligations (plan / partial / date passed) of every source oldest first, plus the last paid ones so a payment
+ * can be cancelled; the screen and the MCP server pass the same params, never URL state (plan 2.10) */
+export async function listObligations(supabase: SaldoClient, params: UpcomingParams) {
+  const { ledgerId } = params
   const [open, paid] = await Promise.all([
-    supabase
-      .from('obligation_states')
-      .select(STATE_COLUMNS)
-      .eq('ledger_id', ledgerId)
-      .in('state', OPEN_STATES)
-      .order('due_on'),
+    openQuery(supabase, params).order('due_on'),
     supabase
       .from('obligation_states')
       .select(STATE_COLUMNS)

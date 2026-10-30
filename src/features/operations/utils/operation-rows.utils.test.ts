@@ -23,6 +23,7 @@ const dbRow: OperationDbRow = {
   occurred_at: '2026-10-30T10:00:00Z',
   occurred_on: '2026-10-30',
   transfer_id: null,
+  refund_of_id: null,
   version: 2,
   created_by: 'u1',
 }

@@ -13,6 +13,7 @@ import { useAccounts } from '../hooks/accounts.hook'
 import { type AccountView, totalInBase } from '../utils/accounts.utils'
 import { AccountFormSheet } from './account-form-sheet.component'
 import { AccountRow } from './account-row.component'
+import { AdjustBalanceSheet } from './adjust-balance-sheet.component'
 import { ArchiveAccountSheet } from './archive-account-sheet.component'
 
 type Tab = 'active' | 'archived'
@@ -30,6 +31,7 @@ export function AccountsScreen() {
   const [tab, setTab] = useState<Tab>('active')
   const [form, setForm] = useState<FormTarget | null>(null)
   const [archiving, setArchiving] = useState<AccountView | null>(null)
+  const [adjusting, setAdjusting] = useState<AccountView | null>(null)
 
   if (isPending) {
     return <div aria-busy className="h-72 rounded-card bg-subtle" />
@@ -102,6 +104,7 @@ export function AccountsScreen() {
                     account={account}
                     onEditAction={(target) => setForm({ account: target })}
                     onArchiveAction={setArchiving}
+                    onAdjustAction={setAdjusting}
                   />
                 ))}
               </ul>
@@ -139,6 +142,9 @@ export function AccountsScreen() {
         account={form?.account ?? null}
       />
       <ArchiveAccountSheet account={archiving} onCloseAction={() => setArchiving(null)} />
+      {adjusting ? (
+        <AdjustBalanceSheet key={adjusting.id} account={adjusting} onCloseAction={() => setAdjusting(null)} />
+      ) : null}
     </>
   )
 }
