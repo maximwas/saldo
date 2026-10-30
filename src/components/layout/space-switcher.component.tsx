@@ -1,9 +1,11 @@
 'use client'
 
 import { Menu } from '@base-ui/react/menu'
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import type { LedgerSummary } from '@/contexts/ledger.context'
+import { CreateSpaceDialog } from '@/features/ledgers/components/create-space-dialog.component'
 import { cn } from '@/lib/utils/cn.utils'
 
 type SpaceSwitcherProps = {
@@ -36,9 +38,10 @@ function SpaceAvatar({ name, size }: SpaceAvatarProps) {
 }
 
 // Figma «Saldo» → SpaceSwitcher 2:24192 (Sidebar / Topbar); menu items SpaceMenuItem 2:24191 in the Menu 2:10341 popup.
-// With one space the switcher is just the name (design brief, shared access).
+// The menu always opens, even with one space: "Create space" (plan 1.17b) lives in it (Space menu 2:40453).
 export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: SpaceSwitcherProps) {
   const translate = useTranslations('shell')
+  const [creating, setCreating] = useState(false)
   const current = spaces.find((space) => space.id === currentId) ?? spaces[0]
 
   if (!current) {
@@ -49,41 +52,58 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
     <Menu.Portal>
       <Menu.Positioner align="start" className="z-50">
         <Menu.Popup className="flex flex-col gap-0.5 rounded-inner border border-border bg-raised p-1.5 shadow-float outline-none">
-          {spaces.map((space) => (
-            <Menu.Item
-              key={space.id}
-              onClick={() => onSelectAction?.(space.id)}
-              className="flex h-14 w-72 items-center gap-3 rounded-sm px-3 outline-none data-highlighted:bg-subtle"
-            >
-              <SpaceAvatar name={space.name} size="md" />
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-body font-medium text-text-primary">{space.name}</span>
-                <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
-              </span>
-              {space.id === current.id && (
-                <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
-              )}
-            </Menu.Item>
-          ))}
+          <Menu.Group className="flex flex-col gap-0.5">
+            <Menu.GroupLabel className="px-3 pt-2 pb-1 text-caption font-medium text-text-tertiary">
+              {translate('space.list')}
+            </Menu.GroupLabel>
+            {spaces.map((space) => (
+              <Menu.Item
+                key={space.id}
+                onClick={() => onSelectAction?.(space.id)}
+                className="flex h-14 w-72 items-center gap-3 rounded-sm px-3 outline-none data-highlighted:bg-subtle"
+              >
+                <SpaceAvatar name={space.name} size="md" />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-body font-medium text-text-primary">{space.name}</span>
+                  <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
+                </span>
+                {space.id === current.id && (
+                  <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
+                )}
+              </Menu.Item>
+            ))}
+          </Menu.Group>
+          <Menu.Separator className="my-1 h-px bg-border" />
+          <Menu.Item
+            onClick={() => setCreating(true)}
+            className="flex h-10 items-center gap-3 rounded-sm px-3 text-body text-text-primary outline-none data-highlighted:bg-subtle"
+          >
+            <Plus aria-hidden size={20} />
+            {translate('space.create.action')}
+          </Menu.Item>
         </Menu.Popup>
       </Menu.Positioner>
     </Menu.Portal>
   )
 
+  const dialog = <CreateSpaceDialog open={creating} onOpenChange={setCreating} />
+
   if (platform === 'button') {
     return (
-      <Menu.Root>
-        <Menu.Trigger className="flex h-11 min-w-0 cursor-pointer items-center whitespace-nowrap px-3 justify-center gap-1.5 rounded-md bg-subtle text-label font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          {translate('space.switch')}
-          <ChevronDown aria-hidden size={16} />
-        </Menu.Trigger>
-        {popup}
-      </Menu.Root>
+      <>
+        <Menu.Root>
+          <Menu.Trigger className="flex h-11 min-w-0 cursor-pointer items-center whitespace-nowrap px-3 justify-center gap-1.5 rounded-md bg-subtle text-label font-semibold text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            {translate('space.switch')}
+            <ChevronDown aria-hidden size={16} />
+          </Menu.Trigger>
+          {popup}
+        </Menu.Root>
+        {dialog}
+      </>
     )
   }
 
   const sidebar = platform === 'sidebar'
-  const canSwitch = spaces.length > 1
 
   const body = (
     <>
@@ -96,23 +116,24 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
       ) : (
         <span className="truncate text-label font-semibold text-text-primary">{current.name}</span>
       )}
-      {canSwitch && <ChevronDown aria-hidden size={16} className="shrink-0 text-text-primary" />}
+      <ChevronDown aria-hidden size={16} className="shrink-0 text-text-primary" />
     </>
   )
   const boxClass = sidebar
     ? 'flex h-14 w-full items-center gap-2.5 rounded-md border border-border bg-card px-2.5 py-2'
     : 'flex h-11 items-center gap-2 rounded-md px-1'
 
-  if (!canSwitch) {
-    return <div className={boxClass}>{body}</div>
-  }
-
   return (
-    <Menu.Root>
-      <Menu.Trigger className={cn(boxClass, 'outline-none focus-visible:ring-2 focus-visible:ring-primary')}>
-        {body}
-      </Menu.Trigger>
-      {popup}
-    </Menu.Root>
+    <>
+      <Menu.Root>
+        <Menu.Trigger
+          className={cn(boxClass, 'cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary')}
+        >
+          {body}
+        </Menu.Trigger>
+        {popup}
+      </Menu.Root>
+      {dialog}
+    </>
   )
 }

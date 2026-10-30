@@ -27,6 +27,16 @@
       "statistics": "Statistics",
       "categories": "Categories",
       "settings": "Settings"
+    },
+    "list": "Spaces",
+    "create": {
+      "action": "Create space",
+      "title": "New space",
+      "name": "Name",
+      "currency": "Base currency",
+      "submit": "Create",
+      "cancel": "Cancel",
+      "nameRequired": "Enter a name, up to 60 characters"
     }
   }
 }

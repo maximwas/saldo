@@ -36,3 +36,8 @@ export function useLedger() {
 
   return ledger
 }
+
+// A viewer sees no write buttons anywhere; RLS refuses the write anyway (architecture §6)
+export function useCanWrite() {
+  return useLedger().role !== 'viewer'
+}
