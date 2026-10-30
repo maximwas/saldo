@@ -24,6 +24,7 @@ export function TabBar() {
       {TAB_BAR_SECTIONS.map((section) => {
         const Icon = section.icon
         const active = section === MORE_SECTION ? isMoreActive(pathname) : section.href === current
+
         return (
           <Link
             key={section.href}

@@ -26,6 +26,10 @@ export default function StubPage({ params }: PageProps<'/[[...slug]]'>) {
 async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
   const { slug } = await params
   const path = `/${(slug ?? []).join('/')}`
-  if (!STUB_HREFS.some((href) => href === path)) notFound()
+
+  if (!STUB_HREFS.some((href) => href === path)) {
+    notFound()
+  }
+
   return <p className="text-body text-text-secondary">{SHELL_TEXT.stub(pageTitle(path))}</p>
 }

@@ -201,6 +201,25 @@ src/features/subscriptions/
 - Будь-який запис у БД — лише через функцію `*.api.ts` (RPC або одна таблиця); жодних прямих `from().insert` у
   компонентах, хуках чи маршрутах.
 
+## 3a. Стиль коду (Максим, 30.10.2026)
+
+- Тіло `if`, `else`, `for` і `while` завжди в `{}`, навіть один рядок; однорядкових `if (…) x()` немає
+  (Biome `style.useBlockStatements: "error"`).
+- Логічні блоки розділяє порожній рядок: оголошення, потім guard і перевірки, потім `return`.
+
+```tsx
+async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
+  const { slug } = await params
+  const path = `/${(slug ?? []).join('/')}`
+
+  if (!STUB_HREFS.some((href) => href === path)) {
+    notFound()
+  }
+
+  return <p className="text-body text-text-secondary">{SHELL_TEXT.stub(pageTitle(path))}</p>
+}
+```
+
 ## 4. Патерни
 
 ### 4.1 Ключі й `queryOptions`
@@ -513,7 +532,8 @@ describe('computeAvailable', () => {
     "rules": {
       "preset": "recommended",
       "style": {
-        "useFilenamingConvention": { "level": "error", "options": { "filenameCases": ["kebab-case"], "requireAscii": true } }
+        "useFilenamingConvention": { "level": "error", "options": { "filenameCases": ["kebab-case"], "requireAscii": true } },
+        "useBlockStatements": "error"
       },
       "performance": { "noBarrelFile": "error", "noReExportAll": "error" }
     }

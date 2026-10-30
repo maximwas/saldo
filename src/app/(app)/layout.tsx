@@ -15,6 +15,7 @@ const CURRENT_SPACE_ID = 'demo-own'
 // TabBar fixed at the bottom, FAB over it. Desktop starts at lg (Figma has no tablet frame).
 export default function AppLayout({ children }: LayoutProps<'/'>) {
   const canWrite = SPACES.find((s) => s.id === CURRENT_SPACE_ID)?.role !== 'viewer'
+
   return (
     <div className="flex min-h-dvh">
       <Sidebar spaces={SPACES} currentSpaceId={CURRENT_SPACE_ID} />

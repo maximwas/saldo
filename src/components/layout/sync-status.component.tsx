@@ -22,6 +22,7 @@ type SyncStatusProps = {
 
 export function SyncStatus({ state, label, action }: SyncStatusProps) {
   const { icon: Icon, iconClass, boxClass } = STATES[state]
+
   return (
     <div role="status" className={cn('flex h-9 items-center gap-2 rounded-md px-3', boxClass)}>
       {/* Figma keeps a 2px stroke at 16px */}

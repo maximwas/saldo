@@ -35,7 +35,11 @@ function SpaceAvatar({ name, size }: { name: string; size: 'md' | 'sm' }) {
 // With one space the switcher is just the name (brief, «Спільний доступ»).
 export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: SpaceSwitcherProps) {
   const current = spaces.find((s) => s.id === currentId) ?? spaces[0]
-  if (!current) return null
+
+  if (!current) {
+    return null
+  }
+
   const sidebar = platform === 'sidebar'
   const canSwitch = spaces.length > 1
 
@@ -57,7 +61,9 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
     ? 'flex h-14 w-full items-center gap-2.5 rounded-md border border-border bg-card px-2.5 py-2'
     : 'flex h-11 items-center gap-2 rounded-md px-1'
 
-  if (!canSwitch) return <div className={boxClass}>{body}</div>
+  if (!canSwitch) {
+    return <div className={boxClass}>{body}</div>
+  }
 
   return (
     <Menu.Root>

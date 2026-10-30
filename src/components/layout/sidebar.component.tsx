@@ -18,6 +18,7 @@ import { SyncStatus } from './sync-status.component'
 // Figma «Saldo» → NavItem 2:8110: 44 high, icon 20, Default / Hover (subtle) / Active (primary-soft)
 function NavItem({ section, active }: { section: NavSection; active: boolean }) {
   const Icon = section.icon
+
   return (
     <Link
       href={section.href as Route}
@@ -77,6 +78,7 @@ export function Sidebar({ spaces, currentSpaceId }: SidebarProps) {
           const active = section.href === current
           const children = active ? section.children : undefined
           const currentChild = children ? activeHref(pathname, children) : null
+
           return [
             <NavItem key={section.href} section={section} active={active} />,
             ...(children ?? []).map((link) => (
