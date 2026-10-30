@@ -17,6 +17,7 @@ import type { Member, PendingInvite } from '../api/access.server'
 import { INVITE_ROLES } from '../schemas/access.schema'
 import { ConfirmSheet } from './confirm-sheet.component'
 import { InviteSheet } from './invite-sheet.component'
+import { MyRemindersCard } from './my-reminders-card.component'
 
 type AccessScreenProps = {
   currentUserId: string
@@ -274,6 +275,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
               })}
             </ul>
           </Card>
+          <MyRemindersCard currentUserId={currentUserId} />
           {isOwner && invites.length > 0 ? (
             <Card title={translate('pendingTitle')}>
               <ul className="flex flex-col gap-4">

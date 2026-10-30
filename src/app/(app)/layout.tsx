@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { Fab } from '@/components/layout/fab.component'
+import { LedgerLinkSwitch } from '@/components/layout/ledger-link-switch.component'
 import { PageTransition } from '@/components/layout/page-transition.component'
 import { Sidebar } from '@/components/layout/sidebar.component'
 import { TabBar } from '@/components/layout/tab-bar.component'
@@ -24,6 +25,7 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
       <Suspense fallback={null}>
         <Fab />
         <AddOperationHost />
+        <LedgerLinkSwitch />
       </Suspense>
     </div>
   )

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
+import { ReminderRuleCard } from '@/components/reminders/reminder-rule-card.component'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -111,6 +112,7 @@ function EditDebtSheet({ debt, onCloseAction }: EditDebtSheetProps) {
           <DebtDueNoteFields />
         </form>
       </FormProvider>
+      <ReminderRuleCard sourceType="debt" sourceId={debt.id} />
     </DebtSheetFrame>
   )
 }

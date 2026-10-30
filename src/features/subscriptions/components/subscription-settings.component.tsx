@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { ReminderRuleCard } from '@/components/reminders/reminder-rule-card.component'
 import { Button } from '@/components/ui/button.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useToday } from '@/contexts/clock.context'
@@ -118,6 +119,7 @@ export function SubscriptionSettings({ subscriptionId }: SubscriptionSettingsPro
     <>
       {/* a new version from someone else re-mounts the form with their values instead of keeping stale ones */}
       <SettingsForm key={subscription.version} subscription={subscription} />
+      <ReminderRuleCard sourceType="subscription" sourceId={subscription.id} />
       <ArchiveCard subscription={subscription} />
     </>
   )

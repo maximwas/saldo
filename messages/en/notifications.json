@@ -2,5 +2,66 @@
   "reminder": {
     "out": "{days, plural, =0 {Due today} one {Due in # day} other {Due in # days}}",
     "in": "{days, plural, =0 {Expected today} one {Expected in # day} other {Expected in # days}}"
+  },
+  "summary": "{count, plural, =0 {No new notifications} other {# new}}",
+  "markAll": "Mark all read",
+  "new": "New",
+  "read": "Read",
+  "empty": "No notifications yet. Payment reminders will appear here at their time.",
+  "loadFailed": "Could not load notifications. Try refreshing the page.",
+  "item": {
+    "open": "Open payment",
+    "markRead": "Mark read",
+    "new": "New",
+    "delivery": {
+      "sent": "Push delivered",
+      "failed": "Push not delivered",
+      "pending": "Push is being sent",
+      "no_subscription": "Push: no device"
+    }
+  },
+  "clear": {
+    "action": "Clear read",
+    "title": "Clear {count, plural, one {# read notification} other {# read notifications}}?",
+    "text": "Only the notifications go away. Payments, transactions and reminders stay as they are.",
+    "keep": "Keep",
+    "confirm": "Clear",
+    "done": "Read notifications cleared"
+  },
+  "push": {
+    "failed": "Could not change push on this device. Try again.",
+    "enable": "Enable",
+    "disable": "Disable",
+    "off": {
+      "title": "Push notifications on this device",
+      "text": "Reminders arrive even when Saldo is closed. Without push they still appear here."
+    },
+    "on": {
+      "title": "Push is on for this device",
+      "text": "Reminders arrive on this device even when Saldo is closed."
+    },
+    "denied": {
+      "title": "Notifications are blocked in the browser",
+      "text": "Allow notifications for this site in the browser settings and come back here. Reminders stay here meanwhile."
+    },
+    "homeScreen": {
+      "title": "On iPhone and iPad, push works from the Home Screen",
+      "text": "Safari sends push only to an app added to the Home Screen: tap Share, then Add to Home Screen, open Saldo from its icon and enable push there."
+    },
+    "unavailable": {
+      "title": "Push is not available on this device",
+      "text": "This browser or app does not support push. Reminders stay here, in the notification centre."
+    }
+  },
+  "rules": {
+    "title": "Reminders",
+    "enabled": "Remind about payment",
+    "offsets": "When to remind",
+    "offset": "{days, plural, =0 {On the due day} one {# day before} other {# days before}}",
+    "hint": {
+      "subscription": "By default, 3 and 2 days before the charge. Reminders stop once the payment is marked paid.",
+      "credit": "By default, on the instalment's due day. Reminders stop once the instalment is paid.",
+      "debt": "No reminders by default. Turn on to be reminded before the repayment date."
+    }
   }
 }
