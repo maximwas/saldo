@@ -2,7 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
-import { useMemo, useState } from 'react'
+import { parseAsString, useQueryState } from 'nuqs'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { operationQueries } from '../api/operations.queries'
@@ -31,6 +32,25 @@ export function OperationsScreen() {
   const items = useMemo(() => (list.data ? buildItems(list.data.rows, list.data.transfers) : []), [list.data])
   const receiptIds = useMemo(() => new Set(list.data?.receiptIds ?? []), [list.data])
   const totals = useMemo(() => summarize(items), [items])
+  const [linkedId, setLinkedId] = useQueryState('operation', parseAsString.withOptions({ history: 'replace' }))
+  const linked = linkedId ? items.find((item) => item.row.id === linkedId) : undefined
+
+  // a search result links ?period=<month>&operation=<id>: open its sheet (edit, or view for a viewer), then drop the id
+  useEffect(() => {
+    if (!linked) {
+      return
+    }
+
+    setEditor((current) => ({
+      open: true,
+      target: {
+        mode: 'edit',
+        item: linked,
+      },
+      key: (current?.key ?? 0) + 1,
+    }))
+    void setLinkedId(null)
+  }, [linked, setLinkedId])
 
   const openEditor = (target: EditorTarget) =>
     setEditor((current) => ({

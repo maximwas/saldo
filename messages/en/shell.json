@@ -38,5 +38,22 @@
       "cancel": "Cancel",
       "nameRequired": "Enter a name, up to 60 characters"
     }
+  },
+  "searchPalette": {
+    "title": "Search",
+    "placeholder": "Operations, accounts, subscriptions, debts…",
+    "hint": "Type at least 2 characters",
+    "searching": "Searching…",
+    "empty": "Nothing found",
+    "failed": "Search failed, try again",
+    "groups": {
+      "account": "Accounts",
+      "category": "Categories",
+      "subscription": "Subscriptions",
+      "credit": "Credits",
+      "debt": "Debts",
+      "obligation": "Payments",
+      "operation": "Operations"
+    }
   }
 }

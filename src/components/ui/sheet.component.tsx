@@ -32,6 +32,8 @@ type SheetProps = {
   children: React.ReactNode
   /** action buttons: right-aligned on desktop, full-width and sticky on mobile */
   footer?: React.ReactNode
+  /** the element focused on open; by default the first tabbable one, which is the close button */
+  initialFocus?: React.RefObject<HTMLElement | null>
 }
 
 const CLOSE_CLASS =
@@ -43,7 +45,7 @@ const BACKDROP_CLASS =
 // Figma «Saldo» → BottomSheet 2:10281 (mobile: radius card on top, handle 36x4, header with 44 close, scrolling body
 // padding 8/20/20, sticky footer with top border and full-width buttons) and Dialog 2:10240 (desktop: 480 wide,
 // padding 24, gap 20, 36 close, footer right-aligned). The same props render either, so screens write one sheet.
-export function Sheet({ open, onOpenChange, title, children, footer }: SheetProps) {
+export function Sheet({ open, onOpenChange, title, children, footer, initialFocus }: SheetProps) {
   const translate = useTranslations('common')
   // a sheet is opened by a click, so it never renders during hydration
   const desktop = useIsDesktop()
@@ -53,7 +55,10 @@ export function Sheet({ open, onOpenChange, title, children, footer }: SheetProp
       <Dialog.Root open={open} onOpenChange={onOpenChange}>
         <Dialog.Portal>
           <Dialog.Backdrop className={BACKDROP_CLASS} />
-          <Dialog.Popup className="fixed top-1/2 left-1/2 z-40 flex max-h-11/12 w-120 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-card bg-raised p-6 shadow-float outline-none transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0">
+          <Dialog.Popup
+            initialFocus={initialFocus}
+            className="fixed top-1/2 left-1/2 z-40 flex max-h-11/12 w-120 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-card bg-raised p-6 shadow-float outline-none transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0"
+          >
             <div className="flex items-center gap-3">
               <Dialog.Title className={TITLE_CLASS}>{title}</Dialog.Title>
               <Dialog.Close aria-label={translate('close')} className={cn(CLOSE_CLASS, 'size-9')}>
@@ -72,7 +77,10 @@ export function Sheet({ open, onOpenChange, title, children, footer }: SheetProp
     <Drawer.Root open={open} onOpenChange={onOpenChange} swipeDirection="down">
       <Drawer.Portal>
         <Drawer.Backdrop className={BACKDROP_CLASS} />
-        <Drawer.Popup className="fixed inset-x-0 bottom-0 z-40 flex max-h-11/12 translate-y-(--drawer-swipe-movement-y) flex-col rounded-t-card bg-raised shadow-float outline-none transition-transform duration-(--duration-slow) ease-(--ease-emphasized) data-ending-style:translate-y-full data-starting-style:translate-y-full data-swiping:transition-none">
+        <Drawer.Popup
+          initialFocus={initialFocus}
+          className="fixed inset-x-0 bottom-0 z-40 flex max-h-11/12 translate-y-(--drawer-swipe-movement-y) flex-col rounded-t-card bg-raised shadow-float outline-none transition-transform duration-(--duration-slow) ease-(--ease-emphasized) data-ending-style:translate-y-full data-starting-style:translate-y-full data-swiping:transition-none"
+        >
           <div className="flex justify-center pt-2 pb-1" aria-hidden>
             <div className="h-1 w-9 rounded-full bg-border-strong" />
           </div>

@@ -1,9 +1,11 @@
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { parseAsString, useQueryState } from 'nuqs'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
+import { cn } from '@/lib/utils/cn.utils'
 import type { DebtRow } from '../api/debts.api'
 import { type DebtState, debtState } from '../utils/debt-groups.utils'
 
@@ -24,7 +26,12 @@ const STATE_TONE = {
 
 // Figma «Saldo» → Personal debts, Desktop 2:61492: avatar-less row on the card: person, reason + state pill, the
 // return line, remaining on the right (closed and written-off debts keep the figure in transfer grey), actions below.
+// a search result links here: bring the row into view
+const scrollIntoView = (node: HTMLLIElement | null) => node?.scrollIntoView({ block: 'center' })
+
 export function DebtRowItem({ debt, onAction }: DebtRowItemProps) {
+  const [linkedId] = useQueryState('id', parseAsString)
+  const linked = linkedId === debt.id
   const translate = useTranslations('debts')
   const format = useFormatter()
   const locale = useLocale()
@@ -42,7 +49,13 @@ export function DebtRowItem({ debt, onAction }: DebtRowItemProps) {
     : translate('row.noDue')
 
   return (
-    <li className="flex flex-col gap-2">
+    <li
+      ref={linked ? scrollIntoView : undefined}
+      className={cn(
+        'flex flex-col gap-2',
+        linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card',
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <span className="flex min-w-0 flex-col gap-1">
           <span className="truncate text-body font-medium text-text-primary">{debt.person}</span>
