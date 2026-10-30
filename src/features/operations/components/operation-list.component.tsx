@@ -4,6 +4,7 @@ import { Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { AuthorAvatar } from '@/components/ui/author-avatar.component'
+import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
 import { formatMinor } from '@/lib/money/money.utils'
@@ -11,7 +12,6 @@ import type { AccountOption, CategoryOption, OperationItem } from '../operations
 import { displayAmount, showsOriginal } from '../utils/operation-display.utils'
 import { dayLabelKind, groupByDay, summarize } from '../utils/operation-items.utils'
 import { formatRate, impliedRate } from '../utils/rate.utils'
-import { CategoryBadge } from './category-badge.component'
 
 type OperationListProps = {
   items: OperationItem[]
@@ -212,10 +212,11 @@ export function OperationList({
                   <td className="px-4 text-label text-text-secondary">{shortDate(item.row.occurredOn)}</td>
                   <td className="px-4">
                     <span className="flex min-w-0 items-center gap-3">
-                      <CategoryBadge
-                        name={category(item.row.categoryId)?.name ?? null}
-                        color={category(item.row.categoryId)?.color ?? null}
-                        transfer={item.kind === 'transfer'}
+                      <CategoryIcon
+                        icon={
+                          item.kind === 'transfer' ? 'arrow-left-right' : (category(item.row.categoryId)?.icon ?? null)
+                        }
+                        color={item.kind === 'transfer' ? null : (category(item.row.categoryId)?.color ?? null)}
                       />
                       <span className="flex min-w-0 flex-col">
                         <button
@@ -266,10 +267,11 @@ export function OperationList({
                     // a transfer shows two amounts: they drop to their own line instead of cutting the title
                     className={`${ROW_BUTTON} flex min-h-16 w-full items-center gap-x-3 py-2 ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
                   >
-                    <CategoryBadge
-                      name={category(item.row.categoryId)?.name ?? null}
-                      color={category(item.row.categoryId)?.color ?? null}
-                      transfer={item.kind === 'transfer'}
+                    <CategoryIcon
+                      icon={
+                        item.kind === 'transfer' ? 'arrow-left-right' : (category(item.row.categoryId)?.icon ?? null)
+                      }
+                      color={item.kind === 'transfer' ? null : (category(item.row.categoryId)?.color ?? null)}
                     />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-body font-medium text-text-primary">{titleOf(item)}</span>

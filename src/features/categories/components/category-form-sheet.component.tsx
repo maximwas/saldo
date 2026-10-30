@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button.component'
-import { ICON_NAMES } from '@/components/ui/category-icon.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
 import { Select } from '@/components/ui/select.component'
@@ -21,6 +20,8 @@ import {
   toUpdateCategoryInput,
 } from '../schemas/category-form.schema'
 import { CATEGORY_KINDS, type CategoryKind, type CategoryView, nextCategorySortOrder } from '../utils/categories.utils'
+import { CategoryColorPicker } from './category-color-picker.component'
+import { CategoryIconPicker } from './category-icon-picker.component'
 
 const FORM_ID = 'category-form'
 
@@ -131,11 +132,12 @@ function CategoryForm({ target, categories, onSubmitAction }: CategoryFormProps)
       name: category?.name ?? '',
       kind: category?.kind ?? target.kind,
       parentId: category?.parentId ?? target.parentId,
-      color: (category?.color ?? parent?.color ?? null) as CategoryFormValues['color'],
+      color: (category?.color ?? parent?.color ?? CATEGORY_COLORS[0]) as CategoryFormValues['color'],
       icon: category?.icon ?? parent?.icon ?? 'tag',
     },
   })
   const kind = form.watch('kind')
+  const color = form.watch('color')
   const parentOptions = categories.filter(
     (row) => row.archivedAt === null && row.parentId === null && row.kind === kind,
   )
@@ -152,6 +154,20 @@ function CategoryForm({ target, categories, onSubmitAction }: CategoryFormProps)
         name="name"
         label={translate('form.name')}
         render={(field) => <Input {...field} autoComplete="off" />}
+      />
+      <FormField
+        control={form.control}
+        name="color"
+        label={translate('form.color')}
+        render={(field) => (
+          <CategoryColorPicker label={translate('form.color')} value={field.value} onChange={field.onChange} />
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="icon"
+        label={translate('form.icon')}
+        render={(field) => <CategoryIconPicker value={field.value} color={color} onChange={field.onChange} />}
       />
       {category ? null : (
         <>
@@ -200,46 +216,6 @@ function CategoryForm({ target, categories, onSubmitAction }: CategoryFormProps)
           />
         </>
       )}
-      <FormField
-        control={form.control}
-        name="color"
-        label={translate('form.color')}
-        render={(field) => (
-          <Select
-            name={field.name}
-            value={field.value ?? NONE}
-            onBlur={field.onBlur}
-            onValueChange={(value) => field.onChange(value === NONE ? null : value)}
-            options={[
-              {
-                value: NONE,
-                label: translate('colors.neutral'),
-              },
-              ...CATEGORY_COLORS.map((color) => ({
-                value: color,
-                label: translate(`colors.${color}`),
-              })),
-            ]}
-          />
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="icon"
-        label={translate('form.icon')}
-        render={(field) => (
-          <Select
-            name={field.name}
-            value={field.value}
-            onBlur={field.onBlur}
-            onValueChange={field.onChange}
-            options={ICON_NAMES.map((icon) => ({
-              value: icon,
-              label: translate(`icons.${icon}`),
-            }))}
-          />
-        )}
-      />
     </form>
   )
 }
