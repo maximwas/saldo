@@ -5,6 +5,7 @@ const MONEY_QUERY_ROOTS = [
   'categories',
   'currencies',
   'obligations',
+  'debts',
   'reserves',
   'overview',
   'budget',

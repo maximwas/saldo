@@ -25,14 +25,18 @@ export async function availableMinor(page: Page) {
   return minorOf(await nextValue(term).innerText())
 }
 
-export async function monthExpenseMinor(page: Page) {
-  const term = page.getByText('Витрати', { exact: true })
+async function monthTileMinor(page: Page, label: string) {
+  const term = page.getByText(label, { exact: true })
 
   await expect(term).toBeVisible()
 
   // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText, its line breaks split the tile and row text
   return Math.abs(minorOf(await nextValue(term).innerText()))
 }
+
+export const monthExpenseMinor = (page: Page) => monthTileMinor(page, 'Витрати')
+
+export const monthIncomeMinor = (page: Page) => monthTileMinor(page, 'Доходи')
 
 export async function accountBalanceMinor(page: Page, name: string) {
   const row = page.getByRole('listitem').filter({ hasText: name }).first()
