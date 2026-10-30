@@ -18,6 +18,7 @@ import type settings from '../../messages/uk/settings.json'
 import type shell from '../../messages/uk/shell.json'
 import type statistics from '../../messages/uk/statistics.json'
 import type subscriptions from '../../messages/uk/subscriptions.json'
+import type sync from '../../messages/uk/sync.json'
 
 // uk is the source of the key types; src/i18n/messages.test.ts keeps en in step
 declare module 'next-intl' {
@@ -43,6 +44,7 @@ declare module 'next-intl' {
       shell: typeof shell
       statistics: typeof statistics
       subscriptions: typeof subscriptions
+      sync: typeof sync
     }
   }
 }

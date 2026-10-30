@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { Fab } from '@/components/layout/fab.component'
 import { LedgerLinkSwitch } from '@/components/layout/ledger-link-switch.component'
+import { OfflineBanner } from '@/components/layout/offline-banner.component'
 import { PageTransition } from '@/components/layout/page-transition.component'
 import { Sidebar } from '@/components/layout/sidebar.component'
 import { TabBar } from '@/components/layout/tab-bar.component'
@@ -17,6 +18,7 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
       <div className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) lg:pb-0">
         <Topbar />
         <main className="px-5 pt-1 pb-8 lg:px-8 lg:pt-0 lg:pb-12">
+          <OfflineBanner />
           <PageTransition className="flex max-w-(--content-max) flex-col gap-4 lg:gap-6">{children}</PageTransition>
         </main>
       </div>

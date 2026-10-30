@@ -28,6 +28,7 @@ export const MESSAGE_NAMESPACES = [
   'calendar',
   'notifications',
   'statistics',
+  'sync',
 ] as const
 
 type LocaleSources = {

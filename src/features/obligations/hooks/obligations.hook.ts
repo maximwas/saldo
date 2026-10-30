@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { isMoneyQuery } from '@/constants/query-roots.constants'
+import { useQuery } from '@tanstack/react-query'
 import { useLedger } from '@/contexts/ledger.context'
-import { getBrowserSupabase } from '@/lib/supabase/browser-client'
+import { defineWrites } from '@/lib/query/ledger-writes.mutations'
+import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import { createObligation, deleteObligationPayment, payObligation, updateObligation } from '../api/obligations.api'
 import { obligationQueries } from '../api/obligations.queries'
 
@@ -27,28 +27,23 @@ export function useObligationPayments(obligationId: string, enabled: boolean) {
   })
 }
 
-/** a write changes balances, «Available», the month and the lists at once: every money view of the space refetches;
- * a failed write refetches too, so a conflict (PT409) shows the state the other person left */
-function useMoneyMutation<Input>(write: (input: Input) => Promise<void>) {
-  const queryClient = useQueryClient()
-  const refresh = () => queryClient.invalidateQueries({ predicate: isMoneyQuery })
+/** this feature's writes in the device's queue; AppProviders registers them before the cache is restored */
+export const obligationsWrites = defineWrites('obligations', {
+  createObligation,
+  updateObligation,
+  payObligation,
+  deleteObligationPayment,
+})
 
-  return useMutation({
-    mutationFn: write,
-    onSettled: refresh,
-  })
+// every sheet of the feature shows a failed write itself (per-call onError: «already paid» for PT409 …)
+const PER_CALL = {
+  quiet: true,
 }
 
-export const useCreateObligation = () =>
-  useMoneyMutation((input: Parameters<typeof createObligation>[1]) => createObligation(getBrowserSupabase(), input))
+export const useCreateObligation = () => useLedgerWrite(obligationsWrites.createObligation, PER_CALL)
 
-export const useUpdateObligation = () =>
-  useMoneyMutation((input: Parameters<typeof updateObligation>[1]) => updateObligation(getBrowserSupabase(), input))
+export const useUpdateObligation = () => useLedgerWrite(obligationsWrites.updateObligation, PER_CALL)
 
-export const usePayObligation = () =>
-  useMoneyMutation((input: Parameters<typeof payObligation>[1]) => payObligation(getBrowserSupabase(), input))
+export const usePayObligation = () => useLedgerWrite(obligationsWrites.payObligation, PER_CALL)
 
-export const useDeleteObligationPayment = () =>
-  useMoneyMutation((input: Parameters<typeof deleteObligationPayment>[1]) =>
-    deleteObligationPayment(getBrowserSupabase(), input),
-  )
+export const useDeleteObligationPayment = () => useLedgerWrite(obligationsWrites.deleteObligationPayment, PER_CALL)

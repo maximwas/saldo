@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { isMoneyQuery } from '@/constants/query-roots.constants'
-import { useLedger } from '@/contexts/ledger.context'
-import { getBrowserSupabase } from '@/lib/supabase/browser-client'
+import { useLedgerStore } from '@/contexts/ledger.context'
+import { dropReceipt, keepReceipt, readReceipt } from '@/lib/offline/device-storage'
+import { defineWrites } from '@/lib/query/ledger-writes.mutations'
+import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
+import type { SaldoClient } from '@/types/supabase.types'
 import { compressReceipt } from '../utils/receipt-compress.utils'
 import {
   createOperation,
@@ -12,88 +13,70 @@ import {
   uploadReceipt,
 } from './operations.api'
 
-/** a write to money refreshes every money view: Overview, operations, accounts … */
-function useInvalidateMoney() {
-  const queryClient = useQueryClient()
-
-  return () => queryClient.invalidateQueries({ predicate: isMoneyQuery })
+type KeptReceipt = {
+  ledgerId: string
+  operationId: string
 }
 
-// shortcut: no offline queue and no optimistic row yet (phase 8: setMutationDefaults + IndexedDB, architecture §6)
-export function useCreateOperation() {
-  const invalidate = useInvalidateMoney()
+/** the queued upload of a photo kept on the device: nothing kept means an earlier try already uploaded it */
+async function uploadKeptReceipt(client: SaldoClient, { ledgerId, operationId }: KeptReceipt) {
+  const file = await readReceipt(operationId)
 
-  return useMutation({
-    mutationFn: (input: Parameters<typeof createOperation>[1]) => createOperation(getBrowserSupabase(), input),
-    onSettled: () => {
-      void invalidate()
-    },
+  if (!file) {
+    return
+  }
+
+  await uploadReceipt(client, {
+    ledgerId,
+    operationId,
+    file,
   })
+  await dropReceipt(operationId)
 }
 
-export function useUpdateOperation() {
-  const invalidate = useInvalidateMoney()
+/** this feature's writes in the device's queue; AppProviders registers them before the cache is restored */
+export const operationsWrites = defineWrites('operations', {
+  createOperation,
+  updateOperation,
+  deleteOperation,
+  createTransfer,
+  uploadKeptReceipt,
+  deleteReceipt,
+})
 
-  return useMutation({
-    mutationFn: (input: Parameters<typeof updateOperation>[1]) => updateOperation(getBrowserSupabase(), input),
-    onSettled: () => {
-      void invalidate()
-    },
-  })
+// the editor shows a failed save inline (the conflict block, the error line): no toast on top
+const INLINE = {
+  quiet: true,
 }
 
-export function useDeleteOperation() {
-  const invalidate = useInvalidateMoney()
+export const useCreateOperation = () => useLedgerWrite(operationsWrites.createOperation, INLINE)
 
-  return useMutation({
-    mutationFn: (input: Parameters<typeof deleteOperation>[1]) => deleteOperation(getBrowserSupabase(), input),
-    onSettled: () => {
-      void invalidate()
-    },
-  })
-}
+export const useUpdateOperation = () => useLedgerWrite(operationsWrites.updateOperation, INLINE)
 
-export function useCreateTransfer() {
-  const invalidate = useInvalidateMoney()
+export const useDeleteOperation = () => useLedgerWrite(operationsWrites.deleteOperation, INLINE)
 
-  return useMutation({
-    mutationFn: (input: Parameters<typeof createTransfer>[1]) => createTransfer(getBrowserSupabase(), input),
-    onSettled: () => {
-      void invalidate()
-    },
-  })
-}
+export const useCreateTransfer = () => useLedgerWrite(operationsWrites.createTransfer, INLINE)
+
+export const useDeleteReceipt = () => useLedgerWrite(operationsWrites.deleteReceipt)
 
 type UploadParams = {
   operationId: string
   file: File
 }
 
-/** compress in the browser, then upload; the list refreshes so the paperclip appears */
+/** compress in the browser and keep the photo on the device, then queue its upload after the operation (plan 8.5) */
 export function useUploadReceipt() {
-  const invalidate = useInvalidateMoney()
-  const { ledgerId } = useLedger()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const upload = useLedgerWrite(operationsWrites.uploadKeptReceipt, INLINE)
 
-  return useMutation({
-    mutationFn: async ({ operationId, file }: UploadParams) =>
-      uploadReceipt(getBrowserSupabase(), {
+  return {
+    mutateAsync: async ({ operationId, file }: UploadParams) => {
+      await keepReceipt(operationId, await compressReceipt(file))
+
+      return upload.mutateAsync({
         ledgerId,
         operationId,
-        file: await compressReceipt(file),
-      }),
-    onSettled: () => {
-      void invalidate()
+      })
     },
-  })
-}
-
-export function useDeleteReceipt() {
-  const invalidate = useInvalidateMoney()
-
-  return useMutation({
-    mutationFn: (receipt: Parameters<typeof deleteReceipt>[1]) => deleteReceipt(getBrowserSupabase(), receipt),
-    onSettled: () => {
-      void invalidate()
-    },
-  })
+  }
 }

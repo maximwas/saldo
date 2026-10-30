@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { defineWrites } from '@/lib/query/ledger-writes.mutations'
 import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import {
   createSubscription,
@@ -8,6 +9,14 @@ import {
   updateSubscription,
 } from '../api/subscriptions.api'
 import { subscriptionQueries } from '../api/subscriptions.queries'
+
+/** this feature's writes in the device's queue; AppProviders registers them before the cache is restored */
+export const subscriptionsWrites = defineWrites('subscriptions', {
+  createSubscription,
+  updateSubscription,
+  setSubscriptionPrice,
+  setSubscriptionDefaults,
+})
 
 const useLedgerId = () => useLedgerStore((ledger) => ledger.ledgerId)
 
@@ -30,10 +39,10 @@ export const useSubscriptionRates = () => useQuery(subscriptionQueries.rates(use
 
 export const useSubscriptionDefaults = () => useQuery(subscriptionQueries.defaults(useLedgerId()))
 
-export const useCreateSubscription = () => useLedgerWrite(createSubscription)
+export const useCreateSubscription = () => useLedgerWrite(subscriptionsWrites.createSubscription)
 
-export const useUpdateSubscription = () => useLedgerWrite(updateSubscription)
+export const useUpdateSubscription = () => useLedgerWrite(subscriptionsWrites.updateSubscription)
 
-export const useSetSubscriptionPrice = () => useLedgerWrite(setSubscriptionPrice)
+export const useSetSubscriptionPrice = () => useLedgerWrite(subscriptionsWrites.setSubscriptionPrice)
 
-export const useSetSubscriptionDefaults = () => useLedgerWrite(setSubscriptionDefaults)
+export const useSetSubscriptionDefaults = () => useLedgerWrite(subscriptionsWrites.setSubscriptionDefaults)

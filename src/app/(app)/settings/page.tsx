@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
+import { SignOut } from '@/components/layout/sign-out.component'
 import { Card } from '@/components/ui/card.component'
 import { getLedgerSettings, getMyDisplayName } from '@/features/ledgers/api/access.server'
 import { DisplayNameForm } from '@/features/ledgers/components/display-name-form.component'
@@ -33,6 +34,12 @@ export default async function SettingsPage() {
         <MyName />
         <SpaceSettings />
       </Suspense>
+      <Card title={translate('signOut.title')}>
+        <p className="text-label text-text-secondary">{translate('signOut.hint')}</p>
+        <div>
+          <SignOut />
+        </div>
+      </Card>
     </div>
   )
 }

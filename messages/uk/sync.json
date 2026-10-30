@@ -1,0 +1,129 @@
+{
+  "status": {
+    "synced": "Синхронізовано",
+    "syncedAt": "Синхронізовано · {time}",
+    "pending": "Очікує ({count})",
+    "offline": "Офлайн",
+    "offlineWaiting": "Офлайн · очікує ({count})",
+    "error": "Помилка ({count})",
+    "conflict": "Конфлікт ({count})"
+  },
+  "banner": {
+    "offline": "Немає мережі. Працюйте далі: нові записи збережуться на пристрої і відправляться, щойно з'явиться зв'язок.",
+    "asOf": "Дані станом на {time}.",
+    "offlineShort": "Немає мережі. Нові записи збережуться на пристрої."
+  },
+  "savedOffline": "Збережено на пристрої. Відправимо, щойно з'явиться зв'язок.",
+  "queue": {
+    "title": "Черга синхронізації",
+    "waiting": "{count, plural, one {# зміна чекає} few {# зміни чекають} many {# змін чекають} other {# зміни чекають}} на відправку",
+    "empty": "Усі зміни вже на сервері.",
+    "hint": "Повторна відправка не створить дублікатів.",
+    "updatedAt": "Останнє оновлення — {time}.",
+    "syncNow": "Синхронізувати зараз",
+    "retry": "Повторити",
+    "discard": "Відкинути",
+    "resolve": "Розв'язати",
+    "forbidden": "доступ до простору відкликано",
+    "states": {
+      "pending": "очікує",
+      "synced": "синхронізовано",
+      "error": "помилка",
+      "conflict": "конфлікт"
+    },
+    "writes": {
+      "other": "Зміна",
+      "operations": {
+        "createOperation": "Нова операція",
+        "updateOperation": "Зміна операції",
+        "deleteOperation": "Видалення операції",
+        "createTransfer": "Переказ",
+        "uploadKeptReceipt": "Фото чека",
+        "deleteReceipt": "Видалення чека"
+      },
+      "obligations": {
+        "createObligation": "Новий платіж",
+        "updateObligation": "Зміна платежу",
+        "payObligation": "Оплата",
+        "deleteObligationPayment": "Скасування оплати"
+      },
+      "overview": {
+        "setNextIncomeOn": "Дата доходу"
+      },
+      "accounts": {
+        "createAccount": "Новий рахунок",
+        "updateAccount": "Зміна рахунку",
+        "adjustBalance": "Коригування залишку"
+      },
+      "budget": {
+        "saveLimit": "Ліміт бюджету",
+        "setIncomePlan": "План доходу",
+        "deleteLimit": "Видалення ліміту",
+        "copyBudgetMonth": "Копія бюджету"
+      },
+      "calendar": {
+        "saveCalendarFilter": "Фільтр календаря"
+      },
+      "categories": {
+        "createCategory": "Нова категорія",
+        "updateCategory": "Зміна категорії",
+        "reorderCategories": "Порядок категорій",
+        "archiveCategory": "Архів категорії"
+      },
+      "credits": {
+        "saveCredit": "Кредит",
+        "replaceCreditSchedule": "Графік кредиту"
+      },
+      "currencies": {
+        "saveRate": "Курс валюти"
+      },
+      "debts": {
+        "saveDebt": "Борг",
+        "addDebtMovement": "Повернення боргу",
+        "closeDebt": "Закриття боргу"
+      },
+      "subscriptions": {
+        "createSubscription": "Нова підписка",
+        "updateSubscription": "Зміна підписки",
+        "setSubscriptionPrice": "Ціна підписки",
+        "setSubscriptionDefaults": "Налаштування підписок"
+      },
+      "reminder-rules": {
+        "saveReminderRule": "Нагадування"
+      }
+    }
+  },
+  "conflict": {
+    "title": "Конфлікт змін",
+    "lead": "Запис змінили, поки ваша зміна чекала на відправку. Нічого не перезаписано — оберіть, що лишити.",
+    "mine": "Ваша версія · {time}",
+    "theirs": "Версія на сервері · {time}",
+    "paidBy": "Підтвердив(ла) {name} · {time}",
+    "someone": "інший учасник",
+    "loading": "Завантажуємо версію з сервера…",
+    "gone": "Цього запису вже немає на сервері.",
+    "keepMine": "Залишити мою",
+    "keepAsExpense": "Лишити як окрему витрату",
+    "takeTheirs": "Взяти їхню",
+    "fields": {
+      "amount": "Сума",
+      "date": "Дата",
+      "account": "Рахунок",
+      "note": "Коментар"
+    }
+  },
+  "badge": {
+    "pending": "Очікує",
+    "error": "Помилка",
+    "conflict": "Конфлікт"
+  },
+  "draft": {
+    "restored": "Відновлено чернетку",
+    "discard": "Очистити"
+  },
+  "offlinePage": {
+    "title": "Немає мережі",
+    "hint": "Ця сторінка ще не збережена на пристрої. Відкрийте Огляд або спробуйте знову, щойно з'явиться зв'язок.",
+    "home": "Відкрити Огляд"
+  }
+}

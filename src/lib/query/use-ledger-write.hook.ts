@@ -1,27 +1,85 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { onlineManager, type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { notify } from '@/components/ui/toaster.component'
-import { useLedger } from '@/contexts/ledger.context'
-import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
-import type { SaldoClient } from '@/types/supabase.types'
-import { invalidateMoney } from './invalidate-money.utils'
+import type { LedgerWrite } from './ledger-writes.mutations'
+
+type WriteCallbacks = {
+  onSuccess?: (data: unknown) => void
+  onError?: (error: unknown) => void
+  onSettled?: () => void
+}
+
+type WriteOptions = {
+  /** the caller shows the error itself (inline in the sheet, or per call) */
+  quiet?: boolean
+}
+
+// a failure the caller has seen (toast, inline error, open form) leaves the queue: the person fixes it in the form, so
+// the queue keeps only what failed unseen (after a reload, a closed sheet, an offline wait)
+function forgetSeenFailure(queryClient: QueryClient, key: readonly unknown[], input: unknown) {
+  const cache = queryClient.getMutationCache()
+  const seen = cache.findAll({
+    mutationKey: key,
+    predicate: (failed) => failed.state.status === 'error' && failed.state.variables === input,
+  })
+
+  for (const failed of seen) {
+    cache.remove(failed)
+  }
+}
 
 /**
- * One write of a feature as a mutation: runs in the sequential offline-first queue (architecture §6), refetches this
- * space's money views when it settles, and turns a Postgres error into the errors.db.<kind> toast. The caller adds
- * onSuccess (close the sheet, «Saved» toast) per call.
+ * One write of a feature as a mutation of the device's write queue (ledger-writes.mutations.ts). Offline the write waits
+ * in the queue, so `mutate` runs the caller's onSuccess at once (the sheet closes) and `mutateAsync` resolves at once;
+ * SyncStatus shows it until it is synced, and a later failure waits in the queue sheet. A Postgres error becomes the
+ * errors.db.<kind> toast unless `quiet`.
  */
-export function useLedgerWrite<Input>(write: (supabase: SaldoClient, input: Input) => Promise<unknown>) {
-  const queryClient = useQueryClient()
-  const { ledgerId } = useLedger()
+export function useLedgerWrite<Input>(write: LedgerWrite<Input>, { quiet = false }: WriteOptions = {}) {
   const translate = useTranslations('errors')
-
-  return useMutation({
-    mutationFn: (input: Input) => write(getBrowserSupabase(), input),
-    scope: { id: 'writes' },
-    networkMode: 'offlineFirst',
-    onError: (error) => notify.error(translate(`db.${toPgError(error as { code?: string }).kind}`)),
-    onSettled: () => invalidateMoney(queryClient, ledgerId),
+  const queryClient = useQueryClient()
+  const mutation = useMutation<unknown, unknown, Input>({
+    mutationKey: write.key,
+    onError: quiet ? undefined : (error) => notify.error(translate(`db.${toPgError(error as { code?: string }).kind}`)),
   })
+
+  const forget = (input: Input) => forgetSeenFailure(queryClient, write.key, input)
+
+  function mutate(input: Input, callbacks: WriteCallbacks = {}) {
+    if (onlineManager.isOnline()) {
+      mutation.mutate(input, {
+        ...callbacks,
+        onError: (error) => {
+          forget(input)
+          callbacks.onError?.(error)
+        },
+      })
+
+      return
+    }
+
+    mutation.mutate(input)
+    callbacks.onSuccess?.(undefined)
+    callbacks.onSettled?.()
+  }
+
+  function mutateAsync(input: Input) {
+    if (onlineManager.isOnline()) {
+      return mutation.mutateAsync(input).catch((error: unknown) => {
+        forget(input)
+
+        throw error
+      })
+    }
+
+    mutation.mutate(input)
+
+    return Promise.resolve(undefined)
+  }
+
+  return {
+    ...mutation,
+    mutate,
+    mutateAsync,
+  }
 }

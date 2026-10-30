@@ -7,7 +7,7 @@ import { Suspense } from 'react'
 import { AppProviders } from '@/components/providers/app-providers.component'
 import { ServiceWorker } from '@/components/providers/service-worker.component'
 import { VercelInsights } from '@/components/providers/vercel-insights.component'
-import { getActiveLedger, getUserTheme } from '@/lib/auth/dal.server'
+import { getActiveLedger, getSession, getUserTheme } from '@/lib/auth/dal.server'
 import './globals.css'
 
 // Fixel by MacPaw (OFL, src/app/fonts/OFL.txt); the variables override --font-sans / --font-display from theme.css
@@ -63,11 +63,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // Reads cookies (space, locale), so it renders per request inside the Suspense boundary (cacheComponents)
 async function Providers({ children }: { children: React.ReactNode }) {
-  const [ledger, theme] = await Promise.all([getActiveLedger(), getUserTheme()])
+  const [ledger, theme, session] = await Promise.all([getActiveLedger(), getUserTheme(), getSession()])
 
   return (
     <NextIntlClientProvider>
-      <AppProviders ledger={ledger} theme={theme}>
+      <AppProviders ledger={ledger} userId={session?.userId ?? null} theme={theme}>
         {children}
       </AppProviders>
     </NextIntlClientProvider>

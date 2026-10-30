@@ -1,8 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { useLedger } from '@/contexts/ledger.context'
+import { defineWrites } from '@/lib/query/ledger-writes.mutations'
 import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import { archiveCategory, createCategory, reorderCategories, updateCategory } from '../api/categories.api'
 import { categoriesQueries } from '../api/categories.queries'
+
+/** this feature's writes in the device's queue; AppProviders registers them before the cache is restored */
+export const categoriesWrites = defineWrites('categories', {
+  createCategory,
+  updateCategory,
+  reorderCategories,
+  archiveCategory,
+})
 
 export function useCategories() {
   const { ledgerId } = useLedger()
@@ -20,10 +29,10 @@ export function useCategoryOperationCount(categoryIds: string[]) {
   })
 }
 
-export const useCreateCategory = () => useLedgerWrite(createCategory)
+export const useCreateCategory = () => useLedgerWrite(categoriesWrites.createCategory)
 
-export const useUpdateCategory = () => useLedgerWrite(updateCategory)
+export const useUpdateCategory = () => useLedgerWrite(categoriesWrites.updateCategory)
 
-export const useReorderCategories = () => useLedgerWrite(reorderCategories)
+export const useReorderCategories = () => useLedgerWrite(categoriesWrites.reorderCategories)
 
-export const useArchiveCategory = () => useLedgerWrite(archiveCategory)
+export const useArchiveCategory = () => useLedgerWrite(categoriesWrites.archiveCategory)

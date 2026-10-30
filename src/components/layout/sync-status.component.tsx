@@ -45,11 +45,11 @@ export function SyncStatus({ state, label, action, className }: SyncStatusProps)
   const { icon: Icon, iconClass, boxClass } = STATES[state]
 
   return (
-    <div role="status" className={cn('flex h-9 items-center gap-2 rounded-md px-3', boxClass, className)}>
+    <span role="status" className={cn('flex h-9 items-center gap-2 rounded-md px-3', boxClass, className)}>
       {/* Figma keeps a 2px stroke at 16px */}
       <Icon aria-hidden size={16} nonScalingStroke className={cn('shrink-0', iconClass)} />
       <span className="flex-1 truncate text-caption">{label}</span>
       {action && <span className="text-caption font-medium">{action}</span>}
-    </div>
+    </span>
   )
 }

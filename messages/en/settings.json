@@ -127,5 +127,15 @@
     "keep": "Keep",
     "confirm": "Delete for good",
     "deleted": "The space data is deleted"
+  },
+  "signOut": {
+    "title": "Sign out",
+    "hint": "Signing out removes the saved data, the change queue, drafts and the push subscription from this device.",
+    "action": "Sign out",
+    "confirmTitle": "Sign out and drop unsent changes?",
+    "unsent": "{count, plural, one {# change has} other {# changes have}} not reached the server yet. They are gone after signing out.",
+    "confirm": "Sign out",
+    "cancel": "Cancel",
+    "failed": "Could not sign out. Check the connection and try again."
   }
 }

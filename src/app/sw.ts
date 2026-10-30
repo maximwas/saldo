@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { defaultCache } from '@serwist/turbopack/worker'
-import { type PrecacheEntry, Serwist, type SerwistGlobalConfig } from 'serwist'
+import { NetworkOnly, type PrecacheEntry, Serwist, type SerwistGlobalConfig } from 'serwist'
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -10,12 +10,31 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope
 
+// Supabase answers never go into a cache (defaultCache would keep cross-origin GETs): data and receipts must not outlive a
+// sign-out or show another moment's money; the app keeps its own data in IndexedDB (plan 8.3)
+const SUPABASE_PATH = /^\/(rest|storage|auth|functions|realtime)\/v1\//
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    {
+      matcher: ({ url }) => SUPABASE_PATH.test(url.pathname),
+      handler: new NetworkOnly(),
+    },
+    ...defaultCache,
+  ],
+  // a page never opened on this device has no cached copy: offline it gets the precached offline page
+  fallbacks: {
+    entries: [
+      {
+        url: '/~offline',
+        matcher: ({ request }) => request.destination === 'document',
+      },
+    ],
+  },
 })
 
 serwist.addEventListeners()

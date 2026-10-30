@@ -6,10 +6,12 @@ import { parseAsString, useQueryState } from 'nuqs'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { mergeQueued } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
 import { useOperationFilters } from '../hooks/operation-filters.hook'
+import { useQueuedOperations } from '../hooks/queued-operations.hook'
 import type { OperationItem } from '../operations.types'
-import { buildItems, summarize } from '../utils/operation-items.utils'
+import { buildItems, newestFirst, summarize } from '../utils/operation-items.utils'
 import { type EditorTarget, OperationEditor } from './operation-editor.component'
 import { OperationFilters } from './operation-filters.component'
 import { OperationList } from './operation-list.component'
@@ -29,7 +31,13 @@ export function OperationsScreen() {
     target: EditorTarget
     key: number
   } | null>(null)
-  const items = useMemo(() => (list.data ? buildItems(list.data.rows, list.data.transfers) : []), [list.data])
+  const queued = useQueuedOperations()
+  // a create still in the device's queue shows as a row with its state until the server has it (one row per id)
+  const items = useMemo(
+    () =>
+      list.data ? buildItems(mergeQueued(list.data.rows, queued.rows).sort(newestFirst), list.data.transfers) : [],
+    [list.data, queued.rows],
+  )
   const receiptIds = useMemo(() => new Set(list.data?.receiptIds ?? []), [list.data])
   const totals = useMemo(() => summarize(items), [items])
   const [linkedId, setLinkedId] = useQueryState('operation', parseAsString.withOptions({ history: 'replace' }))
@@ -99,7 +107,7 @@ export function OperationsScreen() {
         {list.data.truncated ? (
           <p className="text-caption text-text-tertiary">{translate('truncated', { count: list.data.rows.length })}</p>
         ) : null}
-        <OperationList items={items} receiptIds={receiptIds} onSelectAction={select} />
+        <OperationList items={items} receiptIds={receiptIds} syncStates={queued.states} onSelectAction={select} />
       </>
     )
   }

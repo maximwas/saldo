@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils/cn.utils'
 import { Brand } from './brand.component'
 import { activeHref } from './navigation.utils'
 import { SpaceSwitcher } from './space-switcher.component'
-import { SyncStatus } from './sync-status.component'
+import { SyncIndicator } from './sync-indicator.component'
 
 type NavItemProps = {
   section: NavSection
@@ -100,8 +100,7 @@ export function Sidebar() {
           ]
         })}
         <div className="flex-1" />
-        {/* shortcut: static «synced» until the offline queue (phase 8) reports its state */}
-        <SyncStatus state="synced" label={translate('synced')} />
+        <SyncIndicator />
         <NavItem section={SIDEBAR_FOOTER_SECTION} active={SIDEBAR_FOOTER_SECTION.href === current} />
       </nav>
     </aside>

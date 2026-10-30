@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
+import { Badge } from '@/components/ui/badge.component'
+import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
@@ -12,6 +14,7 @@ import { Select } from '@/components/ui/select.component'
 import { Textarea } from '@/components/ui/textarea.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useFormDraft } from '@/lib/forms/form-draft.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
@@ -25,6 +28,8 @@ type OperationFormProps = {
   /** income or expense: the kind of the sheet's switch (an edited row keeps its own) */
   kind: 'expense' | 'income'
   defaults?: Partial<OperationFormValues>
+  /** a new operation keeps what is typed as a draft under this key (drafts.store.ts) */
+  draftKey?: string
   disabled?: boolean
   onSubmitAction: (values: OperationFormValues) => void
   /** the receipt field goes after the comment, inside the form */
@@ -37,11 +42,13 @@ export function OperationForm({
   formId,
   kind,
   defaults,
+  draftKey,
   disabled = false,
   onSubmitAction,
   children,
 }: OperationFormProps) {
   const translate = useTranslations('operations.form')
+  const translateDraft = useTranslations('sync.draft')
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   // the editor mounts the form after the options are loaded; the query cache hands the same data over
@@ -65,6 +72,7 @@ export function OperationForm({
       ...defaults,
     },
   })
+  const draft = useFormDraft(draftKey ?? null, form)
   const currency = form.watch('currency')
   const editedKind = form.watch('kind')
   const categoryKind = editedKind === 'income' ? 'income' : 'expense'
@@ -80,6 +88,14 @@ export function OperationForm({
 
   return (
     <form id={formId} noValidate onSubmit={form.handleSubmit(onSubmitAction)} className="flex flex-col gap-4">
+      {draft.restored ? (
+        <div className="flex items-center gap-2">
+          <Badge tone="info">{translateDraft('restored')}</Badge>
+          <Button type="button" variant="ghost" size="s" onClick={draft.discard}>
+            {translateDraft('discard')}
+          </Button>
+        </div>
+      ) : null}
       <FormField
         control={form.control}
         name="amount"
