@@ -14,5 +14,14 @@
   ],
   "ignoreBinaries": [
     "gitleaks"
-  ]
+  ],
+  "playwright": {
+    "config": [],
+    "entry": [
+      "playwright.config.ts",
+      "e2e/global-setup.ts",
+      "e2e/**/*.setup.ts",
+      "e2e/**/*.e2e.ts"
+    ]
+  }
 }
