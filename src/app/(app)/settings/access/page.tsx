@@ -24,14 +24,5 @@ async function Access() {
     ledger.role === 'owner' ? getPendingInvites(ledger.ledgerId, new Date()) : [],
   ])
 
-  return (
-    <AccessScreen
-      ledgerId={ledger.ledgerId}
-      ledgerName={ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? ''}
-      role={ledger.role}
-      currentUserId={session.userId}
-      members={members}
-      invites={invites}
-    />
-  )
+  return <AccessScreen currentUserId={session.userId} members={members} invites={invites} />
 }

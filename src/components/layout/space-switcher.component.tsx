@@ -5,9 +5,9 @@ import { Check, ChevronDown, Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
-import type { LedgerSummary } from '@/contexts/ledger.context'
 import { CreateSpaceDialog } from '@/features/ledgers/components/create-space-dialog.component'
 import { cn } from '@/lib/utils/cn.utils'
+import type { LedgerSummary } from '@/store/ledger.store'
 
 type SpaceSwitcherProps = {
   spaces: readonly LedgerSummary[]

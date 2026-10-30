@@ -8,23 +8,26 @@ import { Field } from '@/components/ui/field.component'
 import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
-import { useArchiveCategory, useCategoryOperationCount } from '../hooks/categories.hook'
+import { useArchiveCategory, useCategories, useCategoryOperationCount } from '../hooks/categories.hook'
 import type { CategoryView } from '../utils/categories.utils'
 
 // a sentinel for «do not move» in the Select
 const KEEP = 'keep'
 
+// the screen shows the sheet only after the categories are loaded; the query cache hands the same rows over
+const NO_CATEGORIES: readonly CategoryView[] = []
+
 type ArchiveCategorySheetProps = {
   /** the category to archive; null = the sheet is closed */
   category: CategoryView | null
-  categories: readonly CategoryView[]
   onCloseAction: () => void
 }
 
 // Figma «Saldo» → 2:49639, «How it works»: deleting never destroys operations — offer moving them to another
 // category or archiving; an archived category leaves the pickers, its history and statistics stay (spec §6)
-export function ArchiveCategorySheet({ category, categories, onCloseAction }: ArchiveCategorySheetProps) {
+export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategorySheetProps) {
   const translate = useTranslations('categories')
+  const categories = useCategories().data ?? NO_CATEGORIES
   const archive = useArchiveCategory()
   const [moveTo, setMoveTo] = useState(KEEP)
   const family = category

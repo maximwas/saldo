@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useRef } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { notify } from '@/components/ui/toaster.component'
-import { useLedger } from '@/contexts/ledger.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { useDeleteReceipt } from '../api/operations.mutations'
 import { operationQueries } from '../api/operations.queries'
 import { isReceiptType, RECEIPT_MAX_BYTES } from '../utils/receipt-compress.utils'
@@ -25,7 +25,7 @@ type ReceiptFieldProps = {
 // caption «Photo or PDF, optional». Saved receipts show as thumbnails (signed URL, 5 minutes) with a remove button.
 export function ReceiptField({ operationId, file, onFileChangeAction, canEdit }: ReceiptFieldProps) {
   const translate = useTranslations('operations.form')
-  const { ledgerId } = useLedger()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const input = useRef<HTMLInputElement>(null)
   const saved = useQuery({
     ...operationQueries.receipts(ledgerId, operationId ?? ''),

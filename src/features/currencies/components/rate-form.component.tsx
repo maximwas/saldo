@@ -9,26 +9,21 @@ import { Input } from '@/components/ui/input.component'
 import { Select } from '@/components/ui/select.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
-import { useClock } from '@/contexts/clock.context'
-import { useLedger } from '@/contexts/ledger.context'
+import { useToday } from '@/contexts/clock.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { localDate } from '@/lib/utils/clock.utils'
 import { useSaveRate } from '../hooks/currencies.hook'
 import { type RateFormValues, rateFormSchema, toSaveRateInput } from '../schemas/rate-form.schema'
 
-type RateFormProps = {
-  baseCurrency: string
-}
-
 // shortcut: Figma «Saldo» has no frame for rates; the form is an inline card in the style of the settings cards
 // ( · 11:72807): title card-title, fields gap 16, one primary button
-export function RateForm({ baseCurrency }: RateFormProps) {
+export function RateForm() {
   const translate = useTranslations('currencies')
-  const clock = useClock()
-  const { ledgerId } = useLedger()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
+  const today = useToday()
   const save = useSaveRate()
   const foreign = CURRENCIES.filter((currency) => currency !== baseCurrency)
-  const today = localDate(clock.now(), clock.timeZone)
   const form = useForm<RateFormValues>({
     resolver: useZodResolver(rateFormSchema),
     defaultValues: {

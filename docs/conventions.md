@@ -605,6 +605,8 @@ export const useUiStore = create<UiState>()(
 
 ### 4.6 Контекст для DI
 
+Контекст — лише ін'єкція (годинник, інстанс стора). Спільні значення, що змінюються, лежать у zustand-сторі (4.6a); приклад нижче — годинник, у якого стану немає.
+
 ```tsx
 // src/contexts/clock.context.tsx
 'use client'
@@ -644,6 +646,26 @@ export function useClock() {
 
   return clock
 }
+```
+
+### 4.6a Без prop drilling (Максим, 30.10.2026)
+
+Проп не передаємо вглиб дерева крізь компоненти, які його лише пересилають. Звідки дані, тим і беремо:
+
+1. **Серверні дані** — хук TanStack Query (або хук фічі навколо нього) у тому компоненті, якому дані потрібні. Кеш дедуплікує запити, тож він і є стором. Не вантажимо нагорі, щоб передати рядки, options чи курси вниз.
+2. **Активний простір і сесія** (`ledgerId`, `role`, `baseCurrency`, `timeZone`, `ledgers`, `canWrite`, «сьогодні») — `useLedgerStore((ledger) => ledger.baseCurrency)`, `useCanWrite()`, `useToday()`. Контекст у `src/contexts` лише передає стор (DI); значення живуть у `src/store/ledger.store.ts`. Нового поля бракує — додай у `ActiveLedger` і в `getActiveLedger`.
+3. **Клієнтський UI-стан, спільний для далеких компонентів** — zustand-стор у `src/store` (як `ui.store.ts`), не контекст зі станом. Стор із даними користувача — фабрика `createStore` (`zustand/vanilla`) у провайдері на кожен запит, не модульний singleton.
+4. **Стан форми** — react-hook-form; усередині однієї форми `useFormContext`, а не `control` чи значення через підкомпоненти.
+
+Пропи лишаються для власних входів компонента й для одного рівня батько → дитина (рядок отримує свій елемент, колбек `on…Action`).
+
+```tsx
+// ✗ екран пересилає те, що RateForm і сам знає
+<RateForm baseCurrency={data.baseCurrency} />
+// ✓
+export function RateForm() {
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
+  const today = useToday()
 ```
 
 ### 4.7 Чиста функція + тест

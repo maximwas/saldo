@@ -114,13 +114,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
           </div>
         ) : null}
       </section>
-      <AccountFormSheet
-        open={editing}
-        onOpenChange={setEditing}
-        account={account}
-        baseCurrency={data.baseCurrency}
-        sortOrder={account.sortOrder}
-      />
+      <AccountFormSheet open={editing} onOpenChange={setEditing} account={account} />
       <ArchiveAccountSheet account={archiving ? account : null} onCloseAction={() => setArchiving(false)} />
     </>
   )

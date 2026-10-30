@@ -12,11 +12,10 @@ import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
-import { useClock } from '@/contexts/clock.context'
-import { useLedger } from '@/contexts/ledger.context'
+import { useToday } from '@/contexts/clock.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { localDate } from '@/lib/utils/clock.utils'
-import { useCreateAccount, useUpdateAccount } from '../hooks/accounts.hook'
+import { useAccounts, useCreateAccount, useUpdateAccount } from '../hooks/accounts.hook'
 import {
   type AccountFormInput,
   type AccountFormValues,
@@ -24,7 +23,7 @@ import {
   toCreateAccountInput,
   toUpdateAccountInput,
 } from '../schemas/account-form.schema'
-import { ACCOUNT_KINDS, type AccountView } from '../utils/accounts.utils'
+import { ACCOUNT_KINDS, type AccountView, nextSortOrder } from '../utils/accounts.utils'
 
 const FORM_ID = 'account-form'
 
@@ -33,15 +32,14 @@ type AccountFormSheetProps = {
   onOpenChange: (open: boolean) => void
   /** the account being edited; null = a new one */
   account: AccountView | null
-  baseCurrency: string
-  sortOrder: number
 }
 
 // Figma «Saldo» → · 5:106946 (Dialog: title, hint, Name / Type / Currency, Cancel + Save); the
 // create form adds the opening balance and its date (spec §5: the opening balance is a field of the account, not income)
-export function AccountFormSheet({ open, onOpenChange, account, baseCurrency, sortOrder }: AccountFormSheetProps) {
+export function AccountFormSheet({ open, onOpenChange, account }: AccountFormSheetProps) {
   const translate = useTranslations('accounts')
-  const { ledgerId } = useLedger()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const accounts = useAccounts()
   const create = useCreateAccount()
   const update = useUpdateAccount()
   const pending = create.isPending || update.isPending
@@ -70,7 +68,7 @@ export function AccountFormSheet({ open, onOpenChange, account, baseCurrency, so
       toCreateAccountInput(values, {
         id: newId,
         ledgerId,
-        sortOrder,
+        sortOrder: nextSortOrder(accounts.data?.accounts ?? []),
       }),
       { onSuccess: done },
     )
@@ -92,22 +90,22 @@ export function AccountFormSheet({ open, onOpenChange, account, baseCurrency, so
         </>
       }
     >
-      <AccountForm account={account} baseCurrency={baseCurrency} onSubmitAction={submit} />
+      <AccountForm account={account} onSubmitAction={submit} />
     </Sheet>
   )
 }
 
 type AccountFormProps = {
   account: AccountView | null
-  baseCurrency: string
   onSubmitAction: (values: AccountFormValues, newId: string) => void
 }
 
 // mounted only while the sheet is open, so every opening starts from clean defaults
-function AccountForm({ account, baseCurrency, onSubmitAction }: AccountFormProps) {
+function AccountForm({ account, onSubmitAction }: AccountFormProps) {
   const translate = useTranslations('accounts')
   const translateCurrency = useTranslations('currencies')
-  const clock = useClock()
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
+  const today = useToday()
   // one id per opened form: a double click on «Save» sends the same id, so it is one account
   const [newId] = useState(() => crypto.randomUUID())
   const form = useForm<AccountFormInput, unknown, AccountFormValues>({
@@ -117,7 +115,7 @@ function AccountForm({ account, baseCurrency, onSubmitAction }: AccountFormProps
       kind: account?.kind ?? 'bank',
       currency: (account?.currency ?? baseCurrency) as AccountFormInput['currency'],
       openingBalanceMinor: account?.openingBalanceMinor ?? null,
-      openingOn: account?.openingBalanceOn ?? localDate(clock.now(), clock.timeZone),
+      openingOn: account?.openingBalanceOn ?? today,
     },
   })
   const currency = form.watch('currency')

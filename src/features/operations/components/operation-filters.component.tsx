@@ -1,10 +1,15 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select } from '@/components/ui/select.component'
+import { useToday } from '@/contexts/clock.context'
+import { useLedgerStore } from '@/contexts/ledger.context'
+import { useMemberNames } from '@/lib/members/member-names.hook'
 import { cn } from '@/lib/utils/cn.utils'
-import type { AccountOption, CategoryOption, OperationType } from '../operations.types'
+import { operationQueries } from '../api/operations.queries'
+import type { OperationType } from '../operations.types'
 import { OPERATION_TYPES } from '../operations.types'
 import { ALL_TIME, recentMonths } from '../utils/operation-filters.utils'
 
@@ -31,16 +36,11 @@ function ChipSelect({
 }
 
 type OperationFiltersProps = {
-  today: string
   period: string
   accountId: string | null
   categoryId: string | null
   createdBy: string | null
   type: OperationType
-  /** user id → name of the space's members; the «Who» chip appears when there are two or more */
-  members: Record<string, string>
-  accounts: AccountOption[]
-  categories: CategoryOption[]
   onChangeAction: (change: {
     period?: string | null
     account?: string | null
@@ -53,20 +53,23 @@ type OperationFiltersProps = {
 // Figma Saldo file → Operations 2:11403 "Filters": the type switch, then chips (period, account, category); the selected
 // period is a primary-soft chip with a check. Currency, amount, link and text chips wait for their phases.
 export function OperationFilters({
-  today,
   period,
   accountId,
   categoryId,
   createdBy,
   type,
-  members,
-  accounts,
-  categories,
   onChangeAction,
 }: OperationFiltersProps) {
   const translate = useTranslations('operations')
   const formatter = useFormatter()
   const locale = useLocale()
+  const today = useToday()
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  // the «Who» chip appears when the space has two or more members
+  const members = useMemberNames()
+  const options = useQuery(operationQueries.options(ledgerId))
+  const accounts = options.data?.accounts ?? []
+  const categories = options.data?.categories ?? []
   // Intl gives a lowercase month and a short year suffix; only the first letter is raised so the suffix keeps its case
   const monthLabel = (month: string) => {
     const label = formatter.dateTime(new Date(`${month}-15T12:00:00Z`), {

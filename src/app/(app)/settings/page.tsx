@@ -47,7 +47,7 @@ async function MyName() {
 
   const name = await getMyDisplayName(ledger.ledgerId, session.userId)
 
-  return <DisplayNameForm key={`${ledger.ledgerId}:${name}`} ledgerId={ledger.ledgerId} name={name} />
+  return <DisplayNameForm key={`${ledger.ledgerId}:${name}`} name={name} />
 }
 
 // the active space and its row are request data: read inside <Suspense> so the cards above stay instant
