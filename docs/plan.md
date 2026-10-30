@@ -14,7 +14,7 @@
 - мутації — через `setMutationDefaults`, UUID клієнта, `scope: { id: 'writes' }` з першого дня (офлайн-сумісні);
 - `pnpm check` (Biome + typecheck + depcruise + knip + vitest + `supabase test db`) зелений перед комітом і деплоєм;
 - пункт «E2E» фази — 2–6 сценаріїв головних потоків (`docs/conventions.md` §6.3); `pnpm test:e2e` зелений перед
-  закриттям фази, у CI — окремий job `e2e` (у `pnpm check` не входить, бо повільний).
+  закриттям фази й перед кожним PR, лише локально (у CI e2e і pgTAP немає з 30.10.2026: «на гіту тільки юніт»).
 
 ---
 

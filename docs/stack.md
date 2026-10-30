@@ -80,10 +80,10 @@
 | lefthook | 2.2.2 | pre-commit |
 | knip | 6.44.0 | невикористані файли, експорти, залежності |
 | dependency-cruiser | 18.7.0 (MIT) | правило «фічі не імпортують одна одну», `api-is-portable` |
-| @playwright/test | 1.64.1 (Apache-2.0) | e2e проти локального Supabase і `next start`, лише Chromium; `pnpm test:e2e`, окремий CI-job |
+| @playwright/test | 1.64.1 (Apache-2.0) | e2e проти локального Supabase і `next start`, лише Chromium; `pnpm test:e2e`, лише локально |
 | supabase (CLI) | 2.122.0 | міграції, локальна БД, `gen types`, `db dump` |
 | Vercel | — | деплой, `regions: ["fra1"]`, cron раз на добу; домен `saldo.maksymvasianin.com` (Cloudflare CNAME, DNS only) |
-| GitHub Actions | — | нічний бекап, CI на PR без secrets: job `check` (`pnpm check` + `supabase test db`), `gitleaks` і `e2e` (оцінка 7–12 хв; локально `pnpm test:e2e` — 59 тестів за 54 с разом із `next build`, 30.10.2026) |
+| GitHub Actions | — | нічний бекап, CI на PR без secrets: job `check` (lint, typecheck, depcruise, knip, Vitest) і `gitleaks`; pgTAP і e2e лише локально (30.10.2026; `pnpm test:e2e` — 60 тестів ≈ 1 хв разом із `next build`) |
 | gitleaks | 8.30 (MIT; лише security-патчі, drop-in заміна — betterleaks) | пошук секретів у lefthook pre-commit і CI |
 | age | 1.3 (BSD-3-Clause, apt на ubuntu-latest) | шифрування бекапу на публічний ключ |
 | pgTAP | 1.3.3 (у стеку Supabase) | тести RLS просторів (`supabase test db`); вхід ролями — хелпер `pg_temp.login`, без basejump/dbdev (`docs/conventions.md` §6.2) |
