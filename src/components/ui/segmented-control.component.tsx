@@ -14,7 +14,8 @@ type SegmentedOption<Value extends string> = {
 type SegmentedControlProps<Value extends string> = {
   label: string
   options: readonly SegmentedOption<Value>[]
-  value: Value
+  /** undefined while the value is not known yet (a client-only preference before hydration) */
+  value: Value | undefined
   onValueChange: (value: Value) => void
   /** disables the options and marks the group busy while a change is saved */
   pending?: boolean

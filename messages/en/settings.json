@@ -1,4 +1,11 @@
 {
+  "themeTitle": "Theme",
+  "themeHint": "Light, dark or as on the device. Saved to your account.",
+  "themes": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "languageTitle": "Language",
   "languageHint": "The language of the interface, dates and amounts. Saved to your account."
 }
