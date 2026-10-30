@@ -35,11 +35,13 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
   const options = useSubscriptionOptions()
   const [name, currency, unit, status] = watch(['name', 'currency', 'unit', 'status'])
   const statuses = FORM_STATUSES.includes(status) ? FORM_STATUSES : [...FORM_STATUSES, status]
+  // a span on a one-column grid would add an implicit second column
+  const wide = mode === 'edit' ? 'lg:col-span-2' : undefined
 
   return (
     // the create dialog is narrow: one column there, two in the wide Settings card
     <div className={cn('grid gap-4', mode === 'edit' && 'lg:grid-cols-2')}>
-      <div className="flex items-end gap-3 lg:col-span-2">
+      <div className={cn('flex items-end gap-3', wide)}>
         {name.trim() ? <ServiceLogo name={name} className="mb-1" /> : null}
         <div className="min-w-0 flex-1">
           <FormField
@@ -223,7 +225,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
         label={translate('serviceUrl')}
         render={(field) => <Input {...field} inputMode="url" autoComplete="off" />}
       />
-      <div className="lg:col-span-2">
+      <div className={wide}>
         <FormField
           control={control}
           name="note"
