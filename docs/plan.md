@@ -80,9 +80,9 @@ PWA-маніфест, нічний бекап.
 **Мета:** вносити факт (дохід, витрату, переказ, повернення, коригування), бачити залишки, вносити разові планові
 платежі й відмічати їх оплату; Огляд з «Доступно».
 
-- [ ] 1.1 Міграція: `accounts`, `categories` (+ сід стандартних категорій §6), `fx_rates`, `operations`, `transfers`, `attachments`, view `account_balances`.
-- [ ] 1.2 Міграція: `obligations`, `obligation_payments`, view `obligation_states` (часовий пояс із `ledgers.time_zone`).
-- [ ] 1.3 RPC: `create_operation`, `update_operation`, `delete_operation`, `create_transfer`, `pay_obligation`, `delete_obligation_payment`, `archive_category`.
+- [x] 1.1 Міграція: `accounts`, `categories` (+ сід стандартних категорій §6), `fx_rates`, `operations`, `transfers`, `attachments`, view `account_balances`.
+- [x] 1.2 Міграція: `obligations`, `obligation_payments`, view `obligation_states` (часовий пояс із `ledgers.time_zone`).
+- [x] 1.3 RPC: `create_operation`, `update_operation`, `delete_operation`, `create_transfer`, `pay_obligation`, `delete_obligation_payment`, `archive_category`.
 - [ ] 1.4 `src/lib/money/money.utils.ts` (toMinor, fromMinor, format з «−» і ₴ $ €), `fx.utils.ts` (convert з decimal.js і режимом округлення).
 - [ ] 1.5 Фіча `accounts`: список, створення (початковий залишок + дата), архів, картка рахунку.
 - [ ] 1.6 Фіча `categories`: дерево доходів/витрат, підкатегорії, колір (`--color-c-*`), порядок, архів із перенесенням.
@@ -96,12 +96,13 @@ PWA-маніфест, нічний бекап.
 - [ ] 1.14 Глобальний «Додати» (дохід / витрата / переказ) через `?add=`.
 - [ ] 1.15 (для MCP) Кожна дія запису має input-схему `<action>-input.schema.ts` (мінорні одиниці, `id: z.uuid()`, без `transform`), а форма — чисту `to<Action>Input(values, clock)`; функції `*.api.ts` отримують `db: SaldoClient` першим параметром і роблять `parse` перед `rpc()`.
 - [ ] 1.16 (для MCP) Огляд і «Доступно» читаються функціями `*.api.ts` + `available-money.utils.ts` з `now`/`timeZone` параметрами; хук лише склеює. Тест: та сама функція без React дає ті самі складові.
-- [ ] 1.17 Фіча `ledgers`, RPC: `create_ledger`, `create_ledger_invite`, `accept_ledger_invite` (security definer, email з JWT), `set_member_role`, `remove_member`; pgTAP: прострочене / чуже / повторне запрошення, editor не запрошує.
+- [x] 1.17a RPC: `create_ledger`, `create_ledger_invite`, `accept_ledger_invite` (security definer, email з JWT), `set_member_role`, `remove_member`; pgTAP: прострочене / чуже / повторне запрошення, editor не запрошує (`supabase/tests/ledger-rpc.test.sql`).
+- [ ] 1.17b Фіча `ledgers` у UI (хвиля B).
 - [ ] 1.18 Налаштування → «Доступ»: учасники з роллю, «Запросити» (email, роль; токен у браузері, у БД — SHA-256; «Копіювати посилання»), зміна ролі, «Відкликати», «Вийти з простору»; налаштування простору (назва, базова валюта, часовий пояс).
 - [ ] 1.19 Прийняття запрошення: `(auth)/invite/[token]`, `api/invites/accept` (`auth.admin.createUser` лише за дійсним токеном), вхід з `?next=`, після прийняття — перемикання на простір.
 - [ ] 1.20 Перемикач простору в Sidebar і mobile Topbar; ключі запитів `[root, ledgerId, …]`; кожна мутація несе `ledger_id`; viewer не бачить кнопок запису.
 - [ ] 1.21 Автор і підтвердження: аватар-ініціал `created_by` у рядках операцій і платежів, «Підтвердив(ла) … · дата» в оплаченому зобов'язанні, фільтр «Хто» в операціях (URL), `pay_obligation` з `p_expected_version` і `PT409`, коли оплату вже позначила інша людина.
-- [ ] 1.22 pgTAP RLS для кожної таблиці фази 1 (owner / editor / viewer / чужий) і складених FK (операція не посилається на рахунок іншого простору).
+- [x] 1.22 pgTAP RLS для кожної таблиці фази 1 (owner / editor / viewer / чужий) і складених FK (операція не посилається на рахунок іншого простору).
 - [ ] 1.23 E2E операцій (`e2e/operations/`): витрата змінює залишок рахунку й «Доступно» на Огляді рівно один раз, подвійний клік «Зберегти» — один рядок, а переказ між рахунками в тому самому тесті не додає витрат місяця; «Оплачено» на плановому платежі створює одну операцію, видалення оплати повертає план у «Найближчі».
 - [ ] 1.24 E2E шарингу (`e2e/sharing/`, фікстура `pageAs`): owner створює запрошення, нова людина відкриває посилання, стає editor і бачить ту саму цифру «Доступно»; editor вносить витрату — owner бачить її з ініціалом автора; viewer не бачить «Додати», а `?add=expense` не зберігає (`42501` → повідомлення); після «Відкликати» простір зникає з перемикача editor після перезавантаження.
 

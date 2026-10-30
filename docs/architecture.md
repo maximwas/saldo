@@ -475,7 +475,8 @@ Postgres 15+ у схемі `public`. Спільні правила для кож
   `(ledger_id)` або складений, що з нього починається. Також `unique (ledger_id, id)`, щоб діти посилалися
   складеним FK: `foreign key (ledger_id, account_id) references accounts (ledger_id, id)` — рядок не може
   вказувати на рядок іншого простору, навіть якщо людина — editor обох.
-- `created_by uuid not null default auth.uid() references auth.users` — автор; тригер не дає його змінити.
+- `created_by uuid default auth.uid() references auth.users on delete set null` — автор; тригер не дає його змінити.
+  Nullable, бо автор може бути editor чужого простору й видалити акаунт: його рядки лишаються без автора (ADR 27).
   Серверні вставки (cron, матеріалізація) пишуть `created_by` = власника простору.
 - `created_at timestamptz not null default now()`, `updated_at timestamptz not null default now()`.
 - `version int not null default 1` на таблицях, які редагуються; тригер `bump_version()` before update:
@@ -546,15 +547,20 @@ null default 0` · `opening_balance_on date not null` · `color text`, `icon tex
 Прапорця видимості немає: рахунок бачать усі учасники простору; приватне — в окремому просторі (ADR 19).
 
 **categories**
-`kind text check in ('income','expense')` · `parent_id uuid null references categories on delete restrict` ·
+`kind text check in ('income','expense')` · `parent_id uuid null` (складений FK `(ledger_id, parent_id, kind)` →
+`categories (ledger_id, id, kind)`: підкатегорія того самого простору й виду) ·
 `name`, `color`, `icon`, `sort_order`, `archived_at`. Check `categories_no_self_parent (parent_id <> id)`.
-Видалення з операціями заборонене FK `on delete restrict`; rpc `archive_category(p_id, p_move_to uuid null)`
+`color` — назва токена `--color-cat-*` (`blue` … `yellow`), не hex. Сід 15 стандартних категорій §6 (українською) —
+`private.seed_categories()` з `handle_new_user` і `create_ledger`.
+Видалення з операціями заборонене FK (`no action`, не `restrict`: видалення простору каскадить батька й дитину
+одним оператором); rpc `archive_category(p_id, p_move_to uuid null)`
 переносить операції або архівує (§6). Оподатковуваність не виводиться з категорії (§6) — вона в `income_tax_details`.
 
 **fx_rates**
 `base_currency`, `quote_currency`, `rate numeric(20,10) check (> 0)`, `rate_on date`, `source text check in
 ('manual','reference')`, `source_name text` (напр. назва банку-джерела). Unique
-`fx_rates_unique (user_id, base_currency, quote_currency, rate_on, source)`. Ручний курс має пріоритет над довідковим.
+`fx_rates_unique (ledger_id, base_currency, quote_currency, rate_on, source)`. `rate` — скільки `quote_currency` за 1
+`base_currency` (EUR→UAH 41.5). Ручний курс має пріоритет над довідковим на ту саму дату.
 
 ### 5.2 Операції й перекази
 
@@ -564,19 +570,19 @@ null default 0` · `opening_balance_on date not null` · `color text`, `icon tex
 |---|---|
 | `kind` | `check in ('income','expense','refund','adjustment','transfer_out','transfer_in','debt_out','debt_in')` |
 | `direction` | `check in ('in','out')`; `operations_kind_direction`: income/refund/transfer_in/debt_in → in; expense/transfer_out/debt_out → out; adjustment — будь-який |
-| `account_id` | `not null references accounts on delete restrict` |
+| `account_id` | `not null`; складений FK `(ledger_id, account_id, currency)` → `accounts (ledger_id, id, currency)` |
 | `amount_minor` | `bigint not null`, `operations_amount_positive check (amount_minor > 0)` |
-| `currency` | має дорівнювати валюті рахунку — перевіряє rpc |
+| `currency` | дорівнює валюті рахунку — тримає той самий складений FK (і для прямих записів, не лише rpc) |
 | `occurred_at` | `timestamptz not null` |
 | `occurred_on` | `date not null` — локальна дата в часовому поясі простору, для подій лише з датою |
 | `created_by` | автор (спільне правило §5); фільтр «Хто» в списку операцій |
-| `category_id` | `null references categories on delete restrict` |
+| `category_id` | `null`; FK `(ledger_id, category_id, category_kind)` → `categories (ledger_id, id, kind)`, де `category_kind` — generated: income → `income`, expense/refund → `expense`, інші види без категорії (`operations_category_allowed`) |
 | `counterparty`, `note` | `text`; `operations_adjustment_note check (kind <> 'adjustment' or note is not null)` (§5) |
 | `base_currency`, `base_amount_minor` | сума в базовій валюті на дату операції; `null` = курс невідомий (позначається, §20) |
 | `fx_rate numeric(20,10)`, `fx_source text`, `fx_rate_on date` | знімок курсу; новий курс не переписує (§21) |
-| `transfer_id` | `null references transfers on delete cascade`; `operations_transfer_link check ((kind in ('transfer_out','transfer_in')) = (transfer_id is not null))` |
-| `refund_of_id` | `null references operations` (повернення конкретної покупки) |
-| `duplicated_from_id` | `null` — «дублювати як новий запис» (§4) |
+| `transfer_id` | `null`, FK `(ledger_id, transfer_id)` → transfers `on delete cascade`; `operations_transfer_link`: ноги переказу завжди з `transfer_id`, з інших видів його має лише комісія (`expense`) |
+| `refund_of_id` | `null`, FK `(ledger_id, refund_of_id)` `on delete set null (refund_of_id)`; лише для `refund` (`operations_refund_link`) |
+| `duplicated_from_id` | `null`, FK `on delete set null (duplicated_from_id)` — «дублювати як новий запис» (§4) |
 
 Індекси: `(ledger_id, occurred_on desc, id)` (keyset-пагінація), `(ledger_id, account_id, occurred_on)`,
 `(ledger_id, category_id, occurred_on)`, `(ledger_id, created_by, occurred_on)` (фільтр «Хто»), GIN `pg_trgm` на `counterparty || ' ' || note` для пошуку.
@@ -612,7 +618,7 @@ unique` (`{ledger_id}/{owner_type}/{owner_id}/{uuid}.{ext}`), `mime`, `size_byte
 | `sequence_no` | `int null` — номер внеску |
 | `planned_amount_minor` | `bigint null`, `obligations_amount_positive check (planned_amount_minor is null or planned_amount_minor > 0)` — невідомо ≠ 0 (§7) |
 | `currency`, `account_id null`, `category_id null` | |
-| `envelope_id` | `null references reserves` — резерв, що покриває (§12) |
+| `envelope_id` | `null references reserves` — резерв, що покриває (§12); колонка з'явиться разом із `reserves` |
 | `lifecycle` | `check in ('active','cancelled','replaced') default 'active'` |
 | `replaced_by_id` | `null references obligations` |
 | `settled_at`, `settled_by` | `timestamptz null`, `uuid null` — явне «оплачено повністю» (сума невідома або дострокове погашення) і хто це зробив |
@@ -625,8 +631,9 @@ Unique `obligations_occurrence_unique (user_id, source_type, source_id, occurren
 rpc видалення джерела скасовує (`lifecycle = 'cancelled'`) його майбутні неоплачені зобов'язання.
 
 **obligation_payments**
-`obligation_id references obligations on delete restrict` · `operation_id null references operations on delete
-cascade` · `withholding_id null references tax_withholdings on delete cascade` ·
+`obligation_id` (FK `no action`) · `operation_id null references operations on delete
+cascade` · `withholding_id null references tax_withholdings on delete cascade` (у фазі 1 `operation_id not null`,
+`withholding_id` і `obligation_payments_one_source` додаються з `tax_withholdings`) ·
 `obligation_payments_one_source check (num_nonnulls(operation_id, withholding_id) = 1)` ·
 `amount_minor bigint check (> 0)` у валюті зобов'язання · unique `(obligation_id, operation_id)`, unique
 `(obligation_id, withholding_id)`. Видалення операції каскадом видаляє оплату, і зобов'язання повертається в план
@@ -797,13 +804,13 @@ HTTP 409; перевірити у фазі 0).
 
 | Функція | Що робить | Інваріанти |
 |---|---|---|
-| `create_operation(p_operation jsonb, p_tax jsonb default null, p_withholdings jsonb default '[]')` | операція + деталі доходу + утримання | валюта = валюта рахунку; idempotent за `id` |
+| `create_operation(p_operation jsonb, p_tax jsonb default null, p_withholdings jsonb default '[]')` | операція + деталі доходу + утримання | валюта = валюта рахунку; idempotent за `id`. Фаза 1: лише `p_operation` (податкові параметри — з таблицями податків); сервер ставить `direction`, `occurred_on` у поясі простору, `base_currency`, а в базовій валюті — `base_amount_minor = amount_minor`; ноги переказу — лише через `create_transfer` |
 | `update_operation(p_id uuid, p_expected_version int, p_patch jsonb)` | редагування | `PT409` при старій версії; тригер ставить `needs_review` податкам; суми оплат ≤ суми операції |
 | `delete_operation(p_id uuid, p_expected_version int)` | видалення | каскад: оплати, spend-резерв, заправка/сервіс → зобов'язання повертається в план |
 | `create_transfer(p_transfer jsonb)` | переказ + 2–3 операції | рахунки різні; комісія — окрема витрата |
-| `pay_obligation(p_payment_id uuid, p_obligation_id uuid, p_expected_version int, p_amount_minor bigint, p_operation jsonb default null, p_existing_operation_id uuid default null, p_reserve_id uuid default null, p_settle bool default false)` | оплата | повтор з тим самим `p_payment_id` повертає стан без запису; інакше `for update` + версія, стара → `PT409` (друга людина вже оплатила); рівно одне з `p_operation` / `p_existing_operation_id`; наявна операція не дублюється (§4, §7); spend не більший за резерв |
+| `pay_obligation(p_payment_id uuid, p_obligation_id uuid, p_expected_version int, p_amount_minor bigint, p_operation jsonb default null, p_existing_operation_id uuid default null, p_reserve_id uuid default null, p_settle bool default false)` | оплата. Фаза 1 — без `p_reserve_id` (з `reserves`); `p_amount_minor` у валюті операції, у `obligation_payments` — у валюті зобов'язання через `fx_rates` простору на дату операції (round half up), курсу немає → `22023`; напрям операції = напрям зобов'язання; повертає `obligation_states` | повтор з тим самим `p_payment_id` повертає стан без запису; інакше `for update` + версія, стара → `PT409` (друга людина вже оплатила); рівно одне з `p_operation` / `p_existing_operation_id`; наявна операція не дублюється (§4, §7); spend не більший за резерв |
 | `link_withholding(p_payment_id uuid, p_obligation_id uuid, p_withholding_id uuid, p_amount_minor bigint)` | зарахувати утримання | без операції, без списання (§17) |
-| `delete_obligation_payment(p_payment_id uuid, p_delete_operation bool)` | скасувати оплату | зобов'язання повертається в план |
+| `delete_obligation_payment(p_payment_id uuid, p_delete_operation bool default false)` | скасувати оплату | зобов'язання повертається в план (`settled_at` скидається); повтор — no-op |
 | `upsert_series_obligations(p_source_type text, p_source_id uuid, p_rows jsonb)` | вставка матеріалізованих дат | `on conflict (…occurrence_on) do nothing`; не чіпає оплачені |
 | `set_subscription_price(p_price jsonb)` | нова ціна з дати | оновлює лише майбутні неоплачені (§8) |
 | `save_credit(p_credit jsonb, p_installments jsonb)`, `replace_credit_schedule(p_credit_id uuid, p_installments jsonb)` | графік | старі неоплачені → `replaced`; оплачені лишаються |
@@ -815,9 +822,9 @@ HTTP 409; перевірити у фазі 0).
 | `adjust_tax_liability(p_adjustment jsonb)` | коригування з причиною | історія оплат не змінюється (§16) |
 | `archive_category(p_id uuid, p_move_to uuid default null)` | архів / перенесення | операції не знищуються (§6) |
 | `copy_budget_month(p_ledger_id uuid, p_from date, p_to date)` | копія місяця | перенесення залишку за `carry_mode` |
-| `create_ledger(p_id uuid, p_name text, p_base_currency text)` | новий простір | автор стає `owner` |
+| `create_ledger(p_id uuid, p_name text, p_base_currency text default 'UAH')` — `security definer` | новий простір | автор стає `owner`, сід категорій; definer, бо INSERT-політика на `ledger_members` дала б стати owner чужого простору |
 | `create_ledger_invite(p_id uuid, p_ledger_id uuid, p_email text, p_role text, p_token_hash bytea)` | запрошення | лише owner; роль не `owner` |
-| `accept_ledger_invite(p_token text)` — `security definer` | прийняття | hash є, не прийнято, не відкликано, не прострочено, `email = auth.jwt() ->> 'email'`; insert `ledger_members` on conflict do nothing; повтор безпечний |
+| `accept_ledger_invite(p_token text)` — `security definer` | прийняття | hash = SHA-256 UTF-8 рядка токена з посилання; hash є, не прийнято, не відкликано, не прострочено, `email = auth.jwt() ->> 'email'` (без регістру); insert `ledger_members` on conflict do nothing; повтор тією самою людиною безпечний. Помилки: `P0002` немає, `PT410` прострочене / відкликане / використане іншим, `42501` чужий email |
 | `set_member_role(p_ledger_id uuid, p_user_id uuid, p_role text)`, `remove_member(p_ledger_id uuid, p_user_id uuid)` | ролі, відкликання, «Вийти» | лише owner (себе — будь-хто, крім owner); owner не видаляється й не понижується |
 
 Усі RPC запису беруть `ledger_id` з рядка (`p_operation->>'ledger_id'` або простір батьківського запису), не з
