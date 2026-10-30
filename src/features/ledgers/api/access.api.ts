@@ -5,7 +5,9 @@ import {
   type RemoveMemberInput,
   removeMemberInputSchema,
   type SetMemberRoleInput,
+  type SetMyDisplayNameInput,
   setMemberRoleInputSchema,
+  setMyDisplayNameInputSchema,
   type UpdateLedgerSettingsInput,
   updateLedgerSettingsInputSchema,
 } from '../schemas/access.schema'
@@ -59,6 +61,19 @@ export async function removeMember(supabase: SaldoClient, input: RemoveMemberInp
   const { error } = await supabase.rpc('remove_member', {
     p_ledger_id: parsed.ledgerId,
     p_user_id: parsed.userId,
+  })
+
+  if (error) {
+    throw error
+  }
+}
+
+// Any member, the owner included, names themselves; the RPC writes only display_name of the caller's own row
+export async function setMyDisplayName(supabase: SaldoClient, input: SetMyDisplayNameInput) {
+  const parsed = setMyDisplayNameInputSchema.parse(input)
+  const { error } = await supabase.rpc('set_my_display_name', {
+    p_ledger_id: parsed.ledgerId,
+    p_name: parsed.name,
   })
 
   if (error) {

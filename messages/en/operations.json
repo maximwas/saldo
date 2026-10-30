@@ -21,7 +21,9 @@
     "allAccounts": "All accounts",
     "category": "Category",
     "allCategories": "All categories",
-    "reset": "Reset filters"
+    "reset": "Reset filters",
+    "who": "Who",
+    "allMembers": "Everyone"
   },
   "totals": {
     "income": "Income",

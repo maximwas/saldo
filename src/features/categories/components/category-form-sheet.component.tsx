@@ -1,6 +1,5 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -12,6 +11,7 @@ import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CATEGORY_COLORS } from '@/constants/category-colors.constants'
 import { useLedger } from '@/contexts/ledger.context'
+import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { useCreateCategory, useUpdateCategory } from '../hooks/categories.hook'
 import {
   type CategoryFormValues,
@@ -127,7 +127,7 @@ function CategoryForm({ target, categories, onSubmitAction }: CategoryFormProps)
   const [newId] = useState(() => crypto.randomUUID())
   const parent = categories.find((row) => row.id === target.parentId)
   const form = useForm<CategoryFormValues>({
-    resolver: zodResolver(categoryFormSchema),
+    resolver: useZodResolver(categoryFormSchema),
     defaultValues: {
       name: category?.name ?? '',
       kind: category?.kind ?? target.kind,

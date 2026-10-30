@@ -51,6 +51,8 @@ export function Amount({ minor, currency, hidden, kind, size, className }: Amoun
           size,
         }),
         minor === null && 'text-text-tertiary',
+        // zero is neither income nor shortfall (Figma Amount rules)
+        minor !== null && Number(minor) === 0 && (kind === 'income' || kind === 'shortfall') && 'text-text-primary',
         className,
       )}
     >

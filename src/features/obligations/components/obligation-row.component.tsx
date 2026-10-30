@@ -1,8 +1,11 @@
 import { Pencil } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
+import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
+import { useLedger } from '@/contexts/ledger.context'
+import { useMemberNames } from '@/lib/members/member-names.hook'
 import type { ObligationRow } from '../api/obligations.api'
 
 type ObligationRowItemProps = {
@@ -35,6 +38,9 @@ export function ObligationRowItem({
 }: ObligationRowItemProps) {
   const translate = useTranslations('obligations')
   const format = useFormatter()
+  const names = useMemberNames()
+  const { timeZone } = useLedger()
+  const confirmer = obligation.confirmedBy ? names[obligation.confirmedBy] : null
   const open = obligation.state !== 'paid'
   const hasPayments = obligation.paidMinor > 0
   const dateLabel =
@@ -64,6 +70,19 @@ export function ObligationRowItem({
               </span>
               <Badge tone={STATE_TONE[obligation.state]}>{translate(`state.${obligation.state}`)}</Badge>
             </span>
+            {obligation.state === 'paid' && confirmer && obligation.confirmedAt ? (
+              <span className="flex items-center gap-1.5 text-caption text-text-secondary">
+                <AuthorAvatar name={confirmer} />
+                {translate('confirmedBy', {
+                  name: confirmer,
+                  date: format.dateTime(new Date(obligation.confirmedAt), {
+                    day: '2-digit',
+                    month: '2-digit',
+                    timeZone,
+                  }),
+                })}
+              </span>
+            ) : null}
           </span>
           <span className="flex shrink-0 flex-col items-end gap-1">
             <Amount

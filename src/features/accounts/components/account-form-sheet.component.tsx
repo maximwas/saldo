@@ -1,6 +1,5 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -15,6 +14,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
+import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { localDate } from '@/lib/utils/clock.utils'
 import { useCreateAccount, useUpdateAccount } from '../hooks/accounts.hook'
 import {
@@ -111,7 +111,7 @@ function AccountForm({ account, baseCurrency, onSubmitAction }: AccountFormProps
   // one id per opened form: a double click on «Save» sends the same id, so it is one account
   const [newId] = useState(() => crypto.randomUUID())
   const form = useForm<AccountFormInput, unknown, AccountFormValues>({
-    resolver: zodResolver(accountFormSchema),
+    resolver: useZodResolver(accountFormSchema),
     defaultValues: {
       name: account?.name ?? '',
       kind: account?.kind ?? 'bank',

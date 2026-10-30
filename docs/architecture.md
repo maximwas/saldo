@@ -501,7 +501,7 @@ Postgres 15+ у схемі `public`. Спільні правила для кож
 
 **ledgers** — `name text not null` · `base_currency` check UAH/USD/EUR · `time_zone text not null default
 'Europe/Kyiv'` (дати зобов'язань і нагадувань простору) · `week_starts_on smallint default 1` · `next_income_on date
-null` (§3) · `subscription_defaults jsonb` (§8) · `reminder_defaults jsonb` · `created_by uuid null` (лише аудит: `on delete set
+null` (§3; суми очікуваного доходу немає: специфікація задає лише дату, а очікувані надходження — це зобов'язання з `direction = 'in'`; змінює лише owner через RLS `ledgers_write`, пишуть її `setNextIncomeOn` в `overview.api.ts` і `updateLedgerSettings` в `access.api.ts` — якщо дозволити editor, це буде RPC, і міняються лише ці дві функції та перевірка ролі в `hero-available.component.tsx`) · `subscription_defaults jsonb` (§8) · `reminder_defaults jsonb` · `created_by uuid null` (лише аудит: `on delete set
 null`, змінити вручну не можна — тригер `keep_created_by`) · `version`.
 Тригер `after insert on auth.users` (`security definer`) створює простір «Мій простір», рядок `ledger_members` з
 `owner` і `user_settings` — у кожного акаунта є власний простір з першого входу.
@@ -514,7 +514,7 @@ null`, змінити вручну не можна — тригер `keep_create
 (порожній масив = не надсилати цьому учаснику), `calendar_sync bool default true` (чи синхронізувати зобов'язання
 простору в календар цього учасника), `joined_at`. `ledger_members_one_owner unique (ledger_id) where role =
 'owner'`. Індекс `(user_id)` — його читає функція членства. Політики: читати — учасники простору; змінювати роль і
-видаляти — лише owner (`private.my_owned_ledger_ids()`); учасник може видалити свій рядок («Вийти»), крім owner.
+видаляти — лише owner (`private.my_owned_ledger_ids()`); учасник може видалити свій рядок («Вийти»), крім owner. Своє `display_name` кожен учасник (owner теж) змінює лише через RPC `set_my_display_name`: RLS обирає рядки, а не колонки, а колонковий грант `update` містить `role`, тож політика «свій рядок» дала б учаснику підняти собі роль.
 
 **ledger_invites** — `ledger_id`, `email citext not null`, `role check in ('editor','viewer')`, `token_hash bytea
 unique not null` (SHA-256; сам токен у БД не зберігається), `expires_at default now() + interval '7 days'`,
@@ -584,7 +584,7 @@ parent_depth)` → `categories (ledger_id, id, kind, depth)`: підкатего
 | `category_id` | `null`; FK `(ledger_id, category_id, category_kind)` → `categories (ledger_id, id, kind)`, де `category_kind` — generated: income → `income`, expense/refund → `expense`, інші види без категорії (`operations_category_allowed`) |
 | `counterparty`, `note` | `text`; `operations_adjustment_note check (kind <> 'adjustment' or note is not null)` (§5) |
 | `base_currency`, `base_amount_minor` | сума в базовій валюті на дату операції; `null` = курс невідомий (позначається, §20) |
-| `fx_rate numeric(20,10)`, `fx_source text`, `fx_rate_on date` | знімок курсу; новий курс не переписує (§21) |
+| `fx_rate numeric(20,10)`, `fx_source text`, `fx_rate_on date` | знімок курсу: одиниць базової валюти за 1 одиницю валюти операції (обернена пара — `round(1/rate, 10)`), джерело й дата курсу, яким рахували; ставить сервер (`private.prepare_operation` за правилом A через `private.pick_rate`), клієнтські значення ігноруються; новий курс не переписує (§21) — знімок береться знову лише тоді, коли змінилися сума, валюта або дата операції |
 | `transfer_id` | `null`, FK `(ledger_id, transfer_id)` → transfers `on delete cascade`; `operations_transfer_link`: ноги переказу завжди з `transfer_id`, з інших видів його має лише комісія (`expense`) |
 | `refund_of_id` | `null`, FK `(ledger_id, refund_of_id)` `on delete set null (refund_of_id)`; лише для `refund` (`operations_refund_link`) |
 | `duplicated_from_id` | `null`, FK `on delete set null (duplicated_from_id)` — «дублювати як новий запис» (§4) |
@@ -818,10 +818,10 @@ editor/owner; прийняти чи відхилити може будь-хто 
 
 | Функція | Що робить | Інваріанти |
 |---|---|---|
-| `create_operation(p_operation jsonb, p_tax jsonb default null, p_withholdings jsonb default '[]')` | операція + деталі доходу + утримання | валюта = валюта рахунку; idempotent за `id`. Фаза 1: лише `p_operation` (податкові параметри — з таблицями податків); сервер ставить `direction`, `occurred_on` у поясі простору, `base_currency`, а в базовій валюті — `base_amount_minor = amount_minor`; ноги переказу — лише через `create_transfer` |
-| `update_operation(p_id uuid, p_expected_version int, p_patch jsonb)` | редагування | `PT409` при старій версії; тригер ставить `needs_review` податкам; суми оплат ≤ суми операції |
+| `create_operation(p_operation jsonb, p_tax jsonb default null, p_withholdings jsonb default '[]')` | операція + деталі доходу + утримання | валюта = валюта рахунку; idempotent за `id`. Фаза 1: лише `p_operation` (податкові параметри — з таблицями податків); сервер ставить `direction`, `occurred_on` у поясі простору, `base_currency`, а в базовій валюті — `base_amount_minor = amount_minor`, в іншій — конвертує за правилом A на `occurred_on` і пише знімок `fx_*` (курсу немає → `null`); ноги переказу — лише через `create_transfer` |
+| `update_operation(p_id uuid, p_expected_version int, p_patch jsonb)` | редагування | `PT409` при старій версії; знімок курсу перераховується лише при іншій сумі, валюті чи даті (порівняння значень, форма шле всі поля), невідомий (`null`) заповнюється, якщо курс уже є; тригер ставить `needs_review` податкам; суми оплат ≤ суми операції |
 | `delete_operation(p_id uuid, p_expected_version int)` | видалення | каскад: оплати, spend-резерв, заправка/сервіс → зобов'язання повертається в план; нога переказу видаляє весь переказ (обидві ноги й комісію), сама комісія — лише себе й `transfers.fee_minor` (стає `null`) |
-| `create_transfer(p_transfer jsonb)` | переказ + 2–3 операції | рахунки різні; комісія — окрема витрата з категорією `p_transfer.fee_category_id` |
+| `create_transfer(p_transfer jsonb)` | переказ + 2–3 операції | рахунки різні; комісія — окрема витрата з категорією `p_transfer.fee_category_id`; ноги й комісія отримують `base_amount_minor` так само, як `create_operation` |
 | `pay_obligation(p_payment_id uuid, p_obligation_id uuid, p_expected_version int, p_amount_minor bigint, p_operation jsonb default null, p_existing_operation_id uuid default null, p_reserve_id uuid default null, p_settle bool default false)` | оплата. Фаза 1 — без `p_reserve_id` (з `reserves`); `p_amount_minor` у валюті операції, у `obligation_payments` — у валюті зобов'язання через `fx_rates` простору на дату операції (round half up), курсу немає → `22023`; `operation_amount_minor = p_amount_minor`; напрям операції = напрям зобов'язання; наявна операція — того самого простору, нога переказу теж може оплатити; повертає `obligation_states` | повтор з тим самим `p_payment_id` повертає стан без запису; інакше `for update` + версія, стара → `PT409` (друга людина вже оплатила); рівно одне з `p_operation` / `p_existing_operation_id`; наявна операція не дублюється (§4, §7); spend не більший за резерв |
 | `link_withholding(p_payment_id uuid, p_obligation_id uuid, p_withholding_id uuid, p_amount_minor bigint)` | зарахувати утримання | без операції, без списання (§17) |
 | `delete_obligation_payment(p_payment_id uuid, p_delete_operation bool default false)` | скасувати оплату | зобов'язання повертається в план (`settled_at` скидається); з `p_delete_operation` операція видаляється так само, як `delete_operation` (нога переказу — весь переказ); повтор — no-op |
@@ -840,6 +840,7 @@ editor/owner; прийняти чи відхилити може будь-хто 
 | `create_ledger_invite(p_id uuid, p_ledger_id uuid, p_email text, p_role text, p_token_hash bytea)` | запрошення | лише owner; роль не `owner` |
 | `accept_ledger_invite(p_token text)` — `security definer` | прийняття | hash = SHA-256 UTF-8 рядка токена з посилання; hash є, не прийнято, не відкликано, не прострочено, `email = auth.jwt() ->> 'email'` (без регістру); insert `ledger_members` on conflict do nothing; повтор тією самою людиною безпечний. Помилки: `P0002` немає, `PT410` прострочене / відкликане / використане іншим, `42501` чужий email |
 | `set_member_role(p_ledger_id uuid, p_user_id uuid, p_role text)`, `remove_member(p_ledger_id uuid, p_user_id uuid)` | ролі, відкликання, «Вийти» | лише owner (себе — будь-хто, крім owner); owner не видаляється й не понижується |
+| `set_my_display_name(p_ledger_id uuid, p_name text)` | своє ім'я в просторі (Налаштування → Загальні) | `security definer`; лише `display_name` власного рядка `(p_ledger_id, auth.uid())`, будь-яка роль; trim, порожнє → `null`, > 60 символів → `22023`, не учасник → `42501`; роль не змінює |
 
 Усі RPC запису беруть `ledger_id` з рядка (`p_operation->>'ledger_id'` або простір батьківського запису), не з
 окремого параметра, щоб складені FK і RLS перевіряли той самий простір. Viewer отримує `42501` від RLS.

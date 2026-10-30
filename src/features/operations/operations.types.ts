@@ -1,6 +1,4 @@
-import type { CURRENCIES } from '@/constants/currencies.constants'
-
-export type Currency = (typeof CURRENCIES)[number]
+import type { LedgerAccountOption, LedgerCategoryOption } from '@/lib/finance/ledger-options.api'
 
 export const OPERATION_TYPES = ['all', 'expense', 'income', 'transfer'] as const
 export type OperationType = (typeof OPERATION_TYPES)[number]
@@ -15,6 +13,7 @@ export type OperationFilters = {
   to: string | null
   accountId: string | null
   categoryId: string | null
+  createdBy: string | null
   type: OperationType
 }
 
@@ -58,24 +57,9 @@ export type OperationsData = {
   truncated: boolean
 }
 
-export type AccountOption = {
-  id: string
-  name: string
-  currency: Currency
-  archived: boolean
-}
+export type AccountOption = LedgerAccountOption
 
-export type CategoryOption = {
-  id: string
-  name: string
-  kind: 'income' | 'expense'
-  /** a token name from theme.css (blue … lime) or null */
-  color: string | null
-  /** a key of CATEGORY_ICONS or null */
-  icon: string | null
-  parentId: string | null
-  archived: boolean
-}
+export type CategoryOption = LedgerCategoryOption
 
 export type Receipt = {
   id: string

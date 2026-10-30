@@ -13,6 +13,7 @@ export const operationFilterParsers = {
   period: parseAsString,
   account: parseAsString,
   category: parseAsString,
+  who: parseAsString,
   type: parseAsStringLiteral(OPERATION_TYPES).withDefault('all'),
 }
 
@@ -22,6 +23,7 @@ type UrlFilters = {
   period: string | null
   account: string | null
   category: string | null
+  who: string | null
   type: OperationType
 }
 
@@ -52,10 +54,11 @@ export function resolveFilters(url: UrlFilters, today: string): OperationFilters
     to: month ? format(endOfMonth(month), DAY_FORMAT) : null,
     accountId: url.account,
     categoryId: url.category,
+    createdBy: url.who,
     type: url.type,
   }
 }
 
 /** a filter other than the default «this month, everything» is on: the empty state then offers a reset */
 export const hasActiveFilters = (url: UrlFilters) =>
-  url.period !== null || url.account !== null || url.category !== null || url.type !== 'all'
+  url.period !== null || url.account !== null || url.category !== null || url.who !== null || url.type !== 'all'

@@ -19,6 +19,13 @@
     "hint": "Amounts on screen are replaced with dots. Applies to this device only.",
     "hideAmounts": "Hide amounts"
   },
+  "myName": {
+    "title": "Your name",
+    "label": "Name in this space",
+    "hint": "Other members see it. Without a name, the start of your email is shown.",
+    "save": "Save",
+    "saved": "Name saved"
+  },
   "space": {
     "title": "Space",
     "ownerOnly": "Only the owner can change the space's name, currency and time zone.",
