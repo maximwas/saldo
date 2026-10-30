@@ -15,7 +15,7 @@ import { type CreateTransferInput, createTransferInputSchema } from '../schemas/
 import { type UpdateOperationInput, updateOperationInputSchema } from '../schemas/update-operation-input.schema'
 
 /** shortcut: one page of the newest operations; a keyset «load more» comes with the statistics phase */
-export const OPERATIONS_LIMIT = 500
+const OPERATIONS_LIMIT = 500
 const RECEIPT_BUCKET = 'attachments'
 const SIGNED_URL_SECONDS = 300
 const IN_CHUNK = 50

@@ -13,7 +13,7 @@ import {
 } from './operations.api'
 
 /** a write to money refreshes every money view: Overview, operations, accounts … */
-export function useInvalidateMoney() {
+function useInvalidateMoney() {
   const queryClient = useQueryClient()
 
   return () => queryClient.invalidateQueries({ predicate: isMoneyQuery })
