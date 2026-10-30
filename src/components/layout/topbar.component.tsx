@@ -1,13 +1,12 @@
 'use client'
 
-import { Bell } from 'lucide-react'
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { Suspense } from 'react'
 import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
+import { NotificationBell } from '@/features/notifications/components/notification-bell.component'
 import { SearchPalette } from '@/features/search/components/search-palette.component'
 import { cn } from '@/lib/utils/cn.utils'
 import { AddButton } from './add-button.component'
@@ -61,13 +60,7 @@ export function Topbar() {
       </div>
       <div className="flex items-center gap-3">
         <SearchPalette />
-        <Link
-          href="/notifications"
-          aria-label={translate('notifications')}
-          className="relative flex size-10 items-center justify-center rounded-md border border-border bg-card text-text-secondary outline-none after:absolute after:-inset-0.5 focus-visible:ring-2 focus-visible:ring-primary lg:size-11 lg:after:inset-0"
-        >
-          <Bell aria-hidden size={20} />
-        </Link>
+        <NotificationBell />
         {/* nuqs reads the URL, so the button waits in Suspense while the shell stays static */}
         <Suspense fallback={null}>
           <AddButton />

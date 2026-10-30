@@ -9,6 +9,7 @@ const OWN_PAGES = [
   '/',
   '/space',
   '/settings',
+  '/notifications',
   '/payments',
   '/payments/credits',
   '/operations',
