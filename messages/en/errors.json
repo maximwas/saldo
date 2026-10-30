@@ -31,5 +31,6 @@
   "installmentsCountInvalid": "From 1 to 360 instalments",
   "scheduleRequired": "Add 1 to 360 instalments",
   "purchaseRequired": "Choose a purchase",
-  "adjustmentNoChange": "The balance has not changed: nothing to adjust"
+  "adjustmentNoChange": "The balance has not changed: nothing to adjust",
+  "countInvalid": "Enter a whole number from 1 to 999"
 }

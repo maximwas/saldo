@@ -76,10 +76,14 @@ export function categoryOptions(
 export const refundableMinor = (purchaseMinor: number, refundedMinor: number) =>
   Math.max(0, purchaseMinor - refundedMinor)
 
-/** where «open source» leads: the credit card, the debts, else the payments list (no subscription card yet) */
+/** where «open source» leads: the credit or subscription card, the debts, else the payments list */
 export function sourceHref({ sourceType, sourceId }: Pick<OperationSource, 'sourceType' | 'sourceId'>): string {
   if (sourceType === 'credit' && sourceId) {
     return `/payments/credits/${sourceId}`
+  }
+
+  if (sourceType === 'subscription' && sourceId) {
+    return `/payments/subscriptions?sub=${sourceId}`
   }
 
   return sourceType === 'debt' ? '/payments/debts' : '/payments'
