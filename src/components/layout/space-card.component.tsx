@@ -36,7 +36,7 @@ export function SpaceCard() {
           <SyncStatus state="synced" label={translate('synced')} className="h-7 rounded-full bg-subtle" />
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <SpaceSwitcher
           spaces={ledger.ledgers}
           currentId={ledger.ledgerId}
@@ -49,7 +49,7 @@ export function SpaceCard() {
             variant="ghost"
             render={<Link href="/settings" />}
             nativeButton={false}
-            className="min-w-0 flex-1 shrink basis-0 cursor-pointer gap-1.5 bg-primary-soft text-label font-semibold"
+            className="cursor-pointer gap-1.5 px-3 bg-primary-soft text-label font-semibold"
           >
             <UserPlus aria-hidden size={16} />
             {translate('space.invite')}
