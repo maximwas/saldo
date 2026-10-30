@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button.component'
 import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
+import { cn } from '@/lib/utils/cn.utils'
 import { pageTitleKey } from './navigation.utils'
 import { SpaceSwitcher } from './space-switcher.component'
 
@@ -23,6 +24,8 @@ export function Topbar() {
   const formatter = useFormatter()
   const canWrite = ledger.role !== 'viewer'
   const titleKey = pageTitleKey(pathname)
+  // Figma 11:73245: the mobile Topbar is the title and the bell only, the space card below says the rest
+  const spacePage = pathname === '/space'
   // the space's zone, not the browser's: «today» is the same for both people in a shared space
   const today = formatter.dateTime(now(), {
     weekday: 'long',
@@ -34,7 +37,7 @@ export function Topbar() {
   return (
     <header className="flex items-center justify-between gap-4 bg-app px-5 py-3 lg:px-8 lg:py-6">
       <div className="flex min-w-0 flex-col gap-0.5 lg:flex-1">
-        <div className="lg:hidden">
+        <div className={cn('lg:hidden', spacePage && 'hidden')}>
           <SpaceSwitcher
             spaces={ledger.ledgers}
             currentId={ledger.ledgerId}
@@ -46,7 +49,14 @@ export function Topbar() {
           {titleKey ? translateNav(titleKey) : translateCommon('brand')}
         </h1>
         {/* Subtitle: text/label on mobile, text/body on desktop (Topbar 2:8195) */}
-        <p className="text-label text-text-secondary first-letter:uppercase lg:text-body">{today}</p>
+        <p
+          className={cn(
+            'text-label text-text-secondary first-letter:uppercase lg:text-body',
+            spacePage && 'max-lg:hidden',
+          )}
+        >
+          {today}
+        </p>
       </div>
       {/* shortcut: search opens nothing until ⌘K search (cmdk) lands */}
       <button

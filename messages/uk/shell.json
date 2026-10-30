@@ -10,5 +10,23 @@
     "owner": "Власник",
     "editor": "Редагує",
     "viewer": "Переглядає"
+  },
+  "space": {
+    "switch": "Змінити простір",
+    "invite": "Запросити",
+    "sections": "Розділи",
+    "signedInAs": "Saldo · ви увійшли як {email}",
+    "tiles": {
+      "accounts": "Рахунки",
+      "budget": "Бюджет",
+      "subscriptions": "Підписки",
+      "credits": "Кредити",
+      "debts": "Борги",
+      "auto": "Авто",
+      "taxes": "Податки",
+      "statistics": "Статистика",
+      "categories": "Категорії",
+      "settings": "Налаштування"
+    }
   }
 }

@@ -1,11 +1,11 @@
 import {
   EXTRA_TITLES,
-  MORE_SECTIONS,
   type NavKey,
   type NavLink,
   type NavSection,
   SIDEBAR_FOOTER_SECTION,
   SIDEBAR_SECTIONS,
+  SPACE_SECTIONS,
 } from '@/constants/navigation.constants'
 
 const matches = (pathname: string, href: string) =>
@@ -39,5 +39,6 @@ export function pageTitleKey(pathname: string): NavKey | null {
   return EXTRA_TITLES.find((extra) => extra.href === activeHref(pathname, EXTRA_TITLES))?.key ?? null
 }
 
-/** More in the TabBar is active on its own page and on every section it lists */
-export const isMoreActive = (pathname: string) => pathname === '/more' || activeHref(pathname, MORE_SECTIONS) !== null
+/** Space in the TabBar is active on its own page and on every section the TabBar has no room for */
+export const isSpaceActive = (pathname: string) =>
+  pathname === '/space' || activeHref(pathname, SPACE_SECTIONS) !== null

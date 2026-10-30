@@ -25,7 +25,7 @@ const MENU_PATHS = [
   '/taxes/settings',
   '/statistics',
   '/settings',
-  '/more',
+  '/space',
 ]
 
 for (const path of MENU_PATHS) {

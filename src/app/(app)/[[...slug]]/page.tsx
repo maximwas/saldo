@@ -5,7 +5,7 @@ import { pageTitleKey } from '@/components/layout/navigation.utils'
 import { EXTRA_TITLES, SIDEBAR_FOOTER_SECTION, SIDEBAR_SECTIONS } from '@/constants/navigation.constants'
 
 // shortcut: one catch-all stub for every §2 page; each feature adds its own page.tsx and leaves this list
-const OWN_PAGES = ['/more', '/settings']
+const OWN_PAGES = ['/space', '/settings']
 
 const STUB_HREFS = [
   ...[...SIDEBAR_SECTIONS, SIDEBAR_FOOTER_SECTION].flatMap((section) => [
