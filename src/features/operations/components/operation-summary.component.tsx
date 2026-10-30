@@ -16,7 +16,7 @@ export function OperationSummary({ totals, baseCurrency }: OperationSummaryProps
       key: 'income' as const,
       minor: totals.incomeMinor,
       kind: 'income' as const,
-      plus: true,
+      plus: totals.incomeMinor > 0,
     },
     {
       key: 'expenses' as const,

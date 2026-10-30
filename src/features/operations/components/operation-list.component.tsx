@@ -98,7 +98,8 @@ export function OperationList({
       return `${formatMinor(row.amountMinor, row.currency, locale)} · ${translate('row.rate', { rate: rate ? formatRate(rate, locale) : '' })}`
     }
 
-    if (row.currency !== row.baseCurrency && row.baseAmountMinor === null) {
+    // a transfer has no base amount by design: only an expense or income without a rate is «unknown»
+    if (item.kind !== 'transfer' && row.currency !== row.baseCurrency && row.baseAmountMinor === null) {
       return translate('row.rateUnknown')
     }
 
@@ -253,7 +254,8 @@ export function OperationList({
                   <button
                     type="button"
                     onClick={() => onSelectAction(item)}
-                    className={`${ROW_BUTTON} flex min-h-16 w-full items-center gap-3 py-2`}
+                    // a transfer shows two amounts: they drop to their own line instead of cutting the title
+                    className={`${ROW_BUTTON} flex min-h-16 w-full items-center gap-x-3 py-2 ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
                   >
                     <CategoryBadge
                       name={category(item.row.categoryId)?.name ?? null}
@@ -267,7 +269,11 @@ export function OperationList({
                         {paperclip(item)}
                       </span>
                     </span>
-                    <span className="text-body font-medium">{amountOf(item)}</span>
+                    <span
+                      className={`text-body font-medium ${item.kind === 'transfer' ? 'basis-full text-right' : ''}`}
+                    >
+                      {amountOf(item)}
+                    </span>
                   </button>
                 </li>
               ))}
