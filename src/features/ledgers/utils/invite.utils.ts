@@ -1,3 +1,4 @@
+import { stringToUint8Array, uint8ArrayToBase64, uint8ArrayToHex } from 'uint8array-extras'
 import type { PgError } from '@/lib/supabase/pg-error.utils'
 import type { LedgerRole } from '@/types/supabase.types'
 
@@ -69,3 +70,16 @@ const STATUS_BY_ERROR: Partial<Record<PgError['kind'], InviteStatus>> = {
 
 // null: not an answer about the invite (network, server), so the page keeps the card and shows the error banner
 export const inviteStatusFromError = (kind: PgError['kind']) => STATUS_BY_ERROR[kind] ?? null
+
+const BYTE_LENGTH = 32
+
+/** 32 random bytes as base64url: the link's secret. Made in the browser, shown once, never stored or logged. */
+export const createInviteToken = () =>
+  uint8ArrayToBase64(crypto.getRandomValues(new Uint8Array(BYTE_LENGTH)), { urlSafe: true })
+
+/** what accept_ledger_invite compares: SHA-256 of the token's UTF-8 bytes, as PostgREST's bytea hex */
+export async function hashInviteToken(token: string) {
+  const digest = await crypto.subtle.digest('SHA-256', stringToUint8Array(token))
+
+  return `\\x${uint8ArrayToHex(new Uint8Array(digest))}`
+}

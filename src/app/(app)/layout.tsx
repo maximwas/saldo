@@ -1,8 +1,10 @@
+import { Suspense } from 'react'
 import { Fab } from '@/components/layout/fab.component'
 import { PageTransition } from '@/components/layout/page-transition.component'
 import { Sidebar } from '@/components/layout/sidebar.component'
 import { TabBar } from '@/components/layout/tab-bar.component'
 import { Topbar } from '@/components/layout/topbar.component'
+import { AddOperationHost } from '@/features/operations/components/add-operation-host.component'
 
 // Overview desktop 2:8237: Sidebar 232 + Main (content padding 0 32 48); mobile 2:8735: content padding 4 20 32,
 // TabBar fixed at the bottom, FAB over it. Desktop starts at lg (Figma has no tablet frame). Between pages only the
@@ -18,7 +20,11 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
         </main>
       </div>
       <TabBar />
-      <Fab />
+      {/* ?add= is read from the URL: both wait in Suspense so the shell stays static (cacheComponents) */}
+      <Suspense fallback={null}>
+        <Fab />
+        <AddOperationHost />
+      </Suspense>
     </div>
   )
 }
