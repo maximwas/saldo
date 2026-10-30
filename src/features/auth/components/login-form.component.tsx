@@ -179,9 +179,12 @@ export function LoginForm() {
       <Button type="submit" className="w-full" disabled={isPending}>
         {translate('submit')}
       </Button>
-      <div className="hidden gap-2 border-t border-border pt-4 md:flex">
-        <InfoIcon />
-        <p className="flex-1 text-caption text-text-secondary">
+      <div className="hidden gap-2 border-t border-border pt-4 text-caption md:flex">
+        {/* icon box = one text line (h-lh), so the icon is centred on the first line, however many lines follow */}
+        <span className="flex h-lh items-center">
+          <InfoIcon />
+        </span>
+        <p className="flex-1 text-text-secondary">
           {translate('inviteOnly')} {translate('twoStepNote')}
         </p>
       </div>
