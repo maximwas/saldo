@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { z } from 'zod'
+import { THEMES } from '@/constants/theme.constants'
 import { LOCALE_COOKIE, LOCALES } from '@/i18n/locale.utils'
 import { verifySession } from '@/lib/auth/dal.server'
 import { logger } from '@/lib/logger/logger.server'
@@ -36,4 +37,18 @@ export async function setLocale(rawLocale: string) {
     path: '/',
     maxAge: ONE_YEAR_SECONDS,
   })
+}
+
+// next-themes has already switched the page; this only makes the choice follow the account to other devices
+export async function saveTheme(rawTheme: string) {
+  const theme = z.enum(THEMES).parse(rawTheme)
+  const session = await verifySession()
+  const supabase = await getServerSupabase()
+  const { error } = await supabase.from('user_settings').update({ theme }).eq('user_id', session.userId)
+
+  if (error) {
+    const { kind } = logPgError(log, error, 'theme update failed')
+
+    throw new Error(`Theme update failed: ${kind}`)
+  }
 }

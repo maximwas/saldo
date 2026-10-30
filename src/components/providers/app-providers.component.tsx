@@ -3,10 +3,12 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { MotionConfig } from 'motion/react'
 import { useLocale } from 'next-intl'
+import { useTheme } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { useEffect, useState } from 'react'
 import { Toaster } from 'sonner'
 import { MOTION } from '@/constants/motion.constants'
+import type { AppTheme } from '@/constants/theme.constants'
 import { ClockProvider } from '@/contexts/clock.context'
 import { type ActiveLedger, LedgerProvider } from '@/contexts/ledger.context'
 import { makeQueryClient } from '@/lib/query/query-client'
@@ -21,12 +23,23 @@ const MOTION_DEFAULTS = {
 
 type AppProvidersProps = {
   ledger: ActiveLedger | null
+  /** user_settings.theme; null when signed out */
+  theme: AppTheme | null
   children: React.ReactNode
 }
 
-export function AppProviders({ ledger, children }: AppProvidersProps) {
+export function AppProviders({ ledger, theme, children }: AppProvidersProps) {
   const [queryClient] = useState(makeQueryClient)
   const locale = useLocale()
+  const { setTheme } = useTheme()
+
+  // next-themes paints the device's last choice before hydration (localStorage); the account's choice then wins, so
+  // a theme picked on another device follows after sign-in or a reload
+  useEffect(() => {
+    if (theme) {
+      setTheme(theme)
+    }
+  }, [theme, setTheme])
 
   // <html lang> renders outside the Suspense boundary that reads the locale (cacheComponents), so it follows here
   useEffect(() => {
