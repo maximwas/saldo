@@ -80,7 +80,7 @@
 | GitHub Actions | — | нічний бекап, CI на PR без secrets: job `check` (`pnpm check` + `supabase test db`) і job `e2e` (оцінка 7–12 хв) |
 | gitleaks | 8.30 (MIT; лише security-патчі, drop-in заміна — betterleaks) | пошук секретів у lefthook pre-commit і CI |
 | age | 1.3 (BSD-3-Clause, apt на ubuntu-latest) | шифрування бекапу на публічний ключ |
-| pgTAP + basejump-supabase_test_helpers | 0.0.6 (MIT, через dbdev) | тести RLS просторів (`supabase test db`) |
+| pgTAP | 1.3.3 (у стеку Supabase) | тести RLS просторів (`supabase test db`); вхід ролями — хелпер `pg_temp.login`, без basejump/dbdev (`docs/conventions.md` §6.2) |
 | pnpm | 12.14.0 (`packageManager`), Node ≥ 24 | менеджер пакетів |
 
 ## Ліміти безкоштовних тарифів, що мають значення

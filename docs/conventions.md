@@ -643,7 +643,7 @@ pre-commit:
 ```
 
 `next typegen` перед `tsc` генерує глобальні `LayoutProps` / `PageProps` і типи `typedRoutes` у `.next/types`.
-TODO(0.10b): у `package.json` поки немає `test:db` і `&& supabase test db` у `check` — додаються разом із Supabase.
+`supabase test db` у `check` потребує запущеного локального стеку (`supabase start`).
 
 `pnpm check` e2e не запускає: він повільний (збірка + браузер). E2E — `pnpm test:e2e` локально перед PR фази й
 окремий job `e2e` у CI.
@@ -735,8 +735,12 @@ RPC-інваріанти без UI — pgTAP або ручна перевірк�
 
 ### 6.2 БД (pgTAP)
 
-`supabase test db`, `basejump-supabase_test_helpers` — RLS кожної таблиці й запрошень (§0), обов'язковий з
-першої міграції.
+`supabase test db` — RLS кожної таблиці й запрошень (§0), обов'язковий з першої міграції. Файл — одна транзакція
+(`begin` … `rollback`), користувачі — прямий insert у `auth.users` (тригер дає простір), вхід —
+`pg_temp.login(uuid)`: `set_config('request.jwt.claims', …)` + `set_config('role', 'authenticated', true)`, назад —
+`reset role` (взірець — `supabase/tests/ledgers.test.sql`). `basejump-supabase_test_helpers` не беремо: dbdev
+ставиться в БД через `pg_tle` + `http` запитом до api.database.dev з вшитим JWT на кожному `supabase start` / в CI —
+мережа в тестах і JWT у публічному репо заради чотирьох рядків хелпера.
 
 ### 6.3 E2E (Playwright)
 
