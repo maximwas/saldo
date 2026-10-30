@@ -20,6 +20,40 @@ export type LedgerCategoryOption = {
   archived: boolean
 }
 
+type AccountOptionRow = {
+  id: string
+  name: string
+  currency: string
+  archived_at: string | null
+}
+
+const toAccountOption = (row: AccountOptionRow): LedgerAccountOption => ({
+  id: row.id,
+  name: row.name,
+  currency: row.currency as LedgerAccountOption['currency'],
+  archived: row.archived_at !== null,
+})
+
+type CategoryOptionRow = {
+  id: string
+  name: string
+  kind: string
+  color: string | null
+  icon: string | null
+  parent_id: string | null
+  archived_at: string | null
+}
+
+const toCategoryOption = (row: CategoryOptionRow): LedgerCategoryOption => ({
+  id: row.id,
+  name: row.name,
+  kind: row.kind === 'income' ? 'income' : 'expense',
+  color: row.color,
+  icon: row.icon,
+  parentId: row.parent_id,
+  archived: row.archived_at !== null,
+})
+
 /** every account of the space, archived ones flagged: forms drop them, the list still names them */
 export async function listAccountOptions(supabase: SaldoClient, ledgerId: string): Promise<LedgerAccountOption[]> {
   const { data, error } = await supabase
@@ -32,12 +66,7 @@ export async function listAccountOptions(supabase: SaldoClient, ledgerId: string
     throw error
   }
 
-  return data.map((account) => ({
-    id: account.id,
-    name: account.name,
-    currency: account.currency as LedgerAccountOption['currency'],
-    archived: account.archived_at !== null,
-  }))
+  return data.map(toAccountOption)
 }
 
 export async function listCategoryOptions(supabase: SaldoClient, ledgerId: string): Promise<LedgerCategoryOption[]> {
@@ -51,13 +80,5 @@ export async function listCategoryOptions(supabase: SaldoClient, ledgerId: strin
     throw error
   }
 
-  return data.map((category) => ({
-    id: category.id,
-    name: category.name,
-    kind: category.kind === 'income' ? 'income' : 'expense',
-    color: category.color,
-    icon: category.icon,
-    parentId: category.parent_id,
-    archived: category.archived_at !== null,
-  }))
+  return data.map(toCategoryOption)
 }

@@ -16,6 +16,36 @@ const HTTP_STATUS = {
   otherEmail: 403,
 } as const
 
+const closedResponse = (status: keyof typeof HTTP_STATUS | 'open') => {
+  const closed = status === 'open' ? 'notFound' : status
+
+  return NextResponse.json({ error: closed }, { status: HTTP_STATUS[closed] })
+}
+
+type CreateUserError = {
+  code?: string
+  name: string
+}
+
+// null = the account was created
+function createUserFailure(error: CreateUserError | null) {
+  if (!error) {
+    return null
+  }
+
+  if (error.code === 'email_exists') {
+    return NextResponse.json({ error: 'accountExists' }, { status: 409 })
+  }
+
+  if (error.code === 'weak_password') {
+    return NextResponse.json({ error: 'weakPassword' }, { status: 422 })
+  }
+
+  log.error({ code: error.code ?? error.name }, 'invite account creation failed')
+
+  return NextResponse.json({ error: 'unknown' }, { status: 500 })
+}
+
 // Sign-up is off: this is the only way to get an account, and only for the email of a valid, unused, unexpired
 // invite (ADR 20). Joining the space is accept_ledger_invite, called next by the new user under their own JWT.
 // shortcut: no rate limit; a token is 256 random bits and a malformed one never reaches the database. Add a Vercel
@@ -36,9 +66,7 @@ export async function POST(request: Request) {
   })
 
   if (!invite || status !== 'open') {
-    const closed = status === 'open' ? 'notFound' : status
-
-    return NextResponse.json({ error: closed }, { status: HTTP_STATUS[closed] })
+    return closedResponse(status)
   }
 
   const { error } = await getAdminSupabase().auth.admin.createUser({
@@ -47,18 +75,10 @@ export async function POST(request: Request) {
     email_confirm: true,
   })
 
-  if (error?.code === 'email_exists') {
-    return NextResponse.json({ error: 'accountExists' }, { status: 409 })
-  }
+  const failure = createUserFailure(error)
 
-  if (error?.code === 'weak_password') {
-    return NextResponse.json({ error: 'weakPassword' }, { status: 422 })
-  }
-
-  if (error) {
-    log.error({ code: error.code ?? error.name }, 'invite account creation failed')
-
-    return NextResponse.json({ error: 'unknown' }, { status: 500 })
+  if (failure) {
+    return failure
   }
 
   log.info({ ledgerId: invite.ledgerId }, 'account created from an invite')

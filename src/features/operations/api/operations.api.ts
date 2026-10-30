@@ -2,18 +2,18 @@ import { getLedgerRates } from '@/lib/finance/ledger-fx.api'
 import { listAccountOptions, listCategoryOptions } from '@/lib/finance/ledger-options.api'
 import type { FxRate } from '@/lib/money/fx.utils'
 import type { SaldoClient } from '@/types/supabase.types'
-import type {
-  AccountOption,
-  CategoryOption,
-  OperationFilters,
-  OperationRow,
-  OperationsData,
-  Receipt,
-  TransferInfo,
-} from '../operations.types'
+import type { AccountOption, CategoryOption, OperationFilters, OperationsData, Receipt } from '../operations.types'
 import { type CreateOperationInput, createOperationInputSchema } from '../schemas/create-operation-input.schema'
 import { type CreateTransferInput, createTransferInputSchema } from '../schemas/create-transfer-input.schema'
 import { type UpdateOperationInput, updateOperationInputSchema } from '../schemas/update-operation-input.schema'
+import {
+  chunks,
+  indexTransfers,
+  kindsOfType,
+  type TransferDbRow,
+  toOperationRow,
+  transferIdsOf,
+} from '../utils/operation-rows.utils'
 
 /** shortcut: one page of the newest operations; a keyset «load more» comes with the statistics phase */
 const OPERATIONS_LIMIT = 500
@@ -29,15 +29,8 @@ type ListParams = {
   filters: OperationFilters
 }
 
-// a function declaration: dependency-cruiser reads a generic arrow in .ts as JSX and adds a react import
-function chunks<Item>(items: Item[], size: number) {
-  return Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
-    items.slice(index * size, (index + 1) * size),
-  )
-}
-
-export async function listOperations(client: SaldoClient, { ledgerId, filters }: ListParams): Promise<OperationsData> {
-  let query = client
+const listQuery = (client: SaldoClient, ledgerId: string) =>
+  client
     .from('operations')
     .select(OPERATION_COLUMNS)
     .eq('ledger_id', ledgerId)
@@ -46,101 +39,102 @@ export async function listOperations(client: SaldoClient, { ledgerId, filters }:
     .order('id')
     .limit(OPERATIONS_LIMIT + 1)
 
-  if (filters.from && filters.to) {
-    query = query.gte('occurred_on', filters.from).lte('occurred_on', filters.to)
+type ListQuery = ReturnType<typeof listQuery>
+
+function filterByPeriod(query: ListQuery, { from, to }: OperationFilters): ListQuery {
+  return from && to ? query.gte('occurred_on', from).lte('occurred_on', to) : query
+}
+
+function filterByType(query: ListQuery, { type }: OperationFilters): ListQuery {
+  const kinds = kindsOfType(type)
+
+  return kinds ? query.in('kind', kinds) : query
+}
+
+function filterByOwners(query: ListQuery, { accountId, categoryId, createdBy }: OperationFilters): ListQuery {
+  let filtered = query
+
+  if (accountId) {
+    filtered = filtered.eq('account_id', accountId)
   }
 
-  if (filters.accountId) {
-    query = query.eq('account_id', filters.accountId)
+  if (categoryId) {
+    filtered = filtered.eq('category_id', categoryId)
   }
 
-  if (filters.categoryId) {
-    query = query.eq('category_id', filters.categoryId)
+  if (createdBy) {
+    filtered = filtered.eq('created_by', createdBy)
   }
 
-  if (filters.createdBy) {
-    query = query.eq('created_by', filters.createdBy)
+  return filtered
+}
+
+async function fetchOperations(client: SaldoClient, { ledgerId, filters }: ListParams) {
+  const query = filterByType(filterByPeriod(filterByOwners(listQuery(client, ledgerId), filters), filters), filters)
+  const { data, error } = await query
+
+  if (error) {
+    throw error
   }
 
-  if (filters.type === 'expense') {
-    query = query.in('kind', ['expense', 'refund'])
-  } else if (filters.type === 'income') {
-    query = query.eq('kind', 'income')
-  } else if (filters.type === 'transfer') {
-    query = query.in('kind', ['transfer_out', 'transfer_in'])
-  }
+  return data
+}
 
-  const operations = await query
-
-  if (operations.error) {
-    throw operations.error
-  }
-
-  const truncated = operations.data.length > OPERATIONS_LIMIT
-  const rows: OperationRow[] = operations.data.slice(0, OPERATIONS_LIMIT).map((row) => ({
-    id: row.id,
-    kind: row.kind,
-    direction: row.direction === 'in' ? 'in' : 'out',
-    accountId: row.account_id,
-    amountMinor: row.amount_minor,
-    currency: row.currency,
-    baseAmountMinor: row.base_amount_minor,
-    baseCurrency: row.base_currency,
-    categoryId: row.category_id,
-    counterparty: row.counterparty,
-    note: row.note,
-    occurredAt: row.occurred_at,
-    occurredOn: row.occurred_on,
-    transferId: row.transfer_id,
-    version: row.version,
-    createdBy: row.created_by,
-  }))
-  const transferIds = [...new Set(rows.flatMap((row) => (row.transferId ? [row.transferId] : [])))]
-  const [transferResults, receipts] = await Promise.all([
-    Promise.all(
-      chunks(transferIds, IN_CHUNK).map((ids) =>
-        client
-          .from('transfers')
-          .select(
-            'id, from_account_id, to_account_id, from_amount_minor, from_currency, to_amount_minor, to_currency, fee_minor',
-          )
-          .eq('ledger_id', ledgerId)
-          .in('id', ids),
-      ),
+/** the transfers behind the loaded rows, a chunk of ids per request */
+async function fetchTransfers(client: SaldoClient, ledgerId: string, transferIds: string[]) {
+  const results = await Promise.all(
+    chunks(transferIds, IN_CHUNK).map((ids) =>
+      client
+        .from('transfers')
+        .select(
+          'id, from_account_id, to_account_id, from_amount_minor, from_currency, to_amount_minor, to_currency, fee_minor',
+        )
+        .eq('ledger_id', ledgerId)
+        .in('id', ids),
     ),
-    // shortcut: every receipt owner of the space, not only the loaded rows; ids in a URL would be too long for 500 rows
-    client.from('attachments').select('owner_id').eq('ledger_id', ledgerId).eq('owner_type', 'operation').limit(5000),
-  ])
-  const transfers: Record<string, TransferInfo> = {}
+  )
+  const rows: TransferDbRow[] = []
 
-  for (const result of transferResults) {
+  for (const result of results) {
     if (result.error) {
       throw result.error
     }
 
-    for (const transfer of result.data) {
-      transfers[transfer.id] = {
-        id: transfer.id,
-        fromAccountId: transfer.from_account_id,
-        toAccountId: transfer.to_account_id,
-        fromAmountMinor: transfer.from_amount_minor,
-        fromCurrency: transfer.from_currency,
-        toAmountMinor: transfer.to_amount_minor,
-        toCurrency: transfer.to_currency,
-        feeMinor: transfer.fee_minor,
-      }
-    }
+    rows.push(...result.data)
   }
 
-  if (receipts.error) {
-    throw receipts.error
+  return rows
+}
+
+// shortcut: every receipt owner of the space, not only the loaded rows; ids in a URL would be too long for 500 rows
+async function fetchReceiptOwnerIds(client: SaldoClient, ledgerId: string) {
+  const { data, error } = await client
+    .from('attachments')
+    .select('owner_id')
+    .eq('ledger_id', ledgerId)
+    .eq('owner_type', 'operation')
+    .limit(5000)
+
+  if (error) {
+    throw error
   }
+
+  return data.map((receipt) => receipt.owner_id)
+}
+
+export async function listOperations(client: SaldoClient, params: ListParams): Promise<OperationsData> {
+  const found = await fetchOperations(client, params)
+  const rows = found.slice(0, OPERATIONS_LIMIT).map(toOperationRow)
+  const [transferRows, receiptIds] = await Promise.all([
+    fetchTransfers(client, params.ledgerId, transferIdsOf(rows)),
+    fetchReceiptOwnerIds(client, params.ledgerId),
+  ])
 
   return {
     rows,
-    transfers,
-    receiptIds: receipts.data.map((receipt) => receipt.owner_id),
-    truncated,
+    transfers: indexTransfers(transferRows),
+    receiptIds,
+    truncated: found.length > OPERATIONS_LIMIT,
   }
 }
 
@@ -273,6 +267,24 @@ export async function uploadReceipt(client: SaldoClient, { ledgerId, operationId
   }
 }
 
+type ReceiptRow = {
+  id: string
+  storage_path: string
+  mime: string
+}
+
+type SignedUrl = {
+  path: string | null
+  signedUrl: string | null
+}
+
+const toReceipt = (row: ReceiptRow, signed: readonly SignedUrl[]): Receipt => ({
+  id: row.id,
+  path: row.storage_path,
+  mime: row.mime,
+  url: signed.find((entry) => entry.path === row.storage_path)?.signedUrl ?? null,
+})
+
 export async function listReceipts(client: SaldoClient, operationId: string): Promise<Receipt[]> {
   const rows = await client
     .from('attachments')
@@ -298,12 +310,7 @@ export async function listReceipts(client: SaldoClient, operationId: string): Pr
     throw signed.error
   }
 
-  return rows.data.map((row) => ({
-    id: row.id,
-    path: row.storage_path,
-    mime: row.mime,
-    url: signed.data.find((entry) => entry.path === row.storage_path)?.signedUrl ?? null,
-  }))
+  return rows.data.map((row) => toReceipt(row, signed.data))
 }
 
 export async function deleteReceipt(client: SaldoClient, receipt: Pick<Receipt, 'id' | 'path'>) {

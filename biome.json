@@ -15,13 +15,22 @@
           "level": "error",
           "options": { "filenameCases": ["kebab-case"], "requireAscii": true }
         },
-        "useBlockStatements": "error"
+        "useBlockStatements": "error",
+        "noNestedTernary": "error"
       },
       "performance": { "noBarrelFile": "error", "noReExportAll": "error" }
     }
   },
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "overrides": [
+    {
+      "includes": [
+        "src/components/ui/amount.component.tsx",
+        "src/features/operations/components/operation-editor.component.tsx",
+        "src/features/operations/components/receipt-field.component.tsx"
+      ],
+      "linter": { "rules": { "style": { "noNestedTernary": "off" } } }
+    },
     {
       "includes": ["src/types/database.types.ts"],
       "javascript": { "formatter": { "expand": "always" } },

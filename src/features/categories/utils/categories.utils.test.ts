@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCategoryTree, type CategoryView, moveWithinSiblings } from './categories.utils'
+import { buildCategoryTree, type CategoryView, moveWithinSiblings, toCategory } from './categories.utils'
 
 const category = (patch: Partial<CategoryView> & Pick<CategoryView, 'id'>): CategoryView => ({
   kind: 'expense',
@@ -119,5 +119,33 @@ describe('moveWithinSiblings', () => {
         sortOrder: 2,
       },
     ])
+  })
+})
+
+describe('toCategory', () => {
+  it('maps columns to the view and keeps the parent and archive date null when unset', () => {
+    expect(
+      toCategory({
+        id: 'c1',
+        kind: 'income',
+        parent_id: null,
+        name: 'Salary',
+        color: null,
+        icon: 'banknote',
+        sort_order: 3,
+        archived_at: null,
+        version: 2,
+      }),
+    ).toEqual({
+      id: 'c1',
+      kind: 'income',
+      parentId: null,
+      name: 'Salary',
+      color: null,
+      icon: 'banknote',
+      sortOrder: 3,
+      archivedAt: null,
+      version: 2,
+    })
   })
 })

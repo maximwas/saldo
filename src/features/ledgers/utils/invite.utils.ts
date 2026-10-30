@@ -40,6 +40,15 @@ type InviteStatusInput = {
   now: Date
 }
 
+// signed out: maybe the same person on another device; after login the check runs again
+const acceptedStatus = (invite: InviteFacts, session: InviteSession | null): InviteStatus =>
+  !session || invite.acceptedBy === session.userId ? 'accepted' : 'expired'
+
+const isClosed = (invite: InviteFacts, now: Date) => Boolean(invite.revokedAt) || new Date(invite.expiresAt) <= now
+
+const isOtherEmail = (invite: InviteFacts, session: InviteSession | null) =>
+  session !== null && session.email?.toLowerCase() !== invite.email.toLowerCase()
+
 // Mirrors accept_ledger_invite's checks, so the page shows the right card before anyone presses a button
 export function inviteStatus({ invite, session, now }: InviteStatusInput): InviteStatus {
   if (!invite) {
@@ -47,15 +56,14 @@ export function inviteStatus({ invite, session, now }: InviteStatusInput): Invit
   }
 
   if (invite.acceptedAt) {
-    // signed out: maybe the same person on another device; after login the check runs again
-    return !session || invite.acceptedBy === session.userId ? 'accepted' : 'expired'
+    return acceptedStatus(invite, session)
   }
 
-  if (invite.revokedAt || new Date(invite.expiresAt) <= now) {
+  if (isClosed(invite, now)) {
     return 'expired'
   }
 
-  if (session && session.email?.toLowerCase() !== invite.email.toLowerCase()) {
+  if (isOtherEmail(invite, session)) {
     return 'otherEmail'
   }
 

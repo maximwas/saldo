@@ -35,6 +35,57 @@ export type LedgerSettings = {
   nextIncomeOn: string | null
 }
 
+type MemberRow = {
+  user_id: string
+  role: string
+  display_name: string | null
+  joined_at: string
+}
+
+const toMember = (row: MemberRow, email: string | null): Member => ({
+  userId: row.user_id,
+  name: row.display_name,
+  email,
+  role: row.role as LedgerRole,
+  joinedAt: row.joined_at,
+})
+
+type PendingInviteRow = {
+  id: string
+  email: string
+  role: string
+  created_at: string
+  expires_at: string
+}
+
+const toPendingInvite = (row: PendingInviteRow): PendingInvite => ({
+  id: row.id,
+  email: row.email,
+  role: row.role as PendingInvite['role'],
+  createdAt: row.created_at,
+  expiresAt: row.expires_at,
+})
+
+type LedgerSettingsRow = {
+  id: string
+  version: number
+  name: string
+  base_currency: string
+  time_zone: string
+  week_starts_on: number
+  next_income_on: string | null
+}
+
+const toLedgerSettings = (row: LedgerSettingsRow): LedgerSettings => ({
+  id: row.id,
+  version: row.version,
+  name: row.name,
+  baseCurrency: row.base_currency,
+  timeZone: row.time_zone,
+  weekStartsOn: row.week_starts_on,
+  nextIncomeOn: row.next_income_on,
+})
+
 // Members come through RLS (only a member sees them); emails live in auth.users, so the secret key reads them for
 // exactly those ids. Members already see each other in the space, so this exposes nothing new.
 export async function getMembers(ledgerId: string): Promise<Member[]> {
@@ -54,13 +105,7 @@ export async function getMembers(ledgerId: string): Promise<Member[]> {
   const admin = getAdminSupabase()
   const users = await Promise.all(data.map((row) => admin.auth.admin.getUserById(row.user_id)))
 
-  return data.map((row, index) => ({
-    userId: row.user_id,
-    name: row.display_name,
-    email: users[index].data.user?.email ?? null,
-    role: row.role as LedgerRole,
-    joinedAt: row.joined_at,
-  }))
+  return data.map((row, index) => toMember(row, users[index].data.user?.email ?? null))
 }
 
 // ledger_invites RLS is owner-only: for anyone else this is simply empty, so callers gate the section by role too
@@ -81,13 +126,7 @@ export async function getPendingInvites(ledgerId: string, now: Date): Promise<Pe
     throw new Error('Invites lookup failed')
   }
 
-  return data.map((row) => ({
-    id: row.id,
-    email: row.email,
-    role: row.role as PendingInvite['role'],
-    createdAt: row.created_at,
-    expiresAt: row.expires_at,
-  }))
+  return data.map(toPendingInvite)
 }
 
 // The signed-in member's own name in the space; null = not set (the access list falls back to the email prefix)
@@ -123,13 +162,5 @@ export async function getLedgerSettings(ledgerId: string): Promise<LedgerSetting
     throw new Error('Ledger settings lookup failed')
   }
 
-  return {
-    id: data.id,
-    version: data.version,
-    name: data.name,
-    baseCurrency: data.base_currency,
-    timeZone: data.time_zone,
-    weekStartsOn: data.week_starts_on,
-    nextIncomeOn: data.next_income_on,
-  }
+  return toLedgerSettings(data)
 }

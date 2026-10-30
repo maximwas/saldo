@@ -121,4 +121,21 @@ export default tseslint.config(
       '@typescript-eslint/no-deprecated': 'error',
     },
   },
+  // logic lives in small named functions (docs/conventions.md §3a2); components and pages are exempt: JSX is long by nature
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/*.component.tsx', 'src/**/page.tsx', 'src/**/layout.tsx', 'src/**/*.test.ts', 'src/types/**'],
+    rules: {
+      complexity: ['error', 8],
+      'max-lines-per-function': [
+        'error',
+        {
+          max: 40,
+          skipBlankLines: true,
+          skipComments: true,
+        },
+      ],
+      'max-depth': ['error', 3],
+    },
+  },
 )

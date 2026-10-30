@@ -11,6 +11,27 @@ const log = logger.child({
   module: 'member-names',
 })
 
+type MemberNameRow = {
+  user_id: string
+  display_name: string | null
+}
+
+/** [userId, name]: the display name, else the email prefix, else '' */
+async function memberNameEntry(
+  admin: ReturnType<typeof getAdminSupabase>,
+  row: MemberNameRow,
+): Promise<[string, string]> {
+  const name = row.display_name?.trim()
+
+  if (name) {
+    return [row.user_id, name]
+  }
+
+  const { data: user } = await admin.auth.admin.getUserById(row.user_id)
+
+  return [row.user_id, user.user?.email?.split('@')[0] ?? '']
+}
+
 /** userId → display name of the space's members; no name set = the part of the email before «@» */
 export async function listMemberNames(rawLedgerId: string): Promise<Record<string, string>> {
   const ledgerId = z.uuid().parse(rawLedgerId)
@@ -32,19 +53,7 @@ export async function listMemberNames(rawLedgerId: string): Promise<Record<strin
   }
 
   const admin = getAdminSupabase()
-  const entries = await Promise.all(
-    data.map(async (row): Promise<[string, string]> => {
-      const name = row.display_name?.trim()
-
-      if (name) {
-        return [row.user_id, name]
-      }
-
-      const { data: user } = await admin.auth.admin.getUserById(row.user_id)
-
-      return [row.user_id, user.user?.email?.split('@')[0] ?? '']
-    }),
-  )
+  const entries = await Promise.all(data.map((row) => memberNameEntry(admin, row)))
 
   return Object.fromEntries(entries.filter(([, name]) => name !== ''))
 }

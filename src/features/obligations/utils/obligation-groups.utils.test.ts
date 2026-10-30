@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { localDate } from '@/lib/utils/clock.utils'
-import { addDaysIso, groupByBucket } from './obligation-groups.utils'
+import { addDaysIso, bucketOf, groupByBucket } from './obligation-groups.utils'
 
 const due = (dueOn: string) => ({ dueOn })
 
@@ -29,5 +29,17 @@ describe('groupByBucket', () => {
 
   it('adds days across a month and year end', () => {
     expect(addDaysIso('2026-12-30', 3)).toBe('2027-01-02')
+  })
+})
+
+describe('bucketOf', () => {
+  it.each([
+    ['2026-10-29', 'overdue'],
+    ['2026-10-30', 'today'],
+    ['2026-10-31', 'week'],
+    ['2026-11-06', 'week'],
+    ['2026-11-07', 'later'],
+  ])('puts %s into %s', (dueOn, bucket) => {
+    expect(bucketOf(dueOn, '2026-10-30', '2026-11-06')).toBe(bucket)
   })
 })

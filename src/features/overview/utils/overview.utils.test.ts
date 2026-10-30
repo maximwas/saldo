@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { isoToDate, monthRange, sumMonth } from './overview.utils'
+import {
+  isoToDate,
+  monthRange,
+  type OverviewAccountRow,
+  sumMonth,
+  toAvailableObligation,
+  toOverviewAccount,
+  toUpcoming,
+  withBalances,
+} from './overview.utils'
 
 describe('isoToDate', () => {
   it('keeps the calendar day in UTC', () => {
@@ -70,5 +79,109 @@ describe('sumMonth', () => {
         },
       ]).unknownCount,
     ).toBe(1)
+  })
+})
+
+const accountRow = {
+  id: 'a1',
+  name: 'Card',
+  kind: 'bank',
+  currency: 'EUR',
+  include_in_available: true,
+  opening_balance_minor: 100,
+}
+
+describe('withBalances', () => {
+  it('takes the balance from account_balances, else the opening balance', () => {
+    const rows = withBalances(
+      [
+        accountRow,
+        {
+          ...accountRow,
+          id: 'a2',
+        },
+      ],
+      [
+        {
+          account_id: 'a1',
+          balance_minor: 900,
+        },
+      ],
+    )
+
+    expect(rows.map((row) => row.balanceMinor)).toEqual([900, 100])
+  })
+})
+
+describe('toOverviewAccount', () => {
+  const row: OverviewAccountRow = {
+    ...accountRow,
+    balanceMinor: 1000,
+  }
+  const rates = [
+    {
+      baseCurrency: 'EUR',
+      quoteCurrency: 'UAH',
+      rate: '41.5',
+      rateOn: '2026-10-01',
+      source: 'manual' as const,
+    },
+  ]
+
+  it('converts to the base currency on the rate of today', () => {
+    const rateContext = {
+      baseCurrency: 'UAH',
+      rates,
+      today: '2026-10-30',
+    }
+
+    expect(toOverviewAccount(row, rateContext)).toMatchObject({
+      balanceMinor: 1000,
+      baseMinor: 41_500,
+      includeInAvailable: true,
+    })
+  })
+
+  it('has no base value, not 0, without a rate', () => {
+    const rateContext = {
+      baseCurrency: 'UAH',
+      rates: [],
+      today: '2026-10-30',
+    }
+
+    expect(toOverviewAccount(row, rateContext).baseMinor).toBeNull()
+  })
+})
+
+describe('obligation mappers', () => {
+  const dueRow = {
+    obligation_id: 'o1',
+    title: 'Rent',
+    source_type: 'manual',
+    direction: 'out',
+    due_on: '2026-11-01',
+    remaining_minor: null,
+    currency: 'UAH',
+    state: 'plan',
+  }
+
+  it('maps a due row for «Available», keeping an unknown amount null', () => {
+    expect(toAvailableObligation(dueRow)).toEqual({
+      id: 'o1',
+      direction: 'out',
+      dueOn: '2026-11-01',
+      remainingMinor: null,
+      currency: 'UAH',
+      state: 'plan',
+    })
+  })
+
+  it('maps an upcoming row with its title', () => {
+    expect(toUpcoming(dueRow)).toMatchObject({
+      id: 'o1',
+      title: 'Rent',
+      sourceType: 'manual',
+      remainingMinor: null,
+    })
   })
 })

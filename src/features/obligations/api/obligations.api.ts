@@ -269,22 +269,42 @@ export async function listObligationPayments(
     throw payments.error
   }
 
-  const ids = (payments.data ?? []).map((row) => row.operation_id)
-  const operations = ids.length > 0 ? await supabase.from('operations').select(OPERATION_COLUMNS).in('id', ids) : null
+  const byId = await candidatesById(
+    supabase,
+    payments.data.map((row) => row.operation_id),
+  )
 
-  if (operations?.error) {
-    throw operations.error
+  return payments.data.map((row) => toPayment(row, byId))
+}
+
+type PaymentRow = {
+  id: string
+  operation_id: string
+  amount_minor: number
+  created_at: string
+}
+
+const toPayment = (row: PaymentRow, candidates: ReadonlyMap<string, CandidateOperation>): ObligationPayment => ({
+  id: row.id,
+  operationId: row.operation_id,
+  amountMinor: row.amount_minor,
+  createdAt: row.created_at,
+  operation: candidates.get(row.operation_id) ?? null,
+})
+
+/** the operations behind payments, by id; no ids, no request */
+async function candidatesById(supabase: SaldoClient, ids: string[]) {
+  if (ids.length === 0) {
+    return new Map<string, CandidateOperation>()
   }
 
-  const byId = new Map((operations?.data ?? []).map((row) => [row.id, toCandidate(row)]))
+  const { data, error } = await supabase.from('operations').select(OPERATION_COLUMNS).in('id', ids)
 
-  return (payments.data ?? []).map((row) => ({
-    id: row.id,
-    operationId: row.operation_id,
-    amountMinor: row.amount_minor,
-    createdAt: row.created_at,
-    operation: byId.get(row.operation_id) ?? null,
-  }))
+  if (error) {
+    throw error
+  }
+
+  return new Map(data.map((row) => [row.id, toCandidate(row)]))
 }
 
 export async function createObligation(supabase: SaldoClient, input: CreateObligationInput) {

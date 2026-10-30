@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type AccountView, nextSortOrder, totalInBase } from './accounts.utils'
+import { type AccountRow, type AccountView, nextSortOrder, toAccount, totalInBase } from './accounts.utils'
 
 const account = (patch: Partial<AccountView>): AccountView => ({
   id: 'a',
@@ -63,5 +63,88 @@ describe('nextSortOrder', () => {
   it('goes after the last account, and starts at 1', () => {
     expect(nextSortOrder([{ sortOrder: 3 }, { sortOrder: 7 }])).toBe(8)
     expect(nextSortOrder([])).toBe(1)
+  })
+})
+
+const row: AccountRow = {
+  id: 'a1',
+  name: 'Card',
+  kind: 'bank',
+  currency: 'EUR',
+  color: 'blue',
+  icon: 'credit-card',
+  opening_balance_minor: 100,
+  opening_balance_on: '2026-10-01',
+  include_in_total: true,
+  include_in_available: false,
+  sort_order: 2,
+  archived_at: null,
+  version: 3,
+}
+
+const context = {
+  balanceOf: new Map<string, number | null>(),
+  baseCurrency: 'UAH',
+  rates: [
+    {
+      baseCurrency: 'EUR',
+      quoteCurrency: 'UAH',
+      rate: '41.5',
+      rateOn: '2026-10-01',
+      source: 'manual' as const,
+    },
+  ],
+  today: '2026-10-30',
+}
+
+describe('toAccount', () => {
+  it('maps columns and converts the balance with the rate of today', () => {
+    const result = toAccount(row, {
+      ...context,
+      balanceOf: new Map([['a1', 1000]]),
+    })
+
+    expect(result).toMatchObject({
+      id: 'a1',
+      openingBalanceMinor: 100,
+      includeInAvailable: false,
+      balanceMinor: 1000,
+      baseMinor: 41_500,
+      rate: '41.5',
+    })
+  })
+
+  it('falls back to the opening balance when account_balances has no row', () => {
+    expect(toAccount(row, context).balanceMinor).toBe(100)
+  })
+
+  it('keeps the base currency as is, without a rate', () => {
+    expect(
+      toAccount(
+        {
+          ...row,
+          currency: 'UAH',
+        },
+        context,
+      ),
+    ).toMatchObject({
+      baseMinor: 100,
+      rate: null,
+    })
+  })
+
+  it('has no base value, not 0, when no rate links the currencies', () => {
+    expect(
+      toAccount(
+        {
+          ...row,
+          currency: 'USD',
+        },
+        context,
+      ),
+    ).toMatchObject({
+      baseMinor: null,
+      rate: null,
+    })
   })
 })

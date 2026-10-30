@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { convertAt, convertMinor, type FxRate, findRate } from './fx.utils'
+import { convertAt, convertMinor, type FxRate, findRate, toFxRate } from './fx.utils'
 
 type RateArgs = {
   pair: string
@@ -81,5 +81,25 @@ describe('findRate', () => {
 
   it('needs no rate for the same currency', () => {
     expect(convertAt(10_000, 'UAH', 'UAH', [], '2026-10-30', 'half_up')).toBe(10_000)
+  })
+})
+
+describe('toFxRate', () => {
+  it('maps the columns and keeps the rate exactly as PostgREST returned it', () => {
+    expect(
+      toFxRate({
+        base_currency: 'EUR',
+        quote_currency: 'UAH',
+        rate: '41.5000000000',
+        rate_on: '2026-10-01',
+        source: 'reference',
+      }),
+    ).toEqual({
+      baseCurrency: 'EUR',
+      quoteCurrency: 'UAH',
+      rate: '41.5000000000',
+      rateOn: '2026-10-01',
+      source: 'reference',
+    })
   })
 })

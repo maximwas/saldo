@@ -1,41 +1,24 @@
-import {
-  type AvailableMoney,
-  type AvailableMoneyInput,
-  computeAvailableMoney,
-} from '@/lib/finance/available-money.utils'
+import { type AvailableMoney, computeAvailableMoney } from '@/lib/finance/available-money.utils'
 import { getLedgerRates } from '@/lib/finance/ledger-fx.api'
-import { convertAt } from '@/lib/money/fx.utils'
 import { localDate } from '@/lib/utils/clock.utils'
 import type { SaldoClient } from '@/types/supabase.types'
-import { type MonthTotals, monthRange, sumMonth } from '../utils/overview.utils'
+import {
+  type MonthTotals,
+  monthRange,
+  type OverviewAccount,
+  type OverviewObligation,
+  sumMonth,
+  toAvailableAccount,
+  toAvailableObligation,
+  toOverviewAccount,
+  toUpcoming,
+  withBalances,
+} from '../utils/overview.utils'
 
 type OverviewParams = {
   ledgerId: string
   now: Date
   timeZone: string
-}
-
-type OverviewAccount = {
-  id: string
-  name: string
-  kind: 'bank' | 'cash' | 'savings'
-  currency: string
-  balanceMinor: number
-  includeInAvailable: boolean
-  /** balance in the base currency on today's rate; null when no rate links the currencies */
-  baseMinor: number | null
-}
-
-type OverviewObligation = {
-  id: string
-  title: string
-  sourceType: string
-  direction: 'in' | 'out'
-  dueOn: string
-  /** null = the amount is unknown (§7) */
-  remainingMinor: number | null
-  currency: string
-  state: 'plan' | 'partial' | 'unconfirmed'
 }
 
 export type Overview = {
@@ -58,6 +41,16 @@ export type Overview = {
 const PAGE = 1000
 const OPEN_STATES = ['plan', 'partial', 'unconfirmed']
 const UPCOMING_LIMIT = 4
+
+type MonthRow = {
+  kind: string
+  base_amount_minor: number | null
+}
+
+const toMonthOperation = (row: MonthRow) => ({
+  kind: row.kind,
+  baseAmountMinor: row.base_amount_minor,
+})
 
 /** income / expense rows of the current month; PostgREST caps a response, so it is read page by page */
 async function getMonthTotals(supabase: SaldoClient, ledgerId: string, today: string): Promise<MonthTotals> {
@@ -82,12 +75,7 @@ async function getMonthTotals(supabase: SaldoClient, ledgerId: string, today: st
       throw error
     }
 
-    rows.push(
-      ...data.map((row) => ({
-        kind: row.kind,
-        baseAmountMinor: row.base_amount_minor,
-      })),
-    )
+    rows.push(...data.map(toMonthOperation))
 
     if (data.length < PAGE) {
       return sumMonth(rows)
@@ -95,55 +83,81 @@ async function getMonthTotals(supabase: SaldoClient, ledgerId: string, today: st
   }
 }
 
-/** Overview + "Available" (plan 1.16): the same numbers for the browser and the MCP server, no React */
-export async function getOverview(
-  supabase: SaldoClient,
-  { ledgerId, now, timeZone }: OverviewParams,
-): Promise<Overview> {
-  const today = localDate(now, timeZone)
-  const ledger = await supabase
+type LedgerHead = {
+  baseCurrency: string
+  untilOn: string | null
+  version: number
+}
+
+async function getLedgerHead(supabase: SaldoClient, ledgerId: string): Promise<LedgerHead> {
+  const { data, error } = await supabase
     .from('ledgers')
     .select('base_currency, next_income_on, version')
     .eq('id', ledgerId)
     .single()
 
-  if (ledger.error) {
-    throw ledger.error
+  if (error) {
+    throw error
   }
 
-  const untilOn = ledger.data.next_income_on
-  // every open obligation to the chosen date counts, not the first few; without a date only today's horizon is read
-  const horizon = untilOn ?? today
+  return {
+    baseCurrency: data.base_currency,
+    untilOn: data.next_income_on,
+    version: data.version,
+  }
+}
+
+type SourceParams = {
+  ledgerId: string
+  today: string
+  /** every open obligation up to this date counts, not the first few */
+  horizon: string
+}
+
+const accountsQuery = (supabase: SaldoClient, ledgerId: string) =>
+  supabase
+    .from('accounts')
+    .select('id, name, kind, currency, include_in_available, opening_balance_minor')
+    .eq('ledger_id', ledgerId)
+    .is('archived_at', null)
+    .order('sort_order')
+
+const dueQuery = (supabase: SaldoClient, ledgerId: string, horizon: string) =>
+  supabase
+    .from('obligation_states')
+    .select('obligation_id, direction, due_on, remaining_minor, currency, state')
+    .eq('ledger_id', ledgerId)
+    .in('state', OPEN_STATES)
+    .lte('due_on', horizon)
+
+const upcomingQuery = (supabase: SaldoClient, ledgerId: string) =>
+  supabase
+    .from('obligation_states')
+    .select('obligation_id, title, source_type, direction, due_on, remaining_minor, currency, state')
+    .eq('ledger_id', ledgerId)
+    .in('state', OPEN_STATES)
+    .order('due_on')
+    .limit(UPCOMING_LIMIT)
+
+const overdueQuery = (supabase: SaldoClient, ledgerId: string) =>
+  supabase
+    .from('obligation_states')
+    .select('obligation_id', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('ledger_id', ledgerId)
+    .eq('state', 'unconfirmed')
+
+/** the reads behind the screen, in parallel; any error throws */
+async function getSources(supabase: SaldoClient, { ledgerId, today, horizon }: SourceParams) {
   const [accounts, balances, rates, due, upcoming, overdue, month] = await Promise.all([
-    supabase
-      .from('accounts')
-      .select('id, name, kind, currency, include_in_available, opening_balance_minor')
-      .eq('ledger_id', ledgerId)
-      .is('archived_at', null)
-      .order('sort_order'),
+    accountsQuery(supabase, ledgerId),
     supabase.from('account_balances').select('account_id, balance_minor').eq('ledger_id', ledgerId),
     getLedgerRates(supabase, ledgerId),
-    supabase
-      .from('obligation_states')
-      .select('obligation_id, direction, due_on, remaining_minor, currency, state')
-      .eq('ledger_id', ledgerId)
-      .in('state', OPEN_STATES)
-      .lte('due_on', horizon),
-    supabase
-      .from('obligation_states')
-      .select('obligation_id, title, source_type, direction, due_on, remaining_minor, currency, state')
-      .eq('ledger_id', ledgerId)
-      .in('state', OPEN_STATES)
-      .order('due_on')
-      .limit(UPCOMING_LIMIT),
-    supabase
-      .from('obligation_states')
-      .select('obligation_id', {
-        count: 'exact',
-        head: true,
-      })
-      .eq('ledger_id', ledgerId)
-      .eq('state', 'unconfirmed'),
+    dueQuery(supabase, ledgerId, horizon),
+    upcomingQuery(supabase, ledgerId),
+    overdueQuery(supabase, ledgerId),
     getMonthTotals(supabase, ledgerId, today),
   ])
 
@@ -153,66 +167,74 @@ export async function getOverview(
     }
   }
 
-  const baseCurrency = ledger.data.base_currency
-  const fxRates = rates
-  const balanceOf = new Map((balances.data ?? []).map((row) => [row.account_id, row.balance_minor]))
-  // account_balances has a row for every visible account; the opening balance is what it holds before any operation
-  const rows = (accounts.data ?? []).map((account) => ({
-    ...account,
-    balanceMinor: balanceOf.get(account.id) ?? account.opening_balance_minor,
-  }))
+  return {
+    accounts: withBalances(accounts.data ?? [], balances.data ?? []),
+    rates,
+    due: due.data ?? [],
+    upcoming: upcoming.data ?? [],
+    overdueCount: overdue.count ?? 0,
+    month,
+  }
+}
+
+type Sources = Awaited<ReturnType<typeof getSources>>
+
+type AvailableParams = {
+  sources: Sources
+  baseCurrency: string
+  horizon: string
+  now: Date
+  timeZone: string
+}
+
+function getAvailable({ sources, baseCurrency, horizon, now, timeZone }: AvailableParams): AvailableMoney {
+  return computeAvailableMoney({
+    baseCurrency,
+    untilOn: horizon,
+    accounts: sources.accounts.filter((row) => row.include_in_available).map(toAvailableAccount),
+    obligations: sources.due.map(toAvailableObligation),
+    rates: sources.rates,
+    now,
+    timeZone,
+  })
+}
+
+/** Overview + "Available" (plan 1.16): the same numbers for the browser and the MCP server, no React */
+export async function getOverview(
+  supabase: SaldoClient,
+  { ledgerId, now, timeZone }: OverviewParams,
+): Promise<Overview> {
+  const today = localDate(now, timeZone)
+  const ledger = await getLedgerHead(supabase, ledgerId)
+  // without a date only today's horizon is read
+  const horizon = ledger.untilOn ?? today
+  const sources = await getSources(supabase, {
+    ledgerId,
+    today,
+    horizon,
+  })
+  const rateContext = {
+    baseCurrency: ledger.baseCurrency,
+    rates: sources.rates,
+    today,
+  }
 
   return {
-    baseCurrency,
+    baseCurrency: ledger.baseCurrency,
     today,
-    untilOn,
-    ledgerVersion: ledger.data.version,
-    month,
-    accounts: rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      kind: row.kind as OverviewAccount['kind'],
-      currency: row.currency,
-      balanceMinor: row.balanceMinor,
-      includeInAvailable: row.include_in_available,
-      baseMinor:
-        row.currency === baseCurrency
-          ? row.balanceMinor
-          : convertAt(row.balanceMinor, row.currency, baseCurrency, fxRates, today, 'half_up'),
-    })),
-    available: computeAvailableMoney({
-      baseCurrency,
-      untilOn: horizon,
-      accounts: rows
-        .filter((row) => row.include_in_available)
-        .map((row) => ({
-          accountId: row.id,
-          balanceMinor: row.balanceMinor,
-          currency: row.currency,
-        })),
-      obligations: (due.data ?? []).map((row) => ({
-        id: row.obligation_id,
-        direction: row.direction as 'in' | 'out',
-        dueOn: row.due_on,
-        remainingMinor: row.remaining_minor,
-        currency: row.currency,
-        state: row.state as AvailableMoneyInput['obligations'][number]['state'],
-      })),
-      rates: fxRates,
+    untilOn: ledger.untilOn,
+    ledgerVersion: ledger.version,
+    month: sources.month,
+    accounts: sources.accounts.map((row) => toOverviewAccount(row, rateContext)),
+    available: getAvailable({
+      sources,
+      baseCurrency: ledger.baseCurrency,
+      horizon,
       now,
       timeZone,
     }),
-    upcoming: (upcoming.data ?? []).map((row) => ({
-      id: row.obligation_id,
-      title: row.title,
-      sourceType: row.source_type,
-      direction: row.direction as 'in' | 'out',
-      dueOn: row.due_on,
-      remainingMinor: row.remaining_minor,
-      currency: row.currency,
-      state: row.state as OverviewObligation['state'],
-    })),
-    overdueCount: overdue.count ?? 0,
+    upcoming: sources.upcoming.map(toUpcoming),
+    overdueCount: sources.overdueCount,
   }
 }
 
