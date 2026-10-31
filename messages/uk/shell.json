@@ -10,5 +10,51 @@
     "owner": "Власник",
     "editor": "Редагує",
     "viewer": "Переглядає"
-  }
+  },
+  "space": {
+    "switch": "Змінити простір",
+    "invite": "Запросити",
+    "sections": "Розділи",
+    "signedInAs": "Saldo · ви увійшли як {email}",
+    "tiles": {
+      "accounts": "Рахунки",
+      "budget": "Бюджет",
+      "subscriptions": "Підписки",
+      "credits": "Кредити",
+      "debts": "Борги",
+      "auto": "Авто",
+      "taxes": "Податки",
+      "statistics": "Статистика",
+      "categories": "Категорії",
+      "settings": "Налаштування"
+    },
+    "list": "Простори",
+    "create": {
+      "action": "Створити простір",
+      "title": "Новий простір",
+      "name": "Назва",
+      "currency": "Базова валюта",
+      "submit": "Створити",
+      "cancel": "Скасувати",
+      "nameRequired": "Вкажіть назву, до 60 символів"
+    }
+  },
+  "searchPalette": {
+    "title": "Пошук",
+    "placeholder": "Операції, рахунки, підписки, борги…",
+    "hint": "Введіть щонайменше 2 символи",
+    "searching": "Шукаємо…",
+    "empty": "Нічого не знайдено",
+    "failed": "Пошук не вдався, спробуйте ще раз",
+    "groups": {
+      "account": "Рахунки",
+      "category": "Категорії",
+      "subscription": "Підписки",
+      "credit": "Кредити",
+      "debt": "Борги",
+      "obligation": "Платежі",
+      "operation": "Операції"
+    }
+  },
+  "notificationsUnread": "Сповіщення, нових: {count}"
 }

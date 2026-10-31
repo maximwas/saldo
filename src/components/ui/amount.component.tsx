@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { useLocale } from 'next-intl'
 import { currencySymbol, formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
+import { useUiStore } from '@/store/ui.store'
 
 // Figma «Saldo» → Amount 2:7789 (Kind × Size S 16 / M 22 / L 28 / XL 44); figures are tabular
 const amountVariants = cva('whitespace-nowrap tabular-nums', {
@@ -32,14 +33,29 @@ type AmountProps = VariantProps<typeof amountVariants> & {
   minor: bigint | number | null
   /** ISO 4217 code: UAH, EUR, USD */
   currency: string
-  /** the «hide amounts» setting */
+  /** overrides the device's «hide amounts» setting */
   hidden?: boolean
   className?: string
 }
 
-export function Amount({ minor, currency, hidden = false, kind, size, className }: AmountProps) {
-  const locale = useLocale()
+// masked («•••• ₴»), unknown («? ₴») or the formatted sum
+function amountText(minor: AmountProps['minor'], currency: string, locale: string, masked: boolean) {
   const symbol = currencySymbol(currency, locale)
+
+  if (masked) {
+    return `•••• ${symbol}`
+  }
+
+  if (minor === null) {
+    return `? ${symbol}`
+  }
+
+  return formatMinor(minor, currency, locale)
+}
+
+export function Amount({ minor, currency, hidden, kind, size, className }: AmountProps) {
+  const locale = useLocale()
+  const hideAmounts = useUiStore((state) => state.hideAmounts)
 
   return (
     <span
@@ -49,10 +65,12 @@ export function Amount({ minor, currency, hidden = false, kind, size, className 
           size,
         }),
         minor === null && 'text-text-tertiary',
+        // zero is neither income nor shortfall (Figma Amount rules)
+        minor !== null && Number(minor) === 0 && (kind === 'income' || kind === 'shortfall') && 'text-text-primary',
         className,
       )}
     >
-      {hidden ? `•••• ${symbol}` : minor === null ? `? ${symbol}` : formatMinor(minor, currency, locale)}
+      {amountText(minor, currency, locale, hidden ?? hideAmounts)}
     </span>
   )
 }

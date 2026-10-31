@@ -1,0 +1,188 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { Button } from '@/components/ui/button.component'
+import { FormField } from '@/components/ui/form-field.component'
+import { Input } from '@/components/ui/input.component'
+import { Select } from '@/components/ui/select.component'
+import { Sheet } from '@/components/ui/sheet.component'
+import { notify } from '@/components/ui/toaster.component'
+import { CATEGORY_COLORS } from '@/constants/category-colors.constants'
+import { useLedgerStore } from '@/contexts/ledger.context'
+import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
+import { useCategories, useCreateCategory, useUpdateCategory } from '../hooks/categories.hook'
+import {
+  type CategoryFormValues,
+  categoryFormSchema,
+  toCreateCategoryInput,
+  toUpdateCategoryInput,
+} from '../schemas/category-form.schema'
+import { CATEGORY_KINDS, type CategoryKind, type CategoryView, nextCategorySortOrder } from '../utils/categories.utils'
+import { CategoryColorPicker } from './category-color-picker.component'
+import { CategoryIconPicker } from './category-icon-picker.component'
+
+const FORM_ID = 'category-form'
+
+// a sentinel for «no value» in a Select: its value is a string, the form keeps null
+
+export type CategoryFormTarget = {
+  /** the category being edited; null = a new one */
+  category: CategoryView | null
+  kind: CategoryKind
+}
+
+// the screen shows the sheet only after the categories are loaded; the query cache hands the same rows over
+const NO_CATEGORIES: readonly CategoryView[] = []
+
+type CategoryFormSheetProps = {
+  /** null = the sheet is closed */
+  target: CategoryFormTarget | null
+  onCloseAction: () => void
+}
+
+// no Figma frame for the category form: it is the accounts edit Dialog ( · 5:106946) with the
+// fields of §6 — name and kind on create, colour and icon always (no subcategories in the UI)
+export function CategoryFormSheet({ target, onCloseAction }: CategoryFormSheetProps) {
+  const translate = useTranslations('categories')
+  const categories = useCategories().data ?? NO_CATEGORIES
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const create = useCreateCategory()
+  const update = useUpdateCategory()
+  const pending = create.isPending || update.isPending
+  const editing = target?.category ?? null
+
+  const done = () => {
+    notify.success(translate('form.saved'))
+    onCloseAction()
+  }
+
+  const submit = (values: CategoryFormValues, newId: string) => {
+    if (editing) {
+      update.mutate(
+        toUpdateCategoryInput(values, {
+          id: editing.id,
+          expectedVersion: editing.version,
+        }),
+        {
+          onSuccess: done,
+        },
+      )
+
+      return
+    }
+
+    const siblings = categories.filter(
+      (row) => row.archivedAt === null && row.kind === values.kind && row.parentId === values.parentId,
+    )
+
+    create.mutate(
+      toCreateCategoryInput(values, {
+        id: newId,
+        ledgerId,
+        sortOrder: nextCategorySortOrder(siblings),
+      }),
+      {
+        onSuccess: done,
+      },
+    )
+  }
+
+  return (
+    <Sheet
+      open={target !== null}
+      onOpenChange={(open) => {
+        if (!open) {
+          onCloseAction()
+        }
+      }}
+      title={translate(editing ? 'form.editTitle' : 'form.createTitle')}
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={onCloseAction}>
+            {translate('form.cancel')}
+          </Button>
+          <Button type="submit" form={FORM_ID} disabled={pending}>
+            {translate('form.save')}
+          </Button>
+        </>
+      }
+    >
+      {target ? <CategoryForm target={target} onSubmitAction={submit} /> : null}
+    </Sheet>
+  )
+}
+
+type CategoryFormProps = {
+  target: CategoryFormTarget
+  onSubmitAction: (values: CategoryFormValues, newId: string) => void
+}
+
+function CategoryForm({ target, onSubmitAction }: CategoryFormProps) {
+  const translate = useTranslations('categories')
+  const { category } = target
+  // one id per opened form: a double click on «Save» sends the same id, so it is one category
+  const [newId] = useState(() => crypto.randomUUID())
+  const form = useForm<CategoryFormValues>({
+    resolver: useZodResolver(categoryFormSchema),
+    defaultValues: {
+      name: category?.name ?? '',
+      kind: category?.kind ?? target.kind,
+      parentId: category?.parentId ?? null,
+      color: (category?.color ?? CATEGORY_COLORS[0]) as CategoryFormValues['color'],
+      icon: category?.icon ?? 'tag',
+    },
+  })
+  const color = form.watch('color')
+
+  return (
+    <form
+      id={FORM_ID}
+      noValidate
+      onSubmit={form.handleSubmit((values) => onSubmitAction(values, newId))}
+      className="flex flex-col gap-4"
+    >
+      <FormField
+        control={form.control}
+        name="name"
+        label={translate('form.name')}
+        required
+        render={(field) => <Input {...field} autoComplete="off" />}
+      />
+      <FormField
+        control={form.control}
+        name="color"
+        label={translate('form.color')}
+        render={(field) => (
+          <CategoryColorPicker label={translate('form.color')} value={field.value} onChange={field.onChange} />
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="icon"
+        label={translate('form.icon')}
+        render={(field) => <CategoryIconPicker value={field.value} color={color} onChange={field.onChange} />}
+      />
+      {category ? null : (
+        <FormField
+          control={form.control}
+          name="kind"
+          label={translate('form.kind')}
+          render={(field) => (
+            <Select
+              name={field.name}
+              value={field.value}
+              onBlur={field.onBlur}
+              onValueChange={field.onChange}
+              options={CATEGORY_KINDS.map((option) => ({
+                value: option,
+                label: translate(`kind.${option}`),
+              }))}
+            />
+          )}
+        />
+      )}
+    </form>
+  )
+}

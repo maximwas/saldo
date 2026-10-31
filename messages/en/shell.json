@@ -10,5 +10,51 @@
     "owner": "Owner",
     "editor": "Editor",
     "viewer": "Viewer"
-  }
+  },
+  "space": {
+    "switch": "Switch space",
+    "invite": "Invite",
+    "sections": "Sections",
+    "signedInAs": "Saldo · signed in as {email}",
+    "tiles": {
+      "accounts": "Accounts",
+      "budget": "Budget",
+      "subscriptions": "Subscriptions",
+      "credits": "Credits",
+      "debts": "Debts",
+      "auto": "Auto",
+      "taxes": "Taxes",
+      "statistics": "Statistics",
+      "categories": "Categories",
+      "settings": "Settings"
+    },
+    "list": "Spaces",
+    "create": {
+      "action": "Create space",
+      "title": "New space",
+      "name": "Name",
+      "currency": "Base currency",
+      "submit": "Create",
+      "cancel": "Cancel",
+      "nameRequired": "Enter a name, up to 60 characters"
+    }
+  },
+  "searchPalette": {
+    "title": "Search",
+    "placeholder": "Operations, accounts, subscriptions, debts…",
+    "hint": "Type at least 2 characters",
+    "searching": "Searching…",
+    "empty": "Nothing found",
+    "failed": "Search failed, try again",
+    "groups": {
+      "account": "Accounts",
+      "category": "Categories",
+      "subscription": "Subscriptions",
+      "credit": "Credits",
+      "debt": "Debts",
+      "obligation": "Payments",
+      "operation": "Operations"
+    }
+  },
+  "notificationsUnread": "Notifications, {count} new"
 }

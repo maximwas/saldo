@@ -26,6 +26,7 @@
   "taxSettings": "Settings",
   "statistics": "Statistics",
   "settings": "Settings",
-  "more": "More",
-  "notifications": "Notifications"
+  "space": "Space",
+  "notifications": "Notifications",
+  "debtsShort": "Debts"
 }

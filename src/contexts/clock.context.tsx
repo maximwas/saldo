@@ -2,6 +2,7 @@
 
 import { TZDate } from '@date-fns/tz'
 import { createContext, use } from 'react'
+import { localDate } from '@/lib/utils/clock.utils'
 
 type Clock = {
   timeZone: string
@@ -36,4 +37,11 @@ export function useClock() {
   }
 
   return clock
+}
+
+/** YYYY-MM-DD of «today» in the ledger time zone */
+export function useToday() {
+  const clock = useClock()
+
+  return localDate(clock.now(), clock.timeZone)
 }

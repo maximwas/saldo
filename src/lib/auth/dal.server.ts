@@ -2,11 +2,12 @@ import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
-import type { ActiveLedger } from '@/contexts/ledger.context'
+import type { AppTheme } from '@/constants/theme.constants'
+import { pickMembership, toActiveLedger } from '@/lib/auth/active-ledger.utils'
 import { logger } from '@/lib/logger/logger.server'
 import { logPgError } from '@/lib/supabase/pg-error.server'
 import { getServerSupabase } from '@/lib/supabase/server-client'
-import type { LedgerRole } from '@/types/supabase.types'
+import type { ActiveLedger } from '@/store/ledger.store'
 
 export const LEDGER_COOKIE = 'saldo-ledger'
 
@@ -15,7 +16,7 @@ const log = logger.child({
 })
 
 // getClaims verifies the JWT (JWKS for asymmetric keys, Auth for the legacy secret); getSession is never trusted on the server
-const getSession = cache(async () => {
+export const getSession = cache(async () => {
   const supabase = await getServerSupabase()
   const { data, error } = await supabase.auth.getClaims()
 
@@ -47,7 +48,7 @@ export async function verifySession() {
   return session
 }
 
-// One user_settings read per request, shared by the active space and the locale (src/i18n/request.ts)
+// One user_settings read per request, shared by the active space, the locale (src/i18n/request.ts) and the theme
 const getUserSettings = cache(async () => {
   const session = await getSession()
 
@@ -58,7 +59,7 @@ const getUserSettings = cache(async () => {
   const supabase = await getServerSupabase()
   const { data, error } = await supabase
     .from('user_settings')
-    .select('last_ledger_id, locale')
+    .select('last_ledger_id, locale, theme')
     .eq('user_id', session.userId)
     .maybeSingle()
 
@@ -71,6 +72,8 @@ const getUserSettings = cache(async () => {
 
 export const getUserLocale = async () => (await getUserSettings())?.locale ?? null
 
+export const getUserTheme = async () => ((await getUserSettings())?.theme as AppTheme | undefined) ?? null
+
 // Active space: cookie saldo-ledger → user_settings.last_ledger_id → own space; only a space the user is a member of
 export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   const session = await getSession()
@@ -82,7 +85,10 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   const supabase = await getServerSupabase()
   const [cookieStore, memberships, settings] = await Promise.all([
     cookies(),
-    supabase.from('ledger_members').select('ledger_id, role, ledgers(name, time_zone)').eq('user_id', session.userId),
+    supabase
+      .from('ledger_members')
+      .select('ledger_id, role, ledgers(name, time_zone, base_currency)')
+      .eq('user_id', session.userId),
     getUserSettings(),
   ])
 
@@ -91,24 +97,7 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   }
 
   const rows = memberships.data ?? []
-  const preferred = [cookieStore.get(LEDGER_COOKIE)?.value, settings?.last_ledger_id]
-  const membership =
-    preferred.map((ledgerId) => rows.find((row) => row.ledger_id === ledgerId)).find(Boolean) ??
-    rows.find((row) => row.role === 'owner') ??
-    rows[0]
+  const membership = pickMembership(rows, [cookieStore.get(LEDGER_COOKIE)?.value, settings?.last_ledger_id])
 
-  if (!membership) {
-    return null
-  }
-
-  return {
-    ledgerId: membership.ledger_id,
-    role: membership.role as LedgerRole,
-    timeZone: membership.ledgers?.time_zone ?? 'Europe/Kyiv',
-    ledgers: rows.map((row) => ({
-      id: row.ledger_id,
-      name: row.ledgers?.name ?? '',
-      role: row.role as LedgerRole,
-    })),
-  }
+  return membership ? toActiveLedger(membership, rows) : null
 })

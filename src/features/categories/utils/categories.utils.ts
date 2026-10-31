@@ -1,0 +1,121 @@
+export const CATEGORY_KINDS = ['expense', 'income'] as const
+
+export type CategoryKind = (typeof CATEGORY_KINDS)[number]
+
+export type CategoryView = {
+  id: string
+  kind: CategoryKind
+  parentId: string | null
+  name: string
+  color: string | null
+  icon: string | null
+  sortOrder: number
+  archivedAt: string | null
+  version: number
+}
+
+type CategoryNode = CategoryView & {
+  /** active subcategories in order; the DB allows two levels at most, so a child has none of its own */
+  children: CategoryView[]
+}
+
+export type CategoryTree = Record<CategoryKind, CategoryNode[]> & {
+  /** every archived category, top-level or not, flat */
+  archived: CategoryView[]
+}
+
+const bySortOrder = (first: CategoryView, second: CategoryView) =>
+  first.sortOrder - second.sortOrder || first.name.localeCompare(second.name)
+
+/** income and expense trees of active categories, plus the flat archive (Figma 2:49639) */
+export function buildCategoryTree(rows: readonly CategoryView[]): CategoryTree {
+  const active = rows.filter((row) => row.archivedAt === null)
+  const tree: CategoryTree = {
+    expense: [],
+    income: [],
+    archived: rows.filter((row) => row.archivedAt !== null).sort(bySortOrder),
+  }
+
+  for (const row of active.filter((candidate) => candidate.parentId === null).sort(bySortOrder)) {
+    tree[row.kind].push({
+      ...row,
+      children: active.filter((child) => child.parentId === row.id).sort(bySortOrder),
+    })
+  }
+
+  return tree
+}
+
+export type SortChange = {
+  id: string
+  version: number
+  sortOrder: number
+}
+
+/** renumbers the siblings 1…n in the given id order; only the rows whose place changed come back */
+export function orderChanges(siblings: readonly CategoryView[], orderedIds: readonly string[]): SortChange[] {
+  const byId = new Map(siblings.map((sibling) => [sibling.id, sibling]))
+
+  return orderedIds.flatMap((id, position) => {
+    const sibling = byId.get(id)
+
+    return sibling && sibling.sortOrder !== position + 1
+      ? [
+          {
+            id,
+            version: sibling.version,
+            sortOrder: position + 1,
+          },
+        ]
+      : []
+  })
+}
+
+/** moves one category a place up or down among its siblings (menu «Up» / «Down»); only changed rows come back */
+export function moveWithinSiblings(
+  siblings: readonly CategoryView[],
+  id: string,
+  direction: 'up' | 'down',
+): SortChange[] {
+  const index = siblings.findIndex((sibling) => sibling.id === id)
+  const target = direction === 'up' ? index - 1 : index + 1
+
+  if (index === -1 || target < 0 || target >= siblings.length) {
+    return []
+  }
+
+  const order = siblings.map((sibling) => sibling.id)
+
+  ;[order[index], order[target]] = [order[target], order[index]]
+
+  return orderChanges(siblings, order)
+}
+
+/** next sort_order among the siblings a new category joins */
+export const nextCategorySortOrder = (siblings: readonly Pick<CategoryView, 'sortOrder'>[]) =>
+  siblings.reduce((max, sibling) => Math.max(max, sibling.sortOrder), 0) + 1
+
+/** the columns getCategories selects from `categories` */
+export type CategoryRow = {
+  id: string
+  kind: string
+  parent_id: string | null
+  name: string
+  color: string | null
+  icon: string | null
+  sort_order: number
+  archived_at: string | null
+  version: number
+}
+
+export const toCategory = (row: CategoryRow): CategoryView => ({
+  id: row.id,
+  kind: row.kind as CategoryKind,
+  parentId: row.parent_id,
+  name: row.name,
+  color: row.color,
+  icon: row.icon,
+  sortOrder: row.sort_order,
+  archivedAt: row.archived_at,
+  version: row.version,
+})

@@ -1,4 +1,173 @@
 {
+  "title": "Settings",
+  "tabsLabel": "Settings sections",
+  "tabs": {
+    "general": "General",
+    "access": "Access",
+    "notifications": "Notifications",
+    "currencies": "Currencies",
+    "data": "Data"
+  },
+  "themeTitle": "Theme",
+  "themeHint": "Light, dark or as on the device. Saved to your account.",
+  "themes": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "languageTitle": "Language",
-  "languageHint": "The language of the interface, dates and amounts. Saved to your account."
+  "languageHint": "The language of the interface, dates and amounts. Saved to your account.",
+  "privacy": {
+    "title": "Privacy",
+    "hint": "Amounts on screen are replaced with dots. Applies to this device only.",
+    "hideAmounts": "Hide amounts"
+  },
+  "myName": {
+    "title": "Your name",
+    "label": "Name in this space",
+    "hint": "Other members see it. Without a name, the start of your email is shown.",
+    "save": "Save",
+    "saved": "Name saved"
+  },
+  "space": {
+    "title": "Space",
+    "ownerOnly": "Only the owner can change the space's name, currency and time zone.",
+    "name": "Name",
+    "baseCurrency": "Base currency",
+    "baseCurrencyHint": "Totals are counted in it. It can be changed only while the space has no operations.",
+    "baseCurrencyLocked": "The base currency can no longer change: the space's operations are already converted to it, and totals would mix two currencies.",
+    "timeZone": "Time zone",
+    "timeZoneHint": "It decides what «today», the end of the month and a payment date are.",
+    "weekStartsOn": "Week starts on",
+    "nextIncomeOn": "Next income",
+    "nextIncomeHint": "«Available» is counted up to this date. Without a date the amount is not calculated.",
+    "save": "Save",
+    "saved": "Space settings saved"
+  },
+  "access": {
+    "membersTitle": "Members",
+    "ownerIntro": "Who sees the space «{space}» and what they can change. Access can be revoked at any time.",
+    "memberIntro": "You can see the members of the space «{space}», but you cannot change them.",
+    "notice": "Your role in the space «{space}» is «{role}». Only the owner, {owner}, can invite people and change roles.",
+    "you": "{name} · you",
+    "since": "{email} · since {date}",
+    "roles": {
+      "owner": "Owner",
+      "editor": "Can edit",
+      "viewer": "View only"
+    },
+    "roleLabel": "{name}'s role",
+    "invite": "Invite",
+    "leave": "Leave space",
+    "revoke": "Revoke access",
+    "pendingTitle": "Waiting for a reply",
+    "pendingMeta": "{role} · sent {sent}, link valid until {until}",
+    "cancelInvite": "Cancel invite",
+    "rolesCardTitle": "What each role can do",
+    "roleHints": {
+      "owner": "Everything an editor can, plus invites people, changes roles, revokes access and deletes the space.",
+      "editor": "Enters operations, marks payments, changes categories and plans. Sees who entered what.",
+      "viewer": "Sees the space's accounts, operations and payments, changes nothing."
+    },
+    "inviteSheet": {
+      "title": "Invite someone to «{space}»",
+      "email": "Email",
+      "emailHint": "The link is valid for 7 days and works once.",
+      "emailInvalid": "Enter a valid address",
+      "noAccount": "There is no Saldo user with this email",
+      "alreadyMember": "This person is already in the space",
+      "role": "Role",
+      "roleNote": "You can change the role or revoke access at any time.",
+      "cancel": "Cancel",
+      "submit": "Create link",
+      "doneTitle": "Link for {email}",
+      "doneHint": "It is shown once and stored nowhere. Copy it and send it to the person: they open it with this address.",
+      "linkLabel": "Link",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "copyFailed": "Could not copy. Select the link and copy it by hand",
+      "done": "Done",
+      "titleMobile": "Invite someone",
+      "emailNoDomain": "Check the email: the domain is missing (for example {example})",
+      "submitMobile": "Create",
+      "offline": "Could not create the link: no connection",
+      "roleHints": {
+        "editor": "Enters operations, marks payments, changes categories and plans.",
+        "viewer": "Sees accounts, operations and payments, changes nothing."
+      }
+    },
+    "revokeSheet": {
+      "title": "Revoke {name}'s access?",
+      "body": "{name} will no longer see the space «{space}» and cannot enter operations. Everything already entered{counts} stays, marked as entered by {name}.",
+      "again": "You can invite {name} again at any time.",
+      "keep": "Keep",
+      "confirm": "Revoke access",
+      "done": "Access revoked",
+      "counts": " ({operations, plural, one {# operation} other {# operations}}, {payments, plural, one {# marked payment} other {# marked payments}})",
+      "bodyMobile": "{name} will no longer see the space «{space}». Everything entered stays, marked as entered by {name}.",
+      "confirmMobile": "Revoke"
+    },
+    "cancelSheet": {
+      "title": "Cancel the invite?",
+      "body": "The link for {email} will stop working. If the person opens it, they will see «The link is not valid».",
+      "keep": "Keep it",
+      "confirm": "Cancel invite",
+      "done": "Invite cancelled"
+    },
+    "leaveSheet": {
+      "title": "Leave the space «{space}»?",
+      "body": "You will no longer see this space's accounts and operations. What you entered stays. You can return only with a new invite from {owner}.",
+      "keep": "Stay",
+      "confirm": "Leave"
+    },
+    "roleChanged": "Role changed",
+    "reminders": {
+      "title": "Reminders",
+      "label": "Reminders of this space for me",
+      "hint": "Your own choice only: other members get reminders by their own settings. When off, none arrive in the app or as push."
+    },
+    "empty": {
+      "title": "Only you use this space",
+      "text": "Invite someone: you will enter operations and mark payments together. You decide what they can do."
+    }
+  },
+  "data": {
+    "exportTitle": "Export",
+    "exportHint": "Files with the data of the active space. Any member can export.",
+    "csv": "Operations (CSV)",
+    "archive": "All data and receipts (ZIP)",
+    "exportFailed": "Could not prepare the file",
+    "deleteTitle": "Delete all data",
+    "deleteHint": "Operations, accounts, payments, debts and receipts of the space are deleted for good. The space and its members stay.",
+    "delete": "Delete all data",
+    "deleteBody": "This cannot be undone. If you may need the data, save the archive first.",
+    "typeName": "To confirm, type the space name «{space}»",
+    "keep": "Keep",
+    "confirm": "Delete for good",
+    "deleted": "The space data is deleted"
+  },
+  "signOut": {
+    "title": "Sign out",
+    "hint": "Signing out removes the saved data, the change queue, drafts and the push subscription from this device.",
+    "action": "Sign out",
+    "confirmTitle": "Sign out and drop unsent changes?",
+    "unsent": "{count, plural, one {# change has} other {# changes have}} not reached the server yet. They are gone after signing out.",
+    "confirm": "Sign out",
+    "cancel": "Cancel",
+    "failed": "Could not sign out. Check the connection and try again."
+  },
+  "hub": {
+    "title": "Space «{space}»",
+    "general": "Language, time zone, theme, home",
+    "accessOwner": "{members, plural, one {# member} other {# members}}{invites, plural, =0 {} one { · # invite} other { · # invites}}",
+    "accessMember": "You and {others, plural, one {# more member} other {# more members}} · {role}",
+    "roles": {
+      "editor": "can edit",
+      "viewer": "view only"
+    },
+    "notifications": "Push, email, reminders",
+    "data": "Export, backups, deletion",
+    "notice": "Your role in the space «{space}» is «{role}». Only the owner, {owner}, can change data.",
+    "signedInAs": "Saldo · you are signed in as {email}"
+  }
 }

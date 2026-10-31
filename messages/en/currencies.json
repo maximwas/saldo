@@ -1,0 +1,34 @@
+{
+  "loadFailed": "Could not load rates. Refresh the page.",
+  "names": {
+    "UAH": "hryvnia",
+    "USD": "dollar",
+    "EUR": "euro"
+  },
+  "base": {
+    "title": "Base currency",
+    "hint": "Saldo shows «Total» and «Available» in it. It is changed in the space settings."
+  },
+  "current": {
+    "title": "Rates in effect on {date}",
+    "unknown": "No rate"
+  },
+  "form": {
+    "title": "New rate",
+    "hint": "A manual rate applies from the given date. It does not change the base-currency amounts of old operations. A manual rate wins a reference rate of the same day; an older manual rate never beats a newer reference one.",
+    "currency": "Currency",
+    "rate": "Rate: 1 {currency} = … {base}",
+    "rateOn": "Effective from",
+    "save": "Save rate",
+    "saved": "Rate saved"
+  },
+  "list": {
+    "title": "All rates",
+    "empty": "No rates yet. Without a rate, amounts in other currencies show as «?»."
+  },
+  "source": {
+    "manual": "Manual",
+    "reference": "Reference"
+  },
+  "summaryBase": "{symbol} base"
+}

@@ -16,6 +16,16 @@
   --brand-arc-bottom-to: var(--color-cat-purple);
 }
 
+/* a scroll container without a visible scrollbar: wheel, touch and keyboard still scroll (Maxim, 31.10.2026: sheets,
+   dialogs, menus and pickers show no scrollbars) */
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer base {
   body {
     @apply bg-app font-sans text-body text-text-primary antialiased;

@@ -1,0 +1,204 @@
+{
+  "loadFailed": "Could not load subscriptions. Refresh the page",
+  "add": "Add subscription",
+  "count": "{count, plural, one {# subscription} other {# subscriptions}}",
+  "filteredEmpty": "No subscriptions in this state",
+  "interval": "{unit, select, day {{count, plural, =1 {Daily} =7 {Weekly} other {Every # days}}} month {{count, plural, =1 {Monthly} other {Every # months}}} other {{count, plural, =1 {Yearly} other {Every # years}}}}",
+  "next": "next {date}",
+  "noNext": "no next payment",
+  "empty": {
+    "title": "No subscriptions yet",
+    "hint": "Add Netflix, Spotify or cloud storage — Saldo shows the month's planned payments and the monthly average cost.",
+    "action": "Add subscription"
+  },
+  "filters": {
+    "label": "Subscription state",
+    "all": "All · {count}",
+    "active": "Active · {count}",
+    "trial": "Trial · {count}",
+    "paused": "Paused · {count}",
+    "cancelled": "Cancelled · {count}",
+    "review": "To review · {count}",
+    "archived": "Archive · {count}"
+  },
+  "totals": {
+    "planned": "Payments planned this month",
+    "plannedNote": "This month's dates at the prices in force, in the base currency",
+    "normalized": "Monthly average cost",
+    "normalizedNote": "A yearly price is divided by 12, not charged every month",
+    "unknown": "Without {count, plural, one {# amount} other {# amounts}}: amount unknown or no rate"
+  },
+  "status": {
+    "trial": "Trial",
+    "active": "Active",
+    "paused": "Paused",
+    "cancel_intended": "Cancel intended",
+    "cancelled": "Cancelled",
+    "archived": "Archived"
+  },
+  "verdict": {
+    "label": "Assessment",
+    "keep": "Keep",
+    "review": "Review",
+    "cancel": "Cancel"
+  },
+  "defaults": {
+    "open": "Default settings",
+    "title": "Subscription defaults",
+    "account": "Account of a new subscription",
+    "none": "Not set",
+    "hint": "A new subscription starts from these settings. Existing subscriptions do not change: their own rules win.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Defaults saved"
+  },
+  "form": {
+    "createTitle": "New subscription",
+    "settingsTitle": "Subscription settings",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Subscription saved",
+    "name": "Name",
+    "amount": "Amount per period",
+    "amountHint": "Empty — the amount is unknown",
+    "currency": "Currency",
+    "account": "Account",
+    "accountHint": "Payments are planned from it",
+    "accountPlaceholder": "Choose an account",
+    "category": "Category",
+    "noCategory": "No category",
+    "count": "Every",
+    "unit": "Period",
+    "units": {
+      "day": "Days",
+      "month": "Months",
+      "year": "Years"
+    },
+    "firstOn": "First date",
+    "firstOnHint": "Every later date is counted from it",
+    "shortMonthRule": "Short month",
+    "rules": {
+      "last_day": "Last day of the month",
+      "next_month_first": "1st of the next month",
+      "skip": "Skip the month"
+    },
+    "status": "State",
+    "trialEndsOn": "Trial until",
+    "serviceUrl": "Service link",
+    "note": "Note",
+    "service": "Service",
+    "servicePlaceholder": "Pick a service",
+    "serviceSearch": "Search services",
+    "serviceEmpty": "This service is not in the list",
+    "serviceCustom": "Custom subscription",
+    "serviceCustomNamed": "Custom subscription: “{name}”",
+    "currencyHint": "A currency change applies to future payments only",
+    "create": "Add subscription"
+  },
+  "card": {
+    "back": "All subscriptions",
+    "edit": "Edit",
+    "loadFailed": "Could not load the subscription. Refresh the page",
+    "notFound": "Subscription not found: it may have been removed",
+    "tabs": {
+      "label": "Subscription sections",
+      "overview": "Overview",
+      "history": "History",
+      "settings": "Settings"
+    }
+  },
+  "details": {
+    "title": "Details",
+    "amount": "Amount and currency",
+    "monthly": "Monthly average",
+    "interval": "Interval",
+    "shortMonth": "Short month",
+    "firstOn": "First date",
+    "nextOn": "Next date",
+    "account": "Account",
+    "category": "Category",
+    "trial": "Trial",
+    "trialNone": "None",
+    "cancelledOn": "Cancelled",
+    "accessEndsOn": "Access until",
+    "serviceUrl": "Link",
+    "note": "Note",
+    "none": "—"
+  },
+  "price": {
+    "title": "Price",
+    "change": "Change price",
+    "current": "Current price",
+    "upcoming": "New price",
+    "from": "from {date}",
+    "hint": "A price change affects only the future plan. Past payments do not change.",
+    "history": "Price history",
+    "sheetTitle": "Change the price of {name}",
+    "sheetCurrent": "Price since {date} —",
+    "sheetHint": "The new price changes only the future plan; paid payments and operations stay as they are.",
+    "amount": "New price per period",
+    "effectiveOn": "Effective from",
+    "effectiveHint": "Payments before this date and paid ones keep the old price",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Price changed"
+  },
+  "cancel": {
+    "title": "Cancellation",
+    "hint": "Cancelling in Saldo does not cancel {name} itself. Mark the intent, the confirmed cancellation and the date access ends separately.",
+    "open": "Cancel subscription",
+    "confirm": "Confirm cancellation",
+    "pause": "Pause",
+    "resume": "Resume",
+    "resumed": "Subscription resumed",
+    "sheetTitle": "Cancel {name}?",
+    "sheetHint": "Saldo does not cancel the subscription in the service — do it in {name}. After cancelling, future payments leave the plan; the history stays.",
+    "accessEndsOn": "Access until",
+    "accessHint": "Usually the end of the paid period",
+    "outcome": "What happened",
+    "outcomes": {
+      "cancelled": "Cancelled in the service",
+      "cancel_intended": "Only the intent"
+    },
+    "keep": "Keep",
+    "submit": "Cancel subscription",
+    "saved": "Subscription state changed"
+  },
+  "pause": {
+    "title": "Pause {name}?",
+    "hint": "While paused, its payments are not part of the month's plan and are not planned.",
+    "info": "The payment history stays. Resume it from the subscription card.",
+    "cancel": "Not now",
+    "confirm": "Pause",
+    "done": "{name} is paused"
+  },
+  "archive": {
+    "title": "Remove {name} from tracking?",
+    "hint": "A subscription is not deleted: its payments are part of the history and totals. It is archived — it leaves the list and the plan.",
+    "info": "You can restore it any time from the «Archive» filter.",
+    "cancel": "Cancel",
+    "confirm": "Archive",
+    "done": "{name} archived",
+    "cardTitle": "Archive subscription",
+    "cardHint": "{name} leaves the list and the plan. The payment history stays.",
+    "open": "Archive",
+    "restoreTitle": "Subscription archived",
+    "restoreHint": "{name} is not part of the plan. Restore it to plan its payments again.",
+    "restore": "Restore from archive",
+    "restored": "Subscription restored"
+  },
+  "payments": {
+    "recent": "Latest and next payments",
+    "all": "All payments",
+    "toHistory": "Full history",
+    "loadFailed": "Could not load payments",
+    "empty": "No payments yet",
+    "payment": "Payment {date}"
+  },
+  "paymentState": {
+    "plan": "Plan",
+    "partial": "Partly paid",
+    "unconfirmed": "Not confirmed",
+    "paid": "Paid"
+  }
+}

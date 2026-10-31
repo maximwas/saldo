@@ -21,10 +21,13 @@
   `to authenticated` і `(select …)` навколо функцій. Нова функція `security definer` — лише в схемі `private`, з
   `set search_path = ''` і `revoke execute … from public`.
 - **RPC** — `security invoker` (RLS діє); `security definer` лише там, де треба читати чуже (прийняття
-  запрошення), і з явною перевіркою `auth.uid()` усередині.
+  запрошення) або писати таблиці, що клієнтам лише для читання (`operations`, `transfers`, `obligation_payments`,
+  architecture §5.10). Такий RPC до будь-якого читання знаходить простір цілі й кличе `private.assert_writable(ledger_id)`
+  (чи явно перевіряє `auth.uid()`), має `set search_path = ''`, повні імена й `revoke execute … from public, anon`.
 - **Тести RLS на двох людях**: кожна міграція з новою таблицею має pgTAP у `supabase/tests/<table>.test.sql`:
   owner і editor пишуть, viewer читає й отримує `42501` на запис, чужий бачить 0 рядків і не вставляє рядок у чужий
-  `ledger_id`; складений FK не дає послатися на рядок іншого простору. `supabase test db` — у `pnpm check` і CI.
+  `ledger_id`; складений FK не дає послатися на рядок іншого простору. pgTAP запускає `pnpm test:db` той, хто зараз
+  володіє локальною БД (одна спільна на всі worktree); у `pnpm check` і CI його немає.
 - **Клієнт**: ключі запитів `[root, ledgerId, …]` (§4.1), кожен запит має явний `.eq('ledger_id', ledgerId)`,
   кожна мутація несе `ledger_id`; `ledgerId` і `role` — лише з `useLedger()` (`src/contexts/ledger.context.tsx`).
 - **Публічний репозиторій** (ADR 22): у git — лише вигадані дані (сід, фікстури, приклади в доках); суми й назви з
@@ -102,7 +105,7 @@ saldo/
         settings/calendars/page.tsx
         settings/data/page.tsx           офлайн, експорт, видалення
         settings/security/page.tsx
-        more/page.tsx                    mobile «Ще»
+        space/page.tsx                   mobile «Простір»
       api/
         cron/reminders/route.ts
         cron/calendar-sync/route.ts
@@ -164,7 +167,7 @@ src/features/subscriptions/
 | `.store.ts` | zustand-store UI-стану | `src/store/ui.store.ts` |
 | `.api.ts` | виклики supabase-js (select, upsert, rpc) | `src/features/obligations/api/obligations.api.ts` |
 | `.queries.ts` | фабрика ключів + `queryOptions` | `src/features/operations/api/operations.queries.ts` |
-| `.mutations.ts` | `register…Mutations` (`setMutationDefaults`) + `useMutation`-хуки | `src/features/operations/api/operations.mutations.ts` |
+| `.mutations.ts` | `defineWrites` / `registerWrites` (`setMutationDefaults`) + `useLedgerWrite`-хуки; композиція всіх фіч — `src/components/providers/app-writes.mutations.ts` | `src/features/operations/api/operations.mutations.ts` |
 | `.schema.ts` | zod-схема | `src/features/operations/schemas/operation-form.schema.ts` |
 | `.types.ts` | типи фічі або спільні | `src/features/taxes/taxes.types.ts`, `src/types/money.types.ts` |
 | `.constants.ts` | константи | `src/constants/navigation.constants.ts` |
@@ -245,7 +248,7 @@ src/features/subscriptions/
   збереженні, ESLint і Biome виправляють), `.vscode/extensions.json`.
 
 ```tsx
-async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
+async function Stub({ params }: Pick<PageProps<'/[...slug]'>, 'params'>) {
   const { slug } = await params
   const path = `/${(slug ?? []).join('/')}`
   const titleKey = pageTitleKey(path)
@@ -257,6 +260,44 @@ async function Stub({ params }: Pick<PageProps<'/[[...slug]]'>, 'params'>) {
   const [translate, translateNav] = await Promise.all([getTranslations('shell'), getTranslations('nav')])
 
   return <p className="text-body text-text-secondary">{translate('stub', { title: translateNav(titleKey) })}</p>
+}
+```
+
+## 3a2. Функції (Максим, 30.10.2026)
+
+Код поза компонентами складається з малих іменованих функцій, і кожна робить одне. Api-функція читається як
+«запит → перевірка помилки → мапінг».
+
+- Рядок БД → доменний об'єкт іде через іменований мапер (`toAccount(row, context)`), а не через довгу стрілку в `.map`.
+- Похідні значення — малі чисті функції в `utils/*.utils.ts` (або `src/lib/**`), кожна з Vitest-тестом.
+- Жодних вкладених тернарників і повторюваних умов в об'єктних літералах (Biome `noNestedTernary`).
+- Ліміти для файлів не-компонентів (ESLint, `eslint.config.mjs`): `complexity` 8, `max-lines-per-function` 40
+  (без порожніх рядків і коментарів), `max-depth` 3. Компоненти, `page.tsx`, `layout.tsx` і тести виключені: JSX
+  довгий за природою.
+- Гроші лишаються в `src/lib/money`; невідоме — `null`, ніколи не 0.
+
+Було (`getAccounts`, вкладені тернарники й умова `row.currency === base` двічі всередині літералу):
+
+```ts
+accounts: accounts.data.map((row) => {
+  const rate = row.currency === base ? null : findRate(rates, row.currency, base, today)
+
+  return {
+    id: row.id,
+    // ... ще 14 полів
+    baseMinor: row.currency === base ? balanceMinor : rate && convertMinor(balanceMinor, row.currency, base, rate, 'half_up'),
+    rate: rate?.toFixed() ?? null,
+  }
+})
+```
+
+Стало (мапер `toAccount` у `accounts.utils.ts`, похідні `accountRate` / `accountBaseMinor` у
+`src/lib/finance/base-balance.utils.ts`, усе з тестами):
+
+```ts
+return {
+  baseCurrency: ledgerFx.baseCurrency,
+  accounts: accounts.data.map((row) => toAccount(row, context)),
 }
 ```
 
@@ -602,6 +643,8 @@ export const useUiStore = create<UiState>()(
 
 ### 4.6 Контекст для DI
 
+Контекст — лише ін'єкція (годинник, інстанс стора). Спільні значення, що змінюються, лежать у zustand-сторі (4.6a); приклад нижче — годинник, у якого стану немає.
+
 ```tsx
 // src/contexts/clock.context.tsx
 'use client'
@@ -641,6 +684,26 @@ export function useClock() {
 
   return clock
 }
+```
+
+### 4.6a Без prop drilling (Максим, 30.10.2026)
+
+Проп не передаємо вглиб дерева крізь компоненти, які його лише пересилають. Звідки дані, тим і беремо:
+
+1. **Серверні дані** — хук TanStack Query (або хук фічі навколо нього) у тому компоненті, якому дані потрібні. Кеш дедуплікує запити, тож він і є стором. Не вантажимо нагорі, щоб передати рядки, options чи курси вниз.
+2. **Активний простір і сесія** (`ledgerId`, `role`, `baseCurrency`, `timeZone`, `ledgers`, `canWrite`, «сьогодні») — `useLedgerStore((ledger) => ledger.baseCurrency)`, `useCanWrite()`, `useToday()`. Контекст у `src/contexts` лише передає стор (DI); значення живуть у `src/store/ledger.store.ts`. Нового поля бракує — додай у `ActiveLedger` і в `getActiveLedger`.
+3. **Клієнтський UI-стан, спільний для далеких компонентів** — zustand-стор у `src/store` (як `ui.store.ts`), не контекст зі станом. Стор із даними користувача — фабрика `createStore` (`zustand/vanilla`) у провайдері на кожен запит, не модульний singleton.
+4. **Стан форми** — react-hook-form; усередині однієї форми `useFormContext`, а не `control` чи значення через підкомпоненти.
+
+Пропи лишаються для власних входів компонента й для одного рівня батько → дитина (рядок отримує свій елемент, колбек `on…Action`).
+
+```tsx
+// ✗ екран пересилає те, що RateForm і сам знає
+<RateForm baseCurrency={data.baseCurrency} />
+// ✓
+export function RateForm() {
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
+  const today = useToday()
 ```
 
 ### 4.7 Чиста функція + тест
@@ -881,15 +944,17 @@ pre-commit:
   "deps": "depcruise src --config .dependency-cruiser.cjs",
   "test": "vitest run",
   "test:db": "supabase test db",
-  "test:e2e": "playwright test",
+  "test:e2e": "playwright test --project=desktop --project=mobile",
+  "test:visual": "E2E_SKIP_RESET=1 playwright test --project=visual --update-snapshots=none",
   "test:e2e:ui": "playwright test --ui",
-  "check": "biome check . && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run && supabase test db",
+  "check": "biome check . && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run",
   "db:types": "supabase gen types typescript --local > src/types/database.types.ts"
 }
 ```
 
 `next typegen` перед `tsc` генерує глобальні `LayoutProps` / `PageProps` і типи `typedRoutes` у `.next/types`.
-`supabase test db` у `check` потребує запущеного локального стеку (`supabase start`).
+`pnpm test:db` (pgTAP) окремо від `check`: він іде в єдиний локальний стек (`supabase start`), спільний для всіх
+worktree, тож його запускає лише власник БД на цей момент (той, хто робить `supabase db reset`).
 
 `pnpm check` e2e не запускає: він повільний (збірка + браузер). E2E — лише `pnpm test:e2e` локально перед кожним PR, у CI
 його немає (Максим, 30.10.2026: «e2e запускаємо тільки на компі», «на гіту тільки юніт»).
@@ -968,7 +1033,7 @@ WebKit і Firefox не запускаються: iOS перевіряється 
 | Рівень | Що | Де | Команда |
 |---|---|---|---|
 | unit | чисте ядро: гроші, курси, повторення, «Доступно», резерви, податки, схеми, мапінг помилок | `src/**/*.test.ts` | `pnpm test` (у `pnpm check`) |
-| БД | RLS кожної таблиці на чотирьох ролях, інваріанти RPC (`42501`, `PT409`, складені FK) | `supabase/tests/*.test.sql` | `pnpm test:db` (у `pnpm check`) |
+| БД | RLS кожної таблиці на чотирьох ролях, інваріанти RPC (`42501`, `PT409`, складені FK) | `supabase/tests/*.test.sql` | `pnpm test:db` (власник локальної БД) |
 | e2e | головні потоки кожної фази через UI: дві людини, ролі в інтерфейсі, офлайн | `e2e/**/*.e2e.ts` | `pnpm test:e2e` (окремо) |
 
 Межа: перестановки прав (хто що бачить у кожній таблиці) — лише pgTAP; e2e бере по одному сценарію «UI ховає дію
@@ -1092,6 +1157,14 @@ worker). У WebKit `setOffline` ламає навігацію під service wor
 Оцінка часу: стек 2–3 хв (образи Docker), install ~0,5 хв, `next build` 1–2 хв, Chromium ~1 хв (з кешем ~10 с),
 тести 2–5 хв — разом 7–12 хв на PR; Actions для публічного репо безкоштовні.
 
+**Піксельне порівняння з Figma.** Проєкт `visual` (`e2e/visual/*.visual.ts`, у `pnpm test:e2e` не входить):
+`matchFrame(page, { frameId, width, height })` ставить viewport розміром фрейму й порівнює його з PNG фрейму,
+експортованим Pixelwright `screenshot` (scale 1) у `e2e/visual/figma/<frameId з «-» замість «:»>.png`; без PNG тест
+падає, сайт ніколи не стає еталоном. Годинник — 31.10.2026, як у фреймах. Запуск (лише локальний стек):
+1. `pnpm exec supabase start`; 2. `pnpm exec supabase db reset` (seed.sql: demo@example.com);
+3. `node scripts/seed-visual.mjs` (операції, переказ і бюджет жовтня з `docs/design/demo-data.md`); 4. `pnpm test:visual`.
+Тест упав — дивіться лише `test-results/**/*-diff.png`, не обидва скріншоти.
+
 **Сценарії.** По 2–6 на фазу, лише головні потоки (`docs/plan.md`, пункти «E2E» кожної фази). Новий баг, який
 дійшов до UI, — спершу unit або pgTAP; e2e додається, лише якщо зламався саме потік.
 
@@ -1116,7 +1189,7 @@ worker). У WebKit `setOffline` ламає навігацію під service wor
 
 ### Гілки й релізи
 
-- `main` — гілка за замовчуванням на GitHub і продакшн (Vercel). `develop` — інтеграційна гілка, preview.
+- `main` — гілка за замовчуванням на GitHub і продакшн (Vercel). `develop` — інтеграційна гілка, preview. Vercel деплоїть лише `main` і `develop` (`git.deploymentEnabled` у `vercel.json`): гілки фіч не збирає, бо Hobby дає 100 деплоїв на добу, і пуші агентів вичерпали їх за вечір 30.10.2026.
 - Кожен пункт або група пунктів — своя гілка від `develop` → PR у `develop` (`gh pr create --base develop`: база за
   замовчуванням тепер `main`). Агенти працюють у worktree від `develop` (`.claude/settings.local.json`:
   `worktree.baseRef: "head"`).

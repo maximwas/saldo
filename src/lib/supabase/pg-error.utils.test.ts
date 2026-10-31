@@ -21,6 +21,34 @@ describe('toPgError', () => {
     ).toBe('conflict')
   })
 
+  it('maps PT410 to expired and P0002 to notFound', () => {
+    expect(
+      toPgError({
+        code: 'PT410',
+        message: 'invite expired',
+      }).kind,
+    ).toBe('expired')
+    expect(
+      toPgError({
+        code: 'P0002',
+        message: 'operation not found',
+      }).kind,
+    ).toBe('notFound')
+  })
+
+  it('takes the constraint name a payment beyond its operation raises', () => {
+    expect(
+      toPgError({
+        code: '23514',
+        message:
+          'new row for relation "obligation_payments" violates check constraint "obligation_payments_within_operation"',
+      }),
+    ).toMatchObject({
+      kind: 'invalid',
+      constraint: 'obligation_payments_within_operation',
+    })
+  })
+
   it('takes the constraint name of a check violation', () => {
     const error = toPgError({
       code: '23514',

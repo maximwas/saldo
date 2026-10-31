@@ -4,9 +4,9 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { MORE_SECTION, TAB_BAR_SECTIONS } from '@/constants/navigation.constants'
+import { SPACE_SECTION, TAB_BAR_SECTIONS } from '@/constants/navigation.constants'
 import { cn } from '@/lib/utils/cn.utils'
-import { activeHref, isMoreActive } from './navigation.utils'
+import { activeHref, isSpaceActive } from './navigation.utils'
 
 // Figma «Saldo» → TabBar 2:8207 (padding 6/8/24, top border) of TabBarItem 2:8206 (icon 24, text/micro, 60 high)
 export function TabBar() {
@@ -15,7 +15,7 @@ export function TabBar() {
   const translateNav = useTranslations('nav')
   const current = activeHref(
     pathname,
-    TAB_BAR_SECTIONS.filter((section) => section !== MORE_SECTION),
+    TAB_BAR_SECTIONS.filter((section) => section !== SPACE_SECTION),
   )
 
   return (
@@ -25,7 +25,7 @@ export function TabBar() {
     >
       {TAB_BAR_SECTIONS.map((section) => {
         const Icon = section.icon
-        const active = section === MORE_SECTION ? isMoreActive(pathname) : section.href === current
+        const active = section === SPACE_SECTION ? isSpaceActive(pathname) : section.href === current
 
         return (
           <Link

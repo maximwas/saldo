@@ -15,7 +15,8 @@
           "level": "error",
           "options": { "filenameCases": ["kebab-case"], "requireAscii": true }
         },
-        "useBlockStatements": "error"
+        "useBlockStatements": "error",
+        "noNestedTernary": "error"
       },
       "performance": { "noBarrelFile": "error", "noReExportAll": "error" }
     }
