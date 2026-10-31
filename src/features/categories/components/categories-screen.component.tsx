@@ -115,7 +115,6 @@ export function CategoriesScreen() {
               setForm({
                 category: null,
                 kind,
-                parentId: null,
               })
             }
           >
@@ -136,7 +135,6 @@ export function CategoriesScreen() {
                 <CategoryRow
                   key={node.id}
                   category={node}
-                  subcategoryCount={node.children.length}
                   canMoveUp={position > 0}
                   canMoveDown={position < nodes.length - 1}
                   onMoveAction={(direction) => move(nodes, node.id, direction)}
@@ -144,14 +142,6 @@ export function CategoriesScreen() {
                     setForm({
                       category: node,
                       kind,
-                      parentId: null,
-                    })
-                  }
-                  onAddSubAction={() =>
-                    setForm({
-                      category: null,
-                      kind,
-                      parentId: node.id,
                     })
                   }
                   onArchiveAction={() => setArchiving(node)}
@@ -160,7 +150,6 @@ export function CategoriesScreen() {
                   <CategoryRow
                     key={child.id}
                     category={child}
-                    nested
                     canMoveUp={childPosition > 0}
                     canMoveDown={childPosition < node.children.length - 1}
                     onMoveAction={(direction) => move(node.children, child.id, direction)}
@@ -168,7 +157,6 @@ export function CategoriesScreen() {
                       setForm({
                         category: child,
                         kind,
-                        parentId: node.id,
                       })
                     }
                     onArchiveAction={() => setArchiving(child)}
@@ -187,7 +175,6 @@ export function CategoriesScreen() {
                   <CategoryRow
                     key={row.id}
                     category={row}
-                    nested={row.parentId !== null}
                     archived
                     restoreDisabled={parentArchived(row)}
                     onRestoreAction={() => restore(row)}
