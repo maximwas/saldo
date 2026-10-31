@@ -1,9 +1,8 @@
 'use client'
 
-import { useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -56,6 +55,13 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
   const amount = toMinor(methods.watch('amount'), debt.currency)
   const left = amount === null ? null : debt.remainingMinor - amount
   const pending = repay.isPending || close.isPending
+  const format = useFormatter()
+  const dayText = (iso: string) =>
+    format.dateTime(new Date(`${iso}T12:00:00Z`), {
+      timeZone: 'UTC',
+      day: '2-digit',
+      month: '2-digit',
+    })
 
   const submit = (values: RepaymentFormValues) => {
     const repayment = toRepaymentInput(values, clock, {
@@ -99,11 +105,16 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
         </>
       }
     >
-      <p className="text-body text-text-secondary">
-        {translate('repay.summary', {
-          person: debt.person,
-          remaining: formatMinor(debt.remainingMinor, debt.currency, locale),
-        })}
+      <p className={closing ? 'text-body text-text-primary' : 'text-label text-text-secondary'}>
+        {closing
+          ? translate('repay.closeText', { remaining: formatMinor(debt.remainingMinor, debt.currency, locale) })
+          : translate('repay.summary', {
+              reason: debt.reason ?? '',
+              date: dayText(debt.arisenOn),
+              principal: formatMinor(debt.principalMinor, debt.currency, locale),
+              repaid: formatMinor(debt.repaidMinor, debt.currency, locale),
+              remaining: formatMinor(debt.remainingMinor, debt.currency, locale),
+            })}
       </p>
       <FormProvider {...methods}>
         <form id={FORM_ID} noValidate onSubmit={methods.handleSubmit(submit)} className="flex flex-col gap-4">
@@ -137,8 +148,8 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
             )}
           />
           <DebtAccountField
-            label={translate('repay.account')}
-            hint={translate('repay.accountHint')}
+            label={translate(debt.direction === 'owed_to_me' ? 'repay.accountIn' : 'repay.accountOut')}
+            hint={translate(debt.direction === 'owed_to_me' ? 'repay.hintIn' : 'repay.hintOut')}
             optional
             currency={debt.currency}
           />
@@ -176,9 +187,8 @@ function RepaymentResult({ left, currency }: RepaymentResultProps) {
   }
 
   return (
-    <p className="text-label text-text-secondary">
-      {translate('repay.result')}
-      <Amount minor={left} currency={currency} className="text-label font-medium" />
+    <p className="text-label font-medium text-text-primary">
+      {translate('repay.result', { amount: formatMinor(left, currency, locale) })}
     </p>
   )
 }

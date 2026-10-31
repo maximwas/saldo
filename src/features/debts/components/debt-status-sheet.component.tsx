@@ -1,7 +1,6 @@
 'use client'
 
-import { Info } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
@@ -23,9 +22,15 @@ type DebtStatusSheetProps = {
 export function DebtStatusSheet({ debt, status, onCloseAction }: DebtStatusSheetProps) {
   const translate = useTranslations('debts')
   const locale = useLocale()
+  const format = useFormatter()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const save = useSaveDebt()
   const writeOff = status === 'written_off'
+  const arisenDay = format.dateTime(new Date(`${debt.arisenOn}T12:00:00Z`), {
+    timeZone: 'UTC',
+    day: '2-digit',
+    month: '2-digit',
+  })
 
   const confirm = () =>
     save.mutate(toStatusInput(debt, status, ledgerId), {
@@ -43,23 +48,28 @@ export function DebtStatusSheet({ debt, status, onCloseAction }: DebtStatusSheet
       footer={
         <>
           <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate('status.cancel')}
+            {translate(writeOff ? 'status.writeOffCancel' : 'status.cancel')}
           </Button>
-          <Button type="button" onClick={confirm} disabled={save.isPending}>
+          <Button type="button" variant={writeOff ? 'danger' : 'primary'} onClick={confirm} disabled={save.isPending}>
             {translate(writeOff ? 'status.writeOffConfirm' : 'status.closeConfirm')}
           </Button>
         </>
       }
     >
-      <p className="flex gap-3 rounded-inner bg-primary-soft p-4 text-body-medium text-primary-text">
-        <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
-        {writeOff
-          ? translate('status.writeOffBody', {
-              remaining: formatMinor(debt.remainingMinor, debt.currency, locale),
-              person: debt.person,
-            })
-          : translate('status.closeBody', { person: debt.person })}
-      </p>
+      {writeOff ? (
+        <>
+          <p className="text-body text-text-primary">
+            {translate('status.writeOffBody', { remaining: formatMinor(debt.remainingMinor, debt.currency, locale) })}
+          </p>
+          <p className="text-label text-text-secondary">
+            {debt.direction === 'owed_to_me'
+              ? translate('status.writeOffNoteOwedToMe', { date: arisenDay })
+              : translate('status.writeOffNoteIOwe')}
+          </p>
+        </>
+      ) : (
+        <p className="text-body text-text-primary">{translate('status.closeBody', { person: debt.person })}</p>
+      )}
     </Sheet>
   )
 }

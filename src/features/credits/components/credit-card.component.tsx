@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronLeft, TriangleAlert } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
@@ -8,14 +8,16 @@ import { useState } from 'react'
 import { ReminderRuleCard } from '@/components/reminders/reminder-rule-card.component'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { Card } from '@/components/ui/card.component'
+import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useCredits, usePayInstallment } from '../hooks/credits.hook'
 import { activeInstallments, creditProgress, dayText, moneyText, payoffOf } from '../utils/credits.utils'
 import { CloseCreditSheet } from './close-credit-sheet.component'
 import { CreditDetails } from './credit-details.component'
 import { CreditFormSheet } from './credit-form-sheet.component'
-import { CreditLogo } from './credit-logo.component'
 import { CreditSchedule } from './credit-schedule.component'
 import { EarlyRepaymentSheet } from './early-repayment-sheet.component'
 import { InstallmentSteps } from './installment-steps.component'
@@ -75,17 +77,51 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const next = progress.next
   const unconfirmed = activeInstallments(credit).find((installment) => installment.state === 'unconfirmed')
   const account = data.accounts.find((option) => option.id === credit.accountId)?.name
+  const close = () => setDialog(null)
+  const monthly = translate('card.monthly', {
+    day: Number((next ?? activeInstallments(credit)[0])?.dueOn.slice(8, 10)),
+  })
   const meta = [
     credit.lender,
     translate('perInstallment', {
       amount: moneyText(credit.regularInstallmentMinor, credit.currency, locale),
       count: credit.installmentsCount,
     }),
+    monthly,
     account,
   ]
     .filter(Boolean)
     .join(' · ')
-  const close = () => setDialog(null)
+
+  const paidText = translate('card.paidSummary', {
+    paid: progress.paidCount,
+    total: progress.steps.length,
+    amount: moneyText(progress.paidMinor, credit.currency, locale),
+  })
+  const nextAmount = next ? moneyText(next.remainingMinor, credit.currency, locale) : null
+  const unconfirmedNext = unconfirmed
+    ? translate('card.unconfirmedNext', {
+        number: unconfirmed.sequenceNo,
+        date: dayText(unconfirmed.dueOn, locale),
+      })
+    : null
+  const archive = writable && (
+    <Button variant="secondary" onClick={() => setDialog('close')}>
+      {translate('actions.close')}
+    </Button>
+  )
+  const actions = writable && (
+    <>
+      {next && (
+        <Button onClick={() => pay(next.id)}>{translate('actions.payNumber', { number: next.sequenceNo })}</Button>
+      )}
+      {payoff && (
+        <Button variant="secondary" onClick={() => setDialog('payoff')}>
+          {translate('actions.payoff')}
+        </Button>
+      )}
+    </>
+  )
 
   return (
     <>
@@ -97,31 +133,41 @@ export function CreditCard({ creditId }: CreditCardProps) {
         {translate('card.back')}
       </Link>
       {unconfirmed && (
-        <p
+        <Banner
+          kind="warning"
           role="status"
-          className="flex gap-3 rounded-inner bg-warning-soft p-4 text-label font-medium text-warning-text"
+          action={
+            writable &&
+            next && (
+              <button type="button" className="cursor-pointer" onClick={() => pay(unconfirmed.id)}>
+                {translate('card.unconfirmedAction')}
+              </button>
+            )
+          }
         >
-          <TriangleAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
           {translate('card.unconfirmed', {
             number: unconfirmed.sequenceNo,
             date: dayText(unconfirmed.dueOn, locale),
           })}
-        </p>
+        </Banner>
       )}
-      <section className="flex flex-col gap-5 rounded-card bg-card p-5 shadow-card lg:p-6">
-        <header className="flex items-center justify-between gap-3">
-          <h2 className="truncate text-card-title text-text-primary">{credit.name}</h2>
-          {writable && (
-            <Button size="s" variant="ghost" onClick={() => setDialog('edit')}>
-              {translate('actions.edit')}
-            </Button>
-          )}
-        </header>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
-            <CreditLogo name={credit.lender ?? credit.name} />
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <div className="flex flex-wrap items-center gap-2">
+      {!canWrite && <Banner>{translate('card.viewOnly')}</Banner>}
+      <Card
+        title={credit.name}
+        action={
+          writable
+            ? {
+                label: translate('actions.edit'),
+                onClickAction: () => setDialog('edit'),
+              }
+            : undefined
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-4 pb-5">
+            <ServiceLogo name={credit.lender ?? credit.name} />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="flex flex-wrap items-center gap-3">
                 <Amount
                   minor={credit.totalPayableMinor ?? credit.purchasePriceMinor}
                   currency={credit.currency}
@@ -129,69 +175,82 @@ export function CreditCard({ creditId }: CreditCardProps) {
                 />
                 <Badge tone={STATUS_TONE[credit.status]}>{translate(`status.${credit.status}`)}</Badge>
               </div>
-              <span className="text-caption text-text-secondary">{meta}</span>
+              <span className="text-label text-text-secondary">{meta}</span>
             </div>
-          </div>
-          {writable && (
-            <div className="flex flex-col-reverse gap-3 sm:flex-row">
-              {payoff && (
+            <div className="flex items-center gap-4 max-lg:hidden">
+              {payoff && writable && (
                 <Button variant="secondary" onClick={() => setDialog('payoff')}>
                   {translate('actions.payoff')}
                 </Button>
               )}
-              {next && (
+              {next && writable && (
                 <Button onClick={() => pay(next.id)}>
                   {translate('actions.payNumber', { number: next.sequenceNo })}
                 </Button>
               )}
             </div>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-caption text-text-secondary">
-            <span className="font-medium text-text-primary">{translate('card.schedule')}</span>
-            {progress.endOn && (
-              <span>
-                {translate('card.remainingUntil', {
-                  amount: moneyText(progress.remainingMinor, credit.currency, locale),
-                  date: dayText(progress.endOn, locale, true),
-                })}
-              </span>
-            )}
           </div>
-          <InstallmentSteps steps={progress.steps} />
-          <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-caption text-text-secondary">
-            <span>
-              {translate('card.paidSummary', {
-                paid: progress.paidCount,
-                total: progress.steps.length,
-                amount: moneyText(progress.paidMinor, credit.currency, locale),
-              })}
-            </span>
-            {next && (
-              <span>
-                {translate('next', {
-                  date: dayText(next.dueOn, locale),
-                  amount: moneyText(next.remainingMinor, credit.currency, locale),
-                })}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-body font-medium text-text-primary">{translate('card.schedule')}</span>
+              {progress.endOn && (
+                <span className="text-label text-text-secondary">
+                  <span className="max-lg:hidden">
+                    {translate('card.remainingUntil', {
+                      amount: moneyText(progress.remainingMinor, credit.currency, locale),
+                      date: dayText(progress.endOn, locale, true),
+                    })}
+                  </span>
+                  <span className="lg:hidden">
+                    {translate('card.until', { date: dayText(progress.endOn, locale, true) })}
+                  </span>
+                </span>
+              )}
+            </div>
+            <InstallmentSteps steps={progress.steps} />
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-label font-medium text-text-primary">
+                <span className="max-lg:hidden">{paidText}</span>
+                <span className="lg:hidden">
+                  {translate('card.paidShort', {
+                    paid: progress.paidCount,
+                    total: progress.steps.length,
+                  })}
+                </span>
               </span>
-            )}
+              {next && (
+                <span className="text-right text-label text-text-secondary">
+                  {unconfirmedNext ?? (
+                    <>
+                      <span className="max-lg:hidden">
+                        {translate('next', {
+                          date: dayText(next.dueOn, locale),
+                          amount: nextAmount ?? '',
+                        })}
+                      </span>
+                      <span className="lg:hidden">{translate('nextShort', { date: dayText(next.dueOn, locale) })}</span>
+                    </>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
+          {writable && <div className="flex flex-col gap-2 lg:hidden">{actions}</div>}
         </div>
-      </section>
-      <div className="grid items-start gap-4 lg:grid-cols-3 lg:gap-6">
-        <CreditSchedule credit={credit} className="lg:col-span-2" />
-        <div className="flex flex-col gap-4 lg:gap-6">
-          <CreditDetails credit={credit} />
+      </Card>
+      <div className="flex flex-col items-start gap-4 lg:flex-row lg:gap-6">
+        <CreditSchedule credit={credit} className="w-full lg:flex-1" />
+        <div className="flex w-full flex-col gap-4 lg:w-100 lg:shrink-0 lg:gap-6">
+          <CreditDetails
+            credit={credit}
+            footer={writable && <div className="flex gap-3 pt-4 lg:hidden">{archive}</div>}
+          />
           <ReminderRuleCard sourceType="credit" sourceId={credit.id} />
           {writable && (
-            <section className="flex flex-col gap-4 rounded-card bg-card p-5 shadow-card lg:p-6">
-              <h2 className="text-card-title text-text-primary">{translate('card.manage')}</h2>
-              <p className="text-caption text-text-secondary">{translate('card.manageText')}</p>
-              <Button variant="danger" className="w-fit" onClick={() => setDialog('close')}>
-                {translate('actions.close')}
-              </Button>
-            </section>
+            <Card title={translate('card.manage')} className="max-lg:hidden">
+              <p className="text-label text-text-secondary">{translate('card.manageText')}</p>
+              <div className="flex gap-3 pt-4">{archive}</div>
+            </Card>
           )}
         </div>
       </div>
