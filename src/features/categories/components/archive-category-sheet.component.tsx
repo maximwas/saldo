@@ -9,7 +9,12 @@ import { Field } from '@/components/ui/field.component'
 import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
-import { useArchiveCategory, useCategories, useCategoryOperationCount } from '../hooks/categories.hook'
+import {
+  useArchiveCategory,
+  useCategories,
+  useCategoryOperationCount,
+  useDeleteCategory,
+} from '../hooks/categories.hook'
 import type { CategoryView } from '../utils/categories.utils'
 
 // the screen shows the sheet only after the categories are loaded; the query cache hands the same rows over
@@ -21,14 +26,14 @@ type ArchiveCategorySheetProps = {
   onCloseAction: () => void
 }
 
-// Figma «Saldo» → 2:52713 / 2:53216: deleting never destroys operations — move them to another category (the catch-all by
-// default) or archive; an archived category leaves the pickers, its history and statistics stay (spec §6).
-// shortcut: «Delete and move» archives the emptied category (archive_category with a target): the database has no
-// category delete yet; a real delete RPC would drop it from the «Archive» list too.
+// Figma «Saldo» → 2:52713 / 2:53216: deleting never destroys operations — «Delete and move» re-points them to another
+// category (the catch-all by default) and deletes the category (RPC delete_category); «Archive» keeps it hidden from the
+// pickers with its history and statistics (spec §6).
 export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategorySheetProps) {
   const translate = useTranslations('categories')
   const categories = useCategories().data ?? NO_CATEGORIES
   const archive = useArchiveCategory()
+  const remove = useDeleteCategory()
   const [moveTo, setMoveTo] = useState<string | null>(null)
   const family = category
     ? categories.filter((row) => row.id === category.id || row.parentId === category.id).map((row) => row.id)
@@ -46,18 +51,20 @@ export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategor
       return
     }
 
-    archive.mutate(
-      {
-        id: category.id,
-        moveTo: move ? target : null,
-      },
-      {
-        onSuccess: () => {
-          notify.success(translate('archive.done'))
-          onCloseAction()
-        },
-      },
-    )
+    const input = {
+      id: category.id,
+      moveTo: move ? target : null,
+    }
+    const onSuccess = () => {
+      notify.success(translate(move ? 'archive.deleted' : 'archive.done'))
+      onCloseAction()
+    }
+
+    if (move) {
+      remove.mutate(input, { onSuccess })
+    } else {
+      archive.mutate(input, { onSuccess })
+    }
   }
 
   return (
@@ -72,14 +79,19 @@ export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategor
       title={translate('archive.title', { name: category?.name ?? '' })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={() => confirm(false)} disabled={archive.isPending}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => confirm(false)}
+            disabled={archive.isPending || remove.isPending}
+          >
             {translate('archive.archiveOnly')}
           </Button>
           <Button
             type="button"
             variant="danger"
             onClick={() => confirm(true)}
-            disabled={archive.isPending || operations.isPending}
+            disabled={archive.isPending || remove.isPending || operations.isPending}
           >
             {translate('archive.confirm')}
           </Button>

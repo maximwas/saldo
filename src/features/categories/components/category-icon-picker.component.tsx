@@ -14,8 +14,9 @@ type CategoryIconPickerProps = FieldControlProps & {
   onChange: (icon: string) => void
 }
 
-// Figma «Saldo» → category form, icon picker: a search field, then solid CategoryBadge tiles (44) in the chosen colour (gap 16), the chosen
-// one with a 2px text-primary ring; the grid scrolls inside the form
+// Figma «Saldo» → category form, icon picker: a search field, then solid CategoryBadge tiles in the chosen colour in
+// equal columns (7 on desktop, 6 on phones; first and last column on the input edges, -mx-1 / p-1 leave room for the
+// ring), the chosen one with a 2px text-primary ring; the grid scrolls inside the form
 export function CategoryIconPicker({ value, color, onChange, id, ...aria }: CategoryIconPickerProps) {
   const translate = useTranslations('categories')
   const [query, setQuery] = useState('')
@@ -50,7 +51,7 @@ export function CategoryIconPicker({ value, color, onChange, id, ...aria }: Cate
       ) : (
         <fieldset
           aria-label={translate('form.icon')}
-          className="flex max-h-60 min-w-0 flex-wrap gap-3 md:gap-4 overflow-y-auto p-1 scrollbar-none"
+          className="-mx-1 grid max-h-60 min-w-0 grid-cols-6 gap-3 overflow-y-auto p-1 scrollbar-none lg:grid-cols-7 lg:gap-4"
         >
           {names.map((name) => (
             <button
@@ -61,11 +62,11 @@ export function CategoryIconPicker({ value, color, onChange, id, ...aria }: Cate
               title={labelOf(name)}
               onClick={() => onChange(name)}
               className={cn(
-                'shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-raised',
+                'aspect-square w-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-raised',
                 value === name && 'ring-2 ring-text-primary ring-offset-2 ring-offset-raised',
               )}
             >
-              <CategoryBadge icon={name} color={color} className="size-11" />
+              <CategoryBadge icon={name} color={color} className="size-full" />
             </button>
           ))}
         </fieldset>
