@@ -1,5 +1,6 @@
 import { accountBaseMinor, accountRate } from '@/lib/finance/base-balance.utils'
 import type { FxRate } from '@/lib/money/fx.utils'
+import { minorDigits } from '@/lib/money/money.utils'
 
 // no cash accounts in Saldo (Maxim, 31.10.2026); the DB check still allows «cash» for rows made before
 export const ACCOUNT_KINDS = ['bank', 'savings'] as const
@@ -158,4 +159,56 @@ export function adjustmentOf(currentMinor: number, actualMinor: number): Adjustm
     direction: difference > 0 ? 'in' : 'out',
     amountMinor: Math.abs(difference),
   }
+}
+
+/** a row of latest transfers: the columns of `transfers` the card shows */
+export type RecentTransferRow = {
+  id: string
+  from_account_id: string
+  to_account_id: string
+  from_amount_minor: number
+  from_currency: string
+  to_amount_minor: number
+  to_currency: string
+  fee_minor: number | null
+  occurred_at: string
+  note: string | null
+}
+
+export type RecentTransfer = {
+  id: string
+  fromAccountId: string
+  toAccountId: string
+  fromAmountMinor: number
+  fromCurrency: string
+  toAmountMinor: number
+  toCurrency: string
+  feeMinor: number | null
+  occurredAt: string
+  note: string | null
+}
+
+export const toRecentTransfer = (row: RecentTransferRow): RecentTransfer => ({
+  id: row.id,
+  fromAccountId: row.from_account_id,
+  toAccountId: row.to_account_id,
+  fromAmountMinor: row.from_amount_minor,
+  fromCurrency: row.from_currency,
+  toAmountMinor: row.to_amount_minor,
+  toCurrency: row.to_currency,
+  feeMinor: row.fee_minor,
+  occurredAt: row.occurred_at,
+  note: row.note,
+})
+
+/** the exchange rate a transfer implies (major units of the target per major unit of the source); null = one currency */
+export function transferRate(transfer: RecentTransfer): number | null {
+  if (transfer.fromCurrency === transfer.toCurrency) {
+    return null
+  }
+
+  const sent = transfer.fromAmountMinor / 10 ** minorDigits(transfer.fromCurrency)
+  const received = transfer.toAmountMinor / 10 ** minorDigits(transfer.toCurrency)
+
+  return received / sent
 }

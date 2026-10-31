@@ -17,6 +17,7 @@ import { AccountFormSheet } from './account-form-sheet.component'
 import { AccountRow } from './account-row.component'
 import { AdjustBalanceSheet } from './adjust-balance-sheet.component'
 import { ArchiveAccountSheet } from './archive-account-sheet.component'
+import { RecentTransfers } from './recent-transfers.component'
 
 type Tab = 'active' | 'archived'
 
@@ -25,7 +26,7 @@ type FormTarget = { account: AccountView | null }
 // Figma «Saldo» → 2:21073 (desktop) / 2:21278 (mobile) / 5:108630 (empty): a toolbar (gap 12, bottom-aligned) with
 // the underline Tabs «Active · N / Archive · N», the primary «Transfer» (the global ?add=transfer sheet) and
 // «New account»; one card (padding 8/24/24) holds the rows and «Total in <base currency>». Transfers live in the
-// operations feature, so the «Latest transfers» card of the frame is not here.
+// operations feature, the «Latest transfers» card under it reads its own `transfers` rows.
 export function AccountsScreen() {
   const translate = useTranslations('accounts')
   const locale = useLocale()
@@ -73,9 +74,10 @@ export function AccountsScreen() {
     inBase.length > 0 ? `${list.format(inBase.map((account) => account.name))}.` : null,
     converted.length > 0
       ? translate('totalWith', {
+          count: converted.length,
           accounts: list.format(
             converted.map((account) =>
-              translate(desktop ? 'totalRate' : 'totalRateShort', {
+              translate('totalRate', {
                 name: account.name,
                 rate: rateOf(account),
               }),
@@ -176,6 +178,7 @@ export function AccountsScreen() {
               </div>
             ) : null}
           </section>
+          {tab === 'active' ? <RecentTransfers accounts={data.accounts} /> : null}
         </>
       )}
       <AccountFormSheet
