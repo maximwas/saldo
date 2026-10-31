@@ -3,11 +3,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link as LinkIcon, Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import type { ReactNode } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { serviceLogoOf } from '@/components/ui/service-logo.utils'
 import { useToday } from '@/contexts/clock.context'
@@ -45,6 +47,25 @@ const PLUS_TONE = {
 } as const
 
 const ROW_BUTTON = 'cursor-pointer rounded-xs text-left outline-none focus-visible:ring-2 focus-visible:ring-primary'
+
+// the ripple layer fills the nearest positioned ancestor: the table row on desktop (the button stretches over it), the
+// button itself on a phone
+type RowButtonProps = {
+  onPressAction: () => void
+  className: string
+  children: ReactNode
+}
+
+function RowButton({ onPressAction, className, children }: RowButtonProps) {
+  const { pressProps, ripple } = useRipple()
+
+  return (
+    <button type="button" onClick={onPressAction} className={className} {...pressProps}>
+      {children}
+      {ripple}
+    </button>
+  )
+}
 
 // Figma Saldo file → Operations 2:11403: a table (desktop) — TableHeader 40 (caption-medium, tertiary), day group rows
 // (44, app fill), TableRow 64: padding 0/16, gap 16, date 72, description (leading 32, gap 12, title body-medium,
@@ -387,19 +408,21 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                 </th>
               </tr>
               {group.items.map((item) => (
-                <tr key={item.row.id} className="relative h-16 border-b border-border hover:bg-subtle">
+                <tr
+                  key={item.row.id}
+                  className="relative h-16 border-b border-border transition-colors hover:bg-subtle"
+                >
                   <td className="pr-2 pl-4 text-label text-text-secondary">{shortDate(item.row.occurredOn)}</td>
                   <td className="px-2">
                     <span className="flex min-w-0 items-center gap-3">
                       {leadingOf(item, 32)}
                       <span className="flex min-w-0 flex-col gap-0.5">
-                        <button
-                          type="button"
-                          onClick={() => onSelectAction(item)}
+                        <RowButton
+                          onPressAction={() => onSelectAction(item)}
                           className={`${ROW_BUTTON} truncate text-body font-medium text-text-primary after:absolute after:inset-0`}
                         >
                           {titleOf(item)}
-                        </button>
+                        </RowButton>
                         <span className="flex items-center gap-2 text-label text-text-secondary">
                           <AuthorAvatar name={author(item)} />
                           <span className="truncate">{subtitleOf(item)}</span>
@@ -464,12 +487,11 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
             </header>
             <ul>
               {group.items.map((item) => (
-                <li key={item.row.id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelectAction(item)}
+                <li key={item.row.id} className="flex">
+                  <RowButton
+                    onPressAction={() => onSelectAction(item)}
                     // a transfer shows two amounts: they drop to their own line instead of cutting the title
-                    className={`${ROW_BUTTON} flex min-h-18 w-full items-center gap-x-4 py-3 ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
+                    className={`cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-primary relative -mx-3 flex min-h-18 flex-1 items-center gap-x-4 overflow-hidden rounded-md px-3 py-3 transition-colors hover:bg-subtle ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
                   >
                     {leadingOf(item, 40)}
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -487,7 +509,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                     >
                       {amountOf(item)}
                     </span>
-                  </button>
+                  </RowButton>
                 </li>
               ))}
             </ul>
