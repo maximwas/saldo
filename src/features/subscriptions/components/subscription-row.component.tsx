@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
@@ -74,6 +75,7 @@ export function SubscriptionRow({ subscription }: SubscriptionRowProps) {
   const translate = useTranslations('subscriptions')
   const today = useToday()
   const dateLabel = useDateLabel()
+  const { pressProps, ripple } = useRipple()
   const { openCard } = useSubscriptionParams()
   const options = useSubscriptionOptions()
   const accountName = options.data?.accounts.find((account) => account.id === subscription.accountId)?.name
@@ -85,7 +87,8 @@ export function SubscriptionRow({ subscription }: SubscriptionRowProps) {
       <button
         type="button"
         onClick={() => openCard(subscription.id)}
-        className="flex min-w-0 flex-1 cursor-pointer items-center gap-4 rounded-xs text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        {...pressProps}
+        className="relative -mx-3 -my-3 flex min-w-0 flex-1 cursor-pointer items-center gap-4 overflow-hidden rounded-md px-3 py-3 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
       >
         <ServiceLogo name={subscription.name} />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -107,6 +110,7 @@ export function SubscriptionRow({ subscription }: SubscriptionRowProps) {
             {nextOn ? translate('next', { date: dateLabel(nextOn) }) : translate('noNext')}
           </span>
         </span>
+        {ripple}
       </button>
       {subscription.archivedAt ? null : <VerdictControl subscription={subscription} />}
     </li>

@@ -7,7 +7,7 @@ import type { CalendarEntry } from '../api/calendar.api'
 import { useCalendarData, useCalendarOptions } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
 import { capitalize, type DayTotals, dayDate, groupByDay, weekDays } from '../utils/calendar.utils'
-import { EntryLine } from './calendar-entry.component'
+import { EntryLine, PressButton } from './calendar-entry.component'
 
 type DaySectionProps = {
   day: string
@@ -95,23 +95,14 @@ function DaySection({ day, entries, totals }: DaySectionProps) {
 
   return (
     <li data-day={day} className="flex flex-col gap-2 border-b border-border py-3 last:border-b-0">
-      <button
-        type="button"
-        onClick={() => open(null)}
-        className="flex items-center gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      >
+      <PressButton onPressAction={() => open(null)} className="-mx-3 flex items-center gap-3 rounded-md px-3 py-1">
         <span className="flex-1 text-label font-semibold text-text-primary">{label}</span>
         <DaySums entries={entries} totals={totals} />
-      </button>
+      </PressButton>
       {entries.map((entry) => (
-        <button
-          key={entry.id}
-          type="button"
-          onClick={() => open(entry.id)}
-          className="block w-full rounded-xs outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
+        <PressButton key={entry.id} onPressAction={() => open(entry.id)} className="-mx-3 block rounded-md px-3 py-1">
           <EntryLine entry={entry} name={nameOf(entry)} withAmount />
-        </button>
+        </PressButton>
       ))}
     </li>
   )
