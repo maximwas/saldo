@@ -9,13 +9,15 @@ const ACTION_CLASS =
 type CardProps = {
   title: string
   /** "All payments ›": label and href of the link in the header, or a button when it opens a dialog on the page */
-  action?: {
- label: string;
-href: string 
-} | {
- label: string;
-onClickAction: () => void 
-}
+  action?:
+    | {
+        label: string
+        href: string
+      }
+    | {
+        label: string
+        onClickAction: () => void
+      }
   className?: string
   children: React.ReactNode
 }
