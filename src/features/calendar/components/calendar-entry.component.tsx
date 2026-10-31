@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
@@ -141,6 +142,34 @@ function EntryActions({ entry }: { entry: CalendarEntry }) {
   )
 }
 
+type PressButtonProps = {
+  className: string
+  pressed?: boolean
+  onPressAction: () => void
+  children: React.ReactNode
+}
+
+/** a clickable calendar row: subtle hover fill and a tap ripple; `className` carries the layout */
+export function PressButton({ className, pressed, onPressAction, children }: PressButtonProps) {
+  const { pressProps, ripple } = useRipple()
+
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onPressAction}
+      className={cn(
+        'relative cursor-pointer overflow-hidden text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary',
+        className,
+      )}
+      {...pressProps}
+    >
+      {children}
+      {ripple}
+    </button>
+  )
+}
+
 function EntryDetails({ entry }: { entry: CalendarEntry }) {
   const translate = useTranslations('calendar')
   const format = useFormatter()
@@ -190,11 +219,10 @@ export function CalendarEntryItem({ entry }: { entry: CalendarEntry }) {
         item === entry.id && 'bg-primary-soft p-3 last:pb-3',
       )}
     >
-      <button
-        type="button"
-        aria-pressed={item === entry.id}
-        onClick={() => void setUrl({ item: item === entry.id ? null : entry.id })}
-        className="flex items-start gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      <PressButton
+        pressed={item === entry.id}
+        onPressAction={() => void setUrl({ item: item === entry.id ? null : entry.id })}
+        className="-mx-3 flex items-start gap-3 rounded-md px-3 py-1"
       >
         {entry.sourceType === 'subscription' ? (
           <ServiceLogo name={entry.title ?? label} />
@@ -212,7 +240,7 @@ export function CalendarEntryItem({ entry }: { entry: CalendarEntry }) {
           <EntryDetails entry={entry} />
         </span>
         <Amount minor={signedMinor(entry)} currency={entry.currency} kind={amountKind(entry)} />
-      </button>
+      </PressButton>
       <EntryActions entry={entry} />
     </li>
   )

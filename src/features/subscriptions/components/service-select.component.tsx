@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useRef, useState } from 'react'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import type { FieldControlProps } from '@/components/ui/field.component'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { FIELD_CLASS } from '@/components/ui/select.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { SERVICE_CHOICES } from '@/components/ui/service-logo.utils'
@@ -25,9 +26,34 @@ type ServiceSelectProps = FieldControlProps & {
 }
 
 const OPTION_CLASS =
-  'flex h-10 w-full cursor-pointer items-center gap-3 rounded-sm px-3 text-left text-body text-text-primary outline-none hover:bg-subtle focus-visible:bg-subtle'
+  'relative flex h-10 w-full cursor-pointer items-center gap-3 overflow-hidden rounded-sm px-3 text-left text-body text-text-primary outline-none transition-colors hover:bg-subtle focus-visible:bg-subtle'
 
 const CustomBadge = () => <CategoryBadge icon="repeat" color="pink" size={32} />
+
+type OptionProps = {
+  selected: boolean
+  className?: string
+  onPickAction: () => void
+  children: React.ReactNode
+}
+
+function ServiceOption({ selected, className, onPickAction, children }: OptionProps) {
+  const { pressProps, ripple } = useRipple()
+
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      className={cn(OPTION_CLASS, className)}
+      onClick={onPickAction}
+      {...pressProps}
+    >
+      {children}
+      {ripple}
+    </button>
+  )
+}
 
 type PanelProps = {
   value: string | null
@@ -63,37 +89,32 @@ function ServicePanel({ value, initialFocus, onPick }: PanelProps) {
       </label>
       <div role="listbox" aria-label={translate('service')} className="flex flex-col gap-0.5">
         {services.map((service) => (
-          <button
+          <ServiceOption
             key={service.name}
-            type="button"
-            role="option"
-            aria-selected={service.name === value}
-            className={OPTION_CLASS}
-            onClick={() => onPick(service.name, typed)}
+            selected={service.name === value}
+            onPickAction={() => onPick(service.name, typed)}
           >
             <ServiceLogo name={service.name} size={32} />
             <span className="min-w-0 flex-1 truncate">{service.name}</span>
             {service.name === value ? <Check className="size-5 shrink-0 text-primary-text" aria-hidden /> : null}
-          </button>
+          </ServiceOption>
         ))}
         {typed && services.length === 0 ? (
           <p className="flex h-10 items-center rounded-sm px-3 text-caption text-text-tertiary">
             {translate('serviceEmpty')}
           </p>
         ) : null}
-        <button
-          type="button"
-          role="option"
-          aria-selected={value === CUSTOM_SERVICE}
-          className={cn(OPTION_CLASS, typed && services.length === 0 && 'bg-subtle')}
-          onClick={() => onPick(CUSTOM_SERVICE, typed)}
+        <ServiceOption
+          selected={value === CUSTOM_SERVICE}
+          className={cn(typed && services.length === 0 && 'bg-subtle')}
+          onPickAction={() => onPick(CUSTOM_SERVICE, typed)}
         >
           <CustomBadge />
           <span className="min-w-0 flex-1 truncate">
             {typed ? translate('serviceCustomNamed', { name: typed }) : translate('serviceCustom')}
           </span>
           {value === CUSTOM_SERVICE ? <Check className="size-5 shrink-0 text-primary-text" aria-hidden /> : null}
-        </button>
+        </ServiceOption>
       </div>
     </div>
   )

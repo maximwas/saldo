@@ -2,6 +2,7 @@
 
 import { useFormatter, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { useLedger } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import type { CalendarEntry } from '../api/calendar.api'
@@ -22,6 +23,7 @@ type DayCellProps = {
 
 function DayCell({ day, column, entries, totals }: DayCellProps) {
   const translate = useTranslations('calendar')
+  const { pressProps, ripple } = useRipple()
   const format = useFormatter()
   const { baseCurrency } = useLedger()
   const { date, today, setUrl } = useCalendarParams()
@@ -50,12 +52,13 @@ function DayCell({ day, column, entries, totals }: DayCellProps) {
           item: null,
         })
       }
+      {...pressProps}
       // Figma CalendarDay 2:10880 (mobile: 56 high, rounded md, number over dots) and 2:10855 (desktop: 192 high, padding 8,
       // gap 6, right / bottom hairlines; weekend and neighbouring-month days on the app ground; selected: primary border + soft fill)
       className={cn(
-        'flex h-14 flex-col items-center gap-1 rounded-md py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:h-48 lg:items-stretch lg:gap-1.5 lg:rounded-none lg:border-r lg:border-b lg:border-border lg:p-2',
+        'relative flex h-14 flex-col overflow-hidden transition-colors items-center gap-1 rounded-md py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:h-48 lg:items-stretch lg:gap-1.5 lg:rounded-none lg:border-r lg:border-b lg:border-border lg:p-2',
         !inMonth || column > 4 ? 'lg:bg-app' : 'lg:bg-card',
-        selected && 'bg-primary-soft lg:border lg:border-primary',
+        selected ? 'bg-primary-soft lg:border lg:border-primary' : 'hover:bg-subtle lg:hover:bg-subtle',
       )}
     >
       <span
@@ -95,6 +98,7 @@ function DayCell({ day, column, entries, totals }: DayCellProps) {
           {hasFact && <Amount minor={factMinor} currency={baseCurrency} className="text-caption" />}
         </span>
       )}
+      {ripple}
     </button>
   )
 }

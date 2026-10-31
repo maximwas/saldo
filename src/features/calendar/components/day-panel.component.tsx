@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils/cn.utils'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
 import { capitalize, dayDate } from '../utils/calendar.utils'
-import { CalendarEntryItem, EntryLine } from './calendar-entry.component'
+import { CalendarEntryItem, EntryLine, PressButton } from './calendar-entry.component'
 
 type DayPanelProps = {
   /** the month's side card: short rows that open the day view; the day view itself lists every entry with its actions */
@@ -100,18 +100,17 @@ export function DayPanel({ compact = false }: DayPanelProps) {
           <ul className="flex flex-col gap-2 border-b border-border pb-4">
             {dayEntries.map((entry) => (
               <li key={entry.id}>
-                <button
-                  type="button"
-                  onClick={() =>
+                <PressButton
+                  onPressAction={() =>
                     void setUrl({
                       view: 'day',
                       item: entry.id,
                     })
                   }
-                  className="block w-full rounded-xs outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="block w-full rounded-xs"
                 >
                   <EntryLine entry={entry} name={entry.title ?? ''} withAmount />
-                </button>
+                </PressButton>
               </li>
             ))}
           </ul>
