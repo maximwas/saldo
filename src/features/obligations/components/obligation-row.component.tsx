@@ -5,6 +5,8 @@ import { Amount } from '@/components/ui/amount.component'
 import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
+import { CategoryBadge } from '@/components/ui/category-badge.component'
+import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
@@ -14,11 +16,14 @@ import { useObligationOptions } from '../hooks/obligations.hook'
 
 type ObligationRowItemProps = {
   obligation: ObligationRow
+  /** «Paid» is in the device's queue, not on the server yet: Figma 5:88413 */
+  awaitingSync: boolean
   onPay: () => void
   onEdit: () => void
   onCancelPayment: () => void
 }
 
+// StatusPill Kind per state: Plan, Partial, Unconfirmed, Paid
 const STATE_TONE = {
   plan: 'plan',
   partial: 'info',
@@ -26,12 +31,20 @@ const STATE_TONE = {
   paid: 'positive',
 } as const
 
-// Figma «Saldo» → Upcoming payments 2:12142 / 2:13276: title, «source · account» + state pill, amount and date on the
-// right, desktop Paid button; on mobile the row itself opens the confirm sheet (no room for the button).
+// Figma «Saldo» → Upcoming payments ListItem 2:12287 / 2:13332: Leading 40 (ServiceLogo, a letter tile, or the
+// CategoryBadge of a big expense), title body-medium, «source · installment · account» + StatusPill, a plan Amount over
+// the date on the right, desktop Secondary S «Paid» button; padding 12/0, gap 16. On mobile the row itself opens the
+// confirm sheet and a credit drops the account from the subtitle.
 // a search result links here: bring the row into view
 const scrollIntoView = (node: HTMLLIElement | null) => node?.scrollIntoView({ block: 'center' })
 
-export function ObligationRowItem({ obligation, onPay, onEdit, onCancelPayment }: ObligationRowItemProps) {
+export function ObligationRowItem({
+  obligation,
+  awaitingSync,
+  onPay,
+  onEdit,
+  onCancelPayment,
+}: ObligationRowItemProps) {
   const [linkedId] = useQueryState('obligation', parseAsString)
   const linked = linkedId === obligation.id
   const translate = useTranslations('obligations')
@@ -42,9 +55,18 @@ export function ObligationRowItem({ obligation, onPay, onEdit, onCancelPayment }
   const today = useToday()
   const options = useObligationOptions()
   const accountName = options.data?.accounts.find((account) => account.id === obligation.accountId)?.name ?? null
+  const category = options.data?.categories.find((item) => item.id === obligation.categoryId)
   const confirmer = obligation.confirmedBy ? names[obligation.confirmedBy] : null
-  const open = obligation.state !== 'paid'
+  const open = obligation.state !== 'paid' && !awaitingSync
   const hasPayments = obligation.paidMinor > 0
+  const isCredit = obligation.sourceType === 'credit'
+  const installment =
+    isCredit && obligation.sequenceNo !== null
+      ? translate(obligation.installmentTotal === null ? 'installmentNumber' : 'installment', {
+          number: obligation.sequenceNo,
+          total: obligation.installmentTotal ?? 0,
+        })
+      : null
   const dateLabel =
     obligation.dueOn === today
       ? translate('todayLabel')
@@ -53,52 +75,50 @@ export function ObligationRowItem({ obligation, onPay, onEdit, onCancelPayment }
           day: '2-digit',
           month: '2-digit',
         })
+  const pill = awaitingSync ? 'paid' : obligation.state
+  const paidKind = open ? 'plan' : 'fact'
+  const amountKind = obligation.direction === 'in' ? 'income' : paidKind
 
   return (
     <li
       ref={linked ? scrollIntoView : undefined}
-      className={cn(
-        'flex flex-col gap-2',
-        linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card',
-      )}
+      className={cn('flex flex-col', linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card')}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center gap-4 py-3">
         <button
           type="button"
           disabled={!canWrite || !open}
           onClick={onPay}
-          className="flex min-w-0 flex-1 items-start justify-between gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-default"
+          className="flex min-w-0 flex-1 items-center gap-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-default"
         >
-          <span className="flex min-w-0 flex-col gap-1">
+          {obligation.sourceType === 'big_expense' ? (
+            <CategoryBadge icon={category?.icon ?? null} color={category?.color ?? null} />
+          ) : (
+            <ServiceLogo name={obligation.title} />
+          )}
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="truncate text-body font-medium text-text-primary">{obligation.title}</span>
-            <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
-              <span>
-                {translate(`source.${obligation.sourceType as 'manual'}`)}
-                {accountName ? ` · ${accountName}` : ''}
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-label text-text-secondary">
+                {translate(`kind.${obligation.sourceType as 'manual'}`)}
+                {installment ? ` · ${installment}` : ''}
+                {accountName ? <span className={cn(isCredit && 'max-lg:hidden')}>{` · ${accountName}`}</span> : null}
+                {awaitingSync ? ` · ${translate('awaitingSync')}` : ''}
               </span>
-              <Badge tone={STATE_TONE[obligation.state]}>{translate(`state.${obligation.state}`)}</Badge>
+              <Badge tone={STATE_TONE[pill]}>{translate(`state.${pill}`)}</Badge>
             </span>
-            {obligation.state === 'paid' && confirmer && obligation.confirmedAt ? (
-              <span className="flex items-center gap-1.5 text-caption text-text-secondary">
-                <AuthorAvatar name={confirmer} />
-                {translate('confirmedBy', {
-                  name: confirmer,
-                  date: format.dateTime(new Date(obligation.confirmedAt), {
-                    day: '2-digit',
-                    month: '2-digit',
-                    timeZone,
-                  }),
-                })}
-              </span>
-            ) : null}
           </span>
-          <span className="flex shrink-0 flex-col items-end gap-1">
+          <span className="flex shrink-0 flex-col items-end gap-0.5">
             <Amount
-              minor={open ? (obligation.remainingMinor ?? obligation.plannedMinor) : obligation.paidMinor}
+              minor={
+                open
+                  ? (obligation.remainingMinor ?? obligation.plannedMinor)
+                  : obligation.paidMinor || obligation.plannedMinor
+              }
               currency={obligation.currency}
-              kind={obligation.direction === 'in' ? 'income' : 'fact'}
+              kind={amountKind}
             />
-            <span className="text-caption text-text-secondary">{dateLabel}</span>
+            <span className="text-label text-text-secondary">{dateLabel}</span>
           </span>
         </button>
         {canWrite && open && (
@@ -107,8 +127,21 @@ export function ObligationRowItem({ obligation, onPay, onEdit, onCancelPayment }
           </Button>
         )}
       </div>
-      {canWrite && (hasPayments || obligation.sourceType === 'manual') && (
-        <div className="flex gap-2">
+      {obligation.state === 'paid' && confirmer && obligation.confirmedAt ? (
+        <span className="flex items-center gap-1.5 pb-3 pl-14 text-caption text-text-secondary">
+          <AuthorAvatar name={confirmer} />
+          {translate('confirmedBy', {
+            name: confirmer,
+            date: format.dateTime(new Date(obligation.confirmedAt), {
+              day: '2-digit',
+              month: '2-digit',
+              timeZone,
+            }),
+          })}
+        </span>
+      ) : null}
+      {canWrite && !awaitingSync && (hasPayments || (obligation.sourceType === 'manual' && open)) && (
+        <div className="flex gap-2 pb-3 pl-14">
           {obligation.sourceType === 'manual' && open && (
             <Button size="s" variant="ghost" onClick={onEdit}>
               <Pencil aria-hidden size={16} />
