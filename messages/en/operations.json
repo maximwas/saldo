@@ -15,6 +15,10 @@
     "debt": "Debt"
   },
   "filters": {
+    "text": "Text",
+    "textTitle": "Search by text",
+    "textHint": "Payee or comment",
+    "textApply": "Show",
     "period": "Period",
     "allTime": "All time",
     "account": "Account",
@@ -62,10 +66,14 @@
     "noCategory": "No category",
     "fee": "Transfer fee"
   },
+  "viewOnly": "View only: operations in «{space}» cannot be added or changed.",
+  "offline": "No network. Data as of {time} — new operations are saved on the device and sync later.",
   "empty": {
     "title": "No operations yet",
     "hint": "Add your first expense or income with the «Add» button.",
-    "filtered": "No operations match this filter"
+    "filtered": "Nothing found",
+    "filteredText": "No {type, select, expense {expenses} income {income} transfer {transfers} other {operations}} for {period}{account, select, none {} other { on «{account}»}}{category, select, none {} other { in «{category}»}}{text, select, none {} other { with the text «{text}»}}. Change the filters or reset them.",
+    "allTime": "all time"
   },
   "loadFailed": "Could not load operations",
   "truncated": "Showing the latest {count} operations. Narrow the period or the filter.",
@@ -126,7 +134,8 @@
       "to": "To",
       "fee": "Fee",
       "rate": "Rate",
-      "purchase": "Purchase"
+      "purchase": "Purchase",
+      "author": "Added by"
     },
     "time": "Time",
     "balance": "Balance {amount}",
@@ -160,6 +169,7 @@
     "info": "The month’s expenses and the category budget go down by this amount. A refund is not income.",
     "submit": "Record refund",
     "done": "Refund recorded",
+    "subtitle": "Refund for {date}",
     "purchase": "Purchase {date}",
     "refunded": "refunded {amount}",
     "amount": "Refund amount",
@@ -168,8 +178,8 @@
   },
   "source": {
     "paid": "Payment: {title} · {date}",
-    "meta": "{type} · plan {amount} · Payments",
-    "metaUnknown": "{type} · Payments",
+    "meta": "{type} · plan {amount}{section, select, shown { · Payments} other {}}",
+    "metaUnknown": "{type}{section, select, shown { · Payments} other {}}",
     "open": "Open source"
   }
 }
