@@ -13,7 +13,16 @@ import { getActiveLedger, verifySession } from '@/lib/auth/dal.server'
 // Figma «Saldo» → Settings, General tab, frame 11:72807: cards 11:73032 (theme) and 11:73055 (language), gap 24;
 // a Card has padding 24, gap 20, radius card, shadow-card, title text/card-title; its body is the hint (text/label,
 // text-secondary) and the SegmentedControl, gap 16. The space and privacy cards have no frame: same Card.
-export default async function SettingsPage() {
+// the translations wait for the user's locale (a Supabase read), so the cards stream inside <Suspense>
+export default function SettingsPage() {
+  return (
+    <Suspense>
+      <SettingsCards />
+    </Suspense>
+  )
+}
+
+async function SettingsCards() {
   const translate = await getTranslations('settings')
 
   return (
