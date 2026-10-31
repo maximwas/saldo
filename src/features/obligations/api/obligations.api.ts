@@ -25,6 +25,11 @@ export type ObligationRow = {
   categoryId: string | null
   state: ObligationState
   version: number
+  sourceId: string | null
+  /** number of the installment / occurrence in its series, null for a single payment */
+  sequenceNo: number | null
+  /** credit installments only: the last number of the schedule, «installment 5 of 10» */
+  installmentTotal: number | null
   /** who confirmed the latest payment and when; null while nothing is paid */
   confirmedBy: string | null
   confirmedAt: string | null
@@ -40,6 +45,8 @@ export type ObligationOptions = {
     id: string
     name: string
     kind: 'income' | 'expense'
+    color: string | null
+    icon: string | null
   }[]
 }
 
@@ -82,7 +89,7 @@ const OPEN_STATES = ['plan', 'partial', 'unconfirmed']
 const PAID_LIMIT = 10
 const CANDIDATE_LIMIT = 10
 const STATE_COLUMNS =
-  'obligation_id, title, source_type, direction, due_on, planned_amount_minor, paid_minor, remaining_minor, currency, account_id, category_id, state, version'
+  'obligation_id, title, source_type, direction, due_on, planned_amount_minor, paid_minor, remaining_minor, currency, account_id, category_id, state, version, source_id, sequence_no'
 
 type StateRow = {
   obligation_id: string
@@ -98,6 +105,8 @@ type StateRow = {
   category_id: string | null
   state: string
   version: number
+  source_id: string | null
+  sequence_no: number | null
 }
 
 function toObligationRow(row: StateRow): ObligationRow {
@@ -115,6 +124,9 @@ function toObligationRow(row: StateRow): ObligationRow {
     categoryId: row.category_id,
     state: row.state as ObligationState,
     version: row.version,
+    sourceId: row.source_id,
+    sequenceNo: row.sequence_no,
+    installmentTotal: null,
     confirmedBy: null,
     confirmedAt: null,
   }
@@ -162,6 +174,37 @@ async function withLatestPayments(supabase: SaldoClient, rows: ObligationRow[]):
   }))
 }
 
+/** the last installment number of each credit on screen: a credit schedule is one obligation per installment
+ * (shortcut: a schedule shortened by an early repayment counts up to its last remaining number) */
+async function installmentTotals(supabase: SaldoClient, ledgerId: string, rows: ObligationRow[]) {
+  const ids = [...new Set(rows.flatMap((row) => (row.sourceType === 'credit' && row.sourceId ? [row.sourceId] : [])))]
+  const totals = new Map<string, number>()
+
+  if (ids.length === 0) {
+    return totals
+  }
+
+  const { data, error } = await supabase
+    .from('obligations')
+    .select('source_id, sequence_no')
+    .eq('ledger_id', ledgerId)
+    .eq('source_type', 'credit')
+    .eq('lifecycle', 'active')
+    .in('source_id', ids)
+
+  if (error) {
+    throw error
+  }
+
+  for (const { source_id: id, sequence_no: number } of data) {
+    if (id && number !== null) {
+      totals.set(id, Math.max(totals.get(id) ?? 0, number))
+    }
+  }
+
+  return totals
+}
+
 /** open obligations of every source, within the range when one is given */
 function openQuery(supabase: SaldoClient, { ledgerId, from, to }: UpcomingParams) {
   let query = supabase
@@ -200,15 +243,16 @@ export async function listObligations(supabase: SaldoClient, params: UpcomingPar
     throw paid.error
   }
 
+  const openMapped = (open.data ?? []).map((row) => toObligationRow(row as StateRow))
+  const paidMapped = (paid.data ?? []).map((row) => toObligationRow(row as StateRow))
+  const totals = await installmentTotals(supabase, ledgerId, [...openMapped, ...paidMapped])
+  const withTotal = (row: ObligationRow): ObligationRow => ({
+    ...row,
+    installmentTotal: row.sourceId ? (totals.get(row.sourceId) ?? null) : null,
+  })
   const [openRows, paidRows] = await Promise.all([
-    withLatestPayments(
-      supabase,
-      (open.data ?? []).map((row) => toObligationRow(row as StateRow)),
-    ),
-    withLatestPayments(
-      supabase,
-      (paid.data ?? []).map((row) => toObligationRow(row as StateRow)),
-    ),
+    withLatestPayments(supabase, openMapped.map(withTotal)),
+    withLatestPayments(supabase, paidMapped.map(withTotal)),
   ])
 
   return {
