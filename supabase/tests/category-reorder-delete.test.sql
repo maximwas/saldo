@@ -1,6 +1,6 @@
 -- reorder_categories and delete_category on the four roles (owner, editor, viewer, outsider). Fictional data only.
 begin;
-select plan(14);
+select plan(16);
 
 create function pg_temp.login(p_user uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_user, 'role', 'authenticated')::text, true);
@@ -39,6 +39,15 @@ select 'a0000000-0000-4000-8000-000000000401', ledger_id, 'Картка', 'bank'
 insert into public.operations (id, ledger_id, kind, direction, account_id, amount_minor, currency, category_id, occurred_at, occurred_on, base_currency, base_amount_minor, created_by)
 select 'b0000000-0000-4000-8000-000000000401', ledger_id, 'expense', 'out', 'a0000000-0000-4000-8000-000000000401', 5000, 'UAH',
   pg_temp.cat('Кафе'), '2026-10-05T10:00:00Z', '2026-10-05', 'UAH', 5000, '00000000-0000-4000-8000-000000000401' from space;
+
+-- category_operation_counts
+select pg_temp.login('00000000-0000-4000-8000-000000000403');
+select is((select operation_count from public.category_operation_counts where category_id = pg_temp.cat('Кафе')), 1,
+  'a member counts the operations of a category');
+reset role;
+select pg_temp.login('00000000-0000-4000-8000-000000000404');
+select is((select count(*)::int from public.category_operation_counts), 0, 'an outsider counts nothing');
+reset role;
 
 -- reorder_categories
 select pg_temp.login('00000000-0000-4000-8000-000000000401');

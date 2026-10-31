@@ -1937,6 +1937,27 @@ export type Database = {
           },
         ]
       }
+      category_operation_counts: {
+        Row: {
+          category_id: string | null
+          ledger_id: string
+          operation_count: number | null
+        }
+        ComputedFields: never
+        Relationships: [
+          {
+            foreignKeyName: 'operations_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
+              'id',
+            ]
+          },
+        ]
+      }
       obligation_states: {
         Row: {
           account_id: string | null
