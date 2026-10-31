@@ -21,7 +21,8 @@
     "db:types": "supabase gen types typescript --local > src/types/database.types.ts && biome format --write src/types/database.types.ts",
     "prepare": "lefthook install",
     "lint:comments": "node scripts/check-sql-comments.mjs",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=desktop --project=mobile",
+    "test:visual": "E2E_SKIP_RESET=1 playwright test --project=visual --update-snapshots=none",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {

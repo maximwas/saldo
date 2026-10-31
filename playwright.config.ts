@@ -54,6 +54,25 @@ export default defineConfig({
       grep: /@mobile/,
       dependencies: ['setup'],
     },
+    {
+      // pixel comparison with Figma frames (`pnpm test:visual`, conventions §6.3); `pnpm test:e2e` leaves it out
+      name: 'visual',
+      testDir: 'e2e/visual',
+      testMatch: '**/*.visual.ts',
+      snapshotPathTemplate: '{testDir}/figma/{arg}{ext}',
+      expect: {
+        toHaveScreenshot: {
+          animations: 'disabled',
+          caret: 'hide',
+          maxDiffPixelRatio: 0.02,
+          threshold: 0.2,
+        },
+      },
+      use: {
+        ...devices['Desktop Chrome'],
+        deviceScaleFactor: 1,
+      },
+    },
   ],
   webServer: {
     // production build: the service worker exists only there, and there is no cold dev compilation
