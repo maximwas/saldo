@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Credit, CreditInstallment } from '../api/credits.api'
-import { creditProgress, creditTotals, payoffOf } from './credits.utils'
+import { creditProgress, creditTotals, monthNotes, payoffOf } from './credits.utils'
 
 const installment = (
   sequenceNo: number,
@@ -104,14 +104,29 @@ describe('creditTotals', () => {
       {
         currency: 'UAH',
         monthMinor: 541_650,
+        nextMonthMinor: 270_825,
         remainingMinor: 541_650,
       },
       {
         currency: 'USD',
         monthMinor: 541_650,
+        nextMonthMinor: 270_825,
         remainingMinor: 541_650,
       },
     ])
+  })
+})
+
+describe('monthNotes', () => {
+  it('names the credit with the date passed, and the one due today', () => {
+    expect(monthNotes([credit()], '2026-10-30')).toEqual({
+      dueToday: [],
+      unconfirmed: [{
+ name: 'Comfy',
+dueOn: '2026-10-20' 
+}],
+    })
+    expect(monthNotes([credit()], '2026-10-20').dueToday).toEqual(['Comfy'])
   })
 })
 
