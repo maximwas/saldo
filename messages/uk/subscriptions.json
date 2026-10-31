@@ -77,7 +77,6 @@
     "firstOn": "Перша дата",
     "firstOnHint": "Від неї рахуються всі наступні дати",
     "shortMonthRule": "Короткий місяць",
-    "shortMonthHint": "Коли дати 29–31 у місяці немає",
     "rules": {
       "last_day": "Останній день місяця",
       "next_month_first": "1-ше наступного місяця",
@@ -86,7 +85,15 @@
     "status": "Стан",
     "trialEndsOn": "Пробний період до",
     "serviceUrl": "Посилання на сервіс",
-    "note": "Примітка"
+    "note": "Примітка",
+    "service": "Сервіс",
+    "servicePlaceholder": "Оберіть сервіс",
+    "serviceSearch": "Пошук сервісу",
+    "serviceEmpty": "Такого сервісу немає в списку",
+    "serviceCustom": "Власна підписка",
+    "serviceCustomNamed": "Власна підписка: “{name}”",
+    "currencyHint": "Зміна валюти діє лише на майбутні оплати",
+    "create": "Додати підписку"
   },
   "card": {
     "back": "Усі підписки",

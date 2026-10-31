@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { SERVICE_CHOICES } from '@/components/ui/service-logo.utils'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import type { SubscriptionView } from '../api/subscriptions.api'
 import { type SeriesSource, SUBSCRIPTION_STATUSES, seriesRows } from '../utils/subscription-series.utils'
@@ -13,6 +14,11 @@ import {
 
 /** messages are keys of the errors namespace; FormField translates them */
 export const subscriptionFormSchema = z.object({
+  /** the picker: a catalog service name (it fills `name`), 'custom' (the user types `name`), null = nothing chosen */
+  service: z
+    .string()
+    .nullable()
+    .refine((service) => service !== null, 'subscriptionServiceRequired'),
   name: z.string().trim().min(1, 'nameRequired').max(80, 'nameTooLong'),
   /** MoneyInput minor units; empty = an unknown amount (§7), never 0. Create only: later prices have a date */
   amountMinor: z.number().int().positive('amountOptionalInvalid').nullable(),
@@ -20,7 +26,7 @@ export const subscriptionFormSchema = z.object({
   accountId: z
     .uuid()
     .nullable()
-    .refine((id) => id !== null, 'accountRequired'),
+    .refine((id) => id !== null, 'subscriptionAccountRequired'),
   categoryId: z.uuid().nullable(),
   unit: z.enum(RECURRENCE_UNITS),
   /** «every N»: typed as text, 1–999 */
@@ -48,6 +54,7 @@ type NewFormContext = {
 
 /** a new subscription: monthly from today, active, the last day of a short month (the column default) */
 export const newSubscriptionFormInput = (context: NewFormContext): SubscriptionFormInput => ({
+  service: null,
   name: '',
   amountMinor: null,
   currency: context.currency as SubscriptionFormInput['currency'],
@@ -65,6 +72,7 @@ export const newSubscriptionFormInput = (context: NewFormContext): SubscriptionF
 
 /** the settings tab starts from the row; the amount is not edited there (prices have dates) */
 export const subscriptionFormInput = (subscription: SubscriptionView): SubscriptionFormInput => ({
+  service: SERVICE_CHOICES.find((service) => service.name === subscription.name)?.name ?? 'custom',
   name: subscription.name,
   amountMinor: null,
   currency: subscription.currency as SubscriptionFormInput['currency'],

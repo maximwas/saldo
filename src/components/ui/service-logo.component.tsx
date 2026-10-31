@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import { CATEGORY_COLORS, CATEGORY_LETTER_TONES } from '@/constants/category-colors.constants'
 import { cn } from '@/lib/utils/cn.utils'
-import { serviceLogoOf } from './service-logo.utils'
+import { serviceLogoIsInset, serviceLogoOf } from './service-logo.utils'
 
 type ServiceLogoProps = {
   name: string
@@ -41,7 +41,7 @@ export function ServiceLogo({ name, size = 40, className }: ServiceLogoProps) {
   if (logo) {
     return (
       <span aria-hidden className={cn('relative shrink-0 overflow-hidden bg-card', box, className)}>
-        <Image src={logo} alt="" fill unoptimized />
+        <Image src={logo} alt="" fill unoptimized className={serviceLogoIsInset(name) ? 'p-1.5' : undefined} />
         <span className={cn('absolute inset-0 border border-border', box)} />
       </span>
     )

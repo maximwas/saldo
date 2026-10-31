@@ -28,7 +28,7 @@ type SelectProps = FieldControlProps & {
   chip?: 'on' | 'off'
 }
 
-const FIELD_CLASS =
+export const FIELD_CLASS =
   'flex h-12 w-full items-center gap-2 rounded-md border border-border-strong bg-card px-4 text-left text-body text-text-primary outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary data-popup-open:border-primary data-popup-open:ring-1 data-popup-open:ring-primary aria-invalid:border-negative aria-invalid:focus-visible:ring-negative disabled:cursor-not-allowed disabled:bg-subtle disabled:text-text-tertiary'
 
 // Figma «Saldo» → Select 2:9397: trigger 48 high, padding 0/16, gap 8, 20px chevron (up while open); Default 1px

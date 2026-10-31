@@ -77,7 +77,6 @@
     "firstOn": "First date",
     "firstOnHint": "Every later date is counted from it",
     "shortMonthRule": "Short month",
-    "shortMonthHint": "When the 29th–31st is missing from a month",
     "rules": {
       "last_day": "Last day of the month",
       "next_month_first": "1st of the next month",
@@ -86,7 +85,15 @@
     "status": "State",
     "trialEndsOn": "Trial until",
     "serviceUrl": "Service link",
-    "note": "Note"
+    "note": "Note",
+    "service": "Service",
+    "servicePlaceholder": "Pick a service",
+    "serviceSearch": "Search services",
+    "serviceEmpty": "This service is not in the list",
+    "serviceCustom": "Custom subscription",
+    "serviceCustomNamed": "Custom subscription: “{name}”",
+    "currencyHint": "A currency change applies to future payments only",
+    "create": "Add subscription"
   },
   "card": {
     "back": "All subscriptions",

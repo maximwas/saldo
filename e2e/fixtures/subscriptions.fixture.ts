@@ -7,9 +7,12 @@ export async function addSubscription(page: Page, name: string, amount: string) 
 
   const form = page.getByRole('dialog')
 
+  // a custom subscription: pick the custom subscription in the service picker, then type its name
+  await form.getByRole('button', { name: 'Оберіть сервіс' }).click()
+  await page.getByRole('option', { name: 'Власна підписка' }).click()
   await form.getByLabel('Назва').fill(name)
   await form.getByLabel('Сума за період').fill(amount)
-  await form.getByRole('button', { name: 'Зберегти' }).click()
+  await form.getByRole('button', { name: 'Додати підписку' }).click()
   await expect(form).toBeHidden()
 }
 

@@ -22,6 +22,7 @@ const ACCOUNT_ID = '3f0a6d1e-6a3b-4c1d-9f4e-0a1b2c3d4e5f'
 const TODAY = '2026-10-30'
 
 const values: SubscriptionFormValues = {
+  service: 'Netflix',
   name: ' Netflix ',
   amountMinor: 34_900,
   currency: 'UAH',
@@ -66,15 +67,20 @@ const subscription: SubscriptionView = {
 }
 
 describe('subscriptionFormSchema', () => {
-  it('needs an account and a whole «every N»', () => {
+  it('needs a service, an account and a whole «every N»', () => {
     const result = subscriptionFormSchema.safeParse({
       ...values,
+      service: null,
       accountId: null,
       count: '0',
     })
 
     expect(result.success).toBe(false)
-    expect(result.error?.issues.map((issue) => issue.message).sort()).toEqual(['accountRequired', 'countInvalid'])
+    expect(result.error?.issues.map((issue) => issue.message).sort()).toEqual([
+      'countInvalid',
+      'subscriptionAccountRequired',
+      'subscriptionServiceRequired',
+    ])
   })
 
   it('accepts an empty amount as unknown', () => {
