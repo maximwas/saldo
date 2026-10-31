@@ -16,22 +16,31 @@ const TABS = [
     href: '/settings/access',
   },
   {
+    key: 'notifications',
+    href: '/settings/notifications',
+  },
+  {
+    key: 'currencies',
+    href: '/settings/currencies',
+  },
+  {
     key: 'data',
     href: '/settings/data',
   },
 ] as const
 
 // Figma «Saldo» → Settings, Tabs 2:30898: gap 24, 1px border-bottom; Tab = label body-medium (text-primary when
-// active, else text-secondary), padding 10/4/0, 2px primary indicator under the active one. Only the tabs that exist
-// are shown; Notifications, Currencies and Security arrive with their features.
+// active, else text-secondary), padding 10/4/0, 2px primary indicator under the active one. Figma order; Security has
+// no feature yet, so its tab is left out. Phones have no tabs: the section list 2:35769 at /settings leads to each page.
 export function SettingsTabs() {
   const pathname = usePathname()
   const translate = useTranslations('settings')
 
   return (
-    <nav aria-label={translate('tabsLabel')} className="flex items-end gap-6 border-b border-border">
+    <nav aria-label={translate('tabsLabel')} className="hidden items-end gap-6 border-b border-border lg:flex">
       {TABS.map((tab) => {
-        const active = pathname === tab.href
+        // phones open General at /settings/general, the desktop tab stays /settings
+        const active = pathname === tab.href || (tab.key === 'general' && pathname === '/settings/general')
 
         return (
           <Link

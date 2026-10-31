@@ -15,19 +15,19 @@ test('запрошення: людина з акаунтом Saldo стає edit
   const ownerAvailable = await availableMinor(owner)
 
   // owner creates the invite and copies the link from the one-time step; an email without a Saldo account is refused
-  // under the field (Figma 32:94877)
+  // under the field (Figma 32:94877); the primary button is the long label on desktop and the short one on phones
   await owner.goto('/settings/access')
   await owner.getByRole('button', { name: 'Запросити' }).click()
 
   const invite = owner.getByRole('dialog')
 
   await invite.getByLabel('Email').fill(`guest-${crypto.randomUUID().slice(0, 8)}@example.com`)
-  await invite.getByRole('button', { name: 'Створити посилання' }).click()
+  await invite.getByRole('button', { name: /^Створити/ }).click()
   await expect(invite.getByText('Користувача з такою поштою немає в Saldo')).toBeVisible()
   await invite.getByLabel('Email').fill(email)
   await invite.getByLabel('Роль').click()
   await owner.getByRole('option', { name: 'Редагує' }).click()
-  await invite.getByRole('button', { name: 'Створити посилання' }).click()
+  await invite.getByRole('button', { name: /^Створити/ }).click()
 
   const link = await invite.getByLabel('Посилання').inputValue()
 
@@ -50,7 +50,10 @@ test('запрошення: людина з акаунтом Saldo стає edit
     .filter({ hasText: email })
     .getByRole('button', { name: 'Відкликати доступ' })
     .click()
-  await owner.getByRole('dialog').getByRole('button', { name: 'Відкликати доступ' }).click()
+  await owner
+    .getByRole('dialog')
+    .getByRole('button', { name: /^Відкликати/ })
+    .click()
   await expect(owner.getByRole('listitem').filter({ hasText: email })).toHaveCount(0)
 
   await guest.reload()
