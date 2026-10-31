@@ -23,8 +23,23 @@ import { OperationSummary } from './operation-summary.component'
 export function OperationsScreen() {
   const translate = useTranslations('operations')
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
-  const { url, filters, period, active, setUrl, reset } = useOperationFilters()
+  const { url, filters, period, today, active, setUrl, reset } = useOperationFilters()
   const list = useQuery(operationQueries.list(ledgerId, filters))
+  const timeZone = useLedgerStore((ledger) => ledger.timeZone)
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
+  // the «with plan to the month end» line belongs to the whole current month: a type, account or category filter hides it
+  const wholeMonth = period === today.slice(0, 7) && url.type === 'all' && !url.account && !url.category && !url.who
+  const planned = useQuery({
+    ...operationQueries.planned(
+      {
+        ledgerId,
+        baseCurrency,
+        timeZone,
+      },
+      today,
+    ),
+    enabled: wholeMonth,
+  })
   const options = useQuery(operationQueries.options(ledgerId))
   // `key` changes with every target, so a row, then its duplicate, each get a fresh form and fresh ids
   const [editor, setEditor] = useState<{
@@ -117,7 +132,11 @@ export function OperationsScreen() {
   } else {
     content = (
       <>
-        <OperationSummary totals={totals} period={period} />
+        <OperationSummary
+          totals={totals}
+          period={period}
+          withPlanMinor={wholeMonth && planned.data != null ? totals.resultMinor - planned.data : null}
+        />
         {list.data.truncated ? (
           <p className="text-caption text-text-tertiary">{translate('truncated', { count: list.data.rows.length })}</p>
         ) : null}

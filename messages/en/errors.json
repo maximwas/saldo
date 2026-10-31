@@ -42,5 +42,6 @@
   "formatInvalid": "Check the format",
   "invalid": "Check the value",
   "categoryRequired": "Choose a category",
-  "counterpartyRequired": "Enter a recipient"
+  "counterpartyRequired": "Enter a recipient",
+  "factInFuture": "A fact cannot be in the future — create a plan"
 }

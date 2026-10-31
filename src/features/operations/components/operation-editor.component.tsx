@@ -106,7 +106,14 @@ export function OperationEditor({
   const [newId] = useState(() => crypto.randomUUID())
   // a blank new operation keeps a draft per space; a duplicate starts from its source instead
   const draftKey = target.mode === 'create' && !target.defaults ? `operations:create:${ledgerId}` : undefined
-  const [kind, setKind] = useState<AddKind>(target.mode === 'create' ? target.kind : 'expense')
+  // an edited income / expense starts on its own kind; the switch flips it (update_operation takes kind + direction)
+  const [kind, setKind] = useState<AddKind>(() => {
+    if (target.mode === 'create') {
+      return target.kind
+    }
+
+    return target.item.kind === 'income' ? 'income' : 'expense'
+  })
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [refunding, setRefunding] = useState(false)
@@ -490,10 +497,21 @@ export function OperationEditor({
       <div aria-busy className="h-64 rounded-md bg-subtle" />
     ) : (
       <>
+        {/* Figma 5:101464: the edit sheet keeps the type switch; a transfer is made anew, so only the two kinds flip */}
+        <SegmentedControl
+          stretch
+          label={translate('add.typeLabel')}
+          options={ADD_KINDS.map((value) => ({
+            value,
+            label: translate(`add.${value}`),
+          }))}
+          value={kind}
+          onValueChange={(next) => (next === 'transfer' ? undefined : setKind(next))}
+        />
         <OperationSource operationId={item.row.id} />
         <OperationForm
           formId={FORM_ID}
-          kind={item.kind as 'expense' | 'income'}
+          kind={kind === 'income' ? 'income' : 'expense'}
           defaults={toFormValues(item, timeZone)}
           onSubmitAction={saveOperation}
         >
@@ -504,10 +522,11 @@ export function OperationEditor({
             {translate('refund.refunded', { amount: formatMinor(refundedMinor, item.row.currency, locale) })}
           </p>
         ) : null}
-        {/* Figma 17:89221 «Refund»: a top border, padding-top 16, Ghost «record refund» and the limit (caption) */}
+        {/* Figma 15:76568 «Refund»: a top border, padding-top 12, a full-width Ghost «record refund», the limit
+            (caption) centred under it, gap 4 */}
         {canRefund ? (
-          <div className="flex items-center gap-3 border-t border-border pt-4">
-            <Button type="button" variant="ghost" onClick={() => setRefunding(true)}>
+          <div className="flex flex-col items-center gap-1 border-t border-border pt-3">
+            <Button type="button" variant="ghost" className="self-stretch" onClick={() => setRefunding(true)}>
               <Undo2 aria-hidden className="size-5" />
               {translate('refund.submit')}
             </Button>

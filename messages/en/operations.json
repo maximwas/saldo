@@ -31,7 +31,8 @@
     "result": "Result",
     "unknownRate": "No rate: {count}",
     "incomeOf": "Income in {month}",
-    "expensesOf": "Expenses in {month}"
+    "expensesOf": "Expenses in {month}",
+    "withPlan": "with plans to the month end"
   },
   "table": {
     "date": "Date",

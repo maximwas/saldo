@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useLocale, useTranslations } from 'next-intl'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
@@ -18,7 +18,7 @@ import { useFormDraft } from '@/lib/forms/form-draft.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
-import { type OperationFormValues, operationFormSchema } from '../schemas/operation-form.schema'
+import { factFormSchema, type OperationFormValues } from '../schemas/operation-form.schema'
 import { accountOptions } from '../utils/operation-display.utils'
 import { CategorySelect } from './category-select.component'
 
@@ -57,7 +57,7 @@ export function OperationForm({
   const accounts = options.data?.accounts ?? []
   const categories = options.data?.categories ?? []
   const balances = options.data?.balances ?? {}
-  const resolver = useZodResolver(operationFormSchema)
+  const resolver = useZodResolver(useMemo(() => factFormSchema(today), [today]))
   const firstAccount = accounts.find((account) => !account.archived)
   const form = useForm<OperationFormValues>({
     resolver,

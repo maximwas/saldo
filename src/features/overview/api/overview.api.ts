@@ -1,4 +1,9 @@
-import { type AvailableMoney, computeAvailableMoney } from '@/lib/finance/available-money.utils'
+import {
+  type AvailableMoney,
+  computeAvailableMoney,
+  monthEndOf,
+  plannedToMonthEnd,
+} from '@/lib/finance/available-money.utils'
 import { getLedgerRates } from '@/lib/finance/ledger-fx.api'
 import { type LedgerCategoryOption, listCategoryOptions } from '@/lib/finance/ledger-options.api'
 import { localDate } from '@/lib/utils/clock.utils'
@@ -35,6 +40,8 @@ export type Overview = {
   ledgerVersion: number
   /** the current month in the ledger time zone, in the base currency */
   month: MonthTotals
+  /** the month's result minus the outgoing plans left to the month end, past unconfirmed ones included; null = unknown */
+  monthWithPlanMinor: number | null
   accounts: OverviewAccount[]
   /** balancesMinor is always filled; the other parts mean something only when untilOn is set */
   available: AvailableMoney
@@ -250,6 +257,19 @@ function getAvailable({ sources, baseCurrency, horizon, now, timeZone }: Availab
   })
 }
 
+/** the month's result minus the outgoing plans left to the month end; null = an amount or a rate is unknown */
+function monthWithPlan(sources: Sources, baseCurrency: string, now: Date, timeZone: string) {
+  const planned = plannedToMonthEnd({
+    baseCurrency,
+    obligations: sources.due.map(toAvailableObligation),
+    rates: sources.rates,
+    now,
+    timeZone,
+  })
+
+  return planned === null ? null : sources.month.resultMinor - planned
+}
+
 /** Overview + "Available" (plan 1.16): the same numbers for the browser and the MCP server, no React */
 export async function getOverview(
   supabase: SaldoClient,
@@ -259,11 +279,14 @@ export async function getOverview(
   const ledger = await getLedgerHead(supabase, ledgerId)
   // without a date only today's horizon is read
   const horizon = ledger.untilOn ?? today
+  const monthEnd = monthEndOf(today)
+  // one read serves «Available» (to horizon) and the month result with its plan (to the month end)
   const sources = await getSources(supabase, {
     ledgerId,
     today,
-    horizon,
+    horizon: horizon > monthEnd ? horizon : monthEnd,
   })
+
   const rateContext = {
     baseCurrency: ledger.baseCurrency,
     rates: sources.rates,
@@ -276,6 +299,7 @@ export async function getOverview(
     untilOn: ledger.untilOn,
     ledgerVersion: ledger.version,
     month: sources.month,
+    monthWithPlanMinor: monthWithPlan(sources, ledger.baseCurrency, now, timeZone),
     accounts: sources.accounts.map((row) => toOverviewAccount(row, rateContext)),
     available: getAvailable({
       sources,

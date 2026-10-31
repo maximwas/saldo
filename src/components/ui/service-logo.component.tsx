@@ -25,9 +25,12 @@ const SIZES = {
   },
 } as const
 
+// the first eight presets, the LetterAvatar colours of the Figma frames (the two credits are yellow and blue on Overview 2:8326)
+const LETTER_COLORS = CATEGORY_COLORS.slice(0, 8)
+
 /** the same name always gets the same colour, so a service is recognisable across lists */
 const colorOf = (name: string) =>
-  CATEGORY_COLORS[[...name].reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0) % CATEGORY_COLORS.length]
+  LETTER_COLORS[[...name].reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0) % LETTER_COLORS.length]
 
 // Figma «Saldo» → ServiceLogo 2:7882 (40/32/24, radius md/logo-md/sm, card fill, 1px border ring over the logo from
 // Service logos 1:167); a name without a logo gets LetterAvatar 2:7963: its first letter in cat-<colour>-text on the soft fill

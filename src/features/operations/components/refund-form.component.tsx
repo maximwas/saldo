@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -15,7 +16,7 @@ import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationRow } from '../operations.types'
-import { type OperationFormValues, operationFormSchema, validatedMinor } from '../schemas/operation-form.schema'
+import { factFormSchema, type OperationFormValues, validatedMinor } from '../schemas/operation-form.schema'
 import { accountOptions } from '../utils/operation-display.utils'
 
 type RefundFormProps = {
@@ -43,7 +44,7 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
   const category = categories.find((candidate) => candidate.id === purchase.categoryId)?.name
   const accountName = accounts.find((account) => account.id === purchase.accountId)?.name ?? ''
   const form = useForm<OperationFormValues>({
-    resolver: useZodResolver(operationFormSchema),
+    resolver: useZodResolver(useMemo(() => factFormSchema(today), [today])),
     defaultValues: {
       kind: 'refund',
       direction: 'in',

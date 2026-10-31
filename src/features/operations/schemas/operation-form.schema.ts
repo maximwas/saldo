@@ -47,6 +47,13 @@ export const operationFormSchema = z
 
 export type OperationFormValues = z.infer<typeof operationFormSchema>
 
+/** Figma 5:101464 (a fact is not in the future, make a plan): an operation is a fact, dated today (ledger-local) or earlier */
+export const factFormSchema = (today: string) =>
+  operationFormSchema.refine((values) => values.occurredOn <= today, {
+    path: ['occurredOn'],
+    message: 'factInFuture',
+  })
+
 // shared by create and update; duplicated_from_id is set once at create, so an edit never clears it
 type OperationFields = Omit<CreateOperationInput, 'id' | 'ledger_id' | 'duplicated_from_id'>
 

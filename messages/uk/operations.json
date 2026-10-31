@@ -31,7 +31,8 @@
     "result": "Результат",
     "unknownRate": "Без курсу: {count}",
     "incomeOf": "Доходи за {month}",
-    "expensesOf": "Витрати за {month}"
+    "expensesOf": "Витрати за {month}",
+    "withPlan": "з планом до кінця місяця"
   },
   "table": {
     "date": "Дата",

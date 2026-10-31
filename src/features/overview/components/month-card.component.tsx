@@ -10,8 +10,9 @@ type MonthCardProps = {
   overview: Overview
 }
 
-// Figma «Saldo» → Overview 2:8521 month card: three tiles (subtle fill, radius inner, padding 16, gap 4, label-medium,
-// a signed M sum; a column of rows on mobile), then the top expense categories (label-medium): CategoryIcon 40, name
+// Figma «Saldo» → Overview 2:8521 month card: three tiles in a row (gap 16; subtle fill, radius inner, padding 16, gap 4,
+// label-medium, a signed M sum; on mobile 2:8962 a column of rows, gap 8, padding 12/16), the result tile with the
+// «with plan to the month end» caption (label, secondary) under its sum, then the top expense categories (label-medium): CategoryIcon 40, name
 // body-medium, share label, sum body-semibold, a ProgressBar 8 in the category colour under them (gap 8; rows gap 16)
 export function MonthCard({ overview }: MonthCardProps) {
   const translate = useTranslations('overview')
@@ -51,17 +52,28 @@ export function MonthCard({ overview }: MonthCardProps) {
         href: '/statistics',
       }}
     >
-      <dl className="grid gap-3 lg:grid-cols-3">
+      <dl className="grid gap-2 lg:grid-cols-3 lg:gap-4">
         {tiles.map((tile) => (
           <div
             key={tile.key}
-            className="flex items-center justify-between gap-1 rounded-inner bg-subtle px-4 py-3 lg:flex-col lg:items-start lg:p-4"
+            className="flex flex-wrap items-center justify-between gap-1 rounded-inner bg-subtle px-4 py-3 lg:flex-col lg:flex-nowrap lg:items-start lg:justify-start lg:p-4"
           >
             <dt className="text-label font-medium text-text-secondary">{translate(`month.${tile.key}`)}</dt>
             <dd className="font-display text-number-sm">
               {tile.kind === 'income' && tile.minor > 0 ? <span className="text-positive-text">+</span> : null}
               <Amount minor={tile.minor} currency={baseCurrency} kind={tile.kind} size="m" />
             </dd>
+            {tile.key === 'result' && overview.monthWithPlanMinor !== null ? (
+              <dd className="basis-full text-label text-text-secondary">
+                {translate('month.withPlan')}: {overview.monthWithPlanMinor > 0 ? '+' : null}
+                <Amount
+                  minor={overview.monthWithPlanMinor}
+                  currency={baseCurrency}
+                  kind="plan"
+                  className="text-label font-normal"
+                />
+              </dd>
+            ) : null}
           </div>
         ))}
       </dl>

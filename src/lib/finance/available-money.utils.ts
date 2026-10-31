@@ -1,3 +1,4 @@
+import { endOfMonth, format, parseISO } from 'date-fns'
 import { convertAt, type FxRate, type RoundingMode } from '@/lib/money/fx.utils'
 import { localDate } from '@/lib/utils/clock.utils'
 
@@ -8,7 +9,7 @@ type AvailableAccount = {
   currency: string
 }
 
-type AvailableObligation = {
+export type AvailableObligation = {
   id: string
   /** in = expected income: shown next to the figure, never added (§3) */
   direction: 'in' | 'out'
@@ -124,4 +125,20 @@ export function computeAvailableMoney(input: AvailableMoneyInput): AvailableMone
       .map((obligation) => obligation.id),
     unknownRateCurrencies: [...unknownRates],
   }
+}
+
+/** the last day of the month of a YYYY-MM-DD date */
+export const monthEndOf = (date: string) => format(endOfMonth(parseISO(date)), 'yyyy-MM-dd')
+
+type PlanInput = Pick<AvailableMoneyInput, 'baseCurrency' | 'obligations' | 'rates' | 'now' | 'timeZone'>
+
+/** «with plan to the month end» (Figma Operations 2:11516, Overview 2:8521): open outgoing obligations due by the last day
+ * of today's month, past unconfirmed ones included, in the base currency; the caller subtracts it from the month's
+ * result. Calendar and Budget take the same sum. null = an amount or a rate is unknown, never 0 */
+export function plannedToMonthEnd(input: PlanInput): number | null {
+  return computeAvailableMoney({
+    ...input,
+    accounts: [],
+    untilOn: monthEndOf(localDate(input.now, input.timeZone)),
+  }).obligationsMinor
 }

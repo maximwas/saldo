@@ -54,7 +54,8 @@
     "expense": "Expenses",
     "result": "Result",
     "unknown": "{count, plural, one {# operation without a rate is not counted} other {# operations without a rate are not counted}}",
-    "top": "Top spending categories"
+    "top": "Top spending categories",
+    "withPlan": "with plans to the month end"
   },
   "incomeDate": {
     "change": "Change",

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createOperationInputSchema } from '@/lib/finance/create-operation-input.schema'
 import {
+  factFormSchema,
   type OperationFormValues,
   operationFormSchema,
   toCreateOperationInput,
@@ -209,5 +210,27 @@ describe('createOperationInputSchema', () => {
         direction: 'in',
       }).success,
     ).toBe(false)
+  })
+})
+
+describe('factFormSchema', () => {
+  const fact = (occurredOn: string) => ({
+    kind: 'income' as const,
+    direction: 'in' as const,
+    amount: '100',
+    currency: 'UAH' as const,
+    accountId: '7d6f2b1e-4a8c-4f3e-9b2a-1c5d8e7f6a90',
+    categoryId: null,
+    occurredOn,
+    occurredTime: '',
+    counterparty: '',
+    note: '',
+  })
+
+  it('takes today and earlier, not a future date (Figma «Факт не в майбутньому — створіть план»)', () => {
+    expect(factFormSchema('2026-10-30').safeParse(fact('2026-10-30')).success).toBe(true)
+    const future = factFormSchema('2026-10-30').safeParse(fact('2026-11-26'))
+
+    expect(future.error?.issues.map((issue) => issue.message)).toEqual(['factInFuture'])
   })
 })

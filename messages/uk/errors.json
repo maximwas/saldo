@@ -42,5 +42,6 @@
   "formatInvalid": "Перевірте формат",
   "invalid": "Перевірте значення",
   "categoryRequired": "Оберіть категорію",
-  "counterpartyRequired": "Вкажіть одержувача"
+  "counterpartyRequired": "Вкажіть одержувача",
+  "factInFuture": "Факт не в майбутньому — створіть план"
 }
