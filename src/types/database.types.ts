@@ -1937,6 +1937,27 @@ export type Database = {
           },
         ]
       }
+      category_operation_counts: {
+        Row: {
+          category_id: string | null
+          ledger_id: string
+          operation_count: number | null
+        }
+        ComputedFields: never
+        Relationships: [
+          {
+            foreignKeyName: 'operations_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
+              'id',
+            ]
+          },
+        ]
+      }
       obligation_states: {
         Row: {
           account_id: string | null
@@ -2239,6 +2260,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      delete_category: {
+        Args: {
+          p_id: string
+          p_move_to?: string
+        }
+        Returns: undefined
+      }
       delete_ledger_data: {
         Args: {
           p_ledger_id: string
@@ -2356,6 +2384,12 @@ export type Database = {
         Args: {
           p_ledger_id: string
           p_user_id: string
+        }
+        Returns: undefined
+      }
+      reorder_categories: {
+        Args: {
+          p_items: Json
         }
         Returns: undefined
       }

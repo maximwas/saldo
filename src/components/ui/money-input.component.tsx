@@ -24,8 +24,8 @@ type MoneyInputProps = FieldControlProps & {
 
 const textFromMinor = (minor: number | null, currency: string) => (minor === null ? '' : fromMinor(minor, currency))
 
-// Figma «Saldo» → MoneyInput 2:7642 (+ State=Error 5:91715): field 60 high, padding 0/16, gap 8, radius md, number-sm
-// text; Sign text-secondary, Value text-primary, Currency text-tertiary; Default 1px border-strong, Focus 2px primary,
+// Figma «Saldo» → MoneyInput 2:7642 (+ State=Error 5:91715): field 48 high like every field, padding 0/16, gap 8, radius md, text/body
+// like every input; Sign text-secondary, Value text-primary, Currency text-tertiary; Default 1px border-strong, Focus 2px primary,
 // Error 2px negative. No Disabled variant in Figma: it follows Input (subtle fill, tertiary text).
 export function MoneyInput({
   value,
@@ -42,6 +42,7 @@ export function MoneyInput({
   id,
   'aria-describedby': describedBy,
   'aria-invalid': invalid,
+  'aria-required': ariaRequired,
 }: MoneyInputProps) {
   const locale = useLocale()
   const { group, decimal } = useMemo(() => {
@@ -65,11 +66,11 @@ export function MoneyInput({
       data-invalid={invalid ? '' : undefined}
       data-disabled={disabled ? '' : undefined}
       className={cn(
-        'flex h-15 w-full items-center gap-2 rounded-md border border-border-strong bg-card px-4 text-number-sm ring-1 ring-transparent transition-colors focus-within:border-primary focus-within:ring-primary data-invalid:border-negative data-invalid:ring-negative data-disabled:bg-subtle data-disabled:text-text-tertiary',
+        'flex h-12 w-full items-center gap-2 rounded-md border border-border-strong bg-card px-4 text-body ring-1 ring-transparent transition-colors focus-within:border-primary focus-within:ring-primary data-invalid:border-negative data-invalid:ring-negative data-disabled:bg-subtle data-disabled:text-text-tertiary',
         className,
       )}
     >
-      {sign ? <span className="font-display text-text-secondary">{sign}</span> : null}
+      {sign ? <span className="text-text-secondary">{sign}</span> : null}
       <NumericFormat
         id={id}
         name={name}
@@ -88,7 +89,12 @@ export function MoneyInput({
         disabled={disabled}
         aria-describedby={describedBy}
         aria-invalid={invalid}
-        onBlur={onBlur}
+        aria-required={ariaRequired}
+        onBlur={() => {
+          // a typed «2400» reads «2 400,00» once the field is left, like a prefilled amount
+          setText(textFromMinor(value, currency))
+          onBlur?.()
+        }}
         onValueChange={(values, source) => {
           // react-number-format also reports prop-driven changes; only typing should reach the form
           if (source.source !== 'event') {
@@ -98,9 +104,9 @@ export function MoneyInput({
           setText(values.value)
           onValueChange(parseAmountText(values.value, currency))
         }}
-        className="min-w-0 flex-1 bg-transparent font-display text-text-primary outline-none placeholder:text-text-tertiary disabled:cursor-not-allowed disabled:text-text-tertiary"
+        className="min-w-0 flex-1 bg-transparent text-text-primary outline-none placeholder:text-text-tertiary disabled:cursor-not-allowed disabled:text-text-tertiary"
       />
-      <span className="font-display text-text-tertiary">{currencySymbol(currency, locale)}</span>
+      <span className="text-text-tertiary">{currencySymbol(currency, locale)}</span>
     </div>
   )
 }

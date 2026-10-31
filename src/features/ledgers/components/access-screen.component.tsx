@@ -1,23 +1,28 @@
 'use client'
 
-import { LogOut, UserPlus } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { UserPlus, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { Select } from '@/components/ui/select.component'
+import { useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { cn } from '@/lib/utils/cn.utils'
-import { cancelLedgerInvite, removeMember, setMemberRole } from '../api/access.api'
+import { cancelLedgerInvite, getMemberContributions, removeMember, setMemberRole } from '../api/access.api'
 import type { Member, PendingInvite } from '../api/access.server'
 import { INVITE_ROLES } from '../schemas/access.schema'
+import { memberName } from '../utils/members.utils'
 import { ConfirmSheet } from './confirm-sheet.component'
 import { InviteSheet } from './invite-sheet.component'
-import { MyRemindersCard } from './my-reminders-card.component'
+import { LeaveSpaceButton } from './leave-space-button.component'
 
 type AccessScreenProps = {
   currentUserId: string
@@ -34,7 +39,6 @@ type Dialog =
       kind: 'cancel'
       invite: PendingInvite
     }
-  | { kind: 'leave' }
   | null
 
 // Figma LetterAvatar Size=40 colours: tones differ per person, text/body-semibold on a soft fill
@@ -44,8 +48,6 @@ const AVATAR_TONES = [
   'bg-cat-orange-soft text-cat-orange-text',
   'bg-cat-green-soft text-cat-green-text',
 ]
-
-const memberName = (member: Member) => member.name ?? member.email?.split('@')[0] ?? '—'
 
 type AvatarProps = {
   name: string
@@ -66,14 +68,16 @@ function Avatar({ name, index }: AvatarProps) {
   )
 }
 
-// Figma «Saldo» → Settings, Access tab 2:30818: Card Members (intro + Invite, rows: avatar, name + email,
-// role 200, action 180) and Card Pending invites; to the right Card Roles (400). The viewer frame
-// 2:46979 adds an info line on top and Leave space in place of Invite.
+// Figma «Saldo» → Settings, Access tab 2:30818: Card Members (body gap 16: intro with 8 below + Invite, rows padding 16
+// with a divider: avatar, name + email, role 200, action 180) and Card Pending invites; to the right Card Roles (400,
+// as tall as the row). Read only 2:46979: Info Banner on top, Leave space in place of Invite, the own role a disabled
+// Select. Only the owner in the space and no invites 2:46293: one Members card with the empty state.
 export function AccessScreen({ currentUserId, members, invites }: AccessScreenProps) {
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const role = useLedgerStore((ledger) => ledger.role)
   const ledgerName = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const router = useRouter()
+  const isDesktop = useIsDesktop()
   const translate = useTranslations('settings.access')
   const translateError = useTranslations('errors.db')
   const formatter = useFormatter()
@@ -84,6 +88,14 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
   const isOwner = role === 'owner'
   const owner = members.find((member) => member.role === 'owner')
   const ownerName = owner ? memberName(owner) : '—'
+  const revokeMember = dialog?.kind === 'revoke' ? dialog.member : null
+  const revokeName = revokeMember ? memberName(revokeMember) : ''
+  // the desktop dialog counts what the person entered (2:36442); the mobile sheet 2:45498 does not
+  const contributions = useQuery({
+    queryKey: ledgerQueryKey('ledger-members', ledgerId, 'contributions', revokeMember?.userId),
+    queryFn: () => getMemberContributions(getBrowserSupabase(), ledgerId, revokeMember?.userId ?? ''),
+    enabled: revokeMember !== null && isDesktop,
+  })
   const roleOptions = INVITE_ROLES.map((value) => ({
     value,
     label: translate(`roles.${value}`),
@@ -136,16 +148,10 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
   }
 
   const confirm = () => {
-    if (!dialog) {
-      return
-    }
-
-    const supabase = getBrowserSupabase()
-
-    if (dialog.kind === 'revoke') {
+    if (dialog?.kind === 'revoke') {
       void run(
         () =>
-          removeMember(supabase, {
+          removeMember(getBrowserSupabase(), {
             ledgerId,
             userId: dialog.member.userId,
           }),
@@ -154,186 +160,192 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
           notify.success(translate('revokeSheet.done'))
         },
       )
-    } else if (dialog.kind === 'cancel') {
+    } else if (dialog?.kind === 'cancel') {
       void run(
-        () => cancelLedgerInvite(supabase, dialog.invite.id, new Date()),
+        () => cancelLedgerInvite(getBrowserSupabase(), dialog.invite.id, new Date()),
         () => {
           closeDialog()
           notify.success(translate('cancelSheet.done'))
         },
       )
-    } else {
-      // the active-space cookie still names this space; the server falls back to another one the person belongs to
-      void run(
-        () =>
-          removeMember(supabase, {
-            ledgerId,
-            userId: currentUserId,
-          }),
-        () => {
-          closeDialog()
-          router.replace('/')
-        },
-      )
     }
   }
 
-  const revokeName = dialog?.kind === 'revoke' ? memberName(dialog.member) : ''
+  const inviteButton = (
+    <Button type="button" className="cursor-pointer" onClick={() => setInviteOpen(true)}>
+      <UserPlus aria-hidden className="size-5" />
+      {translate('invite')}
+    </Button>
+  )
+  const isAlone = isOwner && members.length <= 1 && invites.length === 0
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       {isOwner ? null : (
-        <p className="flex items-center gap-3 rounded-inner bg-primary-soft px-4 py-3 text-label text-primary-text">
+        <Banner kind="info">
           {translate('notice', {
             space: ledgerName,
             role: translate(`roles.${role}`),
             owner: ownerName,
           })}
-        </p>
+        </Banner>
       )}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
-        <div className="flex min-w-0 flex-1 flex-col gap-4 lg:gap-6">
-          <Card title={translate('membersTitle')}>
-            <div className="flex flex-wrap items-center gap-4 pb-2">
-              <p className="min-w-0 flex-1 basis-60 text-label text-text-secondary">
-                {translate(isOwner ? 'ownerIntro' : 'memberIntro', { space: ledgerName })}
-              </p>
-              {isOwner ? (
-                <Button type="button" className="cursor-pointer" onClick={() => setInviteOpen(true)}>
-                  <UserPlus aria-hidden className="size-5" />
-                  {translate('invite')}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="cursor-pointer"
-                  onClick={() => setDialog({ kind: 'leave' })}
-                >
-                  <LogOut aria-hidden className="size-5" />
-                  {translate('leave')}
-                </Button>
-              )}
-            </div>
-            <ul className="flex flex-col">
-              {members.map((member, index) => {
-                const name = memberName(member)
-                const isYou = member.userId === currentUserId
-                const canManage = isOwner && member.role !== 'owner'
+      {isAlone ? (
+        <Card title={translate('membersTitle')}>
+          <div className="flex flex-col items-center gap-3 p-2 text-center">
+            <span
+              aria-hidden
+              className="flex size-10 items-center justify-center rounded-full bg-cat-blue-soft text-cat-blue-text"
+            >
+              <Users className="size-5" />
+            </span>
+            <p className="self-stretch text-body font-semibold text-text-primary">{translate('empty.title')}</p>
+            <p className="self-stretch text-label text-text-secondary">{translate('empty.text')}</p>
+            {inviteButton}
+          </div>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+          <div className="flex min-w-0 flex-1 flex-col gap-4 lg:gap-6">
+            <Card title={translate('membersTitle')}>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-4 pb-2">
+                  <p className="min-w-0 flex-1 basis-60 text-label text-text-secondary">
+                    {translate(isOwner ? 'ownerIntro' : 'memberIntro', { space: ledgerName })}
+                  </p>
+                  {isOwner ? inviteButton : <LeaveSpaceButton currentUserId={currentUserId} ownerName={ownerName} />}
+                </div>
+                <ul className="flex flex-col gap-4">
+                  {members.map((member, index) => {
+                    const name = memberName(member)
+                    const isMemberOwner = member.role === 'owner'
 
-                return (
-                  <li
-                    key={member.userId}
-                    className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border py-4 last:border-b-0"
-                  >
-                    <Avatar name={name} index={index} />
-                    <div className="flex min-w-0 flex-1 flex-col basis-40">
-                      <span className="truncate text-body font-semibold text-text-primary">
-                        {isYou ? translate('you', { name }) : name}
-                      </span>
-                      <span className="text-caption text-text-tertiary">
-                        {translate('since', {
-                          email: member.email ?? '—',
-                          date: day(member.joinedAt, true),
-                        })}
-                      </span>
-                    </div>
-                    <div className="basis-full sm:w-50 sm:basis-auto">
-                      {canManage ? (
-                        <Select
-                          aria-label={translate('roleLabel', { name })}
-                          options={roleOptions}
-                          value={member.role}
-                          disabled={isPending}
-                          onValueChange={(value) => changeRole(member, value)}
-                        />
-                      ) : (
-                        <span className="text-label sm:px-4 font-medium text-text-secondary">
-                          {translate(`roles.${member.role}`)}
+                    return (
+                      <li
+                        key={member.userId}
+                        className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border py-4 last:border-b-0"
+                      >
+                        <Avatar name={name} index={index} />
+                        <div className="flex min-w-0 flex-1 basis-40 flex-col">
+                          <span className="truncate text-body font-semibold text-text-primary">
+                            {member.userId === currentUserId ? translate('you', { name }) : name}
+                          </span>
+                          <span className="text-caption text-text-tertiary">
+                            {isMemberOwner
+                              ? (member.email ?? '—')
+                              : translate('since', {
+                                  email: member.email ?? '—',
+                                  date: day(member.joinedAt, true),
+                                })}
+                          </span>
+                        </div>
+                        <div className="basis-full sm:w-50 sm:basis-auto">
+                          {isMemberOwner ? (
+                            <span className="text-label font-medium text-text-secondary sm:px-4">
+                              {translate('roles.owner')}
+                            </span>
+                          ) : (
+                            <Select
+                              aria-label={translate('roleLabel', { name })}
+                              options={roleOptions}
+                              value={member.role}
+                              disabled={!isOwner || isPending}
+                              onValueChange={(value) => changeRole(member, value)}
+                            />
+                          )}
+                        </div>
+                        {isOwner && !isMemberOwner ? (
+                          <div className="flex sm:w-45 sm:justify-end">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="cursor-pointer"
+                              onClick={() =>
+                                setDialog({
+                                  kind: 'revoke',
+                                  member,
+                                })
+                              }
+                            >
+                              {translate('revoke')}
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="hidden sm:block sm:w-45" />
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            </Card>
+            {isOwner && invites.length > 0 ? (
+              <Card title={translate('pendingTitle')}>
+                <ul className="flex flex-col gap-4">
+                  {invites.map((invite, index) => (
+                    <li key={invite.id} className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                      <Avatar name={invite.email} index={index + 2} />
+                      <div className="flex min-w-0 flex-1 basis-40 flex-col">
+                        <span className="truncate text-body font-semibold text-text-primary">{invite.email}</span>
+                        <span className="text-caption text-text-tertiary">
+                          {translate('pendingMeta', {
+                            role: translate(`roles.${invite.role}`),
+                            sent: day(invite.createdAt, false),
+                            until: day(invite.expiresAt, false),
+                          })}
                         </span>
-                      )}
-                    </div>
-                    {canManage ? (
+                      </div>
                       <Button
                         type="button"
-                        variant="ghost"
-                        className="cursor-pointer sm:w-45"
+                        variant="secondary"
+                        className="cursor-pointer"
                         onClick={() =>
                           setDialog({
-                            kind: 'revoke',
-                            member,
+                            kind: 'cancel',
+                            invite,
                           })
                         }
                       >
-                        {translate('revoke')}
+                        {translate('cancelInvite')}
                       </Button>
-                    ) : (
-                      <span className="hidden sm:block sm:w-45" />
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            ) : null}
+          </div>
+          <Card title={translate('rolesCardTitle')} className="lg:w-100 lg:shrink-0">
+            <dl className="flex flex-col gap-4">
+              {(['owner', ...INVITE_ROLES] as const).map((value) => (
+                <div key={value} className="flex flex-col gap-1">
+                  <dt className="text-body font-semibold text-text-primary">{translate(`roles.${value}`)}</dt>
+                  <dd className="text-label text-text-secondary">{translate(`roleHints.${value}`)}</dd>
+                </div>
+              ))}
+            </dl>
           </Card>
-          <MyRemindersCard currentUserId={currentUserId} />
-          {isOwner && invites.length > 0 ? (
-            <Card title={translate('pendingTitle')}>
-              <ul className="flex flex-col gap-4">
-                {invites.map((invite, index) => (
-                  <li key={invite.id} className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                    <Avatar name={invite.email} index={index + 2} />
-                    <div className="flex min-w-0 flex-1 flex-col basis-40">
-                      <span className="truncate text-body font-semibold text-text-primary">{invite.email}</span>
-                      <span className="text-caption text-text-tertiary">
-                        {translate('pendingMeta', {
-                          role: translate(`roles.${invite.role}`),
-                          sent: day(invite.createdAt, false),
-                          until: day(invite.expiresAt, false),
-                        })}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="cursor-pointer"
-                      onClick={() =>
-                        setDialog({
-                          kind: 'cancel',
-                          invite,
-                        })
-                      }
-                    >
-                      {translate('cancelInvite')}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
         </div>
-        <Card title={translate('rolesCardTitle')} className="lg:w-100 lg:shrink-0">
-          <dl className="flex flex-col gap-4">
-            {(['owner', ...INVITE_ROLES] as const).map((value) => (
-              <div key={value} className="flex flex-col gap-1">
-                <dt className="text-body font-semibold text-text-primary">{translate(`roles.${value}`)}</dt>
-                <dd className="text-label text-text-secondary">{translate(`roleHints.${value}`)}</dd>
-              </div>
-            ))}
-          </dl>
-        </Card>
-      </div>
+      )}
       <InviteSheet open={inviteOpen} onOpenChange={setInviteOpen} />
       <ConfirmSheet
         open={dialog?.kind === 'revoke'}
         onOpenChange={(open) => !open && closeDialog()}
         title={translate('revokeSheet.title', { name: revokeName })}
-        body={translate('revokeSheet.body', {
-          name: revokeName,
-          space: ledgerName,
-        })}
-        note={translate('revokeSheet.again', { name: revokeName })}
+        body={
+          isDesktop
+            ? translate('revokeSheet.body', {
+                name: revokeName,
+                space: ledgerName,
+                counts: contributions.data ? translate('revokeSheet.counts', contributions.data) : '',
+              })
+            : translate('revokeSheet.bodyMobile', {
+                name: revokeName,
+                space: ledgerName,
+              })
+        }
+        note={isDesktop ? translate('revokeSheet.again', { name: revokeName }) : undefined}
         keepLabel={translate('revokeSheet.keep')}
-        confirmLabel={translate('revokeSheet.confirm')}
+        confirmLabel={translate(isDesktop ? 'revokeSheet.confirm' : 'revokeSheet.confirmMobile')}
         onConfirm={confirm}
         pending={isPending}
         error={dialogError}
@@ -341,21 +353,10 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
       <ConfirmSheet
         open={dialog?.kind === 'cancel'}
         onOpenChange={(open) => !open && closeDialog()}
-        title={translate('cancelSheet.title', { email: dialog?.kind === 'cancel' ? dialog.invite.email : '' })}
-        body={translate('cancelSheet.body')}
+        title={translate('cancelSheet.title')}
+        body={translate('cancelSheet.body', { email: dialog?.kind === 'cancel' ? dialog.invite.email : '' })}
         keepLabel={translate('cancelSheet.keep')}
         confirmLabel={translate('cancelSheet.confirm')}
-        onConfirm={confirm}
-        pending={isPending}
-        error={dialogError}
-      />
-      <ConfirmSheet
-        open={dialog?.kind === 'leave'}
-        onOpenChange={(open) => !open && closeDialog()}
-        title={translate('leaveSheet.title', { space: ledgerName })}
-        body={translate('leaveSheet.body', { owner: ownerName })}
-        keepLabel={translate('leaveSheet.keep')}
-        confirmLabel={translate('leaveSheet.confirm')}
         onConfirm={confirm}
         pending={isPending}
         error={dialogError}

@@ -52,7 +52,26 @@ export type SortChange = {
   sortOrder: number
 }
 
-/** moves one category a place up or down among its siblings and renumbers them 1…n; only changed rows come back */
+/** renumbers the siblings 1…n in the given id order; only the rows whose place changed come back */
+export function orderChanges(siblings: readonly CategoryView[], orderedIds: readonly string[]): SortChange[] {
+  const byId = new Map(siblings.map((sibling) => [sibling.id, sibling]))
+
+  return orderedIds.flatMap((id, position) => {
+    const sibling = byId.get(id)
+
+    return sibling && sibling.sortOrder !== position + 1
+      ? [
+          {
+            id,
+            version: sibling.version,
+            sortOrder: position + 1,
+          },
+        ]
+      : []
+  })
+}
+
+/** moves one category a place up or down among its siblings (menu «Up» / «Down»); only changed rows come back */
 export function moveWithinSiblings(
   siblings: readonly CategoryView[],
   id: string,
@@ -65,19 +84,11 @@ export function moveWithinSiblings(
     return []
   }
 
-  const order = [...siblings]
+  const order = siblings.map((sibling) => sibling.id)
 
   ;[order[index], order[target]] = [order[target], order[index]]
 
-  return order
-    .map((sibling, position) => ({
-      id: sibling.id,
-      version: sibling.version,
-      sortOrder: position + 1,
-      changed: sibling.sortOrder !== position + 1,
-    }))
-    .filter((entry) => entry.changed)
-    .map(({ changed: _changed, ...change }) => change)
+  return orderChanges(siblings, order)
 }
 
 /** next sort_order among the siblings a new category joins */

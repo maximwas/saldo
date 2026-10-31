@@ -35,8 +35,9 @@ test('«Оплачено» створює одну операцію, видал�
 
   await page.goto('/')
   await expect(upcoming).toHaveCount(0)
-  // the payment's operation has no payee to find it by: the month's expenses grew by it once
-  expect(await monthExpenseMinor(page)).toBe(expenseBefore + 35_000)
+  // the payment's operation has no payee to find it by: the month's expenses grew by it once (polled: the overview
+  // shows the cached month first and refetches it)
+  await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore + 35_000)
 
   await page.goto('/payments')
   await page.getByRole('listitem').filter({ hasText: mark }).getByRole('button', { name: 'Скасувати оплату' }).click()
@@ -48,7 +49,7 @@ test('«Оплачено» створює одну операцію, видал�
 
   await page.goto('/')
   await expect(upcoming).toHaveCount(1)
-  expect(await monthExpenseMinor(page)).toBe(expenseBefore)
+  await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore)
 
   // a plan whose date has passed without a payment waits in the overdue group (§7)
   await page.goto('/payments')

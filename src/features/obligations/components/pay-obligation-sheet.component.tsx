@@ -5,7 +5,6 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
-import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -27,6 +26,7 @@ import {
   payObligationFormSchema,
   toPayObligationInput,
 } from '../schemas/pay-obligation-form.schema'
+import { OperationLine } from './operation-line.component'
 
 type PayObligationSheetProps = {
   obligation: ObligationRow
@@ -83,11 +83,23 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
   const remaining = obligation.remainingMinor
   const sameCurrency = currency === obligation.currency
   const partial = remaining !== null && sameCurrency && (toMinor(amountText, currency) ?? remaining) < remaining
-  const dueLabel = format.dateTime(new Date(`${obligation.dueOn}T12:00:00Z`), {
-    timeZone: 'UTC',
-    day: '2-digit',
-    month: '2-digit',
-  })
+  const shortDate = (isoDate: string) =>
+    format.dateTime(new Date(`${isoDate}T12:00:00Z`), {
+      timeZone: 'UTC',
+      day: '2-digit',
+      month: '2-digit',
+    })
+  const dueLabel = shortDate(obligation.dueOn)
+  const installment =
+    obligation.sourceType === 'credit' && obligation.sequenceNo !== null
+      ? translate(obligation.installmentTotal === null ? 'installmentNumber' : 'installment', {
+          number: obligation.sequenceNo,
+          total: obligation.installmentTotal ?? 0,
+        })
+      : null
+  const kind = installment
+    ? `${translate(`kind.${obligation.sourceType as 'credit'}`)}, ${installment}`
+    : translate(`kind.${obligation.sourceType as 'manual'}`)
 
   const submit = (values: PayObligationFormValues, linked: boolean) =>
     pay.mutate(
@@ -157,9 +169,10 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
         </>
       }
     >
-      <p className="text-body text-text-secondary">
+      <p className="text-label text-text-secondary">
         {translate('pay.summary', {
           title: obligation.title,
+          kind,
           date: dueLabel,
         })}
       </p>
@@ -173,6 +186,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           control={form.control}
           name="amount"
           label={translate('pay.amount')}
+          required
           render={(field) => (
             <MoneyInput
               autoFocus
@@ -188,6 +202,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           control={form.control}
           name="occurredOn"
           label={translate('pay.date')}
+          required
           render={(field) => (
             <DatePicker
               value={field.value}
@@ -200,6 +215,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           control={form.control}
           name="accountId"
           label={translate('pay.account')}
+          required
           hint={translate('pay.accountHint')}
           render={(field) => (
             <Select
@@ -232,34 +248,32 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           />
         )}
       </form>
-      <section className="flex flex-col gap-2">
-        <h3 className="text-label font-medium text-text-primary">{translate('pay.linkTitle')}</h3>
-        <p className="text-caption text-text-secondary">{translate('pay.linkHint')}</p>
+      <section className="flex flex-col gap-1">
+        <h3 className="text-label font-medium text-text-secondary">{translate('pay.linkTitle')}</h3>
+        <p className="text-caption text-text-tertiary">{translate('pay.linkHint')}</p>
         {(candidates.data ?? []).length === 0 && !candidates.isPending && (
           <p className="text-caption text-text-tertiary">{translate('pay.linkEmpty')}</p>
         )}
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col">
           {(candidates.data ?? []).map((operation) => (
-            <li key={operation.id} className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 flex-col">
-                <span className="truncate text-body font-medium text-text-primary">
-                  {operation.counterparty ?? operation.note ?? accountName.get(operation.accountId)}
-                </span>
-                <span className="text-caption text-text-secondary">
-                  {operation.occurredOn} · {accountName.get(operation.accountId)}
-                </span>
-              </div>
-              <Amount minor={operation.amountMinor} currency={operation.currency} />
-              <Button
-                size="s"
-                variant="secondary"
-                type="button"
-                disabled={pay.isPending}
-                onClick={() => link(operation)}
-              >
-                {translate('pay.link')}
-              </Button>
-            </li>
+            <OperationLine
+              key={operation.id}
+              title={operation.counterparty ?? operation.note ?? accountName.get(operation.accountId) ?? ''}
+              subtitle={`${shortDate(operation.occurredOn)} · ${accountName.get(operation.accountId) ?? ''}`}
+              minor={obligation.direction === 'out' ? -operation.amountMinor : operation.amountMinor}
+              currency={operation.currency}
+              action={
+                <Button
+                  size="s"
+                  variant="secondary"
+                  type="button"
+                  disabled={pay.isPending}
+                  onClick={() => link(operation)}
+                >
+                  {translate('pay.link')}
+                </Button>
+              }
+            />
           ))}
         </ul>
       </section>

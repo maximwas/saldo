@@ -132,12 +132,14 @@ function AccountForm({ account, onSubmitAction }: AccountFormProps) {
         control={form.control}
         name="name"
         label={translate('form.name')}
+        required
         render={(field) => <Input {...field} autoComplete="off" />}
       />
       <FormField
         control={form.control}
         name="kind"
         label={translate('form.kind')}
+        required
         render={(field) => (
           <Select
             name={field.name}
@@ -155,6 +157,7 @@ function AccountForm({ account, onSubmitAction }: AccountFormProps) {
         control={form.control}
         name="currency"
         label={translate('form.currency')}
+        required
         hint={account ? translate('form.currencyLocked') : undefined}
         render={(field) => (
           <Select

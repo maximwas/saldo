@@ -89,7 +89,7 @@ export function ReceiptField({ operationId, file, onFileChangeAction, canEdit }:
               event.target.value = ''
             }}
           />
-          <Button type="button" variant="secondary" onClick={() => input.current?.click()}>
+          <Button type="button" variant="secondary" className="max-md:w-full" onClick={() => input.current?.click()}>
             <Paperclip aria-hidden size={20} />
             {translate('addReceipt')}
           </Button>
@@ -106,7 +106,8 @@ export function ReceiptField({ operationId, file, onFileChangeAction, canEdit }:
               </button>
             </span>
           ) : (
-            <span className="text-caption text-text-tertiary">{translate('receiptHint')}</span>
+            // Figma mobile 2:18677: a full-width button without the hint
+            <span className="text-caption text-text-tertiary max-md:hidden">{translate('receiptHint')}</span>
           )}
         </div>
       ) : null}

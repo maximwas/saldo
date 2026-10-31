@@ -90,10 +90,10 @@ export default async function globalSetup() {
       },
       {
         ledger_id: ownerLedgerId,
-        name: DEMO.cashName,
-        kind: 'cash',
+        name: DEMO.savingsName,
+        kind: 'savings',
         currency: 'UAH',
-        opening_balance_minor: DEMO.cashOpeningMinor,
+        opening_balance_minor: DEMO.savingsOpeningMinor,
         opening_balance_on: '2026-01-01',
         created_by: userIds.owner,
         sort_order: 2,

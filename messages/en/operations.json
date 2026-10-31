@@ -15,6 +15,10 @@
     "debt": "Debt"
   },
   "filters": {
+    "text": "Text",
+    "textTitle": "Search by text",
+    "textHint": "Payee or comment",
+    "textApply": "Show",
     "period": "Period",
     "allTime": "All time",
     "account": "Account",
@@ -29,7 +33,10 @@
     "income": "Income",
     "expenses": "Expenses",
     "result": "Result",
-    "unknownRate": "No rate: {count}"
+    "unknownRate": "No rate: {count}",
+    "incomeOf": "Income in {month}",
+    "expensesOf": "Expenses in {month}",
+    "withPlan": "with plans to the month end"
   },
   "table": {
     "date": "Date",
@@ -43,6 +50,15 @@
     "yesterday": "Yesterday, {date}",
     "count": "{count, plural, one {# operation} other {# operations}}"
   },
+  "plan": {
+    "title": "Planned",
+    "count": "{count, plural, one {# payment} other {# payments}}",
+    "notFact": "not a fact yet",
+    "pill": "Plan",
+    "installment": "installment {number} of {count}",
+    "interval": "{unit, select, day {{count, plural, =1 {daily} =7 {weekly} other {every # days}}} month {{count, plural, =1 {monthly} other {every # months}}} other {{count, plural, =1 {yearly} other {every # years}}}}",
+    "creditCategory": "Credits"
+  },
   "row": {
     "receipt": "Has a receipt",
     "rate": "rate {rate}",
@@ -50,10 +66,14 @@
     "noCategory": "No category",
     "fee": "Transfer fee"
   },
+  "viewOnly": "View only: operations in «{space}» cannot be added or changed.",
+  "offline": "No network. Data as of {time} — new operations are saved on the device and sync later.",
   "empty": {
     "title": "No operations yet",
     "hint": "Add your first expense or income with the «Add» button.",
-    "filtered": "No operations match this filter"
+    "filtered": "Nothing found",
+    "filteredText": "No {type, select, expense {expenses} income {income} transfer {transfers} other {operations}} for {period}{account, select, none {} other { on «{account}»}}{category, select, none {} other { in «{category}»}}{text, select, none {} other { with the text «{text}»}}. Change the filters or reset them.",
+    "allTime": "all time"
   },
   "loadFailed": "Could not load operations",
   "truncated": "Showing the latest {count} operations. Narrow the period or the filter.",
@@ -70,6 +90,7 @@
     "date": "Date",
     "counterparty": "Payee",
     "counterpartyHint": "As on the bank statement",
+    "payer": "Source",
     "note": "Comment",
     "noteHint": "Up to 500 characters",
     "save": "Save",
@@ -78,6 +99,7 @@
     "close": "Close",
     "delete": "Delete",
     "duplicate": "Duplicate",
+    "actions": "Operation actions",
     "receipt": "Receipt",
     "addReceipt": "Add receipt",
     "receiptHint": "Photo or PDF, optional",
@@ -112,8 +134,13 @@
       "to": "To",
       "fee": "Fee",
       "rate": "Rate",
-      "purchase": "Purchase"
-    }
+      "purchase": "Purchase",
+      "author": "Added by"
+    },
+    "time": "Time",
+    "balance": "Balance {amount}",
+    "editingTitle": "Edit operation",
+    "saveChanges": "Save changes"
   },
   "deleteConfirm": {
     "balanceUp": "The balance of «{account}» will grow by {amount}; period totals will be recalculated.",
@@ -142,13 +169,17 @@
     "info": "The month’s expenses and the category budget go down by this amount. A refund is not income.",
     "submit": "Record refund",
     "done": "Refund recorded",
+    "subtitle": "Refund for {date}",
     "purchase": "Purchase {date}",
-    "refunded": "refunded {amount}"
+    "refunded": "refunded {amount}",
+    "amount": "Refund amount",
+    "noteHint": "Optional",
+    "effect": "{month} spending and the «{category}» budget go down by {amount}. A refund is not income."
   },
   "source": {
     "paid": "Payment: {title} · {date}",
-    "meta": "{type} · plan {amount} · Payments",
-    "metaUnknown": "{type} · Payments",
+    "meta": "{type} · plan {amount}{section, select, shown { · Payments} other {}}",
+    "metaUnknown": "{type}{section, select, shown { · Payments} other {}}",
     "open": "Open source"
   }
 }

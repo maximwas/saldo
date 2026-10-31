@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test'
+import { pickCategory } from '../fixtures/category.fixture'
 import { DEMO } from '../fixtures/demo-data.fixture'
 import { test } from '../fixtures/roles.fixture'
 
@@ -51,6 +52,14 @@ test('перекази й позика не потрапляють у доход
     const sheet = page.getByRole('dialog')
 
     await sheet.getByLabel('Сума').fill(amount)
+
+    if (kind === 'expense') {
+      await sheet.getByLabel('Одержувач').fill(person)
+    }
+
+    // an income needs a category too (Figma 2:17848)
+    await pickCategory(page, sheet, kind === 'expense' ? 'Продукти' : 'Зарплата')
+
     await sheet.getByRole('button', { name: 'Зберегти' }).click()
     await expect(sheet).toBeHidden()
   }

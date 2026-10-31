@@ -27,12 +27,62 @@ type MonthOperation = {
   kind: string
   /** operation in the base currency; null = no rate (§20) */
   baseAmountMinor: number | null
+  categoryId?: string | null
+}
+
+export type TopCategory = {
+  categoryId: string
+  /** spent in the base currency, refunds taken off */
+  minor: number
+  /** whole percent of the month's spending */
+  percent: number
+}
+
+/** what an operation adds to the month's spending: an expense adds, a refund takes off, the rest (and no rate) nothing */
+const spentMinor = (kind: string, baseAmountMinor: number | null) => {
+  if (baseAmountMinor === null) {
+    return 0
+  }
+
+  if (kind === 'expense') {
+    return baseAmountMinor
+  }
+
+  return kind === 'refund' ? -baseAmountMinor : 0
+}
+
+/** the month's biggest expense categories (refunds net), largest first; uncategorised and unconverted rows skipped */
+export function topCategories(operations: readonly MonthOperation[], limit = 3): TopCategory[] {
+  const spent = new Map<string, number>()
+  let total = 0
+
+  for (const { kind, baseAmountMinor, categoryId } of operations) {
+    const signed = spentMinor(kind, baseAmountMinor)
+
+    total += signed
+
+    if (categoryId && signed !== 0) {
+      spent.set(categoryId, (spent.get(categoryId) ?? 0) + signed)
+    }
+  }
+
+  return [...spent]
+    .filter(([, minor]) => minor > 0)
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, limit)
+    .map(([categoryId, minor]) => ({
+      categoryId,
+      minor,
+      percent: total > 0 ? Math.round((minor / total) * 100) : 0,
+    }))
 }
 
 export type MonthTotals = {
   incomeMinor: number
   expenseMinor: number
   resultMinor: number
+  /** Figma «top expense categories»: up to three */
+  top?: TopCategory[]
   /** operations that could not be converted: the totals are incomplete, never padded with 0 */
   unknownCount: number
 }
@@ -74,7 +124,9 @@ export function sumMonth(operations: readonly MonthOperation[]): MonthTotals {
 export type OverviewAccount = {
   id: string
   name: string
-  kind: 'bank' | 'cash' | 'savings'
+  kind: 'bank' | 'savings'
+  /** a CATEGORY_COLORS name or null */
+  color: string | null
   currency: string
   balanceMinor: number
   includeInAvailable: boolean
@@ -92,6 +144,12 @@ export type OverviewObligation = {
   remainingMinor: number | null
   currency: string
   state: 'plan' | 'partial' | 'unconfirmed'
+  /** a credit's installment number and count ; null for the other sources */
+  installment: {
+    number: number
+    count: number
+  } | null
+  accountId: string | null
 }
 
 /** the columns the overview selects from `accounts`, with the balance from account_balances */
@@ -99,6 +157,7 @@ export type OverviewAccountRow = {
   id: string
   name: string
   kind: string
+  color: string | null
   currency: string
   include_in_available: boolean
   opening_balance_minor: number
@@ -144,7 +203,9 @@ export function toOverviewAccount(
   return {
     id: row.id,
     name: row.name,
-    kind: row.kind as OverviewAccount['kind'],
+    // a legacy «cash» row shows as a card: no cash accounts in Saldo
+    kind: row.kind === 'savings' ? 'savings' : 'bank',
+    color: row.color,
     currency: row.currency,
     balanceMinor: row.balanceMinor,
     includeInAvailable: row.include_in_available,
@@ -185,6 +246,9 @@ export const toAvailableObligation = (row: DueRow): AvailableMoneyInput['obligat
 export type UpcomingRow = DueRow & {
   title: string
   source_type: string
+  source_id: string | null
+  sequence_no: number | null
+  account_id: string | null
 }
 
 type OpenDebtRow = {
@@ -255,7 +319,11 @@ export function sumOpenDebts(debts: OpenDebtRow[], repayments: RepaymentRow[], c
   return sums
 }
 
-export const toUpcoming = (row: UpcomingRow): OverviewObligation => ({
+/** installmentsCount: credit id → its installments_count, for «installment N of M» */
+export const toUpcoming = (
+  row: UpcomingRow,
+  installmentsCount: Readonly<Record<string, number>> = {},
+): OverviewObligation => ({
   id: row.obligation_id,
   title: row.title,
   sourceType: row.source_type,
@@ -264,4 +332,12 @@ export const toUpcoming = (row: UpcomingRow): OverviewObligation => ({
   remainingMinor: row.remaining_minor,
   currency: row.currency,
   state: row.state as OverviewObligation['state'],
+  installment:
+    row.source_type === 'credit' && row.source_id && row.sequence_no && installmentsCount[row.source_id]
+      ? {
+          number: row.sequence_no,
+          count: installmentsCount[row.source_id],
+        }
+      : null,
+  accountId: row.account_id,
 })

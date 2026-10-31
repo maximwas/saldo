@@ -4,6 +4,8 @@
   "tabs": {
     "general": "General",
     "access": "Access",
+    "notifications": "Notifications",
+    "currencies": "Currencies",
     "data": "Data"
   },
   "themeTitle": "Theme",
@@ -40,8 +42,7 @@
     "nextIncomeOn": "Next income",
     "nextIncomeHint": "«Available» is counted up to this date. Without a date the amount is not calculated.",
     "save": "Save",
-    "saved": "Space settings saved",
-    "nameRequired": "Enter a name, up to 60 characters"
+    "saved": "Space settings saved"
   },
   "access": {
     "membersTitle": "Members",
@@ -71,8 +72,10 @@
     "inviteSheet": {
       "title": "Invite someone to «{space}»",
       "email": "Email",
-      "emailHint": "The link is valid for 7 days and works once. Send it to the person yourself.",
+      "emailHint": "The link is valid for 7 days and works once.",
       "emailInvalid": "Enter a valid address",
+      "noAccount": "There is no Saldo user with this email",
+      "alreadyMember": "This person is already in the space",
       "role": "Role",
       "roleNote": "You can change the role or revoke access at any time.",
       "cancel": "Cancel",
@@ -83,20 +86,31 @@
       "copy": "Copy link",
       "copied": "Link copied",
       "copyFailed": "Could not copy. Select the link and copy it by hand",
-      "done": "Done"
+      "done": "Done",
+      "titleMobile": "Invite someone",
+      "emailNoDomain": "Check the email: the domain is missing (for example {example})",
+      "submitMobile": "Create",
+      "offline": "Could not create the link: no connection",
+      "roleHints": {
+        "editor": "Enters operations, marks payments, changes categories and plans.",
+        "viewer": "Sees accounts, operations and payments, changes nothing."
+      }
     },
     "revokeSheet": {
       "title": "Revoke {name}'s access?",
-      "body": "{name} will no longer see the space «{space}» and cannot enter operations. Everything already entered stays, marked as entered by {name}.",
+      "body": "{name} will no longer see the space «{space}» and cannot enter operations. Everything already entered{counts} stays, marked as entered by {name}.",
       "again": "You can invite {name} again at any time.",
       "keep": "Keep",
       "confirm": "Revoke access",
-      "done": "Access revoked"
+      "done": "Access revoked",
+      "counts": " ({operations, plural, one {# operation} other {# operations}}, {payments, plural, one {# marked payment} other {# marked payments}})",
+      "bodyMobile": "{name} will no longer see the space «{space}». Everything entered stays, marked as entered by {name}.",
+      "confirmMobile": "Revoke"
     },
     "cancelSheet": {
-      "title": "Cancel the invite for {email}?",
-      "body": "The link will stop working. You can invite the person again at any time.",
-      "keep": "Keep",
+      "title": "Cancel the invite?",
+      "body": "The link for {email} will stop working. If the person opens it, they will see «The link is not valid».",
+      "keep": "Keep it",
       "confirm": "Cancel invite",
       "done": "Invite cancelled"
     },
@@ -111,6 +125,10 @@
       "title": "Reminders",
       "label": "Reminders of this space for me",
       "hint": "Your own choice only: other members get reminders by their own settings. When off, none arrive in the app or as push."
+    },
+    "empty": {
+      "title": "Only you use this space",
+      "text": "Invite someone: you will enter operations and mark payments together. You decide what they can do."
     }
   },
   "data": {
@@ -137,5 +155,19 @@
     "confirm": "Sign out",
     "cancel": "Cancel",
     "failed": "Could not sign out. Check the connection and try again."
+  },
+  "hub": {
+    "title": "Space «{space}»",
+    "general": "Language, time zone, theme, home",
+    "accessOwner": "{members, plural, one {# member} other {# members}}{invites, plural, =0 {} one { · # invite} other { · # invites}}",
+    "accessMember": "You and {others, plural, one {# more member} other {# more members}} · {role}",
+    "roles": {
+      "editor": "can edit",
+      "viewer": "view only"
+    },
+    "notifications": "Push, email, reminders",
+    "data": "Export, backups, deletion",
+    "notice": "Your role in the space «{space}» is «{role}». Only the owner, {owner}, can change data.",
+    "signedInAs": "Saldo · you are signed in as {email}"
   }
 }

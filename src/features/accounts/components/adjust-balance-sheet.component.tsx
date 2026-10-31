@@ -4,7 +4,9 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Amount } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { Sheet } from '@/components/ui/sheet.component'
@@ -16,7 +18,7 @@ import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
 import { useAdjustBalance } from '../hooks/accounts.hook'
 import { type AdjustmentFormValues, adjustmentFormSchema, toAdjustmentInput } from '../schemas/adjustment-form.schema'
-import { type AccountView, adjustmentOf } from '../utils/accounts.utils'
+import type { AccountView } from '../utils/accounts.utils'
 
 const FORM_ID = 'adjust-balance-form'
 
@@ -25,8 +27,9 @@ type AdjustBalanceSheetProps = {
   onCloseAction: () => void
 }
 
-// Figma Saldo → balance adjustment 14:75082: the account and its balance in Saldo now, the actual balance, the
-// difference to be written (a neutral row: not income, not spending), a required note; Cancel + Record.
+// Figma Saldo → balance adjustment 15:84725: the account and its balance in Saldo now (label), the actual balance with
+// its hint, the difference to be written (DetailRow: padding 12/0, border-bottom; a neutral row, not income, not
+// spending), the date, a required note and the Info banner; Cancel + Record.
 // shortcut: the actual balance is 0 or more (MoneyInput has no minus); a negative one is entered as an operation.
 export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceSheetProps) {
   const translate = useTranslations('accounts.adjust')
@@ -49,7 +52,8 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
     },
   })
   const actualMinor = toMinor(form.watch('actual'), currency)
-  const change = actualMinor === null ? null : adjustmentOf(account.balanceMinor, actualMinor)
+  // Figma 16:86454: a balance equal to Saldo's reads 0,00, an empty field «—»
+  const differenceMinor = actualMinor === null ? null : actualMinor - account.balanceMinor
 
   const submit = (values: AdjustmentFormValues) =>
     adjust.mutate(
@@ -82,7 +86,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
         </>
       }
     >
-      <p className="text-body text-text-secondary">
+      <p className="text-label text-text-secondary">
         {translate('now', {
           account: account.name,
           amount: formatMinor(account.balanceMinor, currency, locale),
@@ -93,6 +97,8 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
           control={form.control}
           name="actual"
           label={translate('actual')}
+          required
+          hint={translate('actualHint')}
           render={(field) => (
             <MoneyInput
               autoFocus
@@ -104,27 +110,41 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
             />
           )}
         />
-        <div className="flex items-baseline justify-between gap-4">
+        <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
           <span className="text-label text-text-secondary">{translate('difference')}</span>
-          {change ? (
-            <span className="text-body font-medium text-text-primary">
-              {change.direction === 'in' ? '+' : null}
-              <Amount
-                minor={change.direction === 'in' ? change.amountMinor : -change.amountMinor}
-                currency={currency}
-              />
-            </span>
-          ) : (
-            <span className="text-body text-text-tertiary">—</span>
-          )}
+          <span className="text-body font-medium text-text-primary">
+            {differenceMinor === null ? (
+              '—'
+            ) : (
+              <>
+                {differenceMinor > 0 ? '+' : null}
+                <Amount minor={differenceMinor} currency={currency} />
+              </>
+            )}
+          </span>
         </div>
+        <FormField
+          control={form.control}
+          name="occurredOn"
+          label={translate('date')}
+          required
+          render={(field) => (
+            <DatePicker
+              value={field.value}
+              onValueChange={(value) => field.onChange(value ?? today)}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
         <FormField
           control={form.control}
           name="note"
           label={translate('note')}
+          required
           hint={translate('noteHint')}
           render={(field) => <Textarea {...field} />}
         />
+        <Banner>{translate('effect', { account: account.name })}</Banner>
       </form>
     </Sheet>
   )

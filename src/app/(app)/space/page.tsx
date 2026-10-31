@@ -10,7 +10,10 @@ export default function SpacePage() {
   return (
     <>
       <SpaceCard />
-      <SpaceTiles />
+      {/* server translations wait for the user's locale (a Supabase read) */}
+      <Suspense>
+        <SpaceTiles />
+      </Suspense>
       <Suspense>
         <SignedInAs />
       </Suspense>

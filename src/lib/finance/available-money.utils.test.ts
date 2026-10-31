@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type AvailableMoneyInput, computeAvailableMoney } from './available-money.utils'
+import { type AvailableMoneyInput, computeAvailableMoney, plannedToMonthEnd } from './available-money.utils'
 
 const base: AvailableMoneyInput = {
   baseCurrency: 'UAH',
@@ -130,5 +130,45 @@ describe('computeAvailableMoney', () => {
     expect(result.balancesMinor).toBeNull()
     expect(result.availableMinor).toBeNull()
     expect(result.obligationsMinor).toBe(1_600_000)
+  })
+})
+
+describe('plannedToMonthEnd', () => {
+  const plan = (id: string, dueOn: string, remainingMinor: number | null, state: 'plan' | 'unconfirmed' | 'paid') => ({
+    id,
+    direction: 'out' as const,
+    dueOn,
+    remainingMinor,
+    currency: 'UAH',
+    state,
+  })
+  const input = {
+    baseCurrency: 'UAH',
+    now: new Date('2026-10-30T16:40:00Z'),
+    timeZone: 'Europe/Kyiv',
+    rates: [],
+  }
+
+  it('counts open plans to the month end and past unconfirmed ones (Figma: 52 015,62 − 2 233,15 = 49 782,47)', () => {
+    expect(
+      plannedToMonthEnd({
+        ...input,
+        obligations: [
+          plan('rozetka', '2026-10-20', 64_990, 'unconfirmed'),
+          plan('citrus', '2026-10-30', 158_325, 'plan'),
+          plan('paid', '2026-10-25', 99_999, 'paid'),
+          plan('comfy', '2026-11-05', 270_825, 'plan'),
+        ],
+      }),
+    ).toBe(223_315)
+  })
+
+  it('is null when an amount is unknown, never 0', () => {
+    expect(
+      plannedToMonthEnd({
+        ...input,
+        obligations: [plan('unknown', '2026-10-31', null, 'plan')],
+      }),
+    ).toBeNull()
   })
 })

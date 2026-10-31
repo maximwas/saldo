@@ -8,7 +8,8 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost):/.test(localStack.API_URL)) {
   throw new Error('e2e runs only against the local Supabase stack')
 }
 
-const PORT = 3100 // not 3000: a running `pnpm dev` with another env must never be reused
+// not 3000: a running `pnpm dev` with another env must never be reused; E2E_PORT lets a second worktree run in parallel
+const PORT = Number(process.env.E2E_PORT ?? 3100)
 const env = {
   NEXT_PUBLIC_SITE_URL: `http://localhost:${PORT}`,
   NEXT_PUBLIC_SUPABASE_URL: localStack.API_URL,
@@ -53,6 +54,25 @@ export default defineConfig({
       use: { ...devices['Pixel 7'] },
       grep: /@mobile/,
       dependencies: ['setup'],
+    },
+    {
+      // pixel comparison with Figma frames (`pnpm test:visual`, conventions §6.3); `pnpm test:e2e` leaves it out
+      name: 'visual',
+      testDir: 'e2e/visual',
+      testMatch: '**/*.visual.ts',
+      snapshotPathTemplate: '{testDir}/figma/{arg}{ext}',
+      expect: {
+        toHaveScreenshot: {
+          animations: 'disabled',
+          caret: 'hide',
+          maxDiffPixelRatio: 0.02,
+          threshold: 0.2,
+        },
+      },
+      use: {
+        ...devices['Desktop Chrome'],
+        deviceScaleFactor: 1,
+      },
     },
   ],
   webServer: {

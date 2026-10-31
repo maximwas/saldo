@@ -2,8 +2,6 @@
   "title": "Upcoming payments",
   "add": "Add payment",
   "loadFailed": "Could not load payments. Reload the page.",
-  "empty": "No upcoming payments",
-  "emptyHint": "Add a planned payment to see it here and in «Available».",
   "groups": {
     "overdue": "Date passed, payment not confirmed",
     "today": "Today",
@@ -58,7 +56,7 @@
   },
   "pay": {
     "title": "Confirm payment",
-    "summary": "{title} · planned date {date}",
+    "summary": "{title} · {kind} · planned date {date}",
     "amount": "Amount",
     "date": "Payment date",
     "account": "Account",
@@ -77,14 +75,16 @@
   },
   "cancelPayment": {
     "title": "Cancel the payment?",
-    "text": "«{title}» becomes unpaid again.",
-    "payments": "Payments",
+    "text": "«{title}» becomes unpaid again with the date {date}. The operation below is deleted, the balance of «{account}» {direction, select, out {goes up} other {goes down}} by {amount}.",
     "deleteOperation": "Also delete the operation this payment created",
     "deleteOperationHint": "If the operation was linked, not created, turn it off — it stays.",
     "keep": "Keep",
     "confirm": "Cancel payment",
     "done": "Payment cancelled",
-    "empty": "No payments"
+    "empty": "No payments",
+    "textCredit": "Installment {number} of {total} of the credit «{title}» becomes unpaid again with the date {date}. The operation below is deleted, the balance of «{account}» {direction, select, out {goes up} other {goes down}} by {amount}.",
+    "operation": "Operation to be deleted",
+    "operationHint": "If the charge happened but with another amount, edit the operation instead."
   },
   "confirmedBy": "Confirmed by {name} · {date}",
   "move": {
@@ -92,5 +92,36 @@
     "text": "«{title}»: the new date is for this payment only, the rest of the schedule stays.",
     "date": "New date",
     "done": "Date changed"
+  },
+  "empty": {
+    "title": "All paid",
+    "text": "No unpaid payments. New ones appear here as a subscription, installment or planned payment comes due.",
+    "textShort": "No unpaid payments. New ones appear here as a date comes close.",
+    "add": "Add planned payment",
+    "addShort": "Add payment"
+  },
+  "overdueHintViewer": "The calendar does not confirm a payment. Only an owner or an editor of the space can confirm it.",
+  "kind": {
+    "manual": "Payment",
+    "subscription": "Subscription",
+    "credit": "Credit",
+    "debt": "Debt",
+    "big_expense": "Big expense",
+    "auto_plan": "Car",
+    "tax": "Tax",
+    "income_plan": "Expected income"
+  },
+  "installment": "installment {number} of {total}",
+  "installmentNumber": "installment {number}",
+  "awaitingSync": "Waiting to sync",
+  "offlineQueued": "No connection. The payment «{title}» is saved on the device and will be sent when the network is back.",
+  "offlineQueuedMany": "No connection. Payments saved on the device: {count}. They will be sent when the network is back.",
+  "summary": {
+    "plannedUntil": "Planned until {date}",
+    "until": "Until {date}",
+    "planned": "Planned",
+    "overdue": "Date passed, not confirmed",
+    "count": "{count, plural, one {# payment} other {# payments}}",
+    "more": "{amount} more"
   }
 }

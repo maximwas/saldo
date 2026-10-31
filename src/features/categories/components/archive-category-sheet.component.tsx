@@ -4,15 +4,18 @@ import { Info } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
+import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Field } from '@/components/ui/field.component'
 import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
-import { useArchiveCategory, useCategories, useCategoryOperationCount } from '../hooks/categories.hook'
+import {
+  useArchiveCategory,
+  useCategories,
+  useCategoryOperationCount,
+  useDeleteCategory,
+} from '../hooks/categories.hook'
 import type { CategoryView } from '../utils/categories.utils'
-
-// a sentinel for «do not move» in the Select
-const KEEP = 'keep'
 
 // the screen shows the sheet only after the categories are loaded; the query cache hands the same rows over
 const NO_CATEGORIES: readonly CategoryView[] = []
@@ -23,13 +26,15 @@ type ArchiveCategorySheetProps = {
   onCloseAction: () => void
 }
 
-// Figma «Saldo» → 2:49639, «How it works»: deleting never destroys operations — offer moving them to another
-// category or archiving; an archived category leaves the pickers, its history and statistics stay (spec §6)
+// Figma «Saldo» → 2:52713 / 2:53216: deleting never destroys operations — «Delete and move» re-points them to another
+// category (the catch-all by default) and deletes the category (RPC delete_category); «Archive» keeps it hidden from the
+// pickers with its history and statistics (spec §6).
 export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategorySheetProps) {
   const translate = useTranslations('categories')
   const categories = useCategories().data ?? NO_CATEGORIES
   const archive = useArchiveCategory()
-  const [moveTo, setMoveTo] = useState(KEEP)
+  const remove = useDeleteCategory()
+  const [moveTo, setMoveTo] = useState<string | null>(null)
   const family = category
     ? categories.filter((row) => row.id === category.id || row.parentId === category.id).map((row) => row.id)
     : []
@@ -38,25 +43,28 @@ export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategor
   const targets = category
     ? categories.filter((row) => row.archivedAt === null && row.kind === category.kind && !family.includes(row.id))
     : []
-  const parentName = (row: CategoryView) => categories.find((parent) => parent.id === row.parentId)?.name
+  // the defaults' catch-all («Other») carries the ellipsis icon (Figma 13:74335)
+  const target = moveTo ?? (targets.find((row) => row.icon === 'ellipsis') ?? targets.at(-1))?.id ?? null
 
-  const confirm = () => {
+  const confirm = (move: boolean) => {
     if (!category) {
       return
     }
 
-    archive.mutate(
-      {
-        id: category.id,
-        moveTo: moveTo === KEEP ? null : moveTo,
-      },
-      {
-        onSuccess: () => {
-          notify.success(translate('archive.done'))
-          onCloseAction()
-        },
-      },
-    )
+    const input = {
+      id: category.id,
+      moveTo: move ? target : null,
+    }
+    const onSuccess = () => {
+      notify.success(translate(move ? 'archive.deleted' : 'archive.done'))
+      onCloseAction()
+    }
+
+    if (move) {
+      remove.mutate(input, { onSuccess })
+    } else {
+      archive.mutate(input, { onSuccess })
+    }
   }
 
   return (
@@ -64,17 +72,27 @@ export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategor
       open={category !== null}
       onOpenChange={(open) => {
         if (!open) {
-          setMoveTo(KEEP)
+          setMoveTo(null)
           onCloseAction()
         }
       }}
       title={translate('archive.title', { name: category?.name ?? '' })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('form.cancel')}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => confirm(false)}
+            disabled={archive.isPending || remove.isPending}
+          >
+            {translate('archive.archiveOnly')}
           </Button>
-          <Button type="button" onClick={confirm} disabled={archive.isPending || operations.isPending}>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={() => confirm(true)}
+            disabled={archive.isPending || remove.isPending || operations.isPending}
+          >
             {translate('archive.confirm')}
           </Button>
         </>
@@ -82,30 +100,27 @@ export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategor
     >
       {category ? (
         <>
-          <p className="text-label text-text-secondary">
+          <p className="text-body text-text-secondary">
             {translate('archive.summary', { count: operations.data ?? 0 })}
           </p>
           {operations.data ? (
-            <Field label={translate('archive.moveTo')} hint={translate('archive.moveHint')}>
+            <Field label={translate('archive.moveTo')}>
               <Select
-                value={moveTo}
-                onValueChange={(value) => setMoveTo(value ?? KEEP)}
-                options={[
-                  {
-                    value: KEEP,
-                    label: translate('archive.keep'),
-                  },
-                  ...targets.map((row) => ({
-                    value: row.id,
-                    label: row.parentId ? `${parentName(row)} › ${row.name}` : row.name,
-                  })),
-                ]}
+                value={target}
+                onValueChange={setMoveTo}
+                options={targets.map((row) => ({
+                  value: row.id,
+                  label: row.name,
+                  leading: <CategoryBadge icon={row.icon} color={row.color} size={32} />,
+                }))}
               />
             </Field>
           ) : null}
-          <p className="flex gap-3 rounded-inner bg-primary-soft p-4 text-body-medium text-primary-text">
-            <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
-            {translate('archive.info')}
+          <p className="flex gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body-medium text-primary-text">
+            <span className="py-0.5">
+              <Info className="size-5 shrink-0" aria-hidden />
+            </span>
+            <span className="flex-1">{translate('archive.info')}</span>
           </p>
         </>
       ) : null}

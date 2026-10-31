@@ -15,6 +15,8 @@ export type OperationFilters = {
   categoryId: string | null
   createdBy: string | null
   type: OperationType
+  /** the «Text» chip: a piece of the payee or the note */
+  text: string | null
 }
 
 export type OperationRow = {
@@ -98,4 +100,27 @@ export type OperationSource = {
   /** null = the planned amount is unknown (§7) */
   plannedMinor: number | null
   currency: string
+}
+
+/** an open outgoing plan of today and the next 7 days: the «Planned» group above the facts (Figma 2:11543 / 2:13753) */
+export type PlannedRow = {
+  id: string
+  title: string
+  sourceType: string
+  dueOn: string
+  /** null = the planned amount is unknown (§7) */
+  remainingMinor: number | null
+  currency: string
+  categoryId: string | null
+  accountId: string | null
+  /** a credit's «installment N of M» */
+  installment: {
+    number: number
+    count: number
+  } | null
+  /** a subscription's period */
+  interval: {
+    unit: string
+    count: number
+  } | null
 }

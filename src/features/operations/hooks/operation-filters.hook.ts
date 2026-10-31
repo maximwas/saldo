@@ -3,7 +3,7 @@ import { useClock } from '@/contexts/clock.context'
 import { localDate } from '@/lib/utils/clock.utils'
 import { hasActiveFilters, operationFilterParsers, periodValue, resolveFilters } from '../utils/operation-filters.utils'
 
-/** the list filters live in the URL (?period=&account=&category=&type=), so a link or a reload keeps them */
+/** the list filters live in the URL (?period=&account=&category=&type=&q=), so a link or a reload keeps them */
 export function useOperationFilters() {
   const clock = useClock()
   const [url, setUrl] = useQueryStates(operationFilterParsers, { history: 'replace' })
@@ -24,6 +24,7 @@ export function useOperationFilters() {
         category: null,
         who: null,
         type: null,
+        q: null,
       }),
   }
 }

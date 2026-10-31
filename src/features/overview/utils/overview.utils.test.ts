@@ -7,6 +7,7 @@ import {
   sumOpenDebts,
   toAvailableObligation,
   toOverviewAccount,
+  topCategories,
   toUpcoming,
   withBalances,
 } from './overview.utils'
@@ -87,6 +88,7 @@ const accountRow = {
   id: 'a1',
   name: 'Card',
   kind: 'bank',
+  color: null,
   currency: 'EUR',
   include_in_available: true,
   opening_balance_minor: 100,
@@ -164,6 +166,9 @@ describe('obligation mappers', () => {
     remaining_minor: null,
     currency: 'UAH',
     state: 'plan',
+    source_id: null,
+    sequence_no: null,
+    account_id: null,
   }
 
   it('maps a due row for «Available», keeping an unknown amount null', () => {
@@ -183,7 +188,23 @@ describe('obligation mappers', () => {
       title: 'Rent',
       sourceType: 'manual',
       remainingMinor: null,
+      installment: null,
     })
+  })
+
+  it('numbers a credit installment out of the credit count', () => {
+    const credit = {
+      ...dueRow,
+      source_type: 'credit',
+      source_id: 'c1',
+      sequence_no: 5,
+    }
+
+    expect(toUpcoming(credit, { c1: 10 }).installment).toEqual({
+      number: 5,
+      count: 10,
+    })
+    expect(toUpcoming(credit).installment).toBeNull()
   })
 })
 
@@ -244,5 +265,55 @@ describe('sumOpenDebts', () => {
       iOweMinor: 415_000,
       unknownCount: 1,
     })
+  })
+})
+
+describe('topCategories', () => {
+  it('ranks expense categories net of refunds and gives each its share of the month', () => {
+    const top = topCategories([
+      {
+        kind: 'expense',
+        baseAmountMinor: 600,
+        categoryId: 'home',
+      },
+      {
+        kind: 'expense',
+        baseAmountMinor: 300,
+        categoryId: 'food',
+      },
+      {
+        kind: 'refund',
+        baseAmountMinor: 100,
+        categoryId: 'food',
+      },
+      {
+        kind: 'expense',
+        baseAmountMinor: 200,
+        categoryId: null,
+      },
+      {
+        kind: 'income',
+        baseAmountMinor: 5000,
+        categoryId: 'salary',
+      },
+      {
+        kind: 'expense',
+        baseAmountMinor: null,
+        categoryId: 'car',
+      },
+    ])
+
+    expect(top).toEqual([
+      {
+        categoryId: 'home',
+        minor: 600,
+        percent: 60,
+      },
+      {
+        categoryId: 'food',
+        minor: 200,
+        percent: 20,
+      },
+    ])
   })
 })

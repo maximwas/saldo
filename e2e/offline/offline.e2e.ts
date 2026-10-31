@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/types/database.types'
+import { pickCategory } from '../fixtures/category.fixture'
 import { DEMO } from '../fixtures/demo-data.fixture'
 import { test } from '../fixtures/roles.fixture'
 import { E2E_PASSWORD, emailOf } from '../fixtures/users.fixture'
@@ -57,6 +58,7 @@ test('офлайн-витрата чекає в черзі, переживає r
 
   await sheet.getByLabel('Сума').fill('77,10')
   await sheet.getByLabel('Одержувач').fill(mark)
+  await pickCategory(page, sheet)
   await sheet.getByRole('button', { name: 'Зберегти' }).click()
   await expect(sheet).toBeHidden()
   await expect(status(page, /очікує \(1\)/i)).toBeVisible()
@@ -151,7 +153,7 @@ test('вихід очищає IndexedDB і кеші пристрою', async ({ 
   await expect(page).toHaveURL('/')
   await expect.poll(deviceData).toBeGreaterThan(0)
 
-  await page.goto('/settings')
+  await page.goto('/settings/general')
   await page.getByRole('button', { name: 'Вийти з акаунта' }).click()
   await expect(page).toHaveURL(/\/login/)
   // the worker's own cache-expiry bookkeeping (Serwist) opens again with /login; nothing of the person is left
@@ -163,6 +165,6 @@ test('вихід очищає IndexedDB і кеші пристрою', async ({ 
     )
     .toEqual([])
   // the worker caches /login itself again at once; no signed-in page survives in any cache
-  expect(await page.evaluate(async () => Boolean(await caches.match('/settings')))).toBe(false)
+  expect(await page.evaluate(async () => Boolean(await caches.match('/settings/general')))).toBe(false)
   await context.close()
 })

@@ -8,23 +8,35 @@
   "new": "New account",
   "kind": {
     "bank": "Card",
-    "cash": "Cash",
     "savings": "Savings"
   },
   "inTotal": "In balance",
   "inAvailable": "In available",
   "notInAvailable": "not in available",
+  "notInAvailableMobile": "Not in available",
   "archivedBadge": "Archived",
   "archivedEmpty": "The archive is empty",
   "converted": "≈ {amount} · rate {rate}",
+  "convertedShort": "≈ {amount}",
   "noRate": "No rate",
-  "total": "Total",
-  "totalNote": "Accounts marked «In balance», at today's rate.",
+  "total": "Total in {currency}",
+  "totalWith": "With {count, plural, one {account} other {accounts}} {accounts} — {amount} in balance.",
+  "totalRate": "“{name}” at {rate}",
+  "recent": {
+    "title": "Recent transfers",
+    "all": "All transfers",
+    "allShort": "All",
+    "untitled": "Transfer",
+    "category": "Transfer",
+    "rate": "Rate {rate}",
+    "noFee": "no fee",
+    "fee": "fee {amount}",
+    "note": "A transfer or exchange counts as neither spending nor income."
+  },
   "totalUnknown": "No rate for {currencies}: those accounts are not in the sum.",
-  "rates": "Exchange rates",
   "empty": {
     "title": "No accounts yet",
-    "hint": "Add a card, cash or savings — Saldo counts your balance and «Available» from them.",
+    "hint": "Add a card or savings — Saldo counts your balance and «Available» from them.",
     "action": "Add account"
   },
   "menu": {
@@ -32,7 +44,8 @@
     "edit": "Edit",
     "archive": "Archive",
     "restore": "Restore from archive",
-    "adjust": "Adjust balance"
+    "adjust": "Adjust balance",
+    "delete": "Delete"
   },
   "form": {
     "createTitle": "New account",
@@ -41,7 +54,7 @@
     "name": "Name",
     "kind": "Type",
     "currency": "Currency",
-    "currencyLocked": "The currency cannot be changed after creation",
+    "currencyLocked": "The currency of an account with operations cannot be changed",
     "openingBalance": "Opening balance",
     "openingOn": "As of",
     "save": "Save",
@@ -49,10 +62,10 @@
     "saved": "Account saved"
   },
   "archive": {
-    "title": "Archive «{name}»?",
-    "summary": "The account has {count, plural, one {# operation} other {# operations}} and a balance of",
-    "balanceOnly": "Account balance",
-    "info": "An account with operations is never deleted. Archive it — the operations stay, the account leaves the lists and «Available».",
+    "title": "Archive the account «{name}»?",
+    "summary": "The account has {count, plural, one {# operation} other {# operations}}{detail} and a balance of {balance}.",
+    "balanceOnly": "Balance {balance}.",
+    "info": "An account with operations is never deleted: the balance and history would go. Archive it — the operations stay, and the account leaves the lists and «Available».",
     "confirm": "Archive",
     "done": "Account archived"
   },
@@ -65,7 +78,7 @@
     "notFound": "Account not found"
   },
   "adjust": {
-    "title": "Adjust balance",
+    "title": "Balance adjustment",
     "now": "{account} · now in Saldo {amount}",
     "actual": "Actual balance",
     "difference": "Difference to record",
@@ -73,6 +86,10 @@
     "noteHint": "Required: where the difference comes from",
     "cancel": "Cancel",
     "submit": "Record adjustment",
-    "done": "Adjustment recorded"
-  }
+    "done": "Adjustment recorded",
+    "actualHint": "What the account really holds now",
+    "date": "Date",
+    "effect": "An adjustment changes only the balance of «{account}» and is neither income nor spending."
+  },
+  "transfer": "Transfer"
 }

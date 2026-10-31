@@ -13,13 +13,12 @@ import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { findRate } from '@/lib/money/fx.utils'
-import { fromMinor, toMinor } from '@/lib/money/money.utils'
+import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
 import { type TransferFormValues, transferFormSchema } from '../schemas/transfer-form.schema'
-import { accountOptions, categoryOptions } from '../utils/operation-display.utils'
+import { accountOptions } from '../utils/operation-display.utils'
 import { formatRate, impliedRate } from '../utils/rate.utils'
-
-const NO_CATEGORY = '__none__'
+import { CategorySelect } from './category-select.component'
 
 type TransferFormProps = {
   formId: string
@@ -38,6 +37,12 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
   const accounts = options.data?.accounts ?? []
   const categories = options.data?.categories ?? []
   const rates = options.data?.rates ?? []
+  const balances = options.data?.balances ?? {}
+  // Figma Transfer 2:22322: the balance hint under each account
+  const balanceHint = (accountId: string, currency: string) =>
+    balances[accountId] === undefined
+      ? undefined
+      : translate('balance', { amount: formatMinor(balances[accountId], currency, locale) })
   const resolver = useZodResolver(transferFormSchema)
   const active = accounts.filter((account) => !account.archived)
   const [source, target] = [active[0], active[1] ?? active[0]]
@@ -83,8 +88,11 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
 
   return (
     <form id={formId} noValidate onSubmit={form.handleSubmit(onSubmitAction)} className="flex flex-col gap-4">
-      <p className="flex items-start gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body text-primary-text">
-        <Info aria-hidden size={20} className="mt-0.5 shrink-0" />
+      {/* Figma Banner 2:10028: padding 12/16, gap 12, text body-medium; the icon box (20 + 2/2) sits on the first line */}
+      <p className="flex items-start gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body font-medium text-primary-text">
+        <span className="flex shrink-0 py-0.5">
+          <Info aria-hidden size={20} />
+        </span>
         {translate('transferNote')}
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -92,6 +100,8 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           control={form.control}
           name="fromAccountId"
           label={translate('from')}
+          required
+          hint={balanceHint(form.watch('fromAccountId'), fromCurrency)}
           render={(field) => (
             <Select
               options={accountOptions(accounts)}
@@ -105,6 +115,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           control={form.control}
           name="fromAmount"
           label={translate('fromAmount')}
+          required
           render={(field) => (
             <MoneyInput
               value={fromMinorValue}
@@ -120,6 +131,8 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           control={form.control}
           name="toAccountId"
           label={translate('to')}
+          required
+          hint={balanceHint(form.watch('toAccountId'), toCurrency)}
           render={(field) => (
             <Select
               options={accountOptions(accounts)}
@@ -134,6 +147,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
             control={form.control}
             name="toAmount"
             label={translate('toAmount')}
+            required
             render={(field) => (
               <MoneyInput
                 value={toMinorValue}
@@ -177,6 +191,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           control={form.control}
           name="occurredOn"
           label={translate('date')}
+          required
           render={(field) => (
             <DatePicker
               value={field.value}
@@ -192,16 +207,12 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           name="feeCategoryId"
           label={translate('feeCategory')}
           render={(field) => (
-            <Select
-              options={[
-                {
-                  value: NO_CATEGORY,
-                  label: translate('noCategory'),
-                },
-                ...categoryOptions(categories, 'expense'),
-              ]}
-              value={field.value ?? NO_CATEGORY}
-              onValueChange={(value) => field.onChange(value === NO_CATEGORY ? null : value)}
+            <CategorySelect
+              categories={categories}
+              kind="expense"
+              noneLabel={translate('noCategory')}
+              value={field.value}
+              onValueChange={field.onChange}
               onBlur={field.onBlur}
             />
           )}
@@ -211,7 +222,6 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
         control={form.control}
         name="note"
         label={translate('note')}
-        hint={translate('noteHint')}
         render={(field) => <Textarea {...field} />}
       />
     </form>

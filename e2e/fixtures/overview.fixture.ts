@@ -39,7 +39,14 @@ export const monthExpenseMinor = (page: Page) => monthTileMinor(page, 'Витр�
 export const monthIncomeMinor = (page: Page) => monthTileMinor(page, 'Доходи')
 
 export async function accountBalanceMinor(page: Page, name: string) {
-  const row = page.getByRole('listitem').filter({ hasText: name }).first()
+  // only the Accounts card: the Upcoming card lists subscriptions as «… · <account name>» above it
+  const card = page.locator('section').filter({
+    has: page.getByRole('heading', {
+      name: 'Рахунки',
+      exact: true,
+    }),
+  })
+  const row = card.getByRole('listitem').filter({ hasText: name })
 
   await expect(row).toBeVisible()
 

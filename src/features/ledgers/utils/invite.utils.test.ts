@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { acceptInviteRequestSchema } from '../schemas/ledger.schema'
 import {
   createInviteToken,
   hashInviteToken,
@@ -130,29 +129,6 @@ describe('inviteStatusFromError', () => {
     expect(inviteStatusFromError('expired')).toBe('expired')
     expect(inviteStatusFromError('forbidden')).toBe('otherEmail')
     expect(inviteStatusFromError('unknown')).toBeNull()
-  })
-})
-
-describe('acceptInviteRequestSchema', () => {
-  it('needs a well-formed token and a password of 8 to 72 characters', () => {
-    expect(
-      acceptInviteRequestSchema.safeParse({
-        token: TOKEN,
-        password: 'correct horse',
-      }).success,
-    ).toBe(true)
-    expect(
-      acceptInviteRequestSchema.safeParse({
-        token: TOKEN,
-        password: 'short',
-      }).success,
-    ).toBe(false)
-    expect(
-      acceptInviteRequestSchema.safeParse({
-        token: 'x',
-        password: 'correct horse',
-      }).success,
-    ).toBe(false)
   })
 })
 

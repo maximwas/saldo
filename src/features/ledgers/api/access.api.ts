@@ -135,3 +135,40 @@ export async function setMyNotifyChannels(supabase: SaldoClient, ledgerId: strin
     throw error
   }
 }
+
+// What a member entered in the space, for the revoke dialog (Figma 2:36442: operation and marked-payment counts): a transfer
+// is two operation rows, its incoming leg is not counted again
+export async function getMemberContributions(supabase: SaldoClient, ledgerId: string, userId: string) {
+  const [operations, payments] = await Promise.all([
+    supabase
+      .from('operations')
+      .select('id', {
+        count: 'exact',
+        head: true,
+      })
+      .eq('ledger_id', ledgerId)
+      .eq('created_by', userId)
+      .neq('kind', 'transfer_in'),
+    supabase
+      .from('obligation_payments')
+      .select('id', {
+        count: 'exact',
+        head: true,
+      })
+      .eq('ledger_id', ledgerId)
+      .eq('created_by', userId),
+  ])
+
+  if (operations.error) {
+    throw operations.error
+  }
+
+  if (payments.error) {
+    throw payments.error
+  }
+
+  return {
+    operations: operations.count ?? 0,
+    payments: payments.count ?? 0,
+  }
+}

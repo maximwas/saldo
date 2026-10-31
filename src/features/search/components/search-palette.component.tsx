@@ -39,9 +39,10 @@ const KIND_KEY = {
 const TRIGGER_CLASS =
   'cursor-pointer items-center rounded-md border border-border bg-card text-text-tertiary outline-none focus-visible:ring-2 focus-visible:ring-primary'
 
-// Plan 7.5: the Topbar search field (desktop), a search button (mobile) and ⌘K / Ctrl+K anywhere open one search
-// over the active space. No Figma frame: the house Sheet with an inline Base UI Autocomplete (its command palette
-// pattern), results grouped by type in search_entities order, arrows + Enter or a click open the item's link.
+// Plan 7.5: the Topbar search field (desktop) and ⌘K / Ctrl+K anywhere open one search over the active space; the
+// mobile Topbar (Figma 2:8195 Platform=Mobile) has no search, only the space switcher and the bell. No Figma frame for
+// the palette: the house Sheet with an inline Base UI Autocomplete (its command palette pattern), results grouped by
+// type in search_entities order, arrows + Enter or a click open the item's link.
 export function SearchPalette() {
   const translate = useTranslations('shell')
   const [open, setOpen] = useState(false)
@@ -70,14 +71,6 @@ export function SearchPalette() {
       >
         <Search aria-hidden size={20} className="shrink-0" />
         <span className="flex-1 truncate text-left">{translate('search')}</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={translate('search')}
-        className={`${TRIGGER_CLASS} relative flex size-10 justify-center text-text-secondary after:absolute after:-inset-0.5 lg:hidden`}
-      >
-        <Search aria-hidden size={20} />
       </button>
       <Sheet open={open} onOpenChange={setOpen} title={translate('searchPalette.title')} initialFocus={inputRef}>
         {open ? <SearchResults inputRef={inputRef} onPickAction={() => setOpen(false)} /> : null}

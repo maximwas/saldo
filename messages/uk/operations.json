@@ -15,6 +15,10 @@
     "debt": "Борг"
   },
   "filters": {
+    "text": "Текст",
+    "textTitle": "Пошук за текстом",
+    "textHint": "Одержувач або коментар",
+    "textApply": "Показати",
     "period": "Період",
     "allTime": "Весь час",
     "account": "Рахунок",
@@ -29,7 +33,10 @@
     "income": "Доходи",
     "expenses": "Витрати",
     "result": "Результат",
-    "unknownRate": "Без курсу: {count}"
+    "unknownRate": "Без курсу: {count}",
+    "incomeOf": "Доходи за {month}",
+    "expensesOf": "Витрати за {month}",
+    "withPlan": "з планом до кінця місяця"
   },
   "table": {
     "date": "Дата",
@@ -43,6 +50,15 @@
     "yesterday": "Учора, {date}",
     "count": "{count, plural, one {# операція} few {# операції} many {# операцій} other {# операцій}}"
   },
+  "plan": {
+    "title": "Заплановано",
+    "count": "{count, plural, one {# платіж} few {# платежі} many {# платежів} other {# платежу}}",
+    "notFact": "ще не факт",
+    "pill": "План",
+    "installment": "внесок {number} з {count}",
+    "interval": "{unit, select, day {{count, plural, =1 {щодня} =7 {щотижня} other {кожні # дн.}}} month {{count, plural, =1 {щомісяця} other {кожні # міс.}}} other {{count, plural, =1 {щороку} other {кожні # р.}}}}",
+    "creditCategory": "Кредити"
+  },
   "row": {
     "receipt": "Є чек",
     "rate": "курс {rate}",
@@ -50,10 +66,14 @@
     "noCategory": "Без категорії",
     "fee": "Комісія переказу"
   },
+  "viewOnly": "Лише перегляд: додавати й змінювати операції в просторі «{space}» не можна.",
+  "offline": "Немає мережі. Показано дані на {time} — нові операції збережуться на пристрої й синхронізуються пізніше.",
   "empty": {
     "title": "Операцій поки немає",
     "hint": "Додайте першу витрату чи дохід кнопкою «Додати».",
-    "filtered": "За цим фільтром операцій немає"
+    "filtered": "Нічого не знайдено",
+    "filteredText": "За {period} немає {type, select, expense {витрат} income {доходів} transfer {переказів} other {операцій}}{account, select, none {} other { на рахунку «{account}»}}{category, select, none {} other { у категорії «{category}»}}{text, select, none {} other { з текстом «{text}»}}. Змініть фільтри або скиньте їх.",
+    "allTime": "весь час"
   },
   "loadFailed": "Не вдалося завантажити операції",
   "truncated": "Показано останні {count} операцій. Звузьте період або фільтр.",
@@ -70,6 +90,7 @@
     "date": "Дата",
     "counterparty": "Одержувач",
     "counterpartyHint": "Як у виписці банку",
+    "payer": "Джерело",
     "note": "Коментар",
     "noteHint": "До 500 символів",
     "save": "Зберегти",
@@ -78,6 +99,7 @@
     "close": "Закрити",
     "delete": "Видалити",
     "duplicate": "Дублювати",
+    "actions": "Дії з операцією",
     "receipt": "Чек",
     "addReceipt": "Додати чек",
     "receiptHint": "Фото або PDF, необов’язково",
@@ -112,8 +134,13 @@
       "to": "Куди",
       "fee": "Комісія",
       "rate": "Курс",
-      "purchase": "Покупка"
-    }
+      "purchase": "Покупка",
+      "author": "Вніс(ла)"
+    },
+    "time": "Час",
+    "balance": "Залишок {amount}",
+    "editingTitle": "Редагувати операцію",
+    "saveChanges": "Зберегти зміни"
   },
   "deleteConfirm": {
     "balanceUp": "Залишок «{account}» зросте на {amount}, суми за період перерахуються.",
@@ -142,13 +169,17 @@
     "info": "Витрати місяця й бюджет категорії зменшаться на цю суму. Повернення не є доходом.",
     "submit": "Записати повернення",
     "done": "Повернення записано",
+    "subtitle": "Повернення за {date}",
     "purchase": "Покупка {date}",
-    "refunded": "повернено {amount}"
+    "refunded": "повернено {amount}",
+    "amount": "Сума повернення",
+    "noteHint": "Необов’язково",
+    "effect": "Витрати {month} й бюджет «{category}» зменшаться на {amount}. Повернення не рахується доходом."
   },
   "source": {
     "paid": "Оплата: {title} · {date}",
-    "meta": "{type} · план {amount} · Платежі",
-    "metaUnknown": "{type} · Платежі",
+    "meta": "{type} · план {amount}{section, select, shown { · Платежі} other {}}",
+    "metaUnknown": "{type}{section, select, shown { · Платежі} other {}}",
     "open": "Відкрити джерело"
   }
 }

@@ -40,6 +40,7 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
   const router = useRouter()
   const translate = useTranslations('settings.space')
   const translateError = useTranslations('errors.db')
+  const translateField = useTranslations('errors')
   const formatter = useFormatter()
   const [name, setName] = useState(settings.name)
   const [currency, setCurrency] = useState(settings.baseCurrency as Currency)
@@ -82,8 +83,9 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
       nextIncomeOn,
     })
 
+    // the name is the only field a person can leave invalid: empty (the Input stops at 60 characters)
     if (!parsed.success) {
-      setNameError(translate('nameRequired'))
+      setNameError(translateField('required'))
 
       return
     }
@@ -115,7 +117,7 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
   return (
     <Card title={translate('title')}>
       <form onSubmit={submit} noValidate className="flex max-w-120 flex-col gap-4">
-        <Field label={translate('name')} error={nameError ?? undefined}>
+        <Field label={translate('name')} required error={nameError ?? undefined}>
           <Input maxLength={60} value={name} onChange={(event) => setName(event.target.value)} />
         </Field>
         <div className="flex flex-col gap-1.5">

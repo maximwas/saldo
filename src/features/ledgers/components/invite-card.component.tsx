@@ -1,13 +1,13 @@
 'use client'
 
-import { ArrowLeftRight, CircleAlert, CircleCheck, Link2Off, MailX } from 'lucide-react'
+import { ArrowLeftRight, CircleCheck, Link2Off, MailX } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
-import { type ReactNode, type SubmitEvent, useId, useState } from 'react'
+import { type ReactNode, useState } from 'react'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
-import { Input } from '@/components/ui/input.component'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { cn } from '@/lib/utils/cn.utils'
@@ -20,12 +20,6 @@ type InviteCardProps = {
   status: InviteStatus
   invite: InviteView | null
   sessionEmail: string | null
-}
-
-type Notice = 'accountExists' | 'weakPassword'
-
-type AccountAnswer = {
-  error?: Notice | InviteStatus | 'invalid' | 'unknown'
 }
 
 type LetterAvatarProps = {
@@ -82,19 +76,16 @@ function Heading({ title, body }: HeadingProps) {
   )
 }
 
-// Figma «Saldo» → Invite card 2:47557 (desktop 480, padding 32) / 2:49217 (mobile, padding 24), gap 24
+// Figma «Saldo» → Invite card 2:47557 (desktop 480, padding 32) / 2:49217 (mobile, padding 24), gap 24. Only people
+// with a Saldo account are invited (create_ledger_invite SL404), so a signed-out person signs in first: «Accept» leads to
+// the login with ?next= back here, the caption names the invited address.
 export function InviteCard({ token, status: initialStatus, invite, sessionEmail }: InviteCardProps) {
   const router = useRouter()
   const translate = useTranslations('auth.invite')
   const translateShell = useTranslations('shell')
   const formatter = useFormatter()
-  const ids = {
-    password: useId(),
-    hint: useId(),
-  }
   const [status, setStatus] = useState(initialStatus)
   const [failed, setFailed] = useState(false)
-  const [notice, setNotice] = useState<Notice | null>(null)
   const [isPending, setIsPending] = useState(false)
   const loginHref = `/login?next=${encodeURIComponent(`/invite/${token}`)}` as Route
   const day = (iso: string) =>
@@ -107,7 +98,6 @@ export function InviteCard({ token, status: initialStatus, invite, sessionEmail 
   function start() {
     setIsPending(true)
     setFailed(false)
-    setNotice(null)
   }
 
   async function openSpace(ledgerId: string) {
@@ -133,70 +123,17 @@ export function InviteCard({ token, status: initialStatus, invite, sessionEmail 
     }
   }
 
-  // No account yet: the route creates it for the invited email only, then the person signs in and accepts as usual
-  async function createAccount(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (!invite) {
-      return
-    }
-
-    const password = String(new FormData(event.currentTarget).get('password'))
-
-    start()
-
-    try {
-      const response = await fetch('/api/invites/accept', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          password,
-        }),
-      })
-
-      if (!response.ok) {
-        const { error } = (await response.json()) as AccountAnswer
-
-        if (error === 'accountExists' || error === 'weakPassword') {
-          setNotice(error)
-        } else if (error === 'expired' || error === 'notFound' || error === 'accepted' || error === 'otherEmail') {
-          setStatus(error)
-        } else {
-          setFailed(true)
-        }
-
-        setIsPending(false)
-
-        return
-      }
-
-      const { error } = await getBrowserSupabase().auth.signInWithPassword({
-        email: invite.email,
-        password,
-      })
-
-      if (error) {
-        throw error
-      }
-
-      await accept()
-    } catch {
-      setFailed(true)
-      setIsPending(false)
-    }
-  }
-
   async function signInAnother() {
     start()
     await getBrowserSupabase().auth.signOut()
     router.replace(loginHref)
   }
 
-  const account = sessionEmail ? (
+  const accountEmail = sessionEmail ?? invite?.email
+  const account = accountEmail ? (
     <p className="w-full text-center text-caption text-text-tertiary">
       {translate('signedInAs', {
-        email: sessionEmail,
+        email: accountEmail,
       })}
     </p>
   ) : null
@@ -215,7 +152,7 @@ export function InviteCard({ token, status: initialStatus, invite, sessionEmail 
       <>
         <div className="flex items-center gap-2">
           <LetterAvatar name={inviter ?? invite.ledgerName} tone="blue" />
-          <ArrowLeftRight aria-hidden size={20} className="text-text-tertiary" />
+          <ArrowLeftRight aria-hidden size={20} className="text-text-primary" />
           <LetterAvatar name={invite.ledgerName} tone="green" />
         </div>
         <Heading
@@ -248,61 +185,28 @@ export function InviteCard({ token, status: initialStatus, invite, sessionEmail 
             ) : null,
           )}
         </dl>
-        {sessionEmail ? (
-          <>
-            <div className="flex w-full gap-3">
-              <Button variant="secondary" className="flex-1" render={<Link href="/" />} nativeButton={false}>
-                {translate('decline')}
-              </Button>
-              <Button
-                className="flex-1"
-                disabled={isPending}
-                onClick={() => {
-                  start()
-                  void accept()
-                }}
-              >
-                {translate(failed ? 'retry' : 'accept')}
-              </Button>
-            </div>
-            {account}
-            <Button variant="ghost" size="s" disabled={isPending} onClick={signInAnother}>
-              {translate('otherAccount')}
+        <div className="flex w-full gap-3">
+          <Button variant="secondary" className="flex-1" render={<Link href="/" />} nativeButton={false}>
+            {translate('decline')}
+          </Button>
+          {sessionEmail ? (
+            <Button
+              className="flex-1"
+              disabled={isPending}
+              onClick={() => {
+                start()
+                void accept()
+              }}
+            >
+              {translate(failed ? 'retry' : 'accept')}
             </Button>
-          </>
-        ) : (
-          <form onSubmit={createAccount} className="flex w-full flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor={ids.password} className="text-label font-medium text-text-secondary">
-                {translate('newPassword')}
-              </label>
-              <Input
-                id={ids.password}
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                minLength={8}
-                maxLength={72}
-                required
-                aria-invalid={notice === 'weakPassword' ? true : undefined}
-                aria-describedby={ids.hint}
-              />
-              <p id={ids.hint} className={cn('text-caption', notice ? 'text-negative-text' : 'text-text-secondary')}>
-                {notice
-                  ? translate(notice)
-                  : translate('newPasswordHint', {
-                      email: invite.email,
-                    })}
-              </p>
-            </div>
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {translate(failed ? 'retry' : 'createAndAccept')}
+          ) : (
+            <Button className="flex-1" render={<Link href={loginHref} />} nativeButton={false}>
+              {translate('accept')}
             </Button>
-            <Button variant="secondary" className="w-full" render={<Link href={loginHref} />} nativeButton={false}>
-              {translate('haveAccount')}
-            </Button>
-          </form>
-        )}
+          )}
+        </div>
+        {account}
       </>
     )
   } else if (status === 'accepted' && invite) {
@@ -387,13 +291,9 @@ export function InviteCard({ token, status: initialStatus, invite, sessionEmail 
   return (
     <>
       {failed ? (
-        <p
-          role="alert"
-          className="flex w-full items-center gap-3 rounded-inner bg-negative-soft px-4 py-3 text-body font-medium text-negative-text md:w-120"
-        >
-          <CircleAlert aria-hidden size={20} className="shrink-0" />
+        <Banner kind="danger" role="alert" className="w-full md:w-120">
           {translate('failed')}
-        </p>
+        </Banner>
       ) : null}
       <section className="flex w-full flex-col items-center gap-6 rounded-card bg-card p-6 shadow-card md:w-120 md:p-8">
         {body}

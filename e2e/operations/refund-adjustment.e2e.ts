@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test'
+import { pickCategory } from '../fixtures/category.fixture'
 import { DEMO } from '../fixtures/demo-data.fixture'
 import {
   accountBalanceMinor,
@@ -31,11 +32,12 @@ test('повернення зменшує витрати місяця, а не �
 
   await sheet.getByLabel('Сума').fill(typed(PURCHASE_MINOR))
   await sheet.getByLabel('Одержувач').fill(mark)
+  await pickCategory(page, sheet)
   await sheet.getByRole('button', { name: 'Зберегти' }).click()
   await expect(sheet).toBeHidden()
 
   await page.getByRole('button', { name: mark }).click()
-  await sheet.getByRole('button', { name: 'Повернення витрати' }).click()
+  await sheet.getByRole('button', { name: 'Записати повернення' }).click()
   // the amount starts at the whole purchase and cannot go above what is left of it
   await expect(sheet.getByLabel('Сума')).toHaveValue(typed(PURCHASE_MINOR))
   await sheet.getByLabel('Сума').fill(typed(PURCHASE_MINOR + 100))
@@ -49,13 +51,13 @@ test('повернення зменшує витрати місяця, а не �
   expect(await monthExpenseMinor(page)).toBe(expenseBefore + PURCHASE_MINOR - REFUND_MINOR)
   expect(await monthIncomeMinor(page)).toBe(incomeBefore)
 
-  const cashBefore = await accountBalanceMinor(page, DEMO.cashName)
+  const cashBefore = await accountBalanceMinor(page, DEMO.savingsName)
   const actual = cashBefore + 12_345
 
   await page.goto('/operations/accounts')
   await page
     .getByRole('listitem')
-    .filter({ hasText: DEMO.cashName })
+    .filter({ hasText: DEMO.savingsName })
     .getByRole('button', { name: 'Дії з рахунком' })
     .click()
   await page.getByRole('menuitem', { name: 'Коригувати залишок' }).click()
@@ -70,7 +72,7 @@ test('повернення зменшує витрати місяця, а не �
   await expect(adjust).toBeHidden()
 
   await page.goto('/')
-  expect(await accountBalanceMinor(page, DEMO.cashName)).toBe(actual)
+  expect(await accountBalanceMinor(page, DEMO.savingsName)).toBe(actual)
   // an adjustment is neither income nor spending (§5)
   expect(await monthExpenseMinor(page)).toBe(expenseBefore + PURCHASE_MINOR - REFUND_MINOR)
   expect(await monthIncomeMinor(page)).toBe(incomeBefore)

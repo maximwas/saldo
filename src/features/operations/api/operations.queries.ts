@@ -2,7 +2,21 @@ import { queryOptions } from '@tanstack/react-query'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import type { OperationFilters } from '../operations.types'
-import { getFormOptions, listOperationSources, listOperations, listReceipts, listRefundLinks } from './operations.api'
+import {
+  getFormOptions,
+  getPlannedToMonthEnd,
+  listOperationSources,
+  listOperations,
+  listReceipts,
+  listRefundLinks,
+  listUpcomingPlans,
+} from './operations.api'
+
+type PlannedLedger = {
+  ledgerId: string
+  baseCurrency: string
+  timeZone: string
+}
 
 // [«operations», ledgerId, …]: the root is in MONEY_QUERY_ROOTS, so any money write refreshes these too
 export const operationQueries = {
@@ -13,6 +27,26 @@ export const operationQueries = {
         listOperations(getBrowserSupabase(), {
           ledgerId,
           filters,
+        }),
+    }),
+  /** keyed by the ledger-local day, so a new day reads the plans again */
+  planned: (ledger: PlannedLedger, today: string) =>
+    queryOptions({
+      queryKey: ledgerQueryKey('operations', ledger.ledgerId, 'planned', today),
+      queryFn: () =>
+        getPlannedToMonthEnd(getBrowserSupabase(), {
+          ...ledger,
+          now: new Date(),
+        }),
+    }),
+  /** the «Planned» group: keyed by the ledger-local day like `planned` */
+  upcoming: (ledgerId: string, today: string) =>
+    queryOptions({
+      queryKey: ledgerQueryKey('operations', ledgerId, 'upcoming', today),
+      queryFn: () =>
+        listUpcomingPlans(getBrowserSupabase(), {
+          ledgerId,
+          today,
         }),
     }),
   options: (ledgerId: string) =>

@@ -1,5 +1,11 @@
-import { type AvailableMoney, computeAvailableMoney } from '@/lib/finance/available-money.utils'
+import {
+  type AvailableMoney,
+  computeAvailableMoney,
+  monthEndOf,
+  plannedToMonthEnd,
+} from '@/lib/finance/available-money.utils'
 import { getLedgerRates } from '@/lib/finance/ledger-fx.api'
+import { type LedgerCategoryOption, listCategoryOptions } from '@/lib/finance/ledger-options.api'
 import { localDate } from '@/lib/utils/clock.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import {
@@ -13,6 +19,7 @@ import {
   toAvailableAccount,
   toAvailableObligation,
   toOverviewAccount,
+  topCategories,
   toUpcoming,
   withBalances,
 } from '../utils/overview.utils'
@@ -33,6 +40,8 @@ export type Overview = {
   ledgerVersion: number
   /** the current month in the ledger time zone, in the base currency */
   month: MonthTotals
+  /** the month's result minus the outgoing plans left to the month end, past unconfirmed ones included; null = unknown */
+  monthWithPlanMinor: number | null
   accounts: OverviewAccount[]
   /** balancesMinor is always filled; the other parts mean something only when untilOn is set */
   available: AvailableMoney
@@ -40,6 +49,8 @@ export type Overview = {
   overdueCount: number
   /** open personal debts, apart from the month's result and the shortfall of «Available» (§3) */
   openDebts: OpenDebts
+  /** names, icons and colours of the month's top categories */
+  categories: LedgerCategoryOption[]
 }
 
 const PAGE = 1000
@@ -49,25 +60,24 @@ const UPCOMING_LIMIT = 4
 type MonthRow = {
   kind: string
   base_amount_minor: number | null
+  category_id: string | null
 }
 
 const toMonthOperation = (row: MonthRow) => ({
   kind: row.kind,
   baseAmountMinor: row.base_amount_minor,
+  categoryId: row.category_id,
 })
 
 /** income / expense rows of the current month; PostgREST caps a response, so it is read page by page */
 async function getMonthTotals(supabase: SaldoClient, ledgerId: string, today: string): Promise<MonthTotals> {
   const { from, to } = monthRange(today)
-  const rows: {
-    kind: string
-    baseAmountMinor: number | null
-  }[] = []
+  const rows: ReturnType<typeof toMonthOperation>[] = []
 
   for (let start = 0; ; start += PAGE) {
     const { data, error } = await supabase
       .from('operations')
-      .select('kind, base_amount_minor')
+      .select('kind, base_amount_minor, category_id')
       .eq('ledger_id', ledgerId)
       .in('kind', ['income', 'expense', 'refund'])
       .gte('occurred_on', from)
@@ -82,7 +92,10 @@ async function getMonthTotals(supabase: SaldoClient, ledgerId: string, today: st
     rows.push(...data.map(toMonthOperation))
 
     if (data.length < PAGE) {
-      return sumMonth(rows)
+      return {
+        ...sumMonth(rows),
+        top: topCategories(rows),
+      }
     }
   }
 }
@@ -121,7 +134,7 @@ type SourceParams = {
 const accountsQuery = (supabase: SaldoClient, ledgerId: string) =>
   supabase
     .from('accounts')
-    .select('id, name, kind, currency, include_in_available, opening_balance_minor')
+    .select('id, name, kind, color, currency, include_in_available, opening_balance_minor')
     .eq('ledger_id', ledgerId)
     .is('archived_at', null)
     .order('sort_order')
@@ -137,7 +150,9 @@ const dueQuery = (supabase: SaldoClient, ledgerId: string, horizon: string) =>
 const upcomingQuery = (supabase: SaldoClient, ledgerId: string) =>
   supabase
     .from('obligation_states')
-    .select('obligation_id, title, source_type, direction, due_on, remaining_minor, currency, state')
+    .select(
+      'obligation_id, title, source_type, source_id, sequence_no, account_id, direction, due_on, remaining_minor, currency, state',
+    )
     .eq('ledger_id', ledgerId)
     .in('state', OPEN_STATES)
     .order('due_on')
@@ -176,9 +191,19 @@ async function getDebtRows(supabase: SaldoClient, ledgerId: string) {
   }
 }
 
+/** credit id → installments_count */
+const countsById = (
+  rows:
+    | {
+        id: string
+        installments_count: number
+      }[]
+    | null,
+) => Object.fromEntries((rows ?? []).map((row) => [row.id, row.installments_count]))
+
 /** the reads behind the screen, in parallel; any error throws */
 async function getSources(supabase: SaldoClient, { ledgerId, today, horizon }: SourceParams) {
-  const [accounts, balances, rates, due, upcoming, overdue, month, debtRows] = await Promise.all([
+  const [accounts, balances, rates, due, upcoming, overdue, month, debtRows, credits, categories] = await Promise.all([
     accountsQuery(supabase, ledgerId),
     supabase.from('account_balances').select('account_id, balance_minor').eq('ledger_id', ledgerId),
     getLedgerRates(supabase, ledgerId),
@@ -187,9 +212,11 @@ async function getSources(supabase: SaldoClient, { ledgerId, today, horizon }: S
     overdueQuery(supabase, ledgerId),
     getMonthTotals(supabase, ledgerId, today),
     getDebtRows(supabase, ledgerId),
+    supabase.from('credits').select('id, installments_count').eq('ledger_id', ledgerId),
+    listCategoryOptions(supabase, ledgerId),
   ])
 
-  for (const result of [accounts, balances, due, upcoming, overdue]) {
+  for (const result of [accounts, balances, due, upcoming, overdue, credits]) {
     if (result.error) {
       throw result.error
     }
@@ -200,6 +227,8 @@ async function getSources(supabase: SaldoClient, { ledgerId, today, horizon }: S
     rates,
     due: due.data ?? [],
     upcoming: upcoming.data ?? [],
+    categories,
+    installmentsCount: countsById(credits.data),
     overdueCount: overdue.count ?? 0,
     month,
     ...debtRows,
@@ -228,6 +257,19 @@ function getAvailable({ sources, baseCurrency, horizon, now, timeZone }: Availab
   })
 }
 
+/** the month's result minus the outgoing plans left to the month end; null = an amount or a rate is unknown */
+function monthWithPlan(sources: Sources, baseCurrency: string, now: Date, timeZone: string) {
+  const planned = plannedToMonthEnd({
+    baseCurrency,
+    obligations: sources.due.map(toAvailableObligation),
+    rates: sources.rates,
+    now,
+    timeZone,
+  })
+
+  return planned === null ? null : sources.month.resultMinor - planned
+}
+
 /** Overview + "Available" (plan 1.16): the same numbers for the browser and the MCP server, no React */
 export async function getOverview(
   supabase: SaldoClient,
@@ -237,11 +279,14 @@ export async function getOverview(
   const ledger = await getLedgerHead(supabase, ledgerId)
   // without a date only today's horizon is read
   const horizon = ledger.untilOn ?? today
+  const monthEnd = monthEndOf(today)
+  // one read serves «Available» (to horizon) and the month result with its plan (to the month end)
   const sources = await getSources(supabase, {
     ledgerId,
     today,
-    horizon,
+    horizon: horizon > monthEnd ? horizon : monthEnd,
   })
+
   const rateContext = {
     baseCurrency: ledger.baseCurrency,
     rates: sources.rates,
@@ -254,6 +299,7 @@ export async function getOverview(
     untilOn: ledger.untilOn,
     ledgerVersion: ledger.version,
     month: sources.month,
+    monthWithPlanMinor: monthWithPlan(sources, ledger.baseCurrency, now, timeZone),
     accounts: sources.accounts.map((row) => toOverviewAccount(row, rateContext)),
     available: getAvailable({
       sources,
@@ -262,9 +308,10 @@ export async function getOverview(
       now,
       timeZone,
     }),
-    upcoming: sources.upcoming.map(toUpcoming),
+    upcoming: sources.upcoming.map((row) => toUpcoming(row, sources.installmentsCount)),
     overdueCount: sources.overdueCount,
     openDebts: sumOpenDebts(sources.debts, sources.repayments, rateContext),
+    categories: sources.categories,
   }
 }
 

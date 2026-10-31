@@ -21,6 +21,7 @@ export function DebtPersonFields() {
         control={control}
         name="person"
         label={translate('form.person')}
+        required
         render={(field) => <Input {...field} autoComplete="off" />}
       />
       <FormField
