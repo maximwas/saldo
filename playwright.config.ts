@@ -8,7 +8,8 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost):/.test(localStack.API_URL)) {
   throw new Error('e2e runs only against the local Supabase stack')
 }
 
-const PORT = 3100 // not 3000: a running `pnpm dev` with another env must never be reused
+// not 3000: a running `pnpm dev` with another env must never be reused; E2E_PORT lets a second worktree run in parallel
+const PORT = Number(process.env.E2E_PORT ?? 3100)
 const env = {
   NEXT_PUBLIC_SITE_URL: `http://localhost:${PORT}`,
   NEXT_PUBLIC_SUPABASE_URL: localStack.API_URL,
