@@ -2239,6 +2239,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      delete_category: {
+        Args: {
+          p_id: string
+          p_move_to?: string
+        }
+        Returns: undefined
+      }
       delete_ledger_data: {
         Args: {
           p_ledger_id: string
@@ -2356,6 +2363,12 @@ export type Database = {
         Args: {
           p_ledger_id: string
           p_user_id: string
+        }
+        Returns: undefined
+      }
+      reorder_categories: {
+        Args: {
+          p_items: Json
         }
         Returns: undefined
       }
