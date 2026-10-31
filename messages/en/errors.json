@@ -43,5 +43,7 @@
   "invalid": "Check the value",
   "categoryRequired": "Choose a category",
   "counterpartyRequired": "Enter a recipient",
-  "factInFuture": "A fact cannot be in the future — create a plan"
+  "factInFuture": "A fact cannot be in the future — create a plan",
+  "subscriptionServiceRequired": "Pick a service from the list",
+  "subscriptionAccountRequired": "Pick the account to charge"
 }

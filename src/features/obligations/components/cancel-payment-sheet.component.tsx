@@ -105,6 +105,11 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
       {payments.data?.length === 0 && (
         <p className="text-caption text-text-tertiary">{translate('cancelPayment.empty')}</p>
       )}
+      <Switch
+        label={translate('cancelPayment.deleteOperation')}
+        checked={deleteOperation}
+        onCheckedChange={setDeleteOperation}
+      />
       {payment && operation && (
         <section className="flex flex-col gap-1">
           <h3 className="text-label font-medium text-text-secondary">{translate('cancelPayment.operation')}</h3>
@@ -127,14 +132,6 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
           </ul>
         </section>
       )}
-      <div className="flex flex-col gap-1">
-        <Switch
-          label={translate('cancelPayment.deleteOperation')}
-          checked={deleteOperation}
-          onCheckedChange={setDeleteOperation}
-        />
-        <p className="text-caption text-text-tertiary">{translate('cancelPayment.deleteOperationHint')}</p>
-      </div>
     </Sheet>
   )
 }

@@ -77,7 +77,6 @@
     "title": "Cancel the payment?",
     "text": "«{title}» becomes unpaid again with the date {date}. The operation below is deleted, the balance of «{account}» {direction, select, out {goes up} other {goes down}} by {amount}.",
     "deleteOperation": "Also delete the operation this payment created",
-    "deleteOperationHint": "If the operation was linked, not created, turn it off — it stays.",
     "keep": "Keep",
     "confirm": "Cancel payment",
     "done": "Payment cancelled",
