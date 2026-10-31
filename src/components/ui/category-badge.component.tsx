@@ -24,7 +24,8 @@ const SIZES = {
   },
 } as const
 
-// Figma «Saldo» → CategoryBadge 29:89750: a circle in the category colour with a white Lucide icon, 40 (icon 20) or
+// Figma «Saldo» → CategoryBadge 29:89750: a circle in the category colour with a white Lucide icon (category/on, white
+// in both themes), 40 (icon 20) or
 // 32 (icon 16); a category without a colour keeps the neutral tile
 export function CategoryBadge({ icon, color, size = 40, className }: CategoryBadgeProps) {
   const Icon = CATEGORY_ICONS[icon as CategoryIconName] ?? Tag
@@ -36,7 +37,7 @@ export function CategoryBadge({ icon, color, size = 40, className }: CategoryBad
       className={cn(
         'flex shrink-0 items-center justify-center rounded-full',
         SIZES[size].box,
-        swatch ? `${swatch} text-on-primary` : NEUTRAL_TONE,
+        swatch ? `${swatch} text-cat-on` : NEUTRAL_TONE,
         className,
       )}
     >

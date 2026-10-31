@@ -63,7 +63,18 @@
     "magenta": "Magenta",
     "wine": "Wine",
     "slate": "Slate",
-    "graphite": "Graphite"
+    "graphite": "Graphite",
+    "navy": "Navy",
+    "ocean": "Ocean",
+    "jade": "Jade",
+    "pine": "Pine",
+    "plum": "Plum",
+    "berry": "Berry",
+    "terracotta": "Terracotta",
+    "rose": "Rose",
+    "lavender": "Lavender",
+    "sage": "Sage",
+    "stone": "Stone"
   },
   "icons": {
     "shopping-basket": "Basket",
