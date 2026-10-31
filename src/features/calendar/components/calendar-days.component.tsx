@@ -1,6 +1,6 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { useLedger } from '@/contexts/ledger.context'
 import type { CalendarEntry } from '../api/calendar.api'
