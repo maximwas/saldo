@@ -6,6 +6,7 @@ import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
@@ -45,6 +46,7 @@ export function ObligationRowItem({
   onEdit,
   onCancelPayment,
 }: ObligationRowItemProps) {
+  const { pressProps, ripple } = useRipple()
   const [linkedId] = useQueryState('obligation', parseAsString)
   const linked = linkedId === obligation.id
   const translate = useTranslations('obligations')
@@ -84,12 +86,13 @@ export function ObligationRowItem({
       ref={linked ? scrollIntoView : undefined}
       className={cn('flex flex-col', linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card')}
     >
-      <div className="flex items-center gap-4 py-3">
+      <div className="flex items-center gap-4">
         <button
           type="button"
           disabled={!canWrite || !open}
           onClick={onPay}
-          className="flex min-w-0 flex-1 items-center gap-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-default"
+          {...(canWrite && open ? pressProps : {})}
+          className="relative flex min-w-0 flex-1 items-center gap-4 -mx-3 overflow-hidden rounded-md px-3 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary enabled:cursor-pointer enabled:hover:bg-subtle disabled:cursor-default"
         >
           {obligation.sourceType === 'big_expense' ? (
             <CategoryBadge icon={category?.icon ?? null} color={category?.color ?? null} />
@@ -120,6 +123,7 @@ export function ObligationRowItem({
             />
             <span className="text-label text-text-secondary">{dateLabel}</span>
           </span>
+          {ripple}
         </button>
         {canWrite && open && (
           <Button size="s" variant="secondary" className="hidden lg:inline-flex" onClick={onPay}>

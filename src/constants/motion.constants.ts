@@ -8,6 +8,8 @@ export const MOTION = {
     fast: 0.15,
     base: 0.24,
     slow: 0.36,
+    /** the tap ripple of a clickable row */
+    ripple: 0.45,
   },
   ease: {
     /** state changes in place: colours, hover, focus */

@@ -9,6 +9,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { ActionSheet, Menu, type MenuItem } from '@/components/ui/menu.component'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Switch } from '@/components/ui/switch.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
@@ -37,6 +38,7 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
   const canWrite = useCanWrite()
   const update = useUpdateAccount()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const { pressProps, ripple } = useRipple()
   const archived = account.archivedAt !== null
   const style = ACCOUNT_KIND_STYLE[account.kind]
   const foreign = account.currency !== baseCurrency
@@ -126,14 +128,16 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
 
   if (desktop) {
     return (
-      <li className="flex items-center gap-4 border-b border-border py-4">
+      <li className="relative flex items-center gap-4 overflow-hidden border-b border-border py-4 transition-colors hover:bg-subtle">
         <CategoryIcon icon={account.icon ?? style.icon} color={account.color ?? style.color} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <Link
             href={`/operations/accounts/${account.id}` as Route}
-            className="cursor-pointer truncate rounded-xs text-body font-medium text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="cursor-pointer truncate rounded-xs text-body font-medium text-text-primary outline-none after:absolute after:inset-0 focus-visible:ring-2 focus-visible:ring-primary"
+            {...pressProps}
           >
             {account.name}
+            {ripple}
           </Link>
           <span className="truncate text-label text-text-secondary">
             {kindAndCurrency}
@@ -141,12 +145,16 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
           </span>
         </div>
         {archived ? <Badge tone="muted">{translate('archivedBadge')}</Badge> : null}
-        {switches}
+        <div className="relative flex items-center gap-4">{switches}</div>
         <div className="flex w-45 shrink-0 flex-col items-end gap-0.5">
           <Amount minor={account.balanceMinor} currency={account.currency} size="m" />
           {converted}
         </div>
-        {canWrite ? <Menu label={translate('menu.label')} items={items} /> : null}
+        {canWrite ? (
+          <div className="relative">
+            <Menu label={translate('menu.label')} items={items} />
+          </div>
+        ) : null}
       </li>
     )
   }
@@ -175,9 +183,11 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
           type="button"
           aria-label={`${account.name}: ${translate('menu.label')}`}
           onClick={() => setSheetOpen(true)}
-          className="flex cursor-pointer items-center gap-3 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="relative -mx-3 -my-1 flex cursor-pointer items-center gap-3 overflow-hidden rounded-md px-3 py-1 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
+          {...pressProps}
         >
           {head}
+          {ripple}
         </button>
       ) : (
         <div className="flex items-center gap-3">{head}</div>
