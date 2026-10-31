@@ -68,6 +68,8 @@ async function pickDay(page: Page, day: string) {
     .getByRole('gridcell')
     .getByRole('button', { name: new RegExp(day) })
     .click()
+  // the picker popover is a dialog too: wait until only the sheet is left
+  await expect(page.getByRole('dialog')).toHaveCount(1)
 }
 
 /** the Silpo groceries expense of demo-data.md with the frame's edits: a future date, no payee, another comment, then save */
