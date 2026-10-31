@@ -63,9 +63,9 @@ export function ObligationsScreen() {
             {[0, 1, 2].map((key) => (
               <div key={key} className="flex items-center gap-4">
                 <Bone className="size-10 rounded-md" />
-                <div className="flex flex-1 flex-col gap-2">
-                  <Bone className="h-4 w-48 rounded-sm" />
-                  <Bone className="h-3 w-64 rounded-sm" />
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <Bone className="h-4 w-48 max-w-full rounded-sm" />
+                  <Bone className="h-3 w-64 max-w-full rounded-sm" />
                 </div>
                 <Bone className="h-4 w-24 rounded-sm" />
               </div>

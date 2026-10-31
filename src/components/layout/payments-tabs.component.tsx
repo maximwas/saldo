@@ -33,7 +33,10 @@ export function PaymentsTabs() {
   const translate = useTranslations('nav')
 
   return (
-    <nav aria-label={translate('payments')} className="flex items-end gap-4 border-b border-border lg:gap-6">
+    <nav
+      aria-label={translate('payments')}
+      className="scrollbar-none flex min-w-0 items-end gap-4 overflow-x-auto border-b border-border lg:gap-6"
+    >
       {TABS.map((tab) => {
         const active = tab.href === '/payments' ? pathname === tab.href : pathname.startsWith(tab.href)
 
@@ -43,7 +46,7 @@ export function PaymentsTabs() {
             href={tab.href as Route}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex cursor-pointer flex-col items-center gap-2.5 rounded-xs px-1 pt-2.5 text-body font-medium outline-none focus-visible:ring-2 focus-visible:ring-primary',
+              'flex shrink-0 cursor-pointer flex-col items-center gap-2.5 whitespace-nowrap rounded-xs px-1 pt-2.5 text-body font-medium outline-none focus-visible:ring-2 focus-visible:ring-primary',
               active ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary',
             )}
           >
