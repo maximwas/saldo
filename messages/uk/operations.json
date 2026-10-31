@@ -46,6 +46,15 @@
     "yesterday": "Учора, {date}",
     "count": "{count, plural, one {# операція} few {# операції} many {# операцій} other {# операцій}}"
   },
+  "plan": {
+    "title": "Заплановано",
+    "count": "{count, plural, one {# платіж} few {# платежі} many {# платежів} other {# платежу}}",
+    "notFact": "ще не факт",
+    "pill": "План",
+    "installment": "внесок {number} з {count}",
+    "interval": "{unit, select, day {{count, plural, =1 {щодня} =7 {щотижня} other {кожні # дн.}}} month {{count, plural, =1 {щомісяця} other {кожні # міс.}}} other {{count, plural, =1 {щороку} other {кожні # р.}}}}",
+    "creditCategory": "Кредити"
+  },
   "row": {
     "receipt": "Є чек",
     "rate": "курс {rate}",

@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
@@ -17,6 +17,8 @@ import { type EditorTarget, OperationEditor } from './operation-editor.component
 import { OperationFilters } from './operation-filters.component'
 import { OperationList } from './operation-list.component'
 import { OperationSummary } from './operation-summary.component'
+
+const subscribeNever = () => () => undefined
 
 // Figma Saldo file → Operations 2:11403 / 2:13681: type switch and chips, the totals of the filter, then the list by day.
 // Adding goes through the global «Add» (?add=), here only a row opens the sheet (edit / view) or a duplicate of it.
@@ -40,7 +42,18 @@ export function OperationsScreen() {
     ),
     enabled: wholeMonth,
   })
+  const upcoming = useQuery({
+    ...operationQueries.upcoming(ledgerId, today),
+    enabled: wholeMonth,
+  })
   const options = useQuery(operationQueries.options(ledgerId))
+  // the screen is a streamed Suspense boundary: it hydrates after the device cache is restored, so the first client
+  // render repeats the server's skeleton and the data comes one render later (no hydration mismatch)
+  const hydrated = useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false,
+  )
   // `key` changes with every target, so a row, then its duplicate, each get a fresh form and fresh ids
   const [editor, setEditor] = useState<{
     open: boolean
@@ -90,7 +103,7 @@ export function OperationsScreen() {
 
   let content: React.ReactNode
 
-  if (list.isPending || options.isPending) {
+  if (!hydrated || list.isPending || options.isPending) {
     content = (
       // Figma operations loading frame 5:103704 (mobile; desktop has no frame and takes the same): the totals card
       // (padding 16, gap 12, two 56 bars) and day cards (padding 16, gap 16, a 140×14 title, lines with a 72 end bar)
@@ -140,7 +153,13 @@ export function OperationsScreen() {
         {list.data.truncated ? (
           <p className="text-caption text-text-tertiary">{translate('truncated', { count: list.data.rows.length })}</p>
         ) : null}
-        <OperationList items={items} receiptIds={receiptIds} syncStates={queued.states} onSelectAction={select} />
+        <OperationList
+          items={items}
+          receiptIds={receiptIds}
+          syncStates={queued.states}
+          planned={wholeMonth ? upcoming.data : undefined}
+          onSelectAction={select}
+        />
       </>
     )
   }

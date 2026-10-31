@@ -99,3 +99,26 @@ export type OperationSource = {
   plannedMinor: number | null
   currency: string
 }
+
+/** an open outgoing plan of today and the next 7 days: the «Planned» group above the facts (Figma 2:11543 / 2:13753) */
+export type PlannedRow = {
+  id: string
+  title: string
+  sourceType: string
+  dueOn: string
+  /** null = the planned amount is unknown (§7) */
+  remainingMinor: number | null
+  currency: string
+  categoryId: string | null
+  accountId: string | null
+  /** a credit's «installment N of M» */
+  installment: {
+    number: number
+    count: number
+  } | null
+  /** a subscription's period */
+  interval: {
+    unit: string
+    count: number
+  } | null
+}

@@ -1,3 +1,4 @@
+import { addDays, format, parseISO } from 'date-fns'
 import { type AvailableObligation, monthEndOf, plannedToMonthEnd } from '@/lib/finance/available-money.utils'
 import { type CreateOperationInput, createOperationInputSchema } from '@/lib/finance/create-operation-input.schema'
 import { getLedgerRates } from '@/lib/finance/ledger-fx.api'
@@ -12,6 +13,7 @@ import type {
   OperationRow,
   OperationSource,
   OperationsData,
+  PlannedRow,
   Receipt,
   RefundLinks,
 } from '../operations.types'
@@ -31,6 +33,8 @@ const OPERATIONS_LIMIT = 500
 const RECEIPT_BUCKET = 'attachments'
 const SIGNED_URL_SECONDS = 300
 const IN_CHUNK = 50
+/** §7 «today» + «next 7 days»: the plans the operations list shows above the facts */
+const PLAN_DAYS = 7
 
 const OPERATION_COLUMNS =
   'id, kind, direction, account_id, amount_minor, currency, base_amount_minor, base_currency, category_id, counterparty, note, occurred_at, occurred_on, transfer_id, refund_of_id, version, created_by'
@@ -468,4 +472,101 @@ export async function getPlannedToMonthEnd(
       state: row.state as AvailableObligation['state'],
     })),
   })
+}
+
+type UpcomingParams = {
+  ledgerId: string
+  /** the ledger-local day */
+  today: string
+}
+
+type PlanDbRow = {
+  obligation_id: string
+  title: string
+  source_type: string
+  source_id: string | null
+  sequence_no: number | null
+  account_id: string | null
+  category_id: string | null
+  due_on: string
+  remaining_minor: number | null
+  currency: string
+}
+
+type PlanSources = {
+  /** credit id → installments_count */
+  counts: ReadonlyMap<string, number>
+  /** subscription id → its period */
+  intervals: ReadonlyMap<string, NonNullable<PlannedRow['interval']>>
+}
+
+function toPlannedRow(row: PlanDbRow, { counts, intervals }: PlanSources): PlannedRow {
+  const count = row.source_type === 'credit' && row.source_id ? counts.get(row.source_id) : undefined
+
+  return {
+    id: row.obligation_id,
+    title: row.title,
+    sourceType: row.source_type,
+    dueOn: row.due_on,
+    remainingMinor: row.remaining_minor,
+    currency: row.currency,
+    categoryId: row.category_id,
+    accountId: row.account_id,
+    installment:
+      count && row.sequence_no
+        ? {
+            number: row.sequence_no,
+            count,
+          }
+        : null,
+    interval: row.source_type === 'subscription' && row.source_id ? (intervals.get(row.source_id) ?? null) : null,
+  }
+}
+
+/**
+ * open outgoing plans due today through today + 7, soonest first (Figma 2:11543: the two credits and Netflix); a plan
+ * past its date is not here, it waits for confirmation in Upcoming payments. The state is not narrowed to «plan»: the
+ * database dates «unconfirmed» by its own clock, and a plan of the ledger's today is still ahead.
+ */
+export async function listUpcomingPlans(
+  supabase: SaldoClient,
+  { ledgerId, today }: UpcomingParams,
+): Promise<PlannedRow[]> {
+  const [due, credits, subscriptions] = await Promise.all([
+    supabase
+      .from('obligation_states')
+      .select(
+        'obligation_id, title, source_type, source_id, sequence_no, account_id, category_id, due_on, remaining_minor, currency',
+      )
+      .eq('ledger_id', ledgerId)
+      .eq('direction', 'out')
+      .in('state', ['plan', 'partial', 'unconfirmed'])
+      .gte('due_on', today)
+      .lte('due_on', format(addDays(parseISO(today), PLAN_DAYS), 'yyyy-MM-dd'))
+      .order('due_on')
+      .order('title'),
+    supabase.from('credits').select('id, installments_count').eq('ledger_id', ledgerId),
+    supabase.from('subscriptions').select('id, interval_unit, interval_count').eq('ledger_id', ledgerId),
+  ])
+
+  for (const result of [due, credits, subscriptions]) {
+    if (result.error) {
+      throw result.error
+    }
+  }
+
+  const sources: PlanSources = {
+    counts: new Map((credits.data ?? []).map((credit) => [credit.id, credit.installments_count])),
+    intervals: new Map(
+      (subscriptions.data ?? []).map((subscription) => [
+        subscription.id,
+        {
+          unit: subscription.interval_unit,
+          count: subscription.interval_count,
+        },
+      ]),
+    ),
+  }
+
+  return (due.data ?? []).map((row) => toPlannedRow(row, sources))
 }

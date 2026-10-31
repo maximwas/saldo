@@ -9,6 +9,7 @@ import {
   listOperations,
   listReceipts,
   listRefundLinks,
+  listUpcomingPlans,
 } from './operations.api'
 
 type PlannedLedger = {
@@ -36,6 +37,16 @@ export const operationQueries = {
         getPlannedToMonthEnd(getBrowserSupabase(), {
           ...ledger,
           now: new Date(),
+        }),
+    }),
+  /** the «Planned» group: keyed by the ledger-local day like `planned` */
+  upcoming: (ledgerId: string, today: string) =>
+    queryOptions({
+      queryKey: ledgerQueryKey('operations', ledgerId, 'upcoming', today),
+      queryFn: () =>
+        listUpcomingPlans(getBrowserSupabase(), {
+          ledgerId,
+          today,
         }),
     }),
   options: (ledgerId: string) =>

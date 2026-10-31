@@ -46,6 +46,15 @@
     "yesterday": "Yesterday, {date}",
     "count": "{count, plural, one {# operation} other {# operations}}"
   },
+  "plan": {
+    "title": "Planned",
+    "count": "{count, plural, one {# payment} other {# payments}}",
+    "notFact": "not a fact yet",
+    "pill": "Plan",
+    "installment": "installment {number} of {count}",
+    "interval": "{unit, select, day {{count, plural, =1 {daily} =7 {weekly} other {every # days}}} month {{count, plural, =1 {monthly} other {every # months}}} other {{count, plural, =1 {yearly} other {every # years}}}}",
+    "creditCategory": "Credits"
+  },
   "row": {
     "receipt": "Has a receipt",
     "rate": "rate {rate}",
