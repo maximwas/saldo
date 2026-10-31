@@ -25,7 +25,7 @@ type SubscriptionFormSheetProps = {
   onCloseAction: () => void
 }
 
-// Figma «Saldo» → the subscription dialog 5:96222 (title, fields, Cancel + Save). Saving writes the row, its first price
+// Figma «Saldo» → New subscription 36:104935 / mobile 36:105840 (title, fields, Cancel + Add). Saving writes the row, its first price
 // and its dates; the ids are made once per opened form, so a double click or a replay is still one subscription.
 export function SubscriptionFormSheet({ onCloseAction }: SubscriptionFormSheetProps) {
   const translate = useTranslations('subscriptions.form')
@@ -48,7 +48,7 @@ export function SubscriptionFormSheet({ onCloseAction }: SubscriptionFormSheetPr
             {translate('cancel')}
           </Button>
           <Button type="submit" form={FORM_ID} disabled={create.isPending || !options.data}>
-            {translate('save')}
+            {translate('create')}
           </Button>
         </>
       }

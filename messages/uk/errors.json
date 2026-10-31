@@ -43,5 +43,7 @@
   "invalid": "Перевірте значення",
   "categoryRequired": "Оберіть категорію",
   "counterpartyRequired": "Вкажіть одержувача",
-  "factInFuture": "Факт не в майбутньому — створіть план"
+  "factInFuture": "Факт не в майбутньому — створіть план",
+  "subscriptionServiceRequired": "Оберіть сервіс зі списку",
+  "subscriptionAccountRequired": "Оберіть рахунок для списання"
 }
