@@ -33,5 +33,6 @@
   "purchaseRequired": "Choose a purchase",
   "adjustmentNoChange": "The balance has not changed: nothing to adjust",
   "countInvalid": "Enter a whole number from 1 to 999",
-  "limitInvalid": "The limit must be above 0. To remove a limit, delete it"
+  "limitInvalid": "The limit must be above 0. To remove a limit, delete it",
+  "timeInvalid": "Enter the time as 18:40"
 }

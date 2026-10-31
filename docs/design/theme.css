@@ -125,7 +125,6 @@
   --duration-base: 240ms; /* segmented pill, page content */
   --duration-slow: 360ms; /* sheets, dialogs */
   --sidebar-w: 232px;    /* desktop sidebar */
-  --content-max: 1144px; /* main column at 1440: 1208 minus 32 padding each side */
   --topbar-h: 112px;     /* desktop topbar, padding 24/32; mobile topbar hugs (82) */
   --tabbar-h: 91px;      /* mobile tab bar: 6 + 60 item + 24 bottom inset + 1 border */
 }

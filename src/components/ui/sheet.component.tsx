@@ -34,7 +34,14 @@ type SheetProps = {
   footer?: React.ReactNode
   /** the element focused on open; by default the first tabbable one, which is the close button */
   initialFocus?: React.RefObject<HTMLElement | null>
+  /** desktop width: md 480 (Dialog 2:10240), lg 640 (the operation form, 2:16567) */
+  size?: 'md' | 'lg'
 }
+
+const DIALOG_WIDTH = {
+  md: 'w-120',
+  lg: 'w-160',
+} as const
 
 const CLOSE_CLASS =
   'flex shrink-0 cursor-pointer items-center justify-center rounded-md text-text-secondary outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary'
@@ -43,9 +50,9 @@ const BACKDROP_CLASS =
   'fixed inset-0 z-40 bg-scrim transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0'
 
 // Figma «Saldo» → BottomSheet 2:10281 (mobile: radius card on top, handle 36x4, header with 44 close, scrolling body
-// padding 8/20/20, sticky footer with top border and full-width buttons) and Dialog 2:10240 (desktop: 480 wide,
+// padding 8/20/20, sticky footer with top border and full-width buttons) and Dialog 2:10240 (desktop: 480 wide, 640 for the operation form,
 // padding 24, gap 20, 36 close, footer right-aligned). The same props render either, so screens write one sheet.
-export function Sheet({ open, onOpenChange, title, children, footer, initialFocus }: SheetProps) {
+export function Sheet({ open, onOpenChange, title, children, footer, initialFocus, size = 'md' }: SheetProps) {
   const translate = useTranslations('common')
   // a sheet is opened by a click, so it never renders during hydration
   const desktop = useIsDesktop()
@@ -57,7 +64,10 @@ export function Sheet({ open, onOpenChange, title, children, footer, initialFocu
           <Dialog.Backdrop className={BACKDROP_CLASS} />
           <Dialog.Popup
             initialFocus={initialFocus}
-            className="fixed top-1/2 left-1/2 z-40 flex max-h-11/12 w-120 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-card bg-raised p-6 shadow-float outline-none transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0"
+            className={cn(
+              'fixed top-1/2 left-1/2 z-40 flex max-h-11/12 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-card bg-raised p-6 shadow-float outline-none transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0',
+              DIALOG_WIDTH[size],
+            )}
           >
             <div className="flex items-center gap-3">
               <Dialog.Title className={TITLE_CLASS}>{title}</Dialog.Title>
@@ -65,7 +75,7 @@ export function Sheet({ open, onOpenChange, title, children, footer, initialFocu
                 <X className="size-5" aria-hidden />
               </Dialog.Close>
             </div>
-            <div className="-m-1 flex min-h-0 flex-col gap-4 overflow-y-auto p-1">{children}</div>
+            <div className="-m-1 flex min-h-0 flex-col gap-4 overflow-y-auto p-1 scrollbar-none">{children}</div>
             {footer ? <div className="flex items-center justify-end gap-3">{footer}</div> : null}
           </Dialog.Popup>
         </Dialog.Portal>
@@ -90,7 +100,7 @@ export function Sheet({ open, onOpenChange, title, children, footer, initialFocu
               <X className="size-5" aria-hidden />
             </Drawer.Close>
           </div>
-          <Drawer.Content className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-2 pb-5">
+          <Drawer.Content className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-2 pb-5 scrollbar-none">
             {children}
           </Drawer.Content>
           {footer ? (

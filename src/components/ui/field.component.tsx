@@ -13,13 +13,15 @@ type FieldProps = {
   hint?: string
   /** replaces the hint and turns the control red */
   error?: string
+  /** the hint shows from md up only (the Figma mobile sheets hide it); an error always shows */
+  hintOnDesktop?: boolean
   className?: string
   children: React.ReactElement<FieldControlProps>
 }
 
 // Figma «Saldo» → Input / Select / DateField frames: column, gap 6, label text-label-medium in text-secondary, hint
 // text-caption in text-tertiary (negative-text in the Error state)
-export function Field({ label, hint, error, className, children }: FieldProps) {
+export function Field({ label, hint, error, hintOnDesktop = false, className, children }: FieldProps) {
   const controlId = useId()
   const messageId = useId()
   const message = error ?? hint
@@ -39,7 +41,11 @@ export function Field({ label, hint, error, className, children }: FieldProps) {
         <p
           id={messageId}
           role={error ? 'alert' : undefined}
-          className={cn('text-caption', error ? 'text-negative-text' : 'text-text-tertiary')}
+          className={cn(
+            'text-caption',
+            error ? 'text-negative-text' : 'text-text-tertiary',
+            !error && hintOnDesktop && 'max-md:hidden',
+          )}
         >
           {message}
         </p>

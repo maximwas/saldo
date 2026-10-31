@@ -103,7 +103,7 @@ export function OperationsScreen() {
   } else {
     content = (
       <>
-        <OperationSummary totals={totals} />
+        <OperationSummary totals={totals} period={period} />
         {list.data.truncated ? (
           <p className="text-caption text-text-tertiary">{translate('truncated', { count: list.data.rows.length })}</p>
         ) : null}
@@ -139,7 +139,7 @@ export function OperationsScreen() {
             )
           }
           onOpenAction={select}
-          onDuplicateAction={({ occurredOn: _date, ...defaults }, sourceId) =>
+          onDuplicateAction={({ occurredOn: _date, occurredTime: _time, ...defaults }, sourceId) =>
             openEditor({
               mode: 'create',
               kind: defaults.kind === 'income' ? 'income' : 'expense',

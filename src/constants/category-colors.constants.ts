@@ -49,6 +49,30 @@ export const CATEGORY_TONES: Record<CategoryColor, string> = {
   graphite: 'bg-cat-graphite-soft text-cat-graphite',
 }
 
+/** a letter avatar: soft background, the colour's text shade (Figma LetterAvatar 2:7963) */
+export const CATEGORY_LETTER_TONES: Record<CategoryColor, string> = {
+  blue: 'bg-cat-blue-soft text-cat-blue-text',
+  green: 'bg-cat-green-soft text-cat-green-text',
+  orange: 'bg-cat-orange-soft text-cat-orange-text',
+  pink: 'bg-cat-pink-soft text-cat-pink-text',
+  purple: 'bg-cat-purple-soft text-cat-purple-text',
+  teal: 'bg-cat-teal-soft text-cat-teal-text',
+  yellow: 'bg-cat-yellow-soft text-cat-yellow-text',
+  red: 'bg-cat-red-soft text-cat-red-text',
+  cyan: 'bg-cat-cyan-soft text-cat-cyan-text',
+  lime: 'bg-cat-lime-soft text-cat-lime-text',
+  brown: 'bg-cat-brown-soft text-cat-brown-text',
+  sand: 'bg-cat-sand-soft text-cat-sand-text',
+  olive: 'bg-cat-olive-soft text-cat-olive-text',
+  forest: 'bg-cat-forest-soft text-cat-forest-text',
+  indigo: 'bg-cat-indigo-soft text-cat-indigo-text',
+  violet: 'bg-cat-violet-soft text-cat-violet-text',
+  magenta: 'bg-cat-magenta-soft text-cat-magenta-text',
+  wine: 'bg-cat-wine-soft text-cat-wine-text',
+  slate: 'bg-cat-slate-soft text-cat-slate-text',
+  graphite: 'bg-cat-graphite-soft text-cat-graphite-text',
+}
+
 /** a swatch of the colour picker */
 export const CATEGORY_SWATCHES: Record<CategoryColor, string> = {
   blue: 'bg-cat-blue',

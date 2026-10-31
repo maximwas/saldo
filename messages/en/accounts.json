@@ -8,7 +8,7 @@
   "new": "New account",
   "kind": {
     "bank": "Card",
-    "cash": "Cash",
+    "cash": "Wallet",
     "savings": "Savings"
   },
   "inTotal": "In balance",

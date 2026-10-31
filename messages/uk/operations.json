@@ -29,7 +29,9 @@
     "income": "Доходи",
     "expenses": "Витрати",
     "result": "Результат",
-    "unknownRate": "Без курсу: {count}"
+    "unknownRate": "Без курсу: {count}",
+    "incomeOf": "Доходи за {month}",
+    "expensesOf": "Витрати за {month}"
   },
   "table": {
     "date": "Дата",
@@ -113,7 +115,12 @@
       "fee": "Комісія",
       "rate": "Курс",
       "purchase": "Покупка"
-    }
+    },
+    "time": "Час",
+    "balance": "Залишок {amount}",
+    "categoryHint": "Підкатегорію можна не вказувати",
+    "editingTitle": "Редагувати операцію",
+    "saveChanges": "Зберегти зміни"
   },
   "deleteConfirm": {
     "balanceUp": "Залишок «{account}» зросте на {amount}, суми за період перерахуються.",

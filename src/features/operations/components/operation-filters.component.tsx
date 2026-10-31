@@ -2,20 +2,18 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select } from '@/components/ui/select.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
-import { cn } from '@/lib/utils/cn.utils'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationType } from '../operations.types'
 import { OPERATION_TYPES } from '../operations.types'
 import { ALL_TIME, recentMonths } from '../utils/operation-filters.utils'
 
 const ALL = 'all'
-const CHIP = 'h-9 w-auto min-w-0 gap-1.5 rounded-full px-3 text-label font-medium'
-const CHIP_ON = 'border-primary-soft bg-primary-soft text-primary-text'
 
 // a chip has no visible label, so a screen-reader label is attached to the Select
 function ChipSelect({
@@ -50,8 +48,9 @@ type OperationFiltersProps = {
   }) => void
 }
 
-// Figma Saldo file → Operations 2:11403 "Filters": the type switch, then chips (period, account, category); the selected
-// period is a primary-soft chip with a check. Currency, amount, link and text chips wait for their phases.
+// Figma Saldo file → Operations 2:11403 "Filters" (gap 16): the type switch, then Chip 2:7714 selects (gap 8; the period
+// is always the selected look with a check); on mobile 2:13681 the chips stay in one line that scrolls to the screen
+// edge. Category options carry their CategoryBadge. Currency, amount, link and text chips wait for their phases.
 export function OperationFilters({
   period,
   accountId,
@@ -70,15 +69,14 @@ export function OperationFilters({
   const options = useQuery(operationQueries.options(ledgerId))
   const accounts = options.data?.accounts ?? []
   const categories = options.data?.categories ?? []
-  // Intl gives a lowercase month and a short year suffix; only the first letter is raised so the suffix keeps its case
+  // Figma Chip: the standalone month name, its first letter raised, and the year without the Intl year suffix
   const monthLabel = (month: string) => {
     const label = formatter.dateTime(new Date(`${month}-15T12:00:00Z`), {
       month: 'long',
-      year: 'numeric',
       timeZone: 'UTC',
     })
 
-    return label.charAt(0).toLocaleUpperCase(locale) + label.slice(1)
+    return `${label.charAt(0).toLocaleUpperCase(locale)}${label.slice(1)} ${month.slice(0, 4)}`
   }
   const months = recentMonths(today, 12)
 
@@ -93,9 +91,9 @@ export function OperationFilters({
         value={type}
         onValueChange={(next) => onChangeAction({ type: next })}
       />
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="-mr-5 flex items-center gap-2 overflow-x-auto pr-5 scrollbar-none lg:mr-0 lg:flex-wrap lg:overflow-visible lg:pr-0">
         <ChipSelect
-          className={cn(CHIP, CHIP_ON)}
+          chip="on"
           options={[
             {
               value: ALL_TIME,
@@ -122,7 +120,7 @@ export function OperationFilters({
           label={translate('filters.period')}
         />
         <ChipSelect
-          className={cn(CHIP, accountId && CHIP_ON)}
+          chip={accountId ? 'on' : 'off'}
           options={[
             {
               value: ALL,
@@ -139,7 +137,7 @@ export function OperationFilters({
           label={translate('filters.account')}
         />
         <ChipSelect
-          className={cn(CHIP, categoryId && CHIP_ON)}
+          chip={categoryId ? 'on' : 'off'}
           options={[
             {
               value: ALL,
@@ -150,6 +148,7 @@ export function OperationFilters({
               .map((category) => ({
                 value: category.id,
                 label: category.name,
+                leading: <CategoryBadge icon={category.icon} color={category.color} size={32} />,
               })),
           ]}
           value={categoryId ?? ALL}
@@ -159,7 +158,7 @@ export function OperationFilters({
         />
         {Object.keys(members).length > 1 && (
           <ChipSelect
-            className={cn(CHIP, createdBy && CHIP_ON)}
+            chip={createdBy ? 'on' : 'off'}
             options={[
               {
                 value: ALL,

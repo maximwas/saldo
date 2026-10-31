@@ -37,15 +37,22 @@ export function OverviewScreen() {
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       <HeroAvailable overview={data} />
-      <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
-        <div className="lg:col-span-2">
+      {/* Figma 2:8237 rows: the left card flex 1, the right one 400, gap 24; cards in a row share the height */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+        <div className="flex flex-col *:flex-1 lg:min-w-0 lg:flex-1">
           <UpcomingCard overview={data} />
         </div>
-        <AccountsCard overview={data} />
-        <div className="lg:col-span-2">
+        <div className="flex flex-col *:flex-1 lg:w-100 lg:shrink-0">
+          <AccountsCard overview={data} />
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+        <div className="flex flex-col *:flex-1 lg:min-w-0 lg:flex-1">
           <MonthCard overview={data} />
         </div>
-        <DebtsCard overview={data} />
+        <div className="flex flex-col *:flex-1 lg:w-100 lg:shrink-0">
+          <DebtsCard overview={data} />
+        </div>
       </div>
     </div>
   )

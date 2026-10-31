@@ -13,6 +13,7 @@ import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { formatMinor, fromMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { localTime } from '@/lib/utils/clock.utils'
 import { useDraftsStore } from '@/store/drafts.store'
 import {
   useCreateOperation,
@@ -65,7 +66,7 @@ type OperationEditorProps = {
 const FORM_ID = 'operation-editor-form'
 const REFUND_FORM_ID = 'operation-refund-form'
 
-const toFormValues = (item: OperationItem): Partial<OperationFormValues> => ({
+const toFormValues = (item: OperationItem, timeZone: string): Partial<OperationFormValues> => ({
   kind: item.row.kind as OperationFormValues['kind'],
   direction: item.row.direction,
   amount: fromMinor(item.row.amountMinor, item.row.currency),
@@ -73,6 +74,7 @@ const toFormValues = (item: OperationItem): Partial<OperationFormValues> => ({
   accountId: item.row.accountId,
   categoryId: item.row.categoryId,
   occurredOn: item.row.occurredOn,
+  occurredTime: localTime(new Date(item.row.occurredAt), timeZone),
   counterparty: item.row.counterparty ?? '',
   note: item.row.note ?? '',
 })
@@ -97,6 +99,7 @@ export function OperationEditor({
   const formatter = useFormatter()
   const clock = useClock()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const canWrite = useCanWrite()
   const queryClient = useQueryClient()
   const options = useQuery(operationQueries.options(ledgerId))
@@ -158,6 +161,10 @@ export function OperationEditor({
 
     if (mode === 'create') {
       return translate(kind === 'transfer' ? 'form.transferTitle' : 'form.newTitle')
+    }
+
+    if (mode === 'edit') {
+      return translate('form.editingTitle')
     }
 
     return translate(isTransfer ? 'form.transferTitle' : 'form.editTitle')
@@ -380,12 +387,12 @@ export function OperationEditor({
           type="button"
           variant="secondary"
           disabled={pending}
-          onClick={() => onDuplicateAction?.(toFormValues(item), item.row.id)}
+          onClick={() => onDuplicateAction?.(toFormValues(item, timeZone), item.row.id)}
         >
           {translate('form.duplicate')}
         </Button>
         <Button type="submit" form={FORM_ID} disabled={pending || options.isPending || conflict}>
-          {translate('form.save')}
+          {translate('form.saveChanges')}
         </Button>
       </>
     )
@@ -466,6 +473,7 @@ export function OperationEditor({
     body = (
       <>
         <SegmentedControl
+          stretch
           label={translate('add.typeLabel')}
           options={ADD_KINDS.map((value) => ({
             value,
@@ -486,7 +494,7 @@ export function OperationEditor({
         <OperationForm
           formId={FORM_ID}
           kind={item.kind as 'expense' | 'income'}
-          defaults={toFormValues(item)}
+          defaults={toFormValues(item, timeZone)}
           onSubmitAction={saveOperation}
         >
           <ReceiptField operationId={item.row.id} file={receipt} onFileChangeAction={setReceipt} canEdit />
@@ -596,7 +604,14 @@ export function OperationEditor({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChangeAction} title={title} footer={footer}>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChangeAction}
+      title={title}
+      footer={footer}
+      // Figma: the operation and transfer forms are 640 wide (2:16567, 2:22322, 5:101464); delete and refund keep 480
+      size={(mode === 'create' || mode === 'edit') && !refunding && !confirmingDelete ? 'lg' : 'md'}
+    >
       {body}
       {conflict ? (
         <p

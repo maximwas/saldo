@@ -9,6 +9,8 @@ import { toMinor } from '@/lib/money/money.utils'
 import { type Clock, toOccurredAt } from '@/lib/utils/clock.utils'
 import type { UpdateOperationInput } from './update-operation-input.schema'
 
+const TIME = z.iso.time({ precision: -1 })
+
 /** messages are keys of the errors namespace; the form translates them */
 export const operationFormSchema = z
   .object({
@@ -20,6 +22,8 @@ export const operationFormSchema = z
     accountId: z.uuid(),
     categoryId: z.uuid().nullable(),
     occurredOn: z.iso.date(),
+    /** HH:mm, or empty: now for today, noon for another day */
+    occurredTime: z.string().refine((time) => time === '' || TIME.safeParse(time).success, { message: 'timeInvalid' }),
     counterparty: z.string().max(200),
     note: z.string().max(500),
   })
@@ -73,7 +77,7 @@ function toOperationFields(values: OperationFormValues, clock: Clock): Operation
     account_id: values.accountId,
     amount_minor: validatedMinor(values.amount, values.currency),
     currency: values.currency,
-    occurred_at: toOccurredAt(values.occurredOn, clock),
+    occurred_at: toOccurredAt(values.occurredOn, clock, values.occurredTime),
     occurred_on: values.occurredOn,
     category_id: values.categoryId,
     counterparty: blankToNull(values.counterparty),

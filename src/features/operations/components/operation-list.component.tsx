@@ -6,7 +6,10 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { Badge } from '@/components/ui/badge.component'
+import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
+import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { serviceLogoOf } from '@/components/ui/service-logo.utils'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
@@ -41,8 +44,12 @@ const PLUS_TONE = {
 
 const ROW_BUTTON = 'cursor-pointer rounded-xs text-left outline-none focus-visible:ring-2 focus-visible:ring-primary'
 
-// Figma Saldo file → Operations 2:11403: a table (desktop) with day group rows (44, app fill) and 64 high rows; 2:13681: a card
-// per day on mobile, the day sum on the right of its header. A transfer is one neutral line «−800,00 € → +33 200,00 ₴».
+// Figma Saldo file → Operations 2:11403: a table (desktop) — TableHeader 40 (caption-medium, tertiary), day group rows
+// (44, app fill), TableRow 64: padding 0/16, gap 16, date 72, description (leading 32, gap 12, title body-medium,
+// subtitle label), category 160, account 180, amount 260; 2:13681: a card per day on mobile (DayHeader padding 12/0/8),
+// ListItem 72 with a 40 leading and the category as its subtitle. The leading is the service logo when the payee has
+// one, else the CategoryBadge; a transfer and an adjustment keep the neutral tile. A transfer is one neutral line
+// «−800,00 € → +33 200,00 ₴».
 // shortcut: no "Planned" group (planned payments are 1.11), no hover quick actions: a click opens the sheet
 export function OperationList({ items, receiptIds, syncStates, onSelectAction }: OperationListProps) {
   const translate = useTranslations('operations')
@@ -183,6 +190,37 @@ export function OperationList({ items, receiptIds, syncStates, onSelectAction }:
 
   const colorOf = (item: OperationItem) => (neutral(item) ? null : (category(item.row.categoryId)?.color ?? null))
 
+  function leadingOf(item: OperationItem, size: 40 | 32) {
+    const payee = item.row.counterparty
+
+    if (!neutral(item) && payee && serviceLogoOf(payee)) {
+      return <ServiceLogo name={payee} size={size} />
+    }
+
+    if (neutral(item)) {
+      return <CategoryIcon icon={iconOf(item)} color={null} size={size === 40 ? 'md' : 'sm'} />
+    }
+
+    return <CategoryBadge icon={iconOf(item)} color={colorOf(item)} size={size} />
+  }
+
+  // mobile has no category column: a categorised row names its category under the title (Figma ListItem Subtitle)
+  const mobileSubtitle = (item: OperationItem) =>
+    (!neutral(item) && category(item.row.categoryId)?.name) || subtitleOf(item)
+
+  const categoryCell = (item: OperationItem) => {
+    if (item.kind === 'transfer') {
+      return translate('kinds.transfer')
+    }
+
+    return neutral(item) ? '' : (category(item.row.categoryId)?.name ?? translate('row.noCategory'))
+  }
+
+  const accountCell = (item: OperationItem) =>
+    item.kind === 'transfer' && item.transfer
+      ? `${accountName(item.transfer.fromAccountId)} → ${accountName(item.transfer.toAccountId)}`
+      : accountName(item.row.accountId)
+
   // a purchase chip with its date on a refund, the refunded sum on a purchase that has refunds
   function refundNote(item: OperationItem) {
     const purchase = item.row.refundOfId ? refunds.data?.purchases[item.row.refundOfId] : undefined
@@ -221,7 +259,7 @@ export function OperationList({ items, receiptIds, syncStates, onSelectAction }:
 
   const paperclip = (item: OperationItem) =>
     receiptIds.has(item.row.id) ? (
-      <Paperclip aria-label={translate('row.receipt')} role="img" size={14} className="shrink-0" />
+      <Paperclip aria-label={translate('row.receipt')} role="img" size={16} className="shrink-0" />
     ) : null
 
   function syncBadge(item: OperationItem) {
@@ -235,20 +273,21 @@ export function OperationList({ items, receiptIds, syncStates, onSelectAction }:
       <div className="hidden overflow-hidden rounded-card bg-card shadow-card lg:block">
         <table className="w-full table-fixed text-left">
           <thead>
-            <tr className="h-10 border-b border-border text-caption text-text-secondary">
-              <th scope="col" className="w-20 px-4 font-normal">
+            {/* cells split the 16 gaps into 8 + 8: date 16+72+8, category 8+160+8, account 8+180+8, amount 8+260+16 */}
+            <tr className="h-10 border-b border-border text-caption font-medium text-text-tertiary">
+              <th scope="col" className="w-24 pr-2 pl-4 font-medium">
                 {translate('table.date')}
               </th>
-              <th scope="col" className="px-4 font-normal">
+              <th scope="col" className="px-2 font-medium">
                 {translate('table.description')}
               </th>
-              <th scope="col" className="hidden w-40 px-4 font-normal xl:table-cell">
+              <th scope="col" className="hidden w-44 px-2 font-medium xl:table-cell">
                 {translate('table.category')}
               </th>
-              <th scope="col" className="hidden w-44 px-4 font-normal xl:table-cell">
+              <th scope="col" className="hidden w-49 px-2 font-medium xl:table-cell">
                 {translate('table.account')}
               </th>
-              <th scope="col" className="w-56 px-4 text-right font-normal">
+              <th scope="col" className="w-71 pr-4 pl-2 text-right font-medium">
                 {translate('table.amount')}
               </th>
             </tr>
@@ -270,11 +309,11 @@ export function OperationList({ items, receiptIds, syncStates, onSelectAction }:
               </tr>
               {group.items.map((item) => (
                 <tr key={item.row.id} className="relative h-16 border-b border-border hover:bg-subtle">
-                  <td className="px-4 text-label text-text-secondary">{shortDate(item.row.occurredOn)}</td>
-                  <td className="px-4">
+                  <td className="pr-2 pl-4 text-label text-text-secondary">{shortDate(item.row.occurredOn)}</td>
+                  <td className="px-2">
                     <span className="flex min-w-0 items-center gap-3">
-                      <CategoryIcon icon={iconOf(item)} color={colorOf(item)} />
-                      <span className="flex min-w-0 flex-col">
+                      {leadingOf(item, 32)}
+                      <span className="flex min-w-0 flex-col gap-0.5">
                         <button
                           type="button"
                           onClick={() => onSelectAction(item)}
@@ -282,7 +321,7 @@ export function OperationList({ items, receiptIds, syncStates, onSelectAction }:
                         >
                           {titleOf(item)}
                         </button>
-                        <span className="flex items-center gap-1.5 text-caption text-text-secondary">
+                        <span className="flex items-center gap-2 text-label text-text-secondary">
                           <AuthorAvatar name={author(item)} />
                           <span className="truncate">{subtitleOf(item)}</span>
                           {paperclip(item)}
@@ -292,13 +331,13 @@ export function OperationList({ items, receiptIds, syncStates, onSelectAction }:
                       </span>
                     </span>
                   </td>
-                  <td className="hidden truncate px-4 text-body text-text-secondary xl:table-cell">
-                    {neutral(item) ? '' : (category(item.row.categoryId)?.name ?? translate('row.noCategory'))}
+                  <td className="hidden truncate px-2 text-label text-text-secondary xl:table-cell">
+                    {categoryCell(item)}
                   </td>
-                  <td className="hidden truncate px-4 text-body text-text-secondary xl:table-cell">
-                    {item.kind === 'transfer' ? '' : accountName(item.row.accountId)}
+                  <td className="hidden truncate px-2 text-label text-text-secondary xl:table-cell">
+                    {accountCell(item)}
                   </td>
-                  <td className="px-4 text-right text-body font-medium">{amountOf(item)}</td>
+                  <td className="pr-4 pl-2 text-right text-body font-medium">{amountOf(item)}</td>
                 </tr>
               ))}
             </tbody>
@@ -308,7 +347,7 @@ export function OperationList({ items, receiptIds, syncStates, onSelectAction }:
       <div className="flex flex-col gap-4 lg:hidden">
         {groups.map((group) => (
           <section key={group.date} className="rounded-card bg-card px-4 py-1 shadow-card">
-            <header className="flex items-center justify-between gap-3 py-3">
+            <header className="flex items-center justify-between gap-3 pt-3 pb-2">
               <h3 className="text-label font-semibold text-text-primary first-letter:uppercase">
                 {dayTitle(group.date)}
               </h3>
@@ -321,14 +360,14 @@ export function OperationList({ items, receiptIds, syncStates, onSelectAction }:
                     type="button"
                     onClick={() => onSelectAction(item)}
                     // a transfer shows two amounts: they drop to their own line instead of cutting the title
-                    className={`${ROW_BUTTON} flex min-h-16 w-full items-center gap-x-3 py-2 ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
+                    className={`${ROW_BUTTON} flex min-h-18 w-full items-center gap-x-4 py-3 ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
                   >
-                    <CategoryIcon icon={iconOf(item)} color={colorOf(item)} />
-                    <span className="flex min-w-0 flex-1 flex-col">
+                    {leadingOf(item, 40)}
+                    <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="truncate text-body font-medium text-text-primary">{titleOf(item)}</span>
-                      <span className="flex items-center gap-1.5 text-caption text-text-secondary">
+                      <span className="flex items-center gap-2 text-label text-text-secondary">
                         <AuthorAvatar name={author(item)} />
-                        <span className="truncate">{subtitleOf(item)}</span>
+                        <span className="truncate">{mobileSubtitle(item)}</span>
                         {paperclip(item)}
                         {refundNote(item)}
                         {syncBadge(item)}

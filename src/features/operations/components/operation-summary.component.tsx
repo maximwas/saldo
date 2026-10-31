@@ -1,17 +1,39 @@
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import type { Totals } from '../utils/operation-items.utils'
 
 type OperationSummaryProps = {
   totals: Totals
+  /** YYYY-MM of the period filter, or another value for all time */
+  period: string
 }
 
-// Figma «Saldo» → SummaryStrip 2:10084 (Desktop 2:16059 / Mobile): a card with three blocks, subtle fill, radius md,
-// padding 12/16, label text-label in secondary, the sum below it. The planned-payments block waits for 1.11.
-export function OperationSummary({ totals }: OperationSummaryProps) {
+// mobile 2:16064 shows sums at S (body-medium), desktop 2:11516 at M (number-sm)
+const SUM_CLASS = 'lg:font-display lg:text-number-sm lg:font-semibold'
+
+// Figma «Saldo» → SummaryStrip 2:10084 (Desktop 2:11516 / Mobile 2:16064): a card (padding 20, 16 on mobile, gap 12)
+// with blocks on the subtle fill, radius md, padding 12/16, gap 4; desktop labels name the month.
+// The planned-payments block waits for 1.11.
+export function OperationSummary({ totals, period }: OperationSummaryProps) {
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const translate = useTranslations('operations.totals')
+  const formatter = useFormatter()
+  const month = /^\d{4}-\d{2}$/.test(period)
+    ? formatter.dateTime(new Date(`${period}-15T12:00:00Z`), {
+        month: 'long',
+        timeZone: 'UTC',
+      })
+    : null
+  const label = (key: 'income' | 'expenses' | 'result') =>
+    month && key !== 'result' ? (
+      <>
+        <span className="lg:hidden">{translate(key)}</span>
+        <span className="max-lg:hidden">{translate(`${key}Of`, { month })}</span>
+      </>
+    ) : (
+      translate(key)
+    )
   const blocks = [
     {
       key: 'income' as const,
@@ -38,10 +60,10 @@ export function OperationSummary({ totals }: OperationSummaryProps) {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {blocks.map((block) => (
           <div key={block.key} className="flex flex-col gap-1 rounded-md bg-subtle px-4 py-3">
-            <p className="text-label text-text-secondary">{translate(block.key)}</p>
+            <p className="text-label text-text-secondary">{label(block.key)}</p>
             <p>
-              {block.plus ? <span className="font-display text-number-sm text-positive-text">+</span> : null}
-              <Amount minor={block.minor} currency={baseCurrency} kind={block.kind} size="m" />
+              {block.plus ? <span className={`text-body font-medium text-positive-text ${SUM_CLASS}`}>+</span> : null}
+              <Amount minor={block.minor} currency={baseCurrency} kind={block.kind} className={SUM_CLASS} />
             </p>
           </div>
         ))}

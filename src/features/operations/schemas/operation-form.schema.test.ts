@@ -27,11 +27,33 @@ const expense: OperationFormValues = {
   accountId: ACCOUNT,
   categoryId: null,
   occurredOn: '2026-10-30',
+  occurredTime: '',
   counterparty: ' Сільпо ',
   note: '',
 }
 
 describe('operationFormSchema', () => {
+  it('takes an empty or HH:mm time only', () => {
+    expect(
+      operationFormSchema.safeParse({
+        ...expense,
+        occurredTime: '18:40',
+      }).success,
+    ).toBe(true)
+    expect(
+      operationFormSchema.safeParse({
+        ...expense,
+        occurredTime: '25:00',
+      }).success,
+    ).toBe(false)
+    expect(
+      operationFormSchema.safeParse({
+        ...expense,
+        occurredTime: '18:4',
+      }).success,
+    ).toBe(false)
+  })
+
   it('accepts a typed amount with a comma', () => {
     expect(operationFormSchema.safeParse(expense).success).toBe(true)
   })

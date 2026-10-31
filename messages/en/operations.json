@@ -29,7 +29,9 @@
     "income": "Income",
     "expenses": "Expenses",
     "result": "Result",
-    "unknownRate": "No rate: {count}"
+    "unknownRate": "No rate: {count}",
+    "incomeOf": "Income in {month}",
+    "expensesOf": "Expenses in {month}"
   },
   "table": {
     "date": "Date",
@@ -113,7 +115,12 @@
       "fee": "Fee",
       "rate": "Rate",
       "purchase": "Purchase"
-    }
+    },
+    "time": "Time",
+    "balance": "Balance {amount}",
+    "categoryHint": "A subcategory is optional",
+    "editingTitle": "Edit operation",
+    "saveChanges": "Save changes"
   },
   "deleteConfirm": {
     "balanceUp": "The balance of «{account}» will grow by {amount}; period totals will be recalculated.",

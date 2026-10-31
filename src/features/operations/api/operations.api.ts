@@ -231,20 +231,37 @@ export type FormOptions = {
   accounts: AccountOption[]
   categories: CategoryOption[]
   rates: FxRate[]
+  /** account id → balance in its own currency (account_balances) */
+  balances: Record<string, number>
+}
+
+async function listBalances(client: SaldoClient, ledgerId: string): Promise<Record<string, number>> {
+  const { data, error } = await client
+    .from('account_balances')
+    .select('account_id, balance_minor')
+    .eq('ledger_id', ledgerId)
+
+  if (error) {
+    throw error
+  }
+
+  return Object.fromEntries(data.map((row) => [row.account_id, Number(row.balance_minor)]))
 }
 
 /** accounts, categories and FX rates the forms and the list need (shared loaders: features do not import each other) */
 export async function getFormOptions(client: SaldoClient, ledgerId: string): Promise<FormOptions> {
-  const [accounts, categories, rates] = await Promise.all([
+  const [accounts, categories, rates, balances] = await Promise.all([
     listAccountOptions(client, ledgerId),
     listCategoryOptions(client, ledgerId),
     getLedgerRates(client, ledgerId),
+    listBalances(client, ledgerId),
   ])
 
   return {
     accounts,
     categories,
     rates,
+    balances,
   }
 }
 

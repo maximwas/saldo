@@ -135,6 +135,7 @@ describe('getOverview', () => {
       expenseMinor: 3_000_000,
       resultMinor: 5_250_000,
       unknownCount: 1,
+      top: [],
     })
   })
 
