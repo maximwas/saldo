@@ -15,7 +15,7 @@ const FRAMES = [
     path: '/',
     frameId: '2:8735',
     width: 390,
-    height: 2909,
+    height: 1977,
   },
   {
     name: 'operations desktop',
