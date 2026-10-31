@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
@@ -108,6 +109,8 @@ export function CreditRow({ credit }: CreditRowProps) {
   const canWrite = useCanWrite()
   const accounts = useCredits().data?.accounts ?? []
   const pay = usePayInstallment()
+  const mobilePress = useRipple()
+  const desktopPress = useRipple()
   const progress = creditProgress(credit)
   const nextTexts = useNextTexts(credit, progress.next)
   const account = accounts.find((option) => option.id === credit.accountId)?.name
@@ -115,7 +118,7 @@ export function CreditRow({ credit }: CreditRowProps) {
   const purpose = [credit.lender ? credit.name : null, account].filter(Boolean).join(' · ')
   const next = progress.next
   const payButton = canWrite && next && credit.status === 'active' && (
-    <Button size="s" variant="secondary" className="shrink-0" onClick={() => pay(next.id)}>
+    <Button size="s" variant="secondary" className="relative shrink-0" onClick={() => pay(next.id)}>
       {translate('actions.paid')}
     </Button>
   )
@@ -125,21 +128,24 @@ export function CreditRow({ credit }: CreditRowProps) {
       {credit.status !== 'active' && <Badge tone="muted">{translate(`status.${credit.status}`)}</Badge>}
     </>
   )
-  const link = (
+  // the link is stretched over the whole row (after:inset-0); the pay button sits above it
+  const linkFor = ({ pressProps, ripple }: ReturnType<typeof useRipple>) => (
     <Link
       href={`/payments/credits/${credit.id}` as Route}
-      className="max-w-full truncate rounded-xs text-body font-semibold text-text-primary outline-none hover:text-primary-text focus-visible:ring-2 focus-visible:ring-primary"
+      className="max-w-full cursor-pointer truncate rounded-xs text-body font-semibold text-text-primary outline-none after:absolute after:inset-0 hover:text-primary-text focus-visible:ring-2 focus-visible:ring-primary"
+      {...pressProps}
     >
       {title}
+      {ripple}
     </Link>
   )
 
   return (
-    <li className="flex flex-col gap-3 border-b border-border py-4 last:border-b-0 lg:flex-row lg:items-center lg:gap-5">
+    <li className="relative flex flex-col gap-3 overflow-hidden border-b border-border py-4 transition-colors last:border-b-0 hover:bg-subtle lg:flex-row lg:items-center lg:gap-5">
       <div className="flex items-center gap-3 lg:hidden">
         <ServiceLogo name={title} />
         <div className="flex min-w-0 flex-1 flex-col items-start">
-          {link}
+          {linkFor(mobilePress)}
           <Amount minor={progress.remainingMinor} currency={credit.currency} kind="plan" />
           {progress.endOn && (
             <span className="text-caption text-text-tertiary">
@@ -155,7 +161,7 @@ export function CreditRow({ credit }: CreditRowProps) {
       </div>
       <ServiceLogo name={title} className="max-lg:hidden" />
       <div className="flex w-50 shrink-0 flex-col items-start gap-1 max-lg:hidden">
-        {link}
+        {linkFor(desktopPress)}
         {purpose && <span className="max-w-full truncate text-label text-text-secondary">{purpose}</span>}
         {badges}
       </div>
