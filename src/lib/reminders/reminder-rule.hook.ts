@@ -6,6 +6,7 @@ import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import {
   getReminderRule,
+  getUpcomingDueDates,
   type ReminderRule,
   type ReminderRulePatch,
   type ReminderSourceType,
@@ -28,11 +29,23 @@ const ruleQuery = (ledgerId: string, sourceType: ReminderSourceType, sourceId: s
       }),
   })
 
+const dueQuery = (ledgerId: string, sourceType: ReminderSourceType, sourceId: string) =>
+  queryOptions({
+    queryKey: ledgerQueryKey('reminder-rules', ledgerId, sourceType, sourceId, 'due'),
+    queryFn: () =>
+      getUpcomingDueDates(getBrowserSupabase(), {
+        ledgerId,
+        sourceType,
+        sourceId,
+      }),
+  })
+
 /** the rule of one subscription / credit / debt plus the one write of it; shared by the three cards (features never import each other) */
 export function useReminderRule(sourceType: ReminderSourceType, sourceId: string) {
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const queryClient = useQueryClient()
   const query = useQuery(ruleQuery(ledgerId, sourceType, sourceId))
+  const due = useQuery(dueQuery(ledgerId, sourceType, sourceId))
   const write = useLedgerWrite(reminderRulesWrites.saveReminderRule)
   const save = (rule: ReminderRule | null, patch: ReminderRulePatch) =>
     write.mutate(
@@ -51,6 +64,7 @@ export function useReminderRule(sourceType: ReminderSourceType, sourceId: string
 
   return {
     rule: query.data,
+    dueDates: due.data ?? [],
     isLoading: query.isPending,
     isSaving: write.isPending,
     save,

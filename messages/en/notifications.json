@@ -4,10 +4,9 @@
     "in": "{days, plural, =0 {Expected today} one {Expected in # day} other {Expected in # days}}"
   },
   "summary": "{count, plural, =0 {No new notifications} other {# new}}",
-  "markAll": "Mark all read",
+  "markAll": "Mark all as read",
   "new": "New",
   "read": "Read",
-  "empty": "No notifications yet. Payment reminders will appear here at their time.",
   "loadFailed": "Could not load notifications. Try refreshing the page.",
   "item": {
     "open": "Open payment",
@@ -55,13 +54,80 @@
   },
   "rules": {
     "title": "Reminders",
-    "enabled": "Remind about payment",
+    "enabled": "Remind me",
     "offsets": "When to remind",
     "offset": "{days, plural, =0 {On the due day} one {# day before} other {# days before}}",
     "hint": {
       "subscription": "By default, 3 and 2 days before the charge. Reminders stop once the payment is marked paid.",
       "credit": "By default, on the instalment's due day. Reminders stop once the instalment is paid.",
       "debt": "No reminders by default. Turn on to be reminded before the repayment date."
+    },
+    "change": "Change",
+    "at": "{offsets} at {time}",
+    "next": "Next: {date} at {time}",
+    "daysBefore": "{list} {days, plural, one {day} other {days}} before",
+    "and": "{first} and {second}",
+    "onDay": {
+      "subscription": "on the charge day",
+      "credit": "on the instalment day",
+      "debt": "on the return day"
+    },
+    "dialog": {
+      "title": "Change reminder",
+      "days": "Remind me",
+      "time": "Time",
+      "timeHint": "In your time zone",
+      "note": "You can pick several days. Next reminder: {date} at {time}.",
+      "noteNone": "You can pick several days.",
+      "cancel": "Cancel",
+      "save": "Save"
+    }
+  },
+  "emptyState": {
+    "title": "No new notifications",
+    "text": "We will remind you about payments and subscriptions as you set it up, in the app or by email.",
+    "action": "Set up notifications"
+  },
+  "offline": "No connection. Showing saved notifications; «read» marks wait for sync.",
+  "popover": {
+    "title": "{count, plural, =0 {Notifications} other {Notifications · # new}}",
+    "markAll": "All read",
+    "all": "All notifications",
+    "empty": "No new notifications"
+  },
+  "pushBanner": {
+    "enable": "Turn on push notifications so you do not miss payments",
+    "action": "Turn on",
+    "denied": "Notifications are blocked in the browser. Allow them in the site settings.",
+    "how": "How to allow",
+    "howTitle": "How to allow notifications"
+  },
+  "settings": {
+    "push": {
+      "title": "Push notifications",
+      "label": "Push on this device",
+      "on": "Browser permission granted. Payment reminders arrive even when Saldo is closed.",
+      "off": "Turn on so reminders arrive even when Saldo is closed. Without push they still appear in the notification centre.",
+      "denied": "The browser blocks notifications, so Saldo cannot send them.",
+      "homeScreen": "Safari sends push only to an app on the Home Screen. Add Saldo to the Home Screen and open it from the icon.",
+      "unavailable": "This browser or app does not support push. Reminders stay in the notification centre.",
+      "status": "Status: {state}",
+      "state": {
+        "on": "on",
+        "off": "off",
+        "denied": "blocked in the browser",
+        "homeScreen": "Home Screen needed",
+        "unavailable": "not available"
+      }
+    },
+    "mine": {
+      "title": "My reminders",
+      "empty": "No reminders yet. They appear once a subscription, credit or debt has a reminder turned on.",
+      "kind": {
+        "subscription": "Subscription",
+        "credit": "Credit",
+        "debt": "Debt"
+      }
     }
   }
 }
