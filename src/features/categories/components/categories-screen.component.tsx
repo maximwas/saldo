@@ -184,8 +184,8 @@ export function CategoriesScreen() {
             </div>
           ) : null}
         </section>
-        {/* Figma Card 2:50042: tips gap 16, a 20 icon and label text-secondary, gap 12 */}
-        <aside className="flex w-full flex-col gap-5 rounded-card bg-card p-5 shadow-card lg:w-100 lg:shrink-0 lg:p-6">
+        {/* Figma Card 2:50042: tips gap 16, a 20 icon and label text-secondary, gap 12; the mobile frame 2:50386 has none */}
+        <aside className="hidden w-full flex-col gap-5 rounded-card bg-card p-5 shadow-card lg:flex lg:w-100 lg:shrink-0 lg:p-6">
           <h2 className="text-card-title text-text-primary">{translate('howTitle')}</h2>
           <ul className="flex flex-col gap-4 text-label text-text-secondary">
             {HOW.map(({ key, Icon }) => (
