@@ -19,6 +19,7 @@ import type {
 } from '../operations.types'
 import { type CreateTransferInput, createTransferInputSchema } from '../schemas/create-transfer-input.schema'
 import { type UpdateOperationInput, updateOperationInputSchema } from '../schemas/update-operation-input.schema'
+import { textFilter } from '../utils/operation-filters.utils'
 import {
   chunks,
   indexTransfers,
@@ -84,8 +85,14 @@ function filterByOwners(query: ListQuery, { accountId, categoryId, createdBy }: 
   return filtered
 }
 
+const filterByText = (query: ListQuery, { text }: OperationFilters): ListQuery =>
+  text ? query.or(textFilter(text)) : query
+
 async function fetchOperations(client: SaldoClient, { ledgerId, filters }: ListParams) {
-  const query = filterByType(filterByPeriod(filterByOwners(listQuery(client, ledgerId), filters), filters), filters)
+  const query = filterByText(
+    filterByType(filterByPeriod(filterByOwners(listQuery(client, ledgerId), filters), filters), filters),
+    filters,
+  )
   const { data, error } = await query
 
   if (error) {

@@ -15,6 +15,8 @@ export type OperationFilters = {
   categoryId: string | null
   createdBy: string | null
   type: OperationType
+  /** the «Text» chip: a piece of the payee or the note */
+  text: string | null
 }
 
 export type OperationRow = {

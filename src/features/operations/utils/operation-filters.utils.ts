@@ -8,13 +8,14 @@ export const ALL_TIME = 'all'
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
 const DAY_FORMAT = 'yyyy-MM-dd'
 
-/** the URL vocabulary of the list: ?period=2026-10|all&account=<id>&category=<id>&type=expense */
+/** the URL vocabulary of the list: ?period=2026-10|all&account=<id>&category=<id>&type=expense&q=<text> */
 export const operationFilterParsers = {
   period: parseAsString,
   account: parseAsString,
   category: parseAsString,
   who: parseAsString,
   type: parseAsStringLiteral(OPERATION_TYPES).withDefault('all'),
+  q: parseAsString,
 }
 
 export const addKindParser = parseAsStringLiteral(ADD_KINDS)
@@ -25,6 +26,7 @@ type UrlFilters = {
   category: string | null
   who: string | null
   type: OperationType
+  q: string | null
 }
 
 const monthOf = (day: string) => day.slice(0, 7)
@@ -56,9 +58,26 @@ export function resolveFilters(url: UrlFilters, today: string): OperationFilters
     categoryId: url.category,
     createdBy: url.who,
     type: url.type,
+    text: url.q?.trim() || null,
   }
+}
+
+/**
+ * PostgREST `or` filter for the «Text» chip: the payee or the note contains the text. LIKE wildcards in the text are
+ * literal (backslash-escaped), and the value is double-quoted so commas and brackets do not split the filter.
+ */
+export function textFilter(text: string): string {
+  const like = `%${text.replace(/[\\%_]/g, (char) => `\\${char}`)}%`
+  const quoted = `"${like.replace(/[\\"]/g, (char) => `\\${char}`)}"`
+
+  return `counterparty.ilike.${quoted},note.ilike.${quoted}`
 }
 
 /** a filter other than the default «this month, everything» is on: the empty state then offers a reset */
 export const hasActiveFilters = (url: UrlFilters) =>
-  url.period !== null || url.account !== null || url.category !== null || url.who !== null || url.type !== 'all'
+  url.period !== null ||
+  url.account !== null ||
+  url.category !== null ||
+  url.who !== null ||
+  url.q !== null ||
+  url.type !== 'all'

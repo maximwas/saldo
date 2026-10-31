@@ -2,9 +2,15 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
+import { Chip } from '@/components/ui/chip.component'
+import { Field } from '@/components/ui/field.component'
+import { Input } from '@/components/ui/input.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select } from '@/components/ui/select.component'
+import { Sheet } from '@/components/ui/sheet.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
@@ -14,6 +20,7 @@ import { OPERATION_TYPES } from '../operations.types'
 import { ALL_TIME, recentMonths } from '../utils/operation-filters.utils'
 
 const ALL = 'all'
+const TEXT_FORM_ID = 'operation-filter-text'
 
 // a chip has no visible label, so a screen-reader label is attached to the Select
 function ChipSelect({
@@ -39,24 +46,29 @@ type OperationFiltersProps = {
   categoryId: string | null
   createdBy: string | null
   type: OperationType
+  text: string | null
   onChangeAction: (change: {
     period?: string | null
     account?: string | null
     category?: string | null
     who?: string | null
     type?: OperationType
+    q?: string | null
   }) => void
 }
 
 // Figma Saldo file → Operations 2:11403 "Filters" (gap 16): the type switch, then Chip 2:7714 selects (gap 8; the period
 // is always the selected look with a check); on mobile 2:13681 the chips stay in one line that scrolls to the screen
-// edge. Category options carry their CategoryBadge. Currency, amount, link and text chips wait for their phases.
+// edge. Category options carry their CategoryBadge. The «Text» chip (2:13725; on, it reads the text with a check, 5:102493)
+// is the phones' text search (their top bar has none); its open state is not drawn, so it opens a sheet with one field.
+// Currency, amount and link chips wait for their phases.
 export function OperationFilters({
   period,
   accountId,
   categoryId,
   createdBy,
   type,
+  text,
   onChangeAction,
 }: OperationFiltersProps) {
   const translate = useTranslations('operations')
@@ -79,6 +91,13 @@ export function OperationFilters({
     return `${label.charAt(0).toLocaleUpperCase(locale)}${label.slice(1)} ${month.slice(0, 4)}`
   }
   const months = recentMonths(today, 12)
+  const [textOpen, setTextOpen] = useState(false)
+
+  const applyText = (event: React.SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    onChangeAction({ q: String(new FormData(event.currentTarget).get('q') ?? '').trim() || null })
+    setTextOpen(false)
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -175,7 +194,31 @@ export function OperationFilters({
             label={translate('filters.who')}
           />
         )}
+        <Chip selected={text !== null} onClick={() => setTextOpen(true)}>
+          {text === null ? translate('filters.text') : `«${text}»`}
+        </Chip>
       </div>
+      <Sheet
+        open={textOpen}
+        onOpenChange={setTextOpen}
+        title={translate('filters.textTitle')}
+        footer={
+          <>
+            <Button type="button" variant="secondary" onClick={() => setTextOpen(false)}>
+              {translate('form.cancel')}
+            </Button>
+            <Button type="submit" form={TEXT_FORM_ID}>
+              {translate('filters.textApply')}
+            </Button>
+          </>
+        }
+      >
+        <form id={TEXT_FORM_ID} noValidate onSubmit={applyText}>
+          <Field label={translate('filters.text')} hint={translate('filters.textHint')}>
+            <Input name="q" type="search" autoFocus maxLength={200} defaultValue={text ?? ''} />
+          </Field>
+        </form>
+      </Sheet>
     </div>
   )
 }
