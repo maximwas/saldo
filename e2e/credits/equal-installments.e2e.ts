@@ -77,5 +77,7 @@ test('дострокове погашення в день оплати внес�
   await page.goto(card)
   await expect(leftOf(page)).toHaveText(/^0 · 0,00\s₴$/)
   await expect(page.getByText('Замінено новим графіком')).toHaveCount(11)
-  await expect(page.getByRole('list', { name: 'Графік внесків' }).getByText('Оплачено', { exact: true })).toHaveCount(2)
+  await expect(
+    page.getByRole('list', { name: 'Графік внесків' }).getByText('Оплачено', { exact: true }).filter({ visible: true }),
+  ).toHaveCount(2)
 })

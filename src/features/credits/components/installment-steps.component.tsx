@@ -19,7 +19,7 @@ export function InstallmentSteps({ steps }: InstallmentStepsProps) {
     <div aria-hidden className="flex gap-1">
       {steps.map((step, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: a segment is its position in the schedule
-        <span key={index} className={cn('h-1.5 min-w-1 flex-1 rounded-full', STEP_TONE[step])} />
+        <span key={index} className={cn('h-2 min-w-1 flex-1 rounded-full', STEP_TONE[step])} />
       ))}
     </div>
   )

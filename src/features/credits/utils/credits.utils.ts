@@ -89,6 +89,8 @@ type CurrencyTotal = {
   currency: string
   /** planned installments due this month, paid or not */
   monthMinor: number | null
+  /** planned installments due next month */
+  nextMonthMinor: number | null
   remainingMinor: number | null
 }
 
@@ -108,16 +110,25 @@ function monthMinorOf(credit: Credit, month: string) {
   )
 }
 
+/** YYYY-MM of the month after the given one */
+export function nextMonthOf(month: string) {
+  const [year, number] = month.split('-').map(Number)
+
+  return number === 12 ? `${year + 1}-01` : `${year}-${String(number + 1).padStart(2, '0')}`
+}
+
 function addTotal(totals: Map<string, CurrencyTotal>, credit: Credit, month: string, remainingMinor: number | null) {
   const current = totals.get(credit.currency) ?? {
     currency: credit.currency,
     monthMinor: 0,
+    nextMonthMinor: 0,
     remainingMinor: 0,
   }
 
   totals.set(credit.currency, {
     currency: credit.currency,
     monthMinor: sumKnown([current.monthMinor, monthMinorOf(credit, month)]),
+    nextMonthMinor: sumKnown([current.nextMonthMinor, monthMinorOf(credit, nextMonthOf(month))]),
     remainingMinor: sumKnown([current.remainingMinor, remainingMinor]),
   })
 }
@@ -148,6 +159,43 @@ export function creditTotals(credits: readonly Credit[], today: string): CreditT
     endOn,
     byCurrency: [...totals.values()],
   }
+}
+
+export type MonthNotes = {
+  /** credits whose next installment falls due today */
+  dueToday: string[]
+  /** credits with an installment whose date passed unconfirmed */
+  unconfirmed: {
+    name: string
+    dueOn: string
+  }[]
+}
+
+/** the caption under «Installments in October»: who is due today and whose date passed */
+export function monthNotes(credits: readonly Credit[], today: string): MonthNotes {
+  const notes: MonthNotes = {
+    dueToday: [],
+    unconfirmed: [],
+  }
+
+  for (const credit of credits.filter((candidate) => candidate.status === 'active')) {
+    const name = credit.lender ?? credit.name
+    const open = activeInstallments(credit).filter(isOpen)
+    const late = open.find((installment) => installment.state === 'unconfirmed')
+
+    if (open.some((installment) => installment.dueOn === today)) {
+      notes.dueToday.push(name)
+    }
+
+    if (late) {
+      notes.unconfirmed.push({
+        name,
+        dueOn: late.dueOn,
+      })
+    }
+  }
+
+  return notes
 }
 
 export type Payoff = {

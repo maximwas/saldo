@@ -32,20 +32,16 @@ const LETTER_COLORS = CATEGORY_COLORS.slice(0, 8)
 const colorOf = (name: string) =>
   LETTER_COLORS[[...name].reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0) % LETTER_COLORS.length]
 
-// Figma «Saldo» → ServiceLogo 2:7882 (40/32/24, radius md/logo-md/sm, card fill, 1px border ring over the logo from
-// Service logos 1:167); a name without a logo gets LetterAvatar 2:7963: its first letter in cat-<colour>-text on the soft fill
-export function ServiceLogo({ name, size = 40, className }: ServiceLogoProps) {
-  const logo = serviceLogoOf(name)
-  const { box, letter } = SIZES[size]
+type LetterAvatarProps = {
+  name: string
+  size?: ServiceLogoProps['size']
+  className?: string
+}
 
-  if (logo) {
-    return (
-      <span aria-hidden className={cn('relative shrink-0 overflow-hidden bg-card', box, className)}>
-        <Image src={logo} alt="" fill unoptimized className={serviceLogoIsInset(name) ? 'p-1.5' : undefined} />
-        <span className={cn('absolute inset-0 border border-border', box)} />
-      </span>
-    )
-  }
+// Figma «Saldo» → LetterAvatar 2:7963: the first letter in cat-<colour>-text on the soft fill; the colour follows the
+// name, so a person or a service looks the same everywhere
+export function LetterAvatar({ name, size = 40, className }: LetterAvatarProps) {
+  const { box, letter } = SIZES[size]
 
   return (
     <span
@@ -61,4 +57,22 @@ export function ServiceLogo({ name, size = 40, className }: ServiceLogoProps) {
       {name.trim().charAt(0).toUpperCase()}
     </span>
   )
+}
+
+// Figma «Saldo» → ServiceLogo 2:7882 (40/32/24, radius md/logo-md/sm, card fill, 1px border ring over the logo from
+// Service logos 1:167); a name without a logo gets LetterAvatar 2:7963: its first letter in cat-<colour>-text on the soft fill
+export function ServiceLogo({ name, size = 40, className }: ServiceLogoProps) {
+  const logo = serviceLogoOf(name)
+  const { box } = SIZES[size]
+
+  if (logo) {
+    return (
+      <span aria-hidden className={cn('relative shrink-0 overflow-hidden bg-card', box, className)}>
+        <Image src={logo} alt="" fill unoptimized className={serviceLogoIsInset(name) ? 'p-1.5' : undefined} />
+        <span className={cn('absolute inset-0 border border-border', box)} />
+      </span>
+    )
+  }
+
+  return <LetterAvatar name={name} size={size} className={className} />
 }

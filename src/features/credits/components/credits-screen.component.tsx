@@ -1,40 +1,89 @@
 'use client'
 
-import { Info, Plus } from 'lucide-react'
+import { CreditCard as CreditCardIcon, Plus } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Amount } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { Card } from '@/components/ui/card.component'
+import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import type { Credit } from '../api/credits.api'
 import { useCredits } from '../hooks/credits.hook'
-import { type CreditTotals, creditTotals, dayText } from '../utils/credits.utils'
+import { type CreditTotals, creditTotals, dayText, moneyText, monthNotes, nextMonthOf } from '../utils/credits.utils'
 import { CreditFormSheet } from './credit-form-sheet.component'
 import { CreditRow } from './credit-row.component'
 
 type TotalsStripProps = {
+  credits: readonly Credit[]
   totals: CreditTotals
 }
 
-// Figma «Saldo» → SummaryStrip 2:10084 in Credits: this month's installments and the whole rest, one line per currency
-function TotalsStrip({ totals }: TotalsStripProps) {
+function useNoteText(credits: readonly Credit[], totals: CreditTotals) {
+  const translate = useTranslations('credits.totals')
+  const locale = useLocale()
+  const today = useToday()
+  const notes = monthNotes(credits, today)
+  const nextMonth = Number(nextMonthOf(today.slice(0, 7)).slice(5))
+  const nextAmount = totals.byCurrency
+    .filter((total) => total.nextMonthMinor !== 0)
+    .map((total) => moneyText(total.nextMonthMinor, total.currency, locale))
+    .join(' + ')
+  const head = [
+    notes.dueToday.length > 0 ? translate('noteToday', { names: notes.dueToday.join(', ') }) : null,
+    ...notes.unconfirmed.map((note) =>
+      translate('noteUnconfirmed', {
+        name: note.name,
+        date: dayText(note.dueOn, locale),
+      }),
+    ),
+  ].filter(Boolean)
+
+  return {
+    mobile: head.join(' · '),
+    desktop: [
+      ...head,
+      nextAmount
+        ? translate('noteNextMonth', {
+            month: nextMonth,
+            amount: nextAmount,
+          })
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  }
+}
+
+// Figma «Saldo» → Credits, Summary 2:31148: two StatCards (padding 24, gap 12, label-medium, Amount L plan, caption
+// tertiary), side by side on desktop, stacked on mobile (the caption there stops before «next month»)
+function TotalsStrip({ credits, totals }: TotalsStripProps) {
   const translate = useTranslations('credits')
   const locale = useLocale()
+  const today = useToday()
+  const note = useNoteText(credits, totals)
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:gap-6">
-      <section className="flex flex-col gap-2 rounded-card bg-card p-5 shadow-card lg:p-6">
-        <h2 className="text-label text-text-secondary">{translate('totals.month')}</h2>
+    <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+      <section className="flex flex-col gap-3 rounded-card bg-card p-6 shadow-card">
+        <h2 className="text-label font-medium text-text-secondary">
+          {translate('totals.month', { month: Number(today.slice(5, 7)) })}
+        </h2>
         {totals.byCurrency.map((total) => (
-          <Amount key={total.currency} minor={total.monthMinor} currency={total.currency} size="l" />
+          <Amount key={total.currency} minor={total.monthMinor} currency={total.currency} kind="plan" size="l" />
         ))}
+        {note.desktop && <p className="text-caption text-text-tertiary max-lg:hidden">{note.desktop}</p>}
+        {note.mobile && <p className="text-caption text-text-tertiary lg:hidden">{note.mobile}</p>}
       </section>
-      <section className="flex flex-col gap-2 rounded-card bg-card p-5 shadow-card lg:p-6">
-        <h2 className="text-label text-text-secondary">{translate('totals.remaining')}</h2>
+      <section className="flex flex-col gap-3 rounded-card bg-card p-6 shadow-card">
+        <h2 className="text-label font-medium text-text-secondary">{translate('totals.remaining')}</h2>
         {totals.byCurrency.map((total) => (
-          <Amount key={total.currency} minor={total.remainingMinor} currency={total.currency} size="l" />
+          <Amount key={total.currency} minor={total.remainingMinor} currency={total.currency} kind="plan" size="l" />
         ))}
-        <p className="text-caption text-text-secondary">
+        <p className="text-caption text-text-tertiary">
           {translate('totals.summary', {
             credits: totals.activeCount,
             installments: totals.openCount,
@@ -46,14 +95,30 @@ function TotalsStrip({ totals }: TotalsStripProps) {
   )
 }
 
+// Figma «Saldo» → Loading 2:48071: Tabs, two StatCard placeholders, a List card with three rows
 function CreditsSkeleton() {
   return (
     <div aria-busy className="flex flex-col gap-4 lg:gap-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:gap-6">
-        <div className="h-32 rounded-card bg-subtle" />
-        <div className="h-32 rounded-card bg-subtle" />
+      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+        {[0, 1].map((key) => (
+          <SkeletonCard key={key} className="gap-3 p-6">
+            <Bone className="h-4 w-30 rounded-sm" />
+            <Bone className="h-8 w-45 rounded-sm" />
+            <Bone className="h-3 w-65 max-w-full rounded-sm" />
+          </SkeletonCard>
+        ))}
       </div>
-      <div className="h-96 rounded-card bg-subtle" />
+      <SkeletonCard className="gap-5 p-6">
+        <Bone className="h-5 w-35 rounded-sm" />
+        {[0, 1, 2].map((key) => (
+          <div key={key} className="flex items-center gap-5">
+            <Bone className="size-10 rounded-md" />
+            <Bone className="h-4 w-50 rounded-sm max-lg:flex-1" />
+            <Bone className="h-3 flex-1 rounded-sm max-lg:hidden" />
+            <Bone className="h-4 w-30 rounded-sm max-lg:hidden" />
+          </div>
+        ))}
+      </SkeletonCard>
     </div>
   )
 }
@@ -67,7 +132,12 @@ export function CreditsScreen() {
   const [creating, setCreating] = useState(false)
 
   if (isPending) {
-    return <CreditsSkeleton />
+    return (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <PaymentsTabs />
+        <CreditsSkeleton />
+      </div>
+    )
   }
 
   if (isError) {
@@ -79,39 +149,44 @@ export function CreditsScreen() {
   }
 
   const estimated = data.credits.some((credit) => credit.status === 'active' && credit.scheduleAccuracy === 'estimated')
-  const addButton = canWrite && (
-    <Button onClick={() => setCreating(true)}>
-      <Plus aria-hidden size={20} />
-      {translate('add')}
-    </Button>
-  )
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
+      <PaymentsTabs />
+      {!canWrite && data.credits.length > 0 && <Banner>{translate('viewOnly')}</Banner>}
       {data.credits.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-card bg-card p-6 text-center shadow-card">
-          <p className="text-body font-medium text-text-primary">{translate('empty')}</p>
-          <p className="max-w-md text-caption text-text-secondary">{translate('emptyHint')}</p>
-          {addButton}
-        </div>
+        <section className="flex flex-col items-center rounded-card bg-card px-5 py-18 shadow-card">
+          <div className="flex w-full max-w-100 flex-col items-center gap-3 p-2 text-center">
+            <span
+              aria-hidden
+              className="flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary-text"
+            >
+              <CreditCardIcon className="size-5" />
+            </span>
+            <h2 className="w-full text-body font-semibold text-text-primary">{translate('empty')}</h2>
+            <p className="w-full text-label text-text-secondary">{translate('emptyHint')}</p>
+            {canWrite && <Button onClick={() => setCreating(true)}>{translate('add')}</Button>}
+          </div>
+        </section>
       ) : (
         <>
-          {canWrite && <div className="flex justify-end">{addButton}</div>}
-          <TotalsStrip totals={creditTotals(data.credits, today)} />
-          {estimated && (
-            <p className="flex gap-3 rounded-inner bg-primary-soft p-4 text-label font-medium text-primary-text">
-              <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
-              {translate('estimatedNote')}
-            </p>
+          {canWrite && (
+            <div className="flex justify-end">
+              <Button onClick={() => setCreating(true)}>
+                <Plus aria-hidden size={20} />
+                {translate('add')}
+              </Button>
+            </div>
           )}
-          <section className="flex flex-col gap-4 rounded-card bg-card p-5 shadow-card lg:p-6">
-            <h2 className="text-card-title text-text-primary">{translate('count', { count: data.credits.length })}</h2>
-            <ul className="flex flex-col">
+          <TotalsStrip credits={data.credits} totals={creditTotals(data.credits, today)} />
+          {estimated && <Banner>{translate('estimatedNote')}</Banner>}
+          <Card title={translate('count', { count: data.credits.length })}>
+            <ul className="flex flex-col gap-4">
               {data.credits.map((credit) => (
                 <CreditRow key={credit.id} credit={credit} />
               ))}
             </ul>
-          </section>
+          </Card>
         </>
       )}
       {creating && <CreditFormSheet credit={null} onCloseAction={() => setCreating(false)} />}

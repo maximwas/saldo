@@ -3,6 +3,7 @@ import { Menu as MenuPrimitive } from '@base-ui/react/menu'
 import { Ellipsis, type LucideIcon, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Fragment } from 'react'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { cn } from '@/lib/utils/cn.utils'
 
 export type MenuItem = {
@@ -40,6 +41,52 @@ function ItemContent({ item, iconClassName }: ItemContentProps) {
   )
 }
 
+function PopupItem({ item }: { item: MenuItem }) {
+  const { pressProps, ripple } = useRipple()
+
+  return (
+    <MenuPrimitive.Item
+      disabled={item.disabled}
+      onClick={item.onSelect}
+      className={cn(
+        ITEM_CLASS,
+        'relative h-10 overflow-hidden transition-colors',
+        item.danger ? 'text-negative-text' : 'text-text-primary',
+      )}
+      {...(item.disabled ? {} : pressProps)}
+    >
+      <ItemContent item={item} iconClassName={item.danger ? 'text-text-primary' : 'text-text-secondary'} />
+      {ripple}
+    </MenuPrimitive.Item>
+  )
+}
+
+type SheetItemProps = {
+  item: MenuItem
+  onChooseAction: (item: MenuItem) => void
+}
+
+function SheetItem({ item, onChooseAction }: SheetItemProps) {
+  const { pressProps, ripple } = useRipple()
+
+  return (
+    <button
+      type="button"
+      disabled={item.disabled}
+      onClick={() => onChooseAction(item)}
+      className={cn(
+        ITEM_CLASS,
+        'relative h-12 w-full overflow-hidden text-left transition-colors hover:bg-subtle focus-visible:bg-subtle disabled:cursor-not-allowed disabled:text-text-tertiary',
+        item.danger ? 'text-negative-text' : 'text-text-primary',
+      )}
+      {...pressProps}
+    >
+      <ItemContent item={item} />
+      {ripple}
+    </button>
+  )
+}
+
 // Figma «Saldo» → Menu 2:10341 / 15:85158: 240 wide, raised, border, radius inner, shadow-float, padding 6, gap 2; rows
 // 40 high (padding 0/12, gap 12, a 20 icon, radius sm, hover subtle); a divider (padding 4/0) before the red items.
 // The «···» trigger is a 44 square (radius md) with a 20px ellipsis. MenuItem 2:10325 paints the icon text-secondary,
@@ -66,13 +113,7 @@ export function Menu({ label, items, className, alignOffset }: MenuProps) {
                     <div className="h-px bg-border" />
                   </MenuPrimitive.Separator>
                 ) : null}
-                <MenuPrimitive.Item
-                  disabled={item.disabled}
-                  onClick={item.onSelect}
-                  className={cn(ITEM_CLASS, 'h-10', item.danger ? 'text-negative-text' : 'text-text-primary')}
-                >
-                  <ItemContent item={item} iconClassName={item.danger ? 'text-text-primary' : 'text-text-secondary'} />
-                </MenuPrimitive.Item>
+                <PopupItem item={item} />
               </Fragment>
             ))}
           </MenuPrimitive.Popup>
@@ -118,19 +159,7 @@ export function ActionSheet({ open, onOpenChange, title, items }: ActionSheetPro
           </div>
           <Drawer.Content className="flex flex-col gap-0.5 px-3 pt-1 pb-8">
             {items.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                disabled={item.disabled}
-                onClick={() => choose(item)}
-                className={cn(
-                  ITEM_CLASS,
-                  'h-12 w-full text-left hover:bg-subtle focus-visible:bg-subtle disabled:cursor-not-allowed disabled:text-text-tertiary',
-                  item.danger ? 'text-negative-text' : 'text-text-primary',
-                )}
-              >
-                <ItemContent item={item} />
-              </button>
+              <SheetItem key={item.label} item={item} onChooseAction={choose} />
             ))}
           </Drawer.Content>
         </Drawer.Popup>

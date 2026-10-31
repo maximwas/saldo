@@ -25,6 +25,10 @@ export type DebtRow = {
   repaidMinor: number
   remainingMinor: number
   overpaidMinor: number
+  /** the date of the latest repayment; null while nothing is repaid */
+  lastRepaymentOn: string | null
+  /** the day the debt row last changed: for a closed or written-off debt, when it was closed (an edit moves it) */
+  closedOn: string
 }
 
 /** an expense a share of which can become a debt owed to me */
@@ -51,16 +55,18 @@ type DebtDbRow = {
   status: string
   note: string | null
   version: number
+  updated_at: string
 }
 
 type MovementDbRow = {
   debt_id: string
   kind: string
   amount_minor: number
+  occurred_on: string
 }
 
 const DEBT_COLUMNS =
-  'id, direction, person, reason, principal_minor, currency, arisen_on, account_id, due_on, origin, share_of_operation_id, status, note, version'
+  'id, direction, person, reason, principal_minor, currency, arisen_on, account_id, due_on, origin, share_of_operation_id, status, note, version, updated_at'
 const PURCHASE_LIMIT = 20
 
 const STATUS_ORDER: Record<DebtStatus, number> = {
@@ -69,7 +75,7 @@ const STATUS_ORDER: Record<DebtStatus, number> = {
   written_off: 2,
 }
 
-function toDebtRow(row: DebtDbRow, movements: DebtMovement[]): DebtRow {
+function toDebtRow(row: DebtDbRow, movements: DebtMovement[], lastRepaymentOn: string | null): DebtRow {
   return {
     id: row.id,
     direction: row.direction as DebtDirection,
@@ -85,6 +91,8 @@ function toDebtRow(row: DebtDbRow, movements: DebtMovement[]): DebtRow {
     status: row.status as DebtStatus,
     note: row.note,
     version: row.version,
+    lastRepaymentOn,
+    closedOn: row.updated_at.slice(0, 10),
     ...debtBalance(row.principal_minor, movements),
   }
 }
@@ -98,7 +106,7 @@ const byStatusThenDue = (left: DebtRow, right: DebtRow) =>
 export async function listDebts(supabase: SaldoClient, ledgerId: string): Promise<DebtRow[]> {
   const [debts, movements] = await Promise.all([
     supabase.from('debts').select(DEBT_COLUMNS).eq('ledger_id', ledgerId),
-    supabase.from('debt_movements').select('debt_id, kind, amount_minor').eq('ledger_id', ledgerId),
+    supabase.from('debt_movements').select('debt_id, kind, amount_minor, occurred_on').eq('ledger_id', ledgerId),
   ])
 
   if (debts.error) {
@@ -112,15 +120,19 @@ export async function listDebts(supabase: SaldoClient, ledgerId: string): Promis
   const byDebt = Map.groupBy(movements.data as MovementDbRow[], (movement) => movement.debt_id)
 
   return (debts.data as DebtDbRow[])
-    .map((row) =>
-      toDebtRow(
+    .map((row) => {
+      const own = byDebt.get(row.id) ?? []
+      const repayments = own.filter((movement) => movement.kind === 'repayment').map((movement) => movement.occurred_on)
+
+      return toDebtRow(
         row,
-        (byDebt.get(row.id) ?? []).map((movement) => ({
+        own.map((movement) => ({
           kind: movement.kind as DebtMovement['kind'],
           amountMinor: movement.amount_minor,
         })),
-      ),
-    )
+        repayments.toSorted().at(-1) ?? null,
+      )
+    })
     .sort(byStatusThenDue)
 }
 

@@ -134,7 +134,6 @@ export function CreditFormSheet({ credit, onCloseAction }: CreditFormSheetProps)
               control={form.control}
               name="lender"
               label={translate('form.lender')}
-              hint={translate('form.optional')}
               render={(field) => <Input {...field} />}
             />
           </div>
@@ -161,7 +160,6 @@ export function CreditFormSheet({ credit, onCloseAction }: CreditFormSheetProps)
               control={form.control}
               name="accountId"
               label={translate('form.account')}
-              hint={translate('form.optional')}
               render={(field) => (
                 <Select
                   options={[

@@ -1,14 +1,17 @@
 {
   "add": "Add credit",
   "loadFailed": "Could not load credits. Refresh the page.",
-  "empty": "No credits yet",
-  "emptyHint": "Add a credit or an instalment plan: its instalments show up here and in Upcoming. The full purchase price never becomes an expense — only paid instalments do.",
+  "empty": "No credits or instalment plans yet",
+  "emptyHint": "Add a purchase in instalments: a full schedule, equal instalments or an existing credit by its next date and balance.",
   "count": "{count, plural, one {# credit} other {# credits}}",
   "totals": {
-    "month": "Instalments this month",
+    "month": "Instalments in {month, select, 1 {January} 2 {February} 3 {March} 4 {April} 5 {May} 6 {June} 7 {July} 8 {August} 9 {September} 10 {October} 11 {November} 12 {December} other {}}",
     "remaining": "Total remaining",
     "summary": "{credits, plural, one {# credit} other {# credits}} · {installments, plural, one {# instalment} other {# instalments}} scheduled",
-    "until": "until {date}"
+    "until": "until {date}",
+    "noteToday": "{names} due today",
+    "noteUnconfirmed": "{name} {date} not confirmed",
+    "noteNextMonth": "Next: in {month, select, 1 {January} 2 {February} 3 {March} 4 {April} 5 {May} 6 {June} 7 {July} 8 {August} 9 {September} 10 {October} 11 {November} 12 {December} other {}}, {amount} more"
   },
   "estimatedNote": "Estimated schedule, not the bank's: the sums are split evenly. Check the last instalments and the date rules with the lender.",
   "installments": "Instalments",
@@ -16,7 +19,7 @@
   "paidOf": "{paid} of {total} paid",
   "next": "Next {date} · {amount}",
   "today": "Today · {amount}",
-  "unconfirmedNext": "Instalment {number} · {date}",
+  "unconfirmedNext": "Instalment {number} · {date} · {amount}",
   "remaining": "Remaining",
   "endsOn": "ends {date}",
   "status": {
@@ -37,7 +40,7 @@
     "payNumber": "Paid · instalment {number}",
     "payoff": "Early repayment",
     "edit": "Edit",
-    "close": "Close credit"
+    "close": "Archive"
   },
   "card": {
     "back": "Credits",
@@ -47,7 +50,13 @@
     "paidSummary": "{paid} of {total} paid · {amount}",
     "unconfirmed": "Instalment {number} of {date} is not confirmed. The calendar does not confirm a payment: mark it or link an existing operation.",
     "manage": "Manage",
-    "manageText": "A closed credit stays in the history with its paid instalments and their operations; unpaid instalments are cancelled."
+    "manageText": "A closed credit stays in the history with its paid instalments and their operations; unpaid instalments are cancelled.",
+    "monthly": "monthly on the {day, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "until": "until {date}",
+    "paidShort": "{paid} of {total} paid",
+    "unconfirmedNext": "Instalment {number} · {date} · not confirmed",
+    "unconfirmedAction": "Paid",
+    "viewOnly": "View only: payments, the schedule and the settings of a credit are changed by the owner of the space."
   },
   "schedule": {
     "title": "Instalment schedule",
@@ -60,10 +69,16 @@
       "unconfirmed": "Date passed",
       "partial": "Partly paid",
       "replaced": "Replaced by a new schedule",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "nextShort": "next",
+      "nextIn": "Next · {days, plural, =0 {today} one {in # day} other {in # days}}"
     },
-    "estimated": "Estimated schedule, not the bank's: the sums are split evenly, the rounding remainder goes into the last instalment.",
-    "paidBefore": "{count, plural, one {Instalment 1 was entered as paid} other {Instalments 1–# were entered as paid}} without dates — no fake operations were created."
+    "estimated": "Estimated schedule, not the bank's: {amount} split into {count} equal instalments.",
+    "paidBefore": "{count, plural, one {Instalment 1 was entered as paid} other {Instalments 1–# were entered as paid}} without dates — no fake operations were created.",
+    "estimatedShort": "Estimated schedule, not the bank's.",
+    "paidBeforeShort": "{count, plural, one {Instalment 1 entered as paid} other {Instalments 1–# entered as paid}}, no dates.",
+    "more": "{count, plural, one {# more instalment} other {# more instalments}} · until {date}",
+    "less": "Show less"
   },
   "details": {
     "title": "Details",
@@ -135,11 +150,16 @@
     "done": "Schedule replaced — confirm the payment"
   },
   "close": {
-    "title": "Close the credit «{name}»?",
+    "title": "Archive credit “{name}”?",
     "text": "{count, plural, =0 {No unpaid instalments.} one {# unpaid instalment will be cancelled.} other {# unpaid instalments will be cancelled.}}",
-    "info": "Paid instalments and their operations stay in the history. A credit cannot be deleted yet — only closed.",
-    "confirm": "Close credit",
+    "info": "Paid instalments and their operations stay in the history. A credit cannot be deleted yet, only archived.",
+    "confirm": "Archive",
     "cancel": "Cancel",
-    "done": "Credit closed"
-  }
+    "done": "Credit archived"
+  },
+  "viewOnly": "View only: you can see the credits of a shared space, but cannot mark payments or change the schedule.",
+  "nextShort": "Next {date}",
+  "todayShort": "Today",
+  "unconfirmedShort": "Instalment {number} · {date}",
+  "until": "until {date}"
 }
