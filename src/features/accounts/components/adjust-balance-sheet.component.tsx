@@ -1,10 +1,10 @@
 'use client'
 
-import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Amount } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -18,7 +18,7 @@ import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
 import { useAdjustBalance } from '../hooks/accounts.hook'
 import { type AdjustmentFormValues, adjustmentFormSchema, toAdjustmentInput } from '../schemas/adjustment-form.schema'
-import { type AccountView, adjustmentOf } from '../utils/accounts.utils'
+import type { AccountView } from '../utils/accounts.utils'
 
 const FORM_ID = 'adjust-balance-form'
 
@@ -52,7 +52,8 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
     },
   })
   const actualMinor = toMinor(form.watch('actual'), currency)
-  const change = actualMinor === null ? null : adjustmentOf(account.balanceMinor, actualMinor)
+  // Figma 16:86454: a balance equal to Saldo's reads 0,00, an empty field «—»
+  const differenceMinor = actualMinor === null ? null : actualMinor - account.balanceMinor
 
   const submit = (values: AdjustmentFormValues) =>
     adjust.mutate(
@@ -111,17 +112,16 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
         />
         <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
           <span className="text-label text-text-secondary">{translate('difference')}</span>
-          {change ? (
-            <span className="text-body font-medium text-text-primary">
-              {change.direction === 'in' ? '+' : null}
-              <Amount
-                minor={change.direction === 'in' ? change.amountMinor : -change.amountMinor}
-                currency={currency}
-              />
-            </span>
-          ) : (
-            <span className="text-body font-medium text-text-primary">—</span>
-          )}
+          <span className="text-body font-medium text-text-primary">
+            {differenceMinor === null ? (
+              '—'
+            ) : (
+              <>
+                {differenceMinor > 0 ? '+' : null}
+                <Amount minor={differenceMinor} currency={currency} />
+              </>
+            )}
+          </span>
         </div>
         <FormField
           control={form.control}
@@ -144,10 +144,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
           hint={translate('noteHint')}
           render={(field) => <Textarea {...field} />}
         />
-        <p className="flex items-center gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body font-medium text-primary-text">
-          <Info aria-hidden size={20} className="shrink-0" />
-          {translate('effect', { account: account.name })}
-        </p>
+        <Banner>{translate('effect', { account: account.name })}</Banner>
       </form>
     </Sheet>
   )

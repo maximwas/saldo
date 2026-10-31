@@ -1,10 +1,10 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { Banner } from '@/components/ui/banner.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
@@ -148,16 +148,18 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
         hint={translate('refund.noteHint')}
         render={(field) => <Textarea {...field} />}
       />
-      <p className="flex items-center gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body font-medium text-primary-text">
-        <Info aria-hidden size={20} className="shrink-0" />
-        {category && month && amount
-          ? translate('refund.effect', {
-              month,
-              category,
-              amount: formatMinor(amount, currency, locale),
-            })
-          : translate('refund.info')}
-      </p>
+      {/* Figma 15:79735: the «more than refundable» state drops the banner */}
+      {form.formState.errors.amount ? null : (
+        <Banner>
+          {category && month && amount
+            ? translate('refund.effect', {
+                month,
+                category,
+                amount: formatMinor(amount, currency, locale),
+              })
+            : translate('refund.info')}
+        </Banner>
+      )}
     </form>
   )
 }
