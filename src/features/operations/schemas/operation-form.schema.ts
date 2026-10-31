@@ -35,8 +35,9 @@ export const operationFormSchema = z
     path: ['note'],
     message: 'adjustmentNote',
   })
-  // Figma new-operation error frames 5:93500 / 5:101464: an expense needs both
-  .refine((values) => values.kind !== 'expense' || values.categoryId !== null, {
+  // Figma new-operation error frames 5:93500 / 5:101464: an expense needs both; income frames 2:17848 / 2:19885 mark
+  // the category required too
+  .refine((values) => (values.kind !== 'expense' && values.kind !== 'income') || values.categoryId !== null, {
     path: ['categoryId'],
     message: 'categoryRequired',
   })

@@ -55,8 +55,10 @@ test('перекази й позика не потрапляють у доход
 
     if (kind === 'expense') {
       await sheet.getByLabel('Одержувач').fill(person)
-      await pickCategory(page, sheet)
     }
+
+    // an income needs a category too (Figma 2:17848)
+    await pickCategory(page, sheet, kind === 'expense' ? 'Продукти' : 'Зарплата')
 
     await sheet.getByRole('button', { name: 'Зберегти' }).click()
     await expect(sheet).toBeHidden()

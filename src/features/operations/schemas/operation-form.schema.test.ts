@@ -71,7 +71,7 @@ describe('operationFormSchema', () => {
     }
   })
 
-  it('requires a category and a recipient on an expense only (Figma 5:93500, 5:101464)', () => {
+  it('requires a category and a recipient on an expense, a category on an income (Figma 5:93500, 2:17848)', () => {
     const blank = {
       ...expense,
       categoryId: null,
@@ -86,11 +86,13 @@ describe('operationFormSchema', () => {
       ['counterparty', 'counterpartyRequired'],
     ])
     expect(
-      operationFormSchema.safeParse({
-        ...blank,
-        kind: 'income',
-      }).success,
-    ).toBe(true)
+      operationFormSchema
+        .safeParse({
+          ...blank,
+          kind: 'income',
+        })
+        .error?.issues.map((issue) => [issue.path.join('.'), issue.message]),
+    ).toEqual([['categoryId', 'categoryRequired']])
   })
 
   it('requires a note on an adjustment (§5)', () => {
@@ -220,7 +222,7 @@ describe('factFormSchema', () => {
     amount: '100',
     currency: 'UAH' as const,
     accountId: '7d6f2b1e-4a8c-4f3e-9b2a-1c5d8e7f6a90',
-    categoryId: null,
+    categoryId: CATEGORY,
     occurredOn,
     occurredTime: '',
     counterparty: '',
