@@ -16,8 +16,11 @@
   },
   "filters": {
     "text": "Текст",
-    "textTitle": "Пошук за текстом",
-    "textHint": "Одержувач або коментар",
+    "textTitle": "Текст",
+    "textHint": "Шукає в одержувачі й примітці",
+    "textLabel": "Що шукати",
+    "textChip": "Текст: {query}",
+    "textReset": "Скинути",
     "textApply": "Показати",
     "period": "Період",
     "allTime": "Весь час",
@@ -79,6 +82,8 @@
   "truncated": "Показано останні {count} операцій. Звузьте період або фільтр.",
   "form": {
     "newTitle": "Нова операція",
+    "newTitleOn": "Новий запис на {date}",
+    "dateFromCalendar": "Дата з календаря — можна змінити",
     "editTitle": "Операція",
     "transferTitle": "Переказ між рахунками",
     "deleteTitle": "Видалити операцію?",

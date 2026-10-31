@@ -28,6 +28,8 @@ type OperationFormProps = {
   /** income or expense: the kind of the sheet's switch (an edited row keeps its own) */
   kind: 'expense' | 'income'
   defaults?: Partial<OperationFormValues>
+  /** the date came from a calendar day: say it can still be changed (Figma 2:72362) */
+  dateFromCalendar?: boolean
   /** a new operation keeps what is typed as a draft under this key (drafts.store.ts) */
   draftKey?: string
   disabled?: boolean
@@ -45,6 +47,7 @@ export function OperationForm({
   formId,
   kind,
   defaults,
+  dateFromCalendar = false,
   draftKey,
   disabled = false,
   onSubmitAction,
@@ -173,6 +176,7 @@ export function OperationForm({
           control={form.control}
           name="occurredOn"
           label={translate('date')}
+          hint={dateFromCalendar ? translate('dateFromCalendar') : undefined}
           required
           render={(field) => (
             <DatePicker

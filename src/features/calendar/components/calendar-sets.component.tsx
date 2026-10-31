@@ -1,9 +1,10 @@
 'use client'
 
-import { Bookmark, Check, SlidersHorizontal, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
+import { Chip } from '@/components/ui/chip.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
@@ -19,32 +20,6 @@ import {
   type UrlFilter,
 } from '../utils/calendar-filters.utils'
 import { CalendarFilterSheet } from './calendar-filter-sheet.component'
-
-type ChipProps = {
-  pressed: boolean
-  onClick: () => void
-  children: React.ReactNode
-}
-
-// Figma «Saldo» → Calendar 2:66942 chips: the active one primary-soft with a check, the rest outlined on white
-function Chip({ pressed, onClick, children }: ChipProps) {
-  return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onClick}
-      className={cn(
-        'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-label font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
-        pressed
-          ? 'bg-primary-soft text-primary-text'
-          : 'border border-border-strong bg-card text-text-primary hover:bg-subtle',
-      )}
-    >
-      {pressed && <Check aria-hidden size={16} />}
-      {children}
-    </button>
-  )
-}
 
 const asList = (value: unknown) => (Array.isArray(value) ? value : [value]).map(String)
 
@@ -88,8 +63,10 @@ function useChipLabel() {
   }
 }
 
-// Figma «Saldo» → Calendar 2:66942 / 2:77407: quick sets (§18) and the space's own sets as chips, «Reset filters» and
-// «Filters» on the right; the active refinements (no frame) as removable chips under them
+// Figma «Saldo» → Calendar 2:66942 / 2:77407 / 2:69624: quick sets (§18) and the space's own sets as Chip 2:7714 (the
+// active one primary-soft with a check), gap 8, wrapping; «Filters» is a 36 Button at the end on desktop and the last,
+// chip-shaped one on phones. With a filter on, «Reset filters» stands before it. The active refinements (no frame) are
+// removable chips under them.
 export function CalendarSets() {
   const translate = useTranslations('calendar')
   const { filter, setUrl } = useCalendarParams()
@@ -98,39 +75,46 @@ export function CalendarSets() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const quickSet = activeQuickSet(filter)
   const chips = activeChips(filter)
+  const filtered = Object.keys(filter).length > 0
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <fieldset className="-mx-5 flex min-w-0 gap-2 overflow-x-auto px-5 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
+        <fieldset className="contents">
           <legend className="sr-only">{translate('sets.label')}</legend>
           {QUICK_SETS.map((set) => (
-            <Chip key={set.key} pressed={quickSet === set.key} onClick={() => void setUrl(typeKeysOf(set.filter))}>
+            <Chip key={set.key} selected={quickSet === set.key} onClick={() => void setUrl(typeKeysOf(set.filter))}>
               {translate(`sets.${set.key}`)}
             </Chip>
           ))}
           {saved.data?.map((set) => (
             <Chip
               key={set.id}
-              pressed={sameFilter(filter, set.filter)}
+              selected={sameFilter(filter, set.filter)}
               onClick={() => void setUrl(fromFilter(set.filter))}
             >
-              <Bookmark aria-hidden size={16} />
               {set.name}
             </Chip>
           ))}
         </fieldset>
-        <div className="flex gap-2 lg:ml-auto">
-          {Object.keys(filter).length > 0 && (
-            <Button variant="secondary" size="s" onClick={() => void setUrl(fromFilter({}))}>
-              {translate('filters.reset')}
-            </Button>
-          )}
-          <Button variant="secondary" size="s" onClick={() => setSheetOpen(true)}>
-            <SlidersHorizontal aria-hidden size={16} />
-            {translate('filters.open')}
+        {filtered && (
+          <Button
+            variant="secondary"
+            size="s"
+            className="rounded-full lg:ml-auto lg:rounded-md"
+            onClick={() => void setUrl(fromFilter({}))}
+          >
+            {translate('filters.reset')}
           </Button>
-        </div>
+        )}
+        <Button
+          variant="secondary"
+          size="s"
+          className={cn('h-9.5 rounded-full lg:h-9 lg:rounded-md', !filtered && 'lg:ml-auto')}
+          onClick={() => setSheetOpen(true)}
+        >
+          {translate('filters.open')}
+        </Button>
       </div>
       {chips.length > 0 && (
         <ul className="flex flex-wrap gap-2">

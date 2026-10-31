@@ -96,9 +96,10 @@
     "income": "Income",
     "expense": "Expenses",
     "result": "Result",
-    "plan": "Still planned until {date}",
     "count": "{count, plural, =0 {No entries} one {# entry} other {# entries}}",
-    "unknown": "{count, plural, one {# entry without a base-currency amount is not counted} other {# entries without a base-currency amount are not counted}}"
+    "unknown": "{count, plural, one {# entry without a base-currency amount is not counted} other {# entries without a base-currency amount are not counted}}",
+    "planMonth": "with the plan to the end of the month: {amount}",
+    "planUntil": "with the plan to {date}: {amount}"
   },
   "more": "{count} more",
   "day": {
@@ -112,7 +113,12 @@
     "add": "Add an entry on {date}",
     "plannedOn": "Planned date {date}",
     "paidOf": "Paid <paid></paid> of <planned></planned>",
-    "open": "Open the day {date}"
+    "open": "Open the day {date}",
+    "openHint": "Tap an entry to open its details — the filters are kept.",
+    "emptyTitle": "No entries on this day",
+    "emptyText": "No actual operations and no planned payments.",
+    "title": "{date} · {count}",
+    "today": "Today, {weekday} {date}"
   },
   "actions": {
     "pay": "Paid",
@@ -122,12 +128,24 @@
       "credit": "To the credit",
       "debt": "To the debt",
       "other": "To payments"
-    }
+    },
+    "remove": "Remove entry"
   },
   "listTitle": "{period} · newest first",
   "empty": {
     "title": "Nothing matches the filter",
     "text": "Nothing was found in this period. Change or reset the filters.",
-    "period": "No entries in this period"
+    "period": "No entries in this period",
+    "titleNamed": "Nothing matches «{name}»"
+  },
+  "viewOnly": "View only: the space owner pays, moves dates and adds entries.",
+  "remove": {
+    "title": "Remove the entry {name} {date}?",
+    "consequences": "The planned payment of {amount} for {date} disappears from the calendar, Upcoming and the «Available» figure.",
+    "consequencesNoAmount": "The planned payment for {date} disappears from the calendar, Upcoming and the «Available» figure.",
+    "details": "{source, select, subscription {The {name} subscription and its next payments stay. To remove the whole subscription, cancel it in the subscription card. This entry has no actual operations.} other {Other payments stay. This entry has no actual operations.}}",
+    "keep": "Cancel",
+    "confirm": "Remove entry",
+    "done": "Entry removed"
   }
 }

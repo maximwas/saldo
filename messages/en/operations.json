@@ -16,8 +16,11 @@
   },
   "filters": {
     "text": "Text",
-    "textTitle": "Search by text",
-    "textHint": "Payee or comment",
+    "textTitle": "Text",
+    "textHint": "Searches the payee and the note",
+    "textLabel": "What to search for",
+    "textChip": "Text: {query}",
+    "textReset": "Reset",
     "textApply": "Show",
     "period": "Period",
     "allTime": "All time",
@@ -79,6 +82,8 @@
   "truncated": "Showing the latest {count} operations. Narrow the period or the filter.",
   "form": {
     "newTitle": "New operation",
+    "newTitleOn": "New entry on {date}",
+    "dateFromCalendar": "Date from the calendar — you can change it",
     "editTitle": "Operation",
     "transferTitle": "Transfer between accounts",
     "deleteTitle": "Delete this operation?",

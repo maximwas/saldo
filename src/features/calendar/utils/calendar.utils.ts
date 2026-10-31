@@ -133,20 +133,22 @@ type ToneFields = {
   sourceType: string | null
 }
 
-/** legend colour of an entry (Figma «Calendar» legend): its source first, otherwise its kind */
+/** legend colour of an entry (Figma «Calendar» legend 2:67113): its source first, otherwise its kind; a plan draws the
+ * marker as an outline (border class), a fact fills it (bg class) */
 export const LEGEND = [
-  ['expense', 'bg-neutral'],
-  ['income', 'bg-positive'],
-  ['transfer', 'bg-border-strong'],
-  ['subscription', 'bg-cat-blue'],
-  ['credit', 'bg-cat-orange'],
-  ['debt', 'bg-cat-pink'],
-  ['big_expense', 'bg-cat-cyan'],
-  ['auto_plan', 'bg-cat-teal'],
-  ['tax', 'bg-cat-yellow'],
+  ['expense', 'bg-neutral', 'border-neutral'],
+  ['income', 'bg-positive', 'border-positive'],
+  ['transfer', 'bg-border-strong', 'border-border-strong'],
+  ['subscription', 'bg-primary', 'border-primary'],
+  ['credit', 'bg-cat-orange', 'border-cat-orange'],
+  ['debt', 'bg-cat-pink', 'border-cat-pink'],
+  ['big_expense', 'bg-cat-cyan', 'border-cat-cyan'],
+  ['auto_plan', 'bg-cat-teal', 'border-cat-teal'],
+  ['tax', 'bg-cat-yellow', 'border-cat-yellow'],
 ] as const
 
-const TONE: Record<string, string> = Object.fromEntries(LEGEND)
+const TONE: Record<string, string> = Object.fromEntries(LEGEND.map(([key, fill]) => [key, fill]))
+const OUTLINE: Record<string, string> = Object.fromEntries(LEGEND.map(([key, , outline]) => [key, outline]))
 const KIND_GROUP: Record<string, string> = {
   income: 'income',
   transfer_out: 'transfer',
@@ -154,8 +156,12 @@ const KIND_GROUP: Record<string, string> = {
   debt_out: 'debt',
 }
 
-export const entryTone = ({ kind, sourceType }: ToneFields) =>
-  TONE[sourceType ?? ''] ?? TONE[KIND_GROUP[kind] ?? 'expense'] ?? TONE.expense
+const toneKey = ({ kind, sourceType }: ToneFields) =>
+  sourceType && sourceType in TONE ? sourceType : (KIND_GROUP[kind] ?? 'expense')
+
+export const entryTone = (entry: ToneFields) => TONE[toneKey(entry)] ?? TONE.expense
+
+export const entryOutline = (entry: ToneFields) => OUTLINE[toneKey(entry)] ?? OUTLINE.expense
 
 const SOURCE_HREF: Record<string, (sourceId: string) => string> = {
   subscription: (sourceId) => `/payments/subscriptions?sub=${sourceId}`,

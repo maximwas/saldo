@@ -45,8 +45,9 @@ function usePeriodTitle() {
   return `${capitalize(month)} ${date.slice(0, 4)}`
 }
 
-// Figma «Saldo» → Calendar 2:66942 / 2:69624: arrows, the period, «Today» and the Month / Week / Day / List switch
-// (full width on mobile); the arrows step by the unit of the view
+// Figma «Saldo» → CalendarHeader 2:11018: 36 arrows (card, hairline border), the period in display/number-sm, «Today»,
+// the Month / Week / Day / List switch at the end (a row of its own, full width, on phones 2:69641; the arrows have no
+// phone frame and stay so the months can be changed); the arrows step by the unit of the view. 100 high on desktop.
 export function CalendarToolbar() {
   const translate = useTranslations('calendar')
   const { view, date, setUrl } = useCalendarParams()
@@ -58,12 +59,12 @@ export function CalendarToolbar() {
     })
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-4 lg:h-25 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex items-center gap-3">
         <Button
           variant="secondary"
           size="s"
-          className="w-9 px-0"
+          className="w-9 border-border px-0"
           aria-label={translate('previous')}
           onClick={() => step(-1)}
         >
@@ -72,13 +73,13 @@ export function CalendarToolbar() {
         <Button
           variant="secondary"
           size="s"
-          className="w-9 px-0"
+          className="w-9 border-border px-0"
           aria-label={translate('next')}
           onClick={() => step(1)}
         >
           <ChevronRight aria-hidden size={20} />
         </Button>
-        <h2 className="min-w-0 flex-1 truncate text-card-title text-text-primary lg:flex-none">{title}</h2>
+        <h2 className="min-w-0 flex-1 truncate font-display text-number-sm text-text-primary lg:flex-none">{title}</h2>
         <Button
           variant="secondary"
           size="s"

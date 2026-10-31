@@ -60,7 +60,7 @@ type OperationFiltersProps = {
 // Figma Saldo file → Operations 2:11403 "Filters" (gap 16): the type switch, then Chip 2:7714 selects (gap 8; the period
 // is always the selected look with a check); on mobile 2:13681 the chips stay in one line that scrolls to the screen
 // edge. Category options carry their CategoryBadge. The «Text» chip (2:13725; on, it reads the text with a check, 5:102493)
-// is the phones' text search (their top bar has none); its open state is not drawn, so it opens a sheet with one field.
+// is the phones' text search (their top bar has none); its sheet 36:108126 is one «What to search for» field with «Reset» / «Show», and the chip reads «Text: query» (36:108858).
 // Currency, amount and link chips wait for their phases.
 export function OperationFilters({
   period,
@@ -195,7 +195,7 @@ export function OperationFilters({
           />
         )}
         <Chip selected={text !== null} onClick={() => setTextOpen(true)}>
-          {text === null ? translate('filters.text') : `«${text}»`}
+          {text === null ? translate('filters.text') : translate('filters.textChip', { query: text })}
         </Chip>
       </div>
       <Sheet
@@ -204,8 +204,15 @@ export function OperationFilters({
         title={translate('filters.textTitle')}
         footer={
           <>
-            <Button type="button" variant="secondary" onClick={() => setTextOpen(false)}>
-              {translate('form.cancel')}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                onChangeAction({ q: null })
+                setTextOpen(false)
+              }}
+            >
+              {translate('filters.textReset')}
             </Button>
             <Button type="submit" form={TEXT_FORM_ID}>
               {translate('filters.textApply')}
@@ -214,7 +221,7 @@ export function OperationFilters({
         }
       >
         <form id={TEXT_FORM_ID} noValidate onSubmit={applyText}>
-          <Field label={translate('filters.text')} hint={translate('filters.textHint')}>
+          <Field label={translate('filters.textLabel')} hint={translate('filters.textHint')}>
             <Input name="q" type="search" autoFocus maxLength={200} defaultValue={text ?? ''} />
           </Field>
         </form>

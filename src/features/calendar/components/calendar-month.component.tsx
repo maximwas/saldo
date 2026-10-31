@@ -2,28 +2,31 @@
 
 import { useFormatter, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
-import { Badge } from '@/components/ui/badge.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import type { CalendarEntry } from '../api/calendar.api'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
 import { capitalize, type DayTotals, dayDate, entryTone, groupByDay, LEGEND, monthGrid } from '../utils/calendar.utils'
+import { EntryLine } from './calendar-entry.component'
 
 const SHOWN = 3
 
 type DayCellProps = {
   day: string
+  /** 0 = Monday … 6 = Sunday */
+  column: number
   entries: CalendarEntry[]
   totals: DayTotals | undefined
 }
 
-function DayCell({ day, entries, totals }: DayCellProps) {
+function DayCell({ day, column, entries, totals }: DayCellProps) {
   const translate = useTranslations('calendar')
   const format = useFormatter()
   const { baseCurrency } = useLedger()
   const { date, today, setUrl } = useCalendarParams()
   const inMonth = day.slice(0, 7) === date.slice(0, 7)
+  const selected = day === date
   const factMinor = totals ? totals.factIncomeMinor - totals.factExpenseMinor : 0
   const planMinor = totals ? totals.planInMinor - totals.planOutMinor : 0
   const hasPlan = entries.some((entry) => entry.entry === 'plan')
@@ -33,7 +36,7 @@ function DayCell({ day, entries, totals }: DayCellProps) {
     <button
       type="button"
       data-day={day}
-      aria-pressed={day === date}
+      aria-pressed={selected}
       aria-label={translate('day.open', {
         date: format.dateTime(dayDate(day), {
           timeZone: 'UTC',
@@ -47,14 +50,17 @@ function DayCell({ day, entries, totals }: DayCellProps) {
           item: null,
         })
       }
+      // Figma CalendarDay 2:10880 (mobile: 56 high, rounded md, number over dots) and 2:10855 (desktop: 192 high, padding 8,
+      // gap 6, right / bottom hairlines; weekend and neighbouring-month days on the app ground; selected: primary border + soft fill)
       className={cn(
-        'flex min-h-14 flex-col items-center gap-1 border-border p-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:min-h-36 lg:items-stretch lg:border-t lg:border-l lg:p-2',
-        day === date && 'rounded-inner bg-primary-soft lg:rounded-none lg:ring-2 lg:ring-inset lg:ring-primary',
+        'flex h-14 flex-col items-center gap-1 rounded-md py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:h-48 lg:items-stretch lg:gap-1.5 lg:rounded-none lg:border-r lg:border-b lg:border-border lg:p-2',
+        !inMonth || column > 4 ? 'lg:bg-app' : 'lg:bg-card',
+        selected && 'bg-primary-soft lg:border lg:border-primary',
       )}
     >
       <span
         className={cn(
-          'flex size-7 items-center justify-center rounded-full text-label font-medium',
+          'flex size-7 shrink-0 items-center justify-center rounded-full text-label font-medium lg:size-6 lg:font-semibold',
           inMonth ? 'text-text-primary' : 'text-text-tertiary',
           day === today && 'bg-primary text-on-primary',
         )}
@@ -66,23 +72,26 @@ function DayCell({ day, entries, totals }: DayCellProps) {
           <span key={entry.id} className={cn('size-1.5 rounded-full', entryTone(entry))} />
         ))}
       </span>
-      <span className="hidden flex-1 flex-col gap-0.5 lg:flex">
+      <span className="hidden min-w-0 flex-1 flex-col lg:flex">
         {entries.slice(0, SHOWN).map((entry) => (
-          <span key={entry.id} className="flex items-center gap-1.5 truncate text-caption text-text-primary">
-            <span aria-hidden className={cn('h-3 w-0.5 shrink-0 rounded-full', entryTone(entry))} />
-            <span className="truncate">{entry.title}</span>
-          </span>
+          <EntryLine key={entry.id} entry={entry} name={entry.title ?? ''} />
         ))}
         {entries.length > SHOWN && (
-          <span className="text-caption text-text-tertiary">
+          <span className="text-caption text-text-secondary">
             {translate('more', { count: entries.length - SHOWN })}
           </span>
         )}
       </span>
       {totals && (
-        <span className="hidden flex-col items-start gap-1 border-t border-border pt-1 lg:flex">
-          {hasPlan && <Badge tone="plan">{translate('day.plan')}</Badge>}
-          {hasPlan && <Amount minor={planMinor} currency={baseCurrency} kind="plan" className="text-caption" />}
+        <span className="hidden flex-col border-t border-border pt-1.5 lg:flex">
+          {hasPlan && (
+            <span className="flex flex-wrap items-center gap-1 gap-y-0.5">
+              <span className="rounded-full border border-border-strong px-2.5 py-0.5 text-caption font-medium text-text-secondary">
+                {translate('day.plan')}
+              </span>
+              <Amount minor={planMinor} currency={baseCurrency} kind="plan" className="text-caption font-normal" />
+            </span>
+          )}
           {hasFact && <Amount minor={factMinor} currency={baseCurrency} className="text-caption" />}
         </span>
       )}
@@ -103,9 +112,10 @@ function useWeekdayNames(days: string[]) {
   )
 }
 
-// Figma «Saldo» → Calendar 2:66942 (desktop: cells with up to three entries, a colour bar per source, the day's plan
-// pill and fact / plan sums at the bottom, the legend below) and 2:69624 (mobile: number and up to three dots).
-// Only the shown month is read: days of the neighbouring months stay empty and grey.
+// Figma «Saldo» → Calendar 2:66942 (desktop: weekday strip on subtle, cells with up to three entries, the day's plan pill
+// and fact / plan sums at the bottom, the legend below; the grid has top / left hairlines, every cell right / bottom) and
+// 2:69624 (mobile: a card, padding 12 / 8, weekdays in micro, number and up to three dots). Only the shown month is
+// read: days of the neighbouring months stay empty and grey.
 export function CalendarMonth() {
   const translate = useTranslations('calendar')
   const { date } = useCalendarParams()
@@ -116,23 +126,32 @@ export function CalendarMonth() {
   const totalsByDay = new Map((totals.data ?? []).map((row) => [row.day, row]))
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-card bg-card p-3 shadow-card lg:p-0">
-        <div aria-hidden className="grid grid-cols-7 pb-2 text-center text-caption text-text-secondary lg:py-2">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1 overflow-hidden rounded-card bg-card px-2 py-3 shadow-card lg:gap-0 lg:border-t lg:border-l lg:border-border lg:p-0">
+        <div
+          aria-hidden
+          className="grid grid-cols-7 pb-1 text-center text-micro text-text-tertiary lg:border-r lg:border-b lg:border-border lg:bg-subtle lg:py-2 lg:pb-2 lg:text-caption lg:font-medium lg:text-text-secondary"
+        >
           {weekdays.map((name) => (
             <span key={name}>{name}</span>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-y-1 lg:-ml-px lg:gap-y-0">
-          {days.map((day) => (
-            <DayCell key={day} day={day} entries={byDay.get(day) ?? []} totals={totalsByDay.get(day)} />
+        <div className="grid grid-cols-7">
+          {days.map((day, index) => (
+            <DayCell
+              key={day}
+              day={day}
+              column={index % 7}
+              entries={byDay.get(day) ?? []}
+              totals={totalsByDay.get(day)}
+            />
           ))}
         </div>
       </div>
-      <ul className="hidden flex-wrap gap-x-4 gap-y-1 text-caption text-text-secondary lg:flex">
+      <ul className="hidden flex-wrap gap-x-4 gap-y-2 text-label text-text-secondary lg:flex">
         {LEGEND.map(([key, tone]) => (
-          <li key={key} className="flex items-center gap-1.5">
-            <span aria-hidden className={cn('h-3 w-0.5 rounded-full', tone)} />
+          <li key={key} className="flex items-center gap-2">
+            <span aria-hidden className={cn('h-3.5 w-0.75 rounded-full', tone)} />
             {translate(`legend.${key}`)}
           </li>
         ))}
