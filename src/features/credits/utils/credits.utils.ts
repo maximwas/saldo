@@ -166,17 +166,17 @@ export type MonthNotes = {
   dueToday: string[]
   /** credits with an installment whose date passed unconfirmed */
   unconfirmed: {
- name: string;
-dueOn: string 
-}[]
+    name: string
+    dueOn: string
+  }[]
 }
 
 /** the caption under «Installments in October»: who is due today and whose date passed */
 export function monthNotes(credits: readonly Credit[], today: string): MonthNotes {
   const notes: MonthNotes = {
- dueToday: [],
-unconfirmed: [] 
-}
+    dueToday: [],
+    unconfirmed: [],
+  }
 
   for (const credit of credits.filter((candidate) => candidate.status === 'active')) {
     const name = credit.lender ?? credit.name
@@ -189,9 +189,9 @@ unconfirmed: []
 
     if (late) {
       notes.unconfirmed.push({
- name,
-dueOn: late.dueOn 
-})
+        name,
+        dueOn: late.dueOn,
+      })
     }
   }
 

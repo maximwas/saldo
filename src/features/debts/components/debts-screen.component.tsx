@@ -1,14 +1,22 @@
 'use client'
 
-import { Info, Plus } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useQueryClient } from '@tanstack/react-query'
+import { HandCoins, Plus } from 'lucide-react'
+import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Amount } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { Card } from '@/components/ui/card.component'
+import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { formatMinor } from '@/lib/money/money.utils'
+import { resumeWrites } from '@/lib/query/ledger-writes.mutations'
+import { useSyncQueue } from '@/lib/query/sync-queue.hook'
 import type { DebtRow } from '../api/debts.api'
-import { useDebts } from '../hooks/debts.hook'
-import { type CurrencyTotal, openCount, owedTotals } from '../utils/debt-groups.utils'
+import { useDebts, useQueuedRepayments } from '../hooks/debts.hook'
+import { type CurrencyTotal, nearestDue, openCount, owedTotals, partlyRepaid } from '../utils/debt-groups.utils'
 import type { DebtDirection } from '../utils/debts.utils'
 import { DebtFormSheet } from './debt-form-sheet.component'
 import { type DebtAction, DebtRowItem } from './debt-row.component'
@@ -78,16 +86,26 @@ function sheetFor(debt: DebtRow, action: DebtAction): Sheet {
   }
 }
 
-// Figma «Saldo» → Personal debts, Desktop 2:61492 / Mobile 2:61784 (two totals, a note, two cards: owed to me and
-// I owe), empty Mobile 2:66269, loading Mobile 2:66731 (skeleton), view-only Desktop 2:65522 (no action buttons).
+// Figma «Saldo» → Personal debts, Desktop 2:61492 / Mobile 2:61784 (Tabs, two totals, a note, two cards: owed to me and
+// I owe), empty Mobile 2:66269, loading Mobile 2:66731, offline Desktop 2:65228 (amber banner with the queued
+// repayment), view-only Desktop 2:65522 (no action buttons).
 export function DebtsScreen() {
   const translate = useTranslations('debts')
+  const locale = useLocale()
   const canWrite = useCanWrite()
+  const queryClient = useQueryClient()
+  const { online } = useSyncQueue()
+  const queued = useQueuedRepayments()
   const { data, isPending, isError } = useDebts()
   const [sheet, setSheet] = useState<Sheet>(null)
 
   if (isPending) {
-    return <DebtsSkeleton />
+    return (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <PaymentsTabs />
+        <DebtsSkeleton />
+      </div>
+    )
   }
 
   if (isError) {
@@ -99,32 +117,58 @@ export function DebtsScreen() {
   }
 
   const close = () => setSheet(null)
+  const waiting = queued.length > 0 && !online ? data.find((debt) => debt.id === queued[0]?.movement.debt_id) : null
+  const addDebt = () =>
+    setSheet({
+      kind: 'form',
+      debt: null,
+    })
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      {canWrite && (
+      <PaymentsTabs />
+      {!canWrite && data.length > 0 && <Banner>{translate('viewOnly')}</Banner>}
+      {waiting && (
+        <Banner
+          kind="warning"
+          role="alert"
+          action={
+            <button type="button" className="cursor-pointer" onClick={() => void resumeWrites(queryClient)}>
+              {translate('offlineRetry')}
+            </button>
+          }
+        >
+          {translate('offline', {
+            person: waiting.person,
+            amount: formatMinor(queued[0]?.movement.amount_minor ?? 0, waiting.currency, locale),
+          })}
+        </Banner>
+      )}
+      {canWrite && data.length > 0 && (
         <div className="flex justify-end">
-          <Button
-            onClick={() =>
-              setSheet({
-                kind: 'form',
-                debt: null,
-              })
-            }
-          >
+          <Button onClick={addDebt}>
             <Plus aria-hidden size={20} />
             {translate('add')}
           </Button>
         </div>
       )}
       {data.length === 0 ? (
-        <div className="flex flex-col gap-1 rounded-card bg-card p-6 text-center shadow-card">
-          <p className="text-body font-medium text-text-primary">{translate('empty')}</p>
-          <p className="text-caption text-text-secondary">{translate('emptyHint')}</p>
-        </div>
+        <section className="flex flex-col items-center rounded-card bg-card px-5 py-10 shadow-card">
+          <div className="flex w-full max-w-100 flex-col items-center gap-3 p-2 text-center">
+            <span
+              aria-hidden
+              className="flex size-10 items-center justify-center rounded-full bg-cat-green-soft text-cat-green-text"
+            >
+              <HandCoins className="size-5" />
+            </span>
+            <h2 className="w-full text-body font-semibold text-text-primary">{translate('empty')}</h2>
+            <p className="w-full text-label text-text-secondary">{translate('emptyHint')}</p>
+            {canWrite && <Button onClick={addDebt}>{translate('add')}</Button>}
+          </div>
+        </section>
       ) : (
         <>
-          <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+          <div className="grid grid-cols-2 gap-4 lg:gap-6">
             {GROUPS.map((group) => (
               <DebtTotal
                 key={group.key}
@@ -134,19 +178,18 @@ export function DebtsScreen() {
               />
             ))}
           </div>
-          <p className="flex gap-3 rounded-inner bg-primary-soft p-4 text-body-medium text-primary-text">
-            <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
-            {translate('note')}
-          </p>
-          <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-6">
+          <Banner>
+            <span className="max-lg:hidden">{translate('note')}</span>
+            <span className="lg:hidden">{translate('noteShort')}</span>
+          </Banner>
+          <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
             {GROUPS.map((group) => (
-              <section key={group.key} className="flex flex-col gap-4 rounded-card bg-card p-5 shadow-card lg:p-6">
-                <h2 className="text-card-title text-text-primary">{translate(`groups.${group.key}`)}</h2>
+              <Card key={group.key} title={translate(`groups.${group.key}`)}>
                 <DebtList
                   debts={data.filter((debt) => debt.direction === group.direction)}
-                  onAction={(debt, action) => setSheet(sheetFor(debt, action))}
+                  onActionAction={(debt, action) => setSheet(sheetFor(debt, action))}
                 />
-              </section>
+              </Card>
             ))}
           </div>
         </>
@@ -160,10 +203,10 @@ export function DebtsScreen() {
 
 type DebtListProps = {
   debts: DebtRow[]
-  onAction: (debt: DebtRow, action: DebtAction) => void
+  onActionAction: (debt: DebtRow, action: DebtAction) => void
 }
 
-function DebtList({ debts, onAction }: DebtListProps) {
+function DebtList({ debts, onActionAction }: DebtListProps) {
   const translate = useTranslations('debts')
 
   if (debts.length === 0) {
@@ -171,9 +214,9 @@ function DebtList({ debts, onAction }: DebtListProps) {
   }
 
   return (
-    <ul className="flex flex-col gap-5">
+    <ul className="flex flex-col gap-4">
       {debts.map((debt) => (
-        <DebtRowItem key={debt.id} debt={debt} onAction={(action) => onAction(debt, action)} />
+        <DebtRowItem key={debt.id} debt={debt} onActionAction={(action) => onActionAction(debt, action)} />
       ))}
     </ul>
   )
@@ -185,26 +228,58 @@ type DebtTotalProps = {
   label: string
 }
 
+// Figma «Saldo» → StatCard: padding 24, gap 12, label-medium, Amount L, caption tertiary; the caption on desktop names
+// the first partly repaid debt (owed to me) or the nearest due date (I owe), on mobile only the count
 function DebtTotal({ debts, direction, label }: DebtTotalProps) {
   const translate = useTranslations('debts')
+  const format = useFormatter()
+  const locale = useLocale()
   const totals = owedTotals(debts, direction)
   const count = openCount(debts, direction)
+  const lead = partlyRepaid(debts, direction)
+  const due = nearestDue(debts, direction)
+  const dueText = due
+    ? translate('summary.nearestDue', {
+        date: format.dateTime(new Date(`${due}T12:00:00Z`), {
+          timeZone: 'UTC',
+          day: '2-digit',
+          month: '2-digit',
+        }),
+      })
+    : null
+  const leadText = lead
+    ? translate('summary.repaidLead', {
+        person: lead.person,
+        repaid: formatMinor(lead.repaidMinor, lead.currency, locale),
+        principal: formatMinor(lead.principalMinor, lead.currency, locale),
+      })
+    : null
+  const extra = leadText ?? dueText
 
   return (
-    <div className="flex flex-col gap-2 rounded-card bg-card p-5 shadow-card lg:p-6">
+    <section className="flex flex-col gap-3 rounded-card bg-card p-6 shadow-card">
       <p className="text-label font-medium text-text-secondary">{label}</p>
       <TotalAmounts totals={totals} />
-      <p className="text-caption text-text-secondary">
-        {count === 0 ? translate('summary.none') : translate('summary.count', { count })}
+      <p className="text-caption text-text-tertiary">
+        {count === 0 ? (
+          translate('summary.none')
+        ) : (
+          <>
+            <span className="max-lg:hidden">
+              {[translate('summary.count', { count }), extra].filter(Boolean).join(' · ')}
+            </span>
+            <span className="lg:hidden">{translate('summary.countShort', { count })}</span>
+          </>
+        )}
       </p>
-    </div>
+    </section>
   )
 }
 
 // one figure per currency: amounts of different currencies are never added up without rates
 function TotalAmounts({ totals }: { totals: CurrencyTotal[] }) {
   if (totals.length === 0) {
-    return <Amount minor={0} currency="UAH" size="l" kind="plan" />
+    return <Amount minor={0} currency="UAH" size="l" />
   }
 
   return (
@@ -216,14 +291,28 @@ function TotalAmounts({ totals }: { totals: CurrencyTotal[] }) {
   )
 }
 
+// Figma «Saldo» → Loading 2:66731: two StatCard placeholders, a card with a title and three rows (square, bar, short bar)
 function DebtsSkeleton() {
   return (
     <div aria-busy className="flex flex-col gap-4 lg:gap-6">
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
-        <div className="h-32 animate-pulse rounded-card bg-subtle" />
-        <div className="h-32 animate-pulse rounded-card bg-subtle" />
+      <div className="grid grid-cols-2 gap-4 lg:gap-6">
+        {[0, 1].map((key) => (
+          <SkeletonCard key={key} className="gap-3 p-6">
+            <Bone className="h-3 w-30 rounded-sm" />
+            <Bone className="h-6 w-35 rounded-sm" />
+          </SkeletonCard>
+        ))}
       </div>
-      <div className="h-64 animate-pulse rounded-card bg-subtle" />
+      <SkeletonCard className="gap-5 p-6">
+        <Bone className="h-4 w-30 rounded-sm" />
+        {[0, 1, 2].map((key) => (
+          <div key={key} className="flex items-center gap-4">
+            <Bone className="size-10 rounded-md" />
+            <Bone className="h-3 flex-1 rounded-sm" />
+            <Bone className="h-3 w-20 rounded-sm" />
+          </div>
+        ))}
+      </SkeletonCard>
     </div>
   )
 }

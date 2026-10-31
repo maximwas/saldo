@@ -42,14 +42,14 @@ function useNextTexts(credit: Credit, next: CreditInstallment | null) {
   if (next.state === 'unconfirmed') {
     return {
       full: translate('unconfirmedNext', {
- number: next.sequenceNo,
-date,
-amount 
-}),
+        number: next.sequenceNo,
+        date,
+        amount,
+      }),
       short: translate('unconfirmedShort', {
- number: next.sequenceNo,
-date 
-}),
+        number: next.sequenceNo,
+        date,
+      }),
     }
   }
 
@@ -62,9 +62,9 @@ date
 
   return {
     full: translate('next', {
- date,
-amount 
-}),
+      date,
+      amount,
+    }),
     short: translate('nextShort', { date }),
   }
 }

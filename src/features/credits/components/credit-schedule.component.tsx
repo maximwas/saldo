@@ -157,7 +157,7 @@ export function CreditSchedule({ credit, className }: CreditScheduleProps) {
 
   return (
     <Card title={translate('schedule.title')} className={className}>
-      <ul className="flex flex-col gap-4">
+      <ul aria-label={translate('schedule.title')} className="flex flex-col gap-4">
         {before.map((number, index) => (
           <ScheduleRow
             key={`before-${number}`}
@@ -202,9 +202,9 @@ export function CreditSchedule({ credit, className }: CreditScheduleProps) {
           {expanded || !lastDue
             ? translate('schedule.less')
             : translate('schedule.more', {
- count: hidden,
-date: dayText(lastDue, locale, true) 
-})}
+                count: hidden,
+                date: dayText(lastDue, locale, true),
+              })}
         </button>
       )}
       <div className="flex flex-col gap-1 text-caption text-text-tertiary">
@@ -212,9 +212,9 @@ date: dayText(lastDue, locale, true)
           <p>
             <span className="max-lg:hidden">
               {translate('schedule.estimated', {
- amount: money,
-count: credit.installmentsCount 
-})}
+                amount: money,
+                count: credit.installmentsCount,
+              })}
             </span>
             <span className="lg:hidden">{translate('schedule.estimatedShort')}</span>
             {credit.paidBeforeTrackingCount > 0 && (

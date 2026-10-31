@@ -36,18 +36,23 @@ function useNoteText(credits: readonly Credit[], totals: CreditTotals) {
     notes.dueToday.length > 0 ? translate('noteToday', { names: notes.dueToday.join(', ') }) : null,
     ...notes.unconfirmed.map((note) =>
       translate('noteUnconfirmed', {
- name: note.name,
-date: dayText(note.dueOn, locale) 
-}),
+        name: note.name,
+        date: dayText(note.dueOn, locale),
+      }),
     ),
   ].filter(Boolean)
 
   return {
     mobile: head.join(' · '),
-    desktop: [...head, nextAmount ? translate('noteNextMonth', {
- month: nextMonth,
-amount: nextAmount 
-}) : null]
+    desktop: [
+      ...head,
+      nextAmount
+        ? translate('noteNextMonth', {
+            month: nextMonth,
+            amount: nextAmount,
+          })
+        : null,
+    ]
       .filter(Boolean)
       .join(' · '),
   }

@@ -121,10 +121,12 @@ describe('monthNotes', () => {
   it('names the credit with the date passed, and the one due today', () => {
     expect(monthNotes([credit()], '2026-10-30')).toEqual({
       dueToday: [],
-      unconfirmed: [{
- name: 'Comfy',
-dueOn: '2026-10-20' 
-}],
+      unconfirmed: [
+        {
+          name: 'Comfy',
+          dueOn: '2026-10-20',
+        },
+      ],
     })
     expect(monthNotes([credit()], '2026-10-20').dueToday).toEqual(['Comfy'])
   })

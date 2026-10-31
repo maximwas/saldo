@@ -101,9 +101,9 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const nextAmount = next ? moneyText(next.remainingMinor, credit.currency, locale) : null
   const unconfirmedNext = unconfirmed
     ? translate('card.unconfirmedNext', {
- number: unconfirmed.sequenceNo,
-date: dayText(unconfirmed.dueOn, locale) 
-})
+        number: unconfirmed.sequenceNo,
+        date: dayText(unconfirmed.dueOn, locale),
+      })
     : null
   const archive = writable && (
     <Button variant="secondary" onClick={() => setDialog('close')}>
@@ -154,10 +154,14 @@ date: dayText(unconfirmed.dueOn, locale)
       {!canWrite && <Banner>{translate('card.viewOnly')}</Banner>}
       <Card
         title={credit.name}
-        action={writable ? {
- label: translate('actions.edit'),
-onClickAction: () => setDialog('edit') 
-} : undefined}
+        action={
+          writable
+            ? {
+                label: translate('actions.edit'),
+                onClickAction: () => setDialog('edit'),
+              }
+            : undefined
+        }
       >
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-4 pb-5">
@@ -209,9 +213,9 @@ onClickAction: () => setDialog('edit')
                 <span className="max-lg:hidden">{paidText}</span>
                 <span className="lg:hidden">
                   {translate('card.paidShort', {
- paid: progress.paidCount,
-total: progress.steps.length 
-})}
+                    paid: progress.paidCount,
+                    total: progress.steps.length,
+                  })}
                 </span>
               </span>
               {next && (
@@ -220,9 +224,9 @@ total: progress.steps.length
                     <>
                       <span className="max-lg:hidden">
                         {translate('next', {
- date: dayText(next.dueOn, locale),
-amount: nextAmount ?? '' 
-})}
+                          date: dayText(next.dueOn, locale),
+                          amount: nextAmount ?? '',
+                        })}
                       </span>
                       <span className="lg:hidden">{translate('nextShort', { date: dayText(next.dueOn, locale) })}</span>
                     </>

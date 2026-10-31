@@ -44,3 +44,16 @@ export function owedTotals(debts: DebtRow[], direction: DebtDirection): Currency
 
 export const openCount = (debts: DebtRow[], direction: DebtDirection) =>
   debts.filter((debt) => debt.direction === direction && isOwed(debt)).length
+
+/** the first open debt of the direction that is partly repaid: «Oleh has already repaid 500 of 2 000» */
+export const partlyRepaid = (debts: DebtRow[], direction: DebtDirection) =>
+  debts.find((debt) => debt.direction === direction && debtState(debt) === 'partial') ?? null
+
+/** the earliest due date among the open debts of the direction; null when none has one */
+export function nearestDue(debts: DebtRow[], direction: DebtDirection) {
+  const dates = debts
+    .filter((debt) => debt.direction === direction && isOwed(debt) && debt.dueOn)
+    .map((debt) => debt.dueOn)
+
+  return dates.length > 0 ? dates.reduce((first, day) => ((day ?? '') < (first ?? '') ? day : first)) : null
+}

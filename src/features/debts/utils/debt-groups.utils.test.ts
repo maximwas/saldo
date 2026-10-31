@@ -20,6 +20,8 @@ const debt = (patch: Partial<DebtRow>): DebtRow => ({
   repaidMinor: 0,
   remainingMinor: 100_000,
   overpaidMinor: 0,
+  lastRepaymentOn: null,
+  closedOn: '2026-10-01',
   ...patch,
 })
 
