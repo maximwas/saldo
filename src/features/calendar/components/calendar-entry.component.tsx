@@ -4,6 +4,7 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
 import { parseAsString, useQueryStates } from 'nuqs'
+import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
@@ -12,7 +13,8 @@ import { useCanWrite } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import type { CalendarEntry } from '../api/calendar.api'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { dayDate, entryTone, signedMinor, sourceHref } from '../utils/calendar.utils'
+import { dayDate, entryOutline, entryTone, signedMinor, sourceHref } from '../utils/calendar.utils'
+import { RemoveEntryDialog } from './remove-entry-dialog.component'
 
 const STATE_TONE = {
   fact: 'neutral',
@@ -25,6 +27,48 @@ const STATE_TONE = {
 
 const OPEN_STATES = ['plan', 'partial', 'unconfirmed']
 const SOURCE_LINKS = ['subscription', 'credit', 'debt']
+const SERIES_SOURCES = ['credit', 'debt']
+
+/** Figma CalendarEntry 2:10750: a 3×14 marker (a fact fills it, a plan outlines it) and the name; the amount is optional */
+function EntryMarker({ entry }: { entry: CalendarEntry }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'h-3.5 w-0.75 shrink-0 rounded-full',
+        entry.entry === 'plan' ? ['border', entryOutline(entry)] : entryTone(entry),
+      )}
+    />
+  )
+}
+
+type EntryLineProps = {
+  entry: CalendarEntry
+  name: string
+  /** shows the signed amount at the end of the line */
+  withAmount?: boolean
+}
+
+export function EntryLine({ entry, name, withAmount = false }: EntryLineProps) {
+  const plan = entry.entry === 'plan'
+
+  return (
+    <span className="flex min-w-0 items-center gap-1.5 text-caption">
+      <EntryMarker entry={entry} />
+      <span className={cn('min-w-0 flex-1 truncate text-left', plan ? 'text-text-secondary' : 'text-text-primary')}>
+        {name}
+      </span>
+      {withAmount && (
+        <Amount
+          minor={signedMinor(entry)}
+          currency={entry.currency}
+          kind={plan ? 'plan' : 'fact'}
+          className={cn('text-caption', plan && 'font-normal')}
+        />
+      )}
+    </span>
+  )
+}
 
 function amountKind(entry: CalendarEntry) {
   if (entry.entry === 'plan') {
@@ -49,12 +93,21 @@ function EntryActions({ entry }: { entry: CalendarEntry }) {
   const translate = useTranslations('calendar')
   const canWrite = useCanWrite()
   const openSheet = useObligationSheets()
+  const [removing, setRemoving] = useState(false)
   const href = sourceHref(entry.sourceType, entry.sourceId)
   // a debt's plan is paid by a repayment on the debt (add_debt_movement), never by «Paid»
   const payable = canWrite && entry.entry === 'plan' && OPEN_STATES.includes(entry.state) && entry.sourceType !== 'debt'
+  // a plan with nothing paid and not a credit / debt installment (those leave through their own card)
+  const removable =
+    canWrite &&
+    entry.entry === 'plan' &&
+    entry.state === 'plan' &&
+    !entry.paidMinor &&
+    entry.obligationId !== null &&
+    !SERIES_SOURCES.includes(entry.sourceType ?? '')
   const sourceKey = SOURCE_LINKS.includes(entry.sourceType ?? '') ? entry.sourceType : 'other'
 
-  if (!payable && !href) {
+  if (!payable && !href && !removable) {
     return null
   }
 
@@ -70,6 +123,12 @@ function EntryActions({ entry }: { entry: CalendarEntry }) {
           </Button>
         </>
       )}
+      {removable && (
+        <Button size="s" variant="ghost" onClick={() => setRemoving(true)}>
+          {translate('actions.remove')}
+        </Button>
+      )}
+      {removing && <RemoveEntryDialog entry={entry} onCloseAction={() => setRemoving(false)} />}
       {href && (
         <Link
           href={href as Route}

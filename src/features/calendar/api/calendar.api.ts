@@ -155,3 +155,23 @@ export async function listCalendarOptions(supabase: SaldoClient, ledgerId: strin
     categories,
   }
 }
+
+type CancelPlanInput = {
+  ledgerId: string
+  obligationId: string
+}
+
+/** «Remove the entry» of a plan with no payment: the occurrence leaves the calendar, Upcoming and «Available» (§18); the
+ * source (a subscription, a series) stays. Idempotent, so a retry from the device queue is safe. */
+export async function cancelPlanEntry(supabase: SaldoClient, input: CancelPlanInput) {
+  const { error } = await supabase
+    .from('obligations')
+    .update({ lifecycle: 'cancelled' })
+    .eq('id', input.obligationId)
+    .eq('ledger_id', input.ledgerId)
+    .eq('lifecycle', 'active')
+
+  if (error) {
+    throw error
+  }
+}

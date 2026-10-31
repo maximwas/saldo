@@ -171,6 +171,19 @@ export function OperationEditor({
     }
 
     if (mode === 'create') {
+      const day = target.mode === 'create' ? target.defaults?.occurredOn : undefined
+
+      // Figma Calendar · New entry from a day 2:72362: the sheet opened from a calendar day names that day
+      if (day && kind !== 'transfer') {
+        return translate('form.newTitleOn', {
+          date: formatter.dateTime(new Date(`${day}T12:00:00Z`), {
+            timeZone: 'UTC',
+            day: 'numeric',
+            month: 'long',
+          }),
+        })
+      }
+
       return translate(kind === 'transfer' ? 'form.transferTitle' : 'form.newTitle')
     }
 
@@ -195,6 +208,7 @@ export function OperationEditor({
         formId={FORM_ID}
         kind={kind}
         defaults={target.mode === 'create' ? target.defaults : undefined}
+        dateFromCalendar={target.mode === 'create' && Boolean(target.defaults?.occurredOn)}
         draftKey={draftKey}
         onSubmitAction={saveOperation}
       >
