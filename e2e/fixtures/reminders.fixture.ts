@@ -23,9 +23,11 @@ export async function addReminderSubscription(page: Page, name: string) {
 
   const form = page.getByRole('dialog')
 
+  await form.getByRole('button', { name: 'Сервіс' }).click()
+  await page.getByRole('option', { name: 'Власна підписка' }).click()
   await form.getByLabel('Назва').fill(name)
   await form.getByLabel('Сума за період').fill('99')
-  await form.getByRole('button', { name: 'Зберегти' }).click()
+  await form.getByRole('button', { name: 'Додати підписку' }).click()
   await expect(form).toBeHidden()
 
   const { data: subscription } = await admin.from('subscriptions').select('id').eq('name', name).single()
