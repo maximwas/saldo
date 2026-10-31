@@ -72,15 +72,16 @@ test('push: відмова в дозволі пояснюється, дозві�
     PushManager.prototype.getSubscription = async () => current as unknown as PushSubscription
   }, endpoint)
 
-  // no permission yet: the answer is «denied» and the card turns into the explanation
+  // no permission yet: the answer is «denied» and the Info banner turns into the Warning one
   await page.goto('/notifications')
   await page.getByRole('button', { name: 'Увімкнути' }).click()
-  await expect(page.getByRole('heading', { name: 'Сповіщення заблоковано в браузері' })).toBeVisible()
+  await expect(page.getByText('Сповіщення заборонені в браузері')).toBeVisible()
 
   await page.context().grantPermissions(['notifications'], { origin: new URL(page.url()).origin })
   await page.reload()
   await page.getByRole('button', { name: 'Увімкнути' }).click()
-  await expect(page.getByRole('button', { name: 'Вимкнути' })).toBeVisible()
+  // subscribed: the «turn on» banner goes away
+  await expect(page.getByRole('button', { name: 'Увімкнути' })).toHaveCount(0)
 
   const { data } = await admin.from('push_subscriptions').select('endpoint').eq('endpoint', endpoint)
 

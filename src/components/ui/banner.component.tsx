@@ -21,7 +21,7 @@ const KINDS = {
 
 type BannerProps = React.ComponentProps<'div'> & {
   kind?: keyof typeof KINDS
-  /** Figma «Action box»: a text button at the end of the line, label-medium in the banner's colour */
+  /** Figma «Action box»: a text button at the end of the line, label-semibold in the banner's colour */
   action?: React.ReactNode
 }
 
@@ -35,7 +35,7 @@ export function Banner({ kind = 'info', className, children, action, ...props }:
         <Icon aria-hidden className="size-5" />
       </span>
       <p className="flex-1 text-body font-medium">{children}</p>
-      {action && <span className="flex shrink-0 py-0.5 text-label font-medium">{action}</span>}
+      {action && <span className="flex shrink-0 py-0.5 text-label font-semibold">{action}</span>}
     </div>
   )
 }
