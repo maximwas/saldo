@@ -23,6 +23,7 @@
     "down": "Move down",
     "edit": "Edit",
     "archive": "Archive",
+    "delete": "Delete",
     "restore": "Restore from archive"
   },
   "form": {
@@ -39,6 +40,7 @@
     "iconEmpty": "Nothing found"
   },
   "colors": {
+    "custom": "Custom colour",
     "neutral": "Neutral",
     "blue": "Blue",
     "cyan": "Cyan",
@@ -195,13 +197,12 @@
     "hand-heart": "Hand heart"
   },
   "archive": {
-    "title": "Archive «{name}»?",
-    "summary": "{count, plural, =0 {This category has no operations.} one {The category and its subcategories have # operation.} other {The category and its subcategories have # operations.}}",
+    "title": "Delete the category «{name}»?",
+    "summary": "{count, plural, =0 {The category is not used yet.} one {The category is used in # operation. Operations are never deleted — choose where to move them.} other {The category is used in # operations. Operations are never deleted — choose where to move them.}}",
     "moveTo": "Move operations to",
-    "moveHint": "Operations are never destroyed: move them or keep them in the archived category.",
-    "keep": "Do not move",
-    "info": "An archived category leaves the pickers, while history and statistics stay. Subcategories are archived with it.",
-    "confirm": "Archive",
+    "info": "Rather not move them? Archive it — the category leaves the pickers and its history stays.",
+    "confirm": "Delete and move",
+    "archiveOnly": "Archive",
     "done": "Category archived"
   },
   "howTitle": "How it works",

@@ -51,13 +51,13 @@ test('повернення зменшує витрати місяця, а не �
   expect(await monthExpenseMinor(page)).toBe(expenseBefore + PURCHASE_MINOR - REFUND_MINOR)
   expect(await monthIncomeMinor(page)).toBe(incomeBefore)
 
-  const cashBefore = await accountBalanceMinor(page, DEMO.cashName)
+  const cashBefore = await accountBalanceMinor(page, DEMO.savingsName)
   const actual = cashBefore + 12_345
 
   await page.goto('/operations/accounts')
   await page
     .getByRole('listitem')
-    .filter({ hasText: DEMO.cashName })
+    .filter({ hasText: DEMO.savingsName })
     .getByRole('button', { name: 'Дії з рахунком' })
     .click()
   await page.getByRole('menuitem', { name: 'Коригувати залишок' }).click()
@@ -72,7 +72,7 @@ test('повернення зменшує витрати місяця, а не �
   await expect(adjust).toBeHidden()
 
   await page.goto('/')
-  expect(await accountBalanceMinor(page, DEMO.cashName)).toBe(actual)
+  expect(await accountBalanceMinor(page, DEMO.savingsName)).toBe(actual)
   // an adjustment is neither income nor spending (§5)
   expect(await monthExpenseMinor(page)).toBe(expenseBefore + PURCHASE_MINOR - REFUND_MINOR)
   expect(await monthIncomeMinor(page)).toBe(incomeBefore)

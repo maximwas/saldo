@@ -89,7 +89,14 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
       })
       router.refresh()
     } catch (caught) {
-      setError(translateError(toPgError(caught as { code?: string }).kind))
+      const { code } = caught as { code?: string }
+
+      // create_ledger_invite: SL404 no Saldo account with the email, SL409 already in the space (Figma 32:94877 / 32:95165)
+      if (code === 'SL404' || code === 'SL409') {
+        setEmailError(translate(code === 'SL404' ? 'inviteSheet.noAccount' : 'inviteSheet.alreadyMember'))
+      } else {
+        setError(translateError(toPgError({ code }).kind))
+      }
     } finally {
       setIsPending(false)
     }

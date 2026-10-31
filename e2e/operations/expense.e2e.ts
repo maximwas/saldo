@@ -46,7 +46,7 @@ test('переказ між рахунками не додає витрат мі
 
   const expenseBefore = await monthExpenseMinor(page)
   const cardBefore = await accountBalanceMinor(page, DEMO.cardName)
-  const cashBefore = await accountBalanceMinor(page, DEMO.cashName)
+  const cashBefore = await accountBalanceMinor(page, DEMO.savingsName)
 
   await page.goto('/operations?add=transfer')
 
@@ -60,5 +60,5 @@ test('переказ між рахунками не додає витрат мі
   expect(await monthExpenseMinor(page)).toBe(expenseBefore)
   // from the first account to the second one by default
   expect(await accountBalanceMinor(page, DEMO.cardName)).toBe(cardBefore - 50_000)
-  expect(await accountBalanceMinor(page, DEMO.cashName)).toBe(cashBefore + 50_000)
+  expect(await accountBalanceMinor(page, DEMO.savingsName)).toBe(cashBefore + 50_000)
 })

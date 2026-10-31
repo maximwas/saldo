@@ -129,6 +129,19 @@
   --ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1); /* things that move or arrive: pills, page content, sheets */
   --default-transition-duration: var(--duration-fast);
   --default-transition-timing-function: var(--ease-standard);
+  /* Figma «Saldo» spectrum/*: the «own colour» swatch of the category form (29:96708) */
+  --color-spectrum-red: #ff0000;
+  --color-spectrum-yellow: #ffff00;
+  --color-spectrum-green: #00ff00;
+  --color-spectrum-cyan: #00ffff;
+  --color-spectrum-blue: #0000ff;
+  --color-spectrum-magenta: #ff00ff;
+}
+
+@utility bg-spectrum {
+  background-image: conic-gradient(from 90deg at 50% 50%, var(--color-spectrum-red) 0%, var(--color-spectrum-yellow) 16.67%,
+    var(--color-spectrum-green) 33.33%, var(--color-spectrum-cyan) 50%, var(--color-spectrum-blue) 66.67%,
+    var(--color-spectrum-magenta) 83.33%, var(--color-spectrum-red) 100%);
 }
 
 :root {

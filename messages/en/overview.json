@@ -42,7 +42,6 @@
     "emptyHint": "Add your first account and balances will show up here.",
     "kind": {
       "bank": "Card",
-      "cash": "Wallet",
       "savings": "Savings"
     },
     "notInAvailable": "Not in available",

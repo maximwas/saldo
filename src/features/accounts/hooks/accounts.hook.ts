@@ -26,11 +26,11 @@ export function useAccounts() {
   )
 }
 
-export function useAccountOperationCount(accountId: string, enabled: boolean) {
+export function useAccountActivity(accountId: string, enabled: boolean) {
   const { ledgerId } = useLedger()
 
   return useQuery({
-    ...accountsQueries.operationCount(ledgerId, accountId),
+    ...accountsQueries.activity(ledgerId, accountId),
     enabled,
   })
 }

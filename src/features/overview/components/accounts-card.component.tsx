@@ -10,7 +10,6 @@ type AccountsCardProps = {
 
 const KIND_ICON = {
   bank: 'credit-card',
-  cash: 'banknote',
   savings: 'landmark',
 } as const
 

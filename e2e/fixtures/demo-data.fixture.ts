@@ -5,6 +5,6 @@ export const DEMO = {
   editorName: 'Олена',
   cardName: 'Основна картка',
   cardOpeningMinor: 4_621_580,
-  cashName: 'Готівка',
-  cashOpeningMinor: 240_000,
+  savingsName: 'Скарбничка',
+  savingsOpeningMinor: 240_000,
 } as const

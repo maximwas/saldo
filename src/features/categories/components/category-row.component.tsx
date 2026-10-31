@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge.component'
-import { CategoryIcon } from '@/components/ui/category-icon.component'
+import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Menu, type MenuItem } from '@/components/ui/menu.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import type { CategoryView } from '../utils/categories.utils'
@@ -60,7 +60,7 @@ export function CategoryRow({
           onSelect: () => onEditAction?.(),
         },
         {
-          label: translate('menu.archive'),
+          label: translate('menu.delete'),
           onSelect: () => onArchiveAction?.(),
           danger: true,
         },
@@ -69,7 +69,7 @@ export function CategoryRow({
   return (
     // Figma CategoryRow: 64 high, gap 12, name body-medium; no subcategories in the UI
     <li className="flex min-h-16 items-center gap-3 border-b border-border">
-      <CategoryIcon icon={category.icon} color={category.color} />
+      <CategoryBadge icon={category.icon} color={category.color} />
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-body font-medium text-text-primary">{category.name}</span>
       </div>

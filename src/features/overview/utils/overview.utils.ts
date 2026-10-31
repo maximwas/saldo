@@ -124,7 +124,7 @@ export function sumMonth(operations: readonly MonthOperation[]): MonthTotals {
 export type OverviewAccount = {
   id: string
   name: string
-  kind: 'bank' | 'cash' | 'savings'
+  kind: 'bank' | 'savings'
   /** a CATEGORY_COLORS name or null */
   color: string | null
   currency: string
@@ -203,7 +203,8 @@ export function toOverviewAccount(
   return {
     id: row.id,
     name: row.name,
-    kind: row.kind as OverviewAccount['kind'],
+    // a legacy «cash» row shows as a card: no cash accounts in Saldo
+    kind: row.kind === 'savings' ? 'savings' : 'bank',
     color: row.color,
     currency: row.currency,
     balanceMinor: row.balanceMinor,
