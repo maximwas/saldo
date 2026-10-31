@@ -35,7 +35,7 @@ test('повернення зменшує витрати місяця, а не �
   await expect(sheet).toBeHidden()
 
   await page.getByRole('button', { name: mark }).click()
-  await sheet.getByRole('button', { name: 'Повернення витрати' }).click()
+  await sheet.getByRole('button', { name: 'Записати повернення' }).click()
   // the amount starts at the whole purchase and cannot go above what is left of it
   await expect(sheet.getByLabel('Сума')).toHaveValue(typed(PURCHASE_MINOR))
   await sheet.getByLabel('Сума').fill(typed(PURCHASE_MINOR + 100))

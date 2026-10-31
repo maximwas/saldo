@@ -2,6 +2,7 @@ import { Select as SelectPrimitive } from '@base-ui/react/select'
 import { Check, ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils/cn.utils'
+import { chipClass } from './chip.component'
 import type { FieldControlProps } from './field.component'
 
 export type SelectOption = {
@@ -29,12 +30,6 @@ type SelectProps = FieldControlProps & {
 
 const FIELD_CLASS =
   'flex h-12 w-full items-center gap-2 rounded-md border border-border-strong bg-card px-4 text-left text-body text-text-primary outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary data-popup-open:border-primary data-popup-open:ring-1 data-popup-open:ring-primary aria-invalid:border-negative aria-invalid:focus-visible:ring-negative disabled:cursor-not-allowed disabled:bg-subtle disabled:text-text-tertiary'
-
-// every state keeps the 1px border so nothing jumps; only the colours change (Chip description in Figma)
-const CHIP_CLASS = {
-  on: 'border-primary bg-primary-soft text-primary-text',
-  off: 'border-border-strong text-text-primary hover:bg-subtle active:bg-border',
-} as const
 
 // Figma «Saldo» → Select 2:9397: trigger 48 high, padding 0/16, gap 8, 20px chevron (up while open); Default 1px
 // border-strong, Focus 2px primary, Error 1px negative, Disabled subtle fill; the selected option's leading sits before
@@ -66,12 +61,7 @@ export function Select({
         aria-describedby={describedBy}
         aria-invalid={invalid}
         onBlur={onBlur}
-        className={cn(
-          chip
-            ? `flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-2 text-label font-medium outline-none transition-colors duration-(--duration-fast) ease-(--ease-standard) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${CHIP_CLASS[chip]}`
-            : FIELD_CLASS,
-          className,
-        )}
+        className={cn(chip ? chipClass(chip === 'on') : FIELD_CLASS, className)}
       >
         {chip === 'on' ? <Check className="size-4 shrink-0" aria-hidden /> : null}
         {chip ? null : leading}

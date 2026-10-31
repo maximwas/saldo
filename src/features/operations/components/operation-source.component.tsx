@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { CalendarClock } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
@@ -15,8 +16,9 @@ type OperationSourceProps = {
   operationId: string
 }
 
-// Figma Saldo → link to the source 14:75083 (desktop 17:89221): on primary-soft the paid obligation and its date, then
-// the source type, its plan and the section, Ghost «open source». A viewer gets the same block: it only reads.
+// Figma Saldo → link to the source 17:89221: on primary-soft (padding 12/8/12/16, gap 12, radius inner) a calendar
+// icon, the paid obligation and its date (label-medium), then the source type, its plan and the section (caption,
+// secondary), Ghost S «open source». A viewer gets the same block: it only reads.
 export function OperationSource({ operationId }: OperationSourceProps) {
   const translate = useTranslations('operations.source')
   const translateType = useTranslations('obligations.source')
@@ -46,16 +48,17 @@ export function OperationSource({ operationId }: OperationSourceProps) {
   return (sources.data ?? []).map((source) => (
     <div
       key={source.obligationId}
-      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-inner bg-primary-soft px-4 py-3"
+      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-inner bg-primary-soft py-3 pr-2 pl-4"
     >
+      <CalendarClock aria-hidden size={20} className="shrink-0 text-primary-text" />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-body font-medium text-text-primary">
+        <span className="text-label font-medium text-text-primary">
           {translate('paid', {
             title: source.title,
             date: date(source.dueOn),
           })}
         </span>
-        <span className="text-label text-text-secondary">{meta(source)}</span>
+        <span className="text-caption text-text-secondary">{meta(source)}</span>
       </span>
       <Button variant="ghost" size="s" render={<Link href={sourceHref(source) as Route} />} nativeButton={false}>
         {translate('open')}

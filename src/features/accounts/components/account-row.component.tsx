@@ -70,7 +70,7 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
       ]
 
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-0 border-b border-border py-4 lg:flex-nowrap">
+    <li className="flex flex-wrap items-center gap-x-4 gap-y-0 border-b border-border py-4 lg:flex-nowrap">
       <CategoryIcon icon={account.icon ?? style.icon} color={account.color ?? style.color} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <Link

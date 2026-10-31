@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
+import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { mergeQueued } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
@@ -76,9 +77,22 @@ export function OperationsScreen() {
 
   if (list.isPending || options.isPending) {
     content = (
+      // Figma operations loading frame 5:103704 (mobile; desktop has no frame and takes the same): the totals card
+      // (padding 16, gap 12, two 56 bars) and day cards (padding 16, gap 16, a 140×14 title, lines with a 72 end bar)
       <div aria-busy className="flex flex-col gap-4">
-        <div className="h-28 rounded-card bg-subtle" />
-        <div className="h-80 rounded-card bg-subtle" />
+        <SkeletonCard className="flex-row gap-3 p-4">
+          <Bone className="h-14 flex-1 rounded-md" />
+          <Bone className="h-14 flex-1 rounded-md" />
+        </SkeletonCard>
+        <SkeletonCard className="gap-4 p-4">
+          <Bone className="h-3.5 w-35 rounded-sm" />
+          <SkeletonLine end="w-18" />
+          <SkeletonLine end="w-18" />
+        </SkeletonCard>
+        <SkeletonCard className="gap-4 p-4">
+          <Bone className="h-3.5 w-35 rounded-sm" />
+          <SkeletonLine end="w-18" />
+        </SkeletonCard>
       </div>
     )
   } else if (list.isError || options.isError) {

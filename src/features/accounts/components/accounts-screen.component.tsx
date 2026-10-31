@@ -1,13 +1,13 @@
 'use client'
 
-import { Plus, Wallet } from 'lucide-react'
+import { ArrowLeftRight, Plus, Wallet } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
-import { SegmentedControl } from '@/components/ui/segmented-control.component'
+import { Tabs } from '@/components/ui/tabs.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useAccounts } from '../hooks/accounts.hook'
 import { type AccountView, totalInBase } from '../utils/accounts.utils'
@@ -20,9 +20,10 @@ type Tab = 'active' | 'archived'
 
 type FormTarget = { account: AccountView | null }
 
-// Figma «Saldo» → 2:21073 (desktop) / 2:21278 (mobile) / 5:108630 (empty): tabs «Active · N / Archive · N» and
-// «New account» in one toolbar; one card holds the rows and «Total in <base currency>». Transfers live in the
-// operations feature, so the «Transfer» button and «Latest transfers» card of the frame are not here.
+// Figma «Saldo» → 2:21073 (desktop) / 2:21278 (mobile) / 5:108630 (empty): a toolbar (gap 12, bottom-aligned) with
+// the underline Tabs «Active · N / Archive · N», the primary «Transfer» (the global ?add=transfer sheet) and
+// «New account»; one card (padding 8/24/24) holds the rows and «Total in <base currency>». Transfers live in the
+// operations feature, so the «Latest transfers» card of the frame is not here.
 export function AccountsScreen() {
   const translate = useTranslations('accounts')
   const locale = useLocale()
@@ -70,22 +71,30 @@ export function AccountsScreen() {
         </section>
       ) : (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <SegmentedControl
-              label={translate('tabs.label')}
-              value={tab}
-              onValueChange={setTab}
-              options={[
-                {
-                  value: 'active',
-                  label: translate('tabs.active', { count: active.length }),
-                },
-                {
-                  value: 'archived',
-                  label: translate('tabs.archived', { count: archived.length }),
-                },
-              ]}
-            />
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-0 flex-1">
+              <Tabs
+                label={translate('tabs.label')}
+                value={tab}
+                onValueChange={setTab}
+                options={[
+                  {
+                    value: 'active',
+                    label: translate('tabs.active', { count: active.length }),
+                  },
+                  {
+                    value: 'archived',
+                    label: translate('tabs.archived', { count: archived.length }),
+                  },
+                ]}
+              />
+            </div>
+            {canWrite ? (
+              <Button render={<Link href={'?add=transfer' as Route} scroll={false} />} nativeButton={false}>
+                <ArrowLeftRight className="size-5" aria-hidden />
+                {translate('transfer')}
+              </Button>
+            ) : null}
             {canWrite ? (
               <Button variant="secondary" onClick={() => setForm({ account: null })}>
                 <Plus className="size-5" aria-hidden />

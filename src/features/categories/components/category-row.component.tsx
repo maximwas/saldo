@@ -83,12 +83,13 @@ export function CategoryRow({
       ]
 
   return (
-    <li className={cn('flex items-center gap-3 border-b border-border py-3', nested && 'pl-10 lg:pl-14')}>
+    // Figma CategoryRow: Top 64 high, Sub 52 with a 48 indent; gap 12; name body-medium (Sub body), meta caption tertiary
+    <li className={cn('flex items-center gap-3 border-b border-border', nested ? 'min-h-13 pl-12' : 'min-h-16')}>
       <CategoryIcon icon={category.icon} color={category.color} size={nested ? 'sm' : 'md'} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-body font-medium text-text-primary">{category.name}</span>
+        <span className={cn('truncate text-body text-text-primary', !nested && 'font-medium')}>{category.name}</span>
         {subcategoryCount > 0 ? (
-          <span className="text-caption text-text-secondary">
+          <span className="text-caption text-text-tertiary">
             {translate('subcategories', { count: subcategoryCount })}
           </span>
         ) : null}

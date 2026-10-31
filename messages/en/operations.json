@@ -150,7 +150,10 @@
     "submit": "Record refund",
     "done": "Refund recorded",
     "purchase": "Purchase {date}",
-    "refunded": "refunded {amount}"
+    "refunded": "refunded {amount}",
+    "amount": "Refund amount",
+    "noteHint": "Optional",
+    "effect": "{month} spending and the «{category}» budget go down by {amount}. A refund is not income."
   },
   "source": {
     "paid": "Payment: {title} · {date}",

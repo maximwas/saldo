@@ -150,7 +150,10 @@
     "submit": "Записати повернення",
     "done": "Повернення записано",
     "purchase": "Покупка {date}",
-    "refunded": "повернено {amount}"
+    "refunded": "повернено {amount}",
+    "amount": "Сума повернення",
+    "noteHint": "Необов’язково",
+    "effect": "Витрати {month} й бюджет «{category}» зменшаться на {amount}. Повернення не рахується доходом."
   },
   "source": {
     "paid": "Оплата: {title} · {date}",

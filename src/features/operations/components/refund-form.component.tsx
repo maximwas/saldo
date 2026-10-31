@@ -26,8 +26,10 @@ type RefundFormProps = {
   onSubmitAction: (values: OperationFormValues) => void
 }
 
-// Figma Saldo → refund 14:75081: the amount starts at what is left to refund and is never above it, an account in
-// the purchase currency (the database refunds in that currency), date, comment; category and payee are the purchase's.
+// Figma Saldo → refund 14:75084: the purchase line (label, secondary), the amount (starts at what is left to refund and
+// is never above it), account in the purchase currency (the database refunds in that currency) and date in one row
+// (gap 12), comment, and the Info banner naming the month, the category and the sum; category and payee are the
+// purchase's.
 export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: RefundFormProps) {
   const translate = useTranslations('operations')
   const locale = useLocale()
@@ -37,6 +39,9 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
   const accounts = (options.data?.accounts ?? []).filter((account) => account.currency === purchase.currency)
   const currency = purchase.currency as OperationFormValues['currency']
   const limit = formatMinor(limitMinor, currency, locale)
+  const categories = options.data?.categories ?? []
+  const category = categories.find((candidate) => candidate.id === purchase.categoryId)?.name
+  const accountName = accounts.find((account) => account.id === purchase.accountId)?.name ?? ''
   const form = useForm<OperationFormValues>({
     resolver: useZodResolver(operationFormSchema),
     defaultValues: {
@@ -47,6 +52,7 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
       accountId: purchase.accountId,
       categoryId: purchase.categoryId,
       occurredOn: today,
+      occurredTime: '',
       counterparty: purchase.counterparty ?? '',
       note: '',
     },
@@ -62,12 +68,35 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
     onSubmitAction(values)
   })
 
+  const purchaseDate = new Date(`${purchase.occurredOn}T12:00:00Z`)
+  // the month in the genitive the day-month format uses
+  const month = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  })
+    .formatToParts(new Date(`${form.watch('occurredOn')}T12:00:00Z`))
+    .find((part) => part.type === 'month')?.value
+  const amount = toMinor(form.watch('amount'), currency)
+  const purchaseLine = [
+    purchase.counterparty ?? category ?? translate('kinds.expense'),
+    formatMinor(-purchase.amountMinor, currency, locale),
+    new Intl.DateTimeFormat(locale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(purchaseDate),
+    accountName,
+  ].join(' · ')
+
   return (
     <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-4">
+      <p className="text-label text-text-secondary">{purchaseLine}</p>
       <FormField
         control={form.control}
         name="amount"
-        label={translate('form.amount')}
+        label={translate('refund.amount')}
         hint={translate('refund.limit', { amount: limit })}
         render={(field) => (
           <MoneyInput
@@ -81,41 +110,49 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
           />
         )}
       />
-      <FormField
-        control={form.control}
-        name="accountId"
-        label={translate('form.account')}
-        render={(field) => (
-          <Select
-            options={accountOptions(accounts, field.value)}
-            value={field.value || null}
-            onValueChange={(value) => field.onChange(value ?? '')}
-            onBlur={field.onBlur}
-          />
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="occurredOn"
-        label={translate('form.date')}
-        render={(field) => (
-          <DatePicker
-            value={field.value}
-            onValueChange={(value) => field.onChange(value ?? today)}
-            onBlur={field.onBlur}
-          />
-        )}
-      />
+      <div className="grid grid-cols-2 gap-3">
+        <FormField
+          control={form.control}
+          name="accountId"
+          label={translate('form.account')}
+          render={(field) => (
+            <Select
+              options={accountOptions(accounts, field.value)}
+              value={field.value || null}
+              onValueChange={(value) => field.onChange(value ?? '')}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="occurredOn"
+          label={translate('form.date')}
+          render={(field) => (
+            <DatePicker
+              value={field.value}
+              onValueChange={(value) => field.onChange(value ?? today)}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
+      </div>
       <FormField
         control={form.control}
         name="note"
         label={translate('form.note')}
-        hint={translate('form.noteHint')}
+        hint={translate('refund.noteHint')}
         render={(field) => <Textarea {...field} />}
       />
-      <p className="flex items-start gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body text-primary-text">
-        <Info aria-hidden size={20} className="mt-0.5 shrink-0" />
-        {translate('refund.info')}
+      <p className="flex items-center gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body font-medium text-primary-text">
+        <Info aria-hidden size={20} className="shrink-0" />
+        {category && month && amount
+          ? translate('refund.effect', {
+              month,
+              category,
+              amount: formatMinor(amount, currency, locale),
+            })
+          : translate('refund.info')}
       </p>
     </form>
   )

@@ -504,11 +504,17 @@ export function OperationEditor({
             {translate('refund.refunded', { amount: formatMinor(refundedMinor, item.row.currency, locale) })}
           </p>
         ) : null}
+        {/* Figma 17:89221 «Refund»: a top border, padding-top 16, Ghost «record refund» and the limit (caption) */}
         {canRefund ? (
-          <Button type="button" variant="ghost" className="self-start" onClick={() => setRefunding(true)}>
-            <Undo2 aria-hidden className="size-5" />
-            {translate('refund.action')}
-          </Button>
+          <div className="flex items-center gap-3 border-t border-border pt-4">
+            <Button type="button" variant="ghost" onClick={() => setRefunding(true)}>
+              <Undo2 aria-hidden className="size-5" />
+              {translate('refund.submit')}
+            </Button>
+            <span className="text-caption text-text-tertiary">
+              {translate('refund.limit', { amount: formatMinor(refundLeft, item.row.currency, locale) })}
+            </span>
+          </div>
         ) : null}
       </>
     )

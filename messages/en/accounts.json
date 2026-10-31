@@ -65,7 +65,7 @@
     "notFound": "Account not found"
   },
   "adjust": {
-    "title": "Adjust balance",
+    "title": "Balance adjustment",
     "now": "{account} · now in Saldo {amount}",
     "actual": "Actual balance",
     "difference": "Difference to record",
@@ -73,6 +73,10 @@
     "noteHint": "Required: where the difference comes from",
     "cancel": "Cancel",
     "submit": "Record adjustment",
-    "done": "Adjustment recorded"
-  }
+    "done": "Adjustment recorded",
+    "actualHint": "What the account really holds now",
+    "date": "Date",
+    "effect": "An adjustment changes only the balance of «{account}» and is neither income nor spending."
+  },
+  "transfer": "Transfer"
 }
