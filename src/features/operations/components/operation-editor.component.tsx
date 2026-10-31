@@ -12,6 +12,7 @@ import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
+import { useMemberNames } from '@/lib/members/member-names.hook'
 import { formatMinor, fromMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localTime } from '@/lib/utils/clock.utils'
@@ -102,6 +103,7 @@ export function OperationEditor({
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const canWrite = useCanWrite()
+  const members = useMemberNames()
   const queryClient = useQueryClient()
   const options = useQuery(operationQueries.options(ledgerId))
   const [newId] = useState(() => crypto.randomUUID())
@@ -519,6 +521,8 @@ export function OperationEditor({
       <div aria-busy className="h-64 rounded-md bg-subtle" />
     ) : (
       <>
+        {/* Figma 17:89221 / 17:90017: the paid source sits above the type switch */}
+        <OperationSource operationId={item.row.id} />
         {/* Figma 5:101464: the edit sheet keeps the type switch; a transfer is made anew, so only the two kinds flip */}
         <SegmentedControl
           stretch="track"
@@ -530,7 +534,6 @@ export function OperationEditor({
           value={kind}
           onValueChange={(next) => (next === 'transfer' ? undefined : setKind(next))}
         />
-        <OperationSource operationId={item.row.id} />
         <OperationForm
           formId={FORM_ID}
           kind={kind === 'income' ? 'income' : 'expense'}
@@ -565,32 +568,30 @@ export function OperationEditor({
     const rate = transfer
       ? impliedRate(transfer.fromAmountMinor, transfer.fromCurrency, transfer.toAmountMinor, transfer.toCurrency)
       : null
+    const author = item.row.createdBy ? members[item.row.createdBy] : undefined
+    // Figma 15:81303: the payee and the category under the amount
+    const payee =
+      [item.row.counterparty, categoryName(item.row.categoryId)].filter(Boolean).join(' · ') ||
+      translateKinds(item.kind)
     const rows: [string, React.ReactNode][] = [
-      [translate('form.details.type'), translateKinds(item.kind)],
-      transfer
-        ? [
-            translate('form.details.from'),
-            <span key="from">
-              {accountName(transfer.fromAccountId)} ·{' '}
-              <Amount minor={-transfer.fromAmountMinor} currency={transfer.fromCurrency} />
-            </span>,
-          ]
-        : [
-            translate('form.details.amount'),
-            <span key="amount">
-              {amount.plus ? '+' : null}
-              <Amount minor={amount.minor} currency={amount.currency} kind={amount.tone} />
-            </span>,
-          ],
-      transfer
-        ? [
-            translate('form.details.to'),
-            <span key="to">
-              {accountName(transfer.toAccountId)} · +
-              <Amount minor={transfer.toAmountMinor} currency={transfer.toCurrency} />
-            </span>,
-          ]
-        : [translate('form.details.account'), accountName(item.row.accountId)],
+      ...(transfer
+        ? ([
+            [
+              translate('form.details.from'),
+              <span key="from">
+                {accountName(transfer.fromAccountId)} ·{' '}
+                <Amount minor={-transfer.fromAmountMinor} currency={transfer.fromCurrency} />
+              </span>,
+            ],
+            [
+              translate('form.details.to'),
+              <span key="to">
+                {accountName(transfer.toAccountId)} · +
+                <Amount minor={transfer.toAmountMinor} currency={transfer.toCurrency} />
+              </span>,
+            ],
+          ] as [string, React.ReactNode][])
+        : ([[translate('form.details.account'), accountName(item.row.accountId)]] as [string, React.ReactNode][])),
       ...(transfer && rate && transfer.fromCurrency !== transfer.toCurrency
         ? ([[translate('form.details.rate'), formatRate(rate, locale)]] as [string, React.ReactNode][])
         : []),
@@ -602,13 +603,17 @@ export function OperationEditor({
             ],
           ] as [string, React.ReactNode][])
         : []),
-      ...(categoryName(item.row.categoryId)
-        ? ([[translate('form.details.category'), categoryName(item.row.categoryId)]] as [string, React.ReactNode][])
-        : []),
-      [translate('form.details.date'), dateLabel(item.row.occurredOn)],
-      ...(item.row.counterparty
-        ? ([[translate('form.details.counterparty'), item.row.counterparty]] as [string, React.ReactNode][])
-        : []),
+      [
+        translate('form.details.date'),
+        formatter.dateTime(new Date(item.row.occurredAt), {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone,
+        }),
+      ],
       ...(item.row.note ? ([[translate('form.details.note'), item.row.note]] as [string, React.ReactNode][]) : []),
       ...(purchase
         ? ([
@@ -632,16 +637,24 @@ export function OperationEditor({
             ],
           ] as [string, React.ReactNode][])
         : []),
+      ...(author ? ([[translate('form.details.author'), author]] as [string, React.ReactNode][]) : []),
     ]
 
+    // Figma 15:81303 (read-only): the amount (display number), the payee line (label, secondary), then DetailRows
+    // (padding 12/0, a hairline under each, label on the left, body-medium value on the right)
     body = (
       <>
         <OperationSource operationId={item.row.id} />
-        <dl className="flex flex-col gap-3">
+        <p className="font-display text-number text-text-primary">
+          {amount.plus ? '+' : null}
+          <Amount minor={amount.minor} currency={amount.currency} kind={amount.tone} size="l" />
+        </p>
+        <p className="text-label text-text-secondary">{payee}</p>
+        <dl className="flex flex-col">
           {rows.map(([label, value]) => (
-            <div key={label} className="flex items-baseline justify-between gap-4">
-              <dt className="text-label text-text-secondary">{label}</dt>
-              <dd className="text-body font-medium text-text-primary">{value}</dd>
+            <div key={label} className="flex items-center justify-between gap-4 border-b border-border py-3">
+              <dt className="flex-1 text-label text-text-secondary">{label}</dt>
+              <dd className="text-right text-body font-medium text-text-primary">{value}</dd>
             </div>
           ))}
         </dl>

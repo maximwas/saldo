@@ -1,14 +1,17 @@
 'use client'
 
 import { TriangleAlert } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
 import { SyncIndicator } from './sync-indicator.component'
 
 // Figma «Saldo» → App states, Offline 4:80063 / 4:80342: a warning above the page while the device is offline, with
-// the time of the data on screen; on mobile (no Sidebar) the SyncStatus of the queue sits here whenever it is not empty
+// the time of the data on screen; on mobile (no Sidebar) the SyncStatus of the queue sits here whenever it is not empty.
+// Operations draw their own desktop warning (5:105115), so there this one stays on phones only.
 export function OfflineBanner() {
+  const ownWarning = usePathname() === '/operations'
   const translate = useTranslations('sync.banner')
   const format = useFormatter()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
@@ -28,7 +31,7 @@ export function OfflineBanner() {
       {online ? null : (
         <p
           role="alert"
-          className="mb-4 flex items-start gap-2 rounded-md bg-warning-soft px-4 py-3 text-label text-warning-text lg:mb-6"
+          className={`mb-4 flex items-start gap-2 rounded-md bg-warning-soft px-4 py-3 text-label text-warning-text lg:mb-6 ${ownWarning ? 'lg:hidden' : ''}`}
         >
           <TriangleAlert aria-hidden size={16} className="mt-0.5 shrink-0" />
           <span className="lg:hidden">{translate('offlineShort')}</span>

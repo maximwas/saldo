@@ -154,7 +154,7 @@ export function OperationForm({
           control={form.control}
           name="categoryId"
           label={translate('category')}
-          required={expense}
+          required
           render={(field) => (
             <CategorySelect
               categories={categories}

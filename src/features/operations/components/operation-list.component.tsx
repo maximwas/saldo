@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { Paperclip } from 'lucide-react'
+import { Link as LinkIcon, Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { AuthorAvatar } from '@/components/ui/author-avatar.component'
@@ -139,6 +139,13 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
       return row.note
     }
 
+    // Figma 15:84284: a refund names the purchase it returns
+    const purchase = row.refundOfId ? refunds.data?.purchases[row.refundOfId] : undefined
+
+    if (purchase) {
+      return translate('refund.subtitle', { date: shortDate(purchase.occurredOn) })
+    }
+
     if (item.kind === 'transfer') {
       return row.transferId ? translate('kinds.transfer') : ''
     }
@@ -231,11 +238,13 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   function refundNote(item: OperationItem) {
     const purchase = item.row.refundOfId ? refunds.data?.purchases[item.row.refundOfId] : undefined
 
+    // Figma 15:84284 «Relation»: subtle pill, padding 2/8, gap 4, a 12 link icon, text/micro
     if (purchase) {
       return (
-        <Badge tone="neutral" className="shrink-0">
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-subtle px-2 py-0.5 text-micro whitespace-nowrap text-text-secondary">
+          <LinkIcon aria-hidden size={12} />
           {translate('refund.purchase', { date: shortDate(purchase.occurredOn) })}
-        </Badge>
+        </span>
       )
     }
 
