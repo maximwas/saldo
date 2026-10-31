@@ -29,7 +29,10 @@
     "income": "Income",
     "expenses": "Expenses",
     "result": "Result",
-    "unknownRate": "No rate: {count}"
+    "unknownRate": "No rate: {count}",
+    "incomeOf": "Income in {month}",
+    "expensesOf": "Expenses in {month}",
+    "withPlan": "with plans to the month end"
   },
   "table": {
     "date": "Date",
@@ -42,6 +45,15 @@
     "today": "Today, {date}",
     "yesterday": "Yesterday, {date}",
     "count": "{count, plural, one {# operation} other {# operations}}"
+  },
+  "plan": {
+    "title": "Planned",
+    "count": "{count, plural, one {# payment} other {# payments}}",
+    "notFact": "not a fact yet",
+    "pill": "Plan",
+    "installment": "installment {number} of {count}",
+    "interval": "{unit, select, day {{count, plural, =1 {daily} =7 {weekly} other {every # days}}} month {{count, plural, =1 {monthly} other {every # months}}} other {{count, plural, =1 {yearly} other {every # years}}}}",
+    "creditCategory": "Credits"
   },
   "row": {
     "receipt": "Has a receipt",
@@ -70,6 +82,7 @@
     "date": "Date",
     "counterparty": "Payee",
     "counterpartyHint": "As on the bank statement",
+    "payer": "Source",
     "note": "Comment",
     "noteHint": "Up to 500 characters",
     "save": "Save",
@@ -78,6 +91,7 @@
     "close": "Close",
     "delete": "Delete",
     "duplicate": "Duplicate",
+    "actions": "Operation actions",
     "receipt": "Receipt",
     "addReceipt": "Add receipt",
     "receiptHint": "Photo or PDF, optional",
@@ -113,7 +127,11 @@
       "fee": "Fee",
       "rate": "Rate",
       "purchase": "Purchase"
-    }
+    },
+    "time": "Time",
+    "balance": "Balance {amount}",
+    "editingTitle": "Edit operation",
+    "saveChanges": "Save changes"
   },
   "deleteConfirm": {
     "balanceUp": "The balance of «{account}» will grow by {amount}; period totals will be recalculated.",
@@ -143,7 +161,10 @@
     "submit": "Record refund",
     "done": "Refund recorded",
     "purchase": "Purchase {date}",
-    "refunded": "refunded {amount}"
+    "refunded": "refunded {amount}",
+    "amount": "Refund amount",
+    "noteHint": "Optional",
+    "effect": "{month} spending and the «{category}» budget go down by {amount}. A refund is not income."
   },
   "source": {
     "paid": "Payment: {title} · {date}",

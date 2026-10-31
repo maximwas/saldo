@@ -19,8 +19,9 @@ type SegmentedControlProps<Value extends string> = {
   onValueChange: (value: Value) => void
   /** disables the options and marks the group busy while a change is saved */
   pending?: boolean
-  /** below lg the control fills its row and the options share it (Figma mobile list rows); natural width from lg */
-  stretch?: boolean
+  /** below lg the control fills its row and the options share it (Figma mobile list rows); natural width from lg.
+   *  «track»: below lg only the track fills the row, the options keep their width (the operation sheet, 2:18677) */
+  stretch?: boolean | 'track'
 }
 
 // Figma «Saldo» → SegmentedControl 2:7681: track subtle, padding 4, gap 4, radius md; the selected option is a card
@@ -55,7 +56,7 @@ export function SegmentedControl<Value extends string>({
             onClick={() => onValueChange(option.value)}
             className={cn(
               'relative flex items-center justify-center rounded-logo-md py-2 text-label outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
-              stretch ? 'min-w-0 flex-1 px-2 lg:flex-none lg:px-4' : 'px-4',
+              stretch === true ? 'min-w-0 flex-1 px-2 lg:flex-none lg:px-4' : 'px-4',
               selected ? 'font-semibold text-text-primary' : 'font-medium text-text-secondary',
             )}
           >

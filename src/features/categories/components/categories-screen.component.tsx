@@ -1,10 +1,11 @@
 'use client'
 
-import { Plus } from 'lucide-react'
+import { Archive, GripVertical, Landmark, Plus, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
-import { SegmentedControl } from '@/components/ui/segmented-control.component'
+import { Chip } from '@/components/ui/chip.component'
+import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useCategories, useReorderCategories, useUpdateCategory } from '../hooks/categories.hook'
 import type { CategoryView } from '../utils/categories.utils'
@@ -16,6 +17,33 @@ import { CategoryRow } from './category-row.component'
 // Figma «Saldo» → 2:49639 (desktop: list card 2/3 + «How it works» 1/3) / 2:50386 (mobile): kind switch with
 // counts, one card with the tree and the archive under it. Counts of operations per category are not shown: they would
 // need every operation of the space; the archive dialog counts only the category it is about.
+// the line widths of the four rows in the loading frame
+const LOADING_ROWS = [
+  ['w-35', 'w-22.5'],
+  ['w-42.5', 'w-27.5'],
+  ['w-30', 'w-20'],
+  ['w-37.5', 'w-25'],
+] as const
+
+const HOW = [
+  {
+    key: 'order',
+    Icon: GripVertical,
+  },
+  {
+    key: 'delete',
+    Icon: Trash2,
+  },
+  {
+    key: 'archive',
+    Icon: Archive,
+  },
+  {
+    key: 'taxes',
+    Icon: Landmark,
+  },
+] as const
+
 export function CategoriesScreen() {
   const translate = useTranslations('categories')
   const canWrite = useCanWrite()
@@ -27,7 +55,22 @@ export function CategoriesScreen() {
   const [archiving, setArchiving] = useState<CategoryView | null>(null)
 
   if (isPending) {
-    return <div aria-busy className="h-96 rounded-card bg-subtle" />
+    // Figma categories loading frame 2:56714: a card (padding 20, gap 20), a 120×20 title, four rows (gap 12) of a
+    // 40 circle and two lines (16 and 12 high, radius xs)
+    return (
+      <SkeletonCard aria-busy className="gap-5 p-5">
+        <Bone className="h-5 w-30 rounded-sm" />
+        {LOADING_ROWS.map(([title, meta]) => (
+          <div key={title} className="flex items-center gap-3">
+            <Bone className="size-10 rounded-full" />
+            <div className="flex flex-col gap-2">
+              <Bone className={`h-4 rounded-xs ${title}`} />
+              <Bone className={`h-3 rounded-xs ${meta}`} />
+            </div>
+          </div>
+        ))}
+      </SkeletonCard>
+    )
   }
 
   if (isError) {
@@ -58,28 +101,20 @@ export function CategoriesScreen() {
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SegmentedControl
-          label={translate('kindLabel')}
-          value={kind}
-          onValueChange={setKind}
-          options={[
-            {
-              value: 'expense',
-              label: translate('tabs.expense', { count: count('expense') }),
-            },
-            {
-              value: 'income',
-              label: translate('tabs.income', { count: count('income') }),
-            },
-          ]}
-        />
+        {/* Figma 2:49639: the kind is a pair of chips, gap 8 */}
+        <fieldset aria-label={translate('kindLabel')} className="flex items-center gap-2">
+          {(['expense', 'income'] as const).map((value) => (
+            <Chip key={value} selected={kind === value} onClick={() => setKind(value)}>
+              {translate(`tabs.${value}`, { count: count(value) })}
+            </Chip>
+          ))}
+        </fieldset>
         {canWrite ? (
           <Button
             onClick={() =>
               setForm({
                 category: null,
                 kind,
-                parentId: null,
               })
             }
           >
@@ -88,8 +123,9 @@ export function CategoriesScreen() {
           </Button>
         ) : null}
       </div>
-      <div className="grid items-start gap-4 lg:grid-cols-3 lg:gap-6">
-        <section className="flex flex-col rounded-card bg-card px-5 py-5 shadow-card lg:col-span-2 lg:px-6 lg:py-6">
+      {/* Figma 2:49639: the list card grows, «How it works» keeps 400; both start at the top */}
+      <div className="flex flex-col items-start gap-4 lg:flex-row lg:gap-6">
+        <section className="flex w-full min-w-0 flex-col rounded-card bg-card px-5 py-5 shadow-card lg:flex-1 lg:px-6 lg:py-6">
           <h2 className="pb-2 text-card-title text-text-primary">{translate(`title.${kind}`)}</h2>
           {nodes.length === 0 ? (
             <p className="py-8 text-center text-label text-text-secondary">{translate('empty')}</p>
@@ -99,7 +135,6 @@ export function CategoriesScreen() {
                 <CategoryRow
                   key={node.id}
                   category={node}
-                  subcategoryCount={node.children.length}
                   canMoveUp={position > 0}
                   canMoveDown={position < nodes.length - 1}
                   onMoveAction={(direction) => move(nodes, node.id, direction)}
@@ -107,14 +142,6 @@ export function CategoriesScreen() {
                     setForm({
                       category: node,
                       kind,
-                      parentId: null,
-                    })
-                  }
-                  onAddSubAction={() =>
-                    setForm({
-                      category: null,
-                      kind,
-                      parentId: node.id,
                     })
                   }
                   onArchiveAction={() => setArchiving(node)}
@@ -123,7 +150,6 @@ export function CategoriesScreen() {
                   <CategoryRow
                     key={child.id}
                     category={child}
-                    nested
                     canMoveUp={childPosition > 0}
                     canMoveDown={childPosition < node.children.length - 1}
                     onMoveAction={(direction) => move(node.children, child.id, direction)}
@@ -131,7 +157,6 @@ export function CategoriesScreen() {
                       setForm({
                         category: child,
                         kind,
-                        parentId: node.id,
                       })
                     }
                     onArchiveAction={() => setArchiving(child)}
@@ -150,7 +175,6 @@ export function CategoriesScreen() {
                   <CategoryRow
                     key={row.id}
                     category={row}
-                    nested={row.parentId !== null}
                     archived
                     restoreDisabled={parentArchived(row)}
                     onRestoreAction={() => restore(row)}
@@ -160,13 +184,16 @@ export function CategoriesScreen() {
             </div>
           ) : null}
         </section>
-        <aside className="flex flex-col gap-4 rounded-card bg-card p-5 shadow-card lg:p-6">
+        {/* Figma Card 2:50042: tips gap 16, a 20 icon and label text-secondary, gap 12; the mobile frame 2:50386 has none */}
+        <aside className="hidden w-full flex-col gap-5 rounded-card bg-card p-5 shadow-card lg:flex lg:w-100 lg:shrink-0 lg:p-6">
           <h2 className="text-card-title text-text-primary">{translate('howTitle')}</h2>
-          <ul className="flex flex-col gap-3 text-label text-text-secondary">
-            <li>{translate('how.order')}</li>
-            <li>{translate('how.delete')}</li>
-            <li>{translate('how.archive')}</li>
-            <li>{translate('how.taxes')}</li>
+          <ul className="flex flex-col gap-4 text-label text-text-secondary">
+            {HOW.map(({ key, Icon }) => (
+              <li key={key} className="flex gap-3">
+                <Icon aria-hidden className="size-5 shrink-0" />
+                {translate(`how.${key}`)}
+              </li>
+            ))}
           </ul>
         </aside>
       </div>

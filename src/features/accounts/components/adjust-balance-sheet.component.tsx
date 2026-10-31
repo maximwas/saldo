@@ -1,10 +1,12 @@
 'use client'
 
+import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
+import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { Sheet } from '@/components/ui/sheet.component'
@@ -25,8 +27,9 @@ type AdjustBalanceSheetProps = {
   onCloseAction: () => void
 }
 
-// Figma Saldo → balance adjustment 14:75082: the account and its balance in Saldo now, the actual balance, the
-// difference to be written (a neutral row: not income, not spending), a required note; Cancel + Record.
+// Figma Saldo → balance adjustment 15:84725: the account and its balance in Saldo now (label), the actual balance with
+// its hint, the difference to be written (DetailRow: padding 12/0, border-bottom; a neutral row, not income, not
+// spending), the date, a required note and the Info banner; Cancel + Record.
 // shortcut: the actual balance is 0 or more (MoneyInput has no minus); a negative one is entered as an operation.
 export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceSheetProps) {
   const translate = useTranslations('accounts.adjust')
@@ -82,7 +85,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
         </>
       }
     >
-      <p className="text-body text-text-secondary">
+      <p className="text-label text-text-secondary">
         {translate('now', {
           account: account.name,
           amount: formatMinor(account.balanceMinor, currency, locale),
@@ -93,6 +96,8 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
           control={form.control}
           name="actual"
           label={translate('actual')}
+          required
+          hint={translate('actualHint')}
           render={(field) => (
             <MoneyInput
               autoFocus
@@ -104,7 +109,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
             />
           )}
         />
-        <div className="flex items-baseline justify-between gap-4">
+        <div className="flex items-baseline justify-between gap-4 border-b border-border py-3">
           <span className="text-label text-text-secondary">{translate('difference')}</span>
           {change ? (
             <span className="text-body font-medium text-text-primary">
@@ -115,16 +120,34 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
               />
             </span>
           ) : (
-            <span className="text-body text-text-tertiary">—</span>
+            <span className="text-body font-medium text-text-primary">—</span>
           )}
         </div>
         <FormField
           control={form.control}
+          name="occurredOn"
+          label={translate('date')}
+          required
+          render={(field) => (
+            <DatePicker
+              value={field.value}
+              onValueChange={(value) => field.onChange(value ?? today)}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
+        <FormField
+          control={form.control}
           name="note"
           label={translate('note')}
+          required
           hint={translate('noteHint')}
           render={(field) => <Textarea {...field} />}
         />
+        <p className="flex items-center gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body font-medium text-primary-text">
+          <Info aria-hidden size={20} className="shrink-0" />
+          {translate('effect', { account: account.name })}
+        </p>
       </form>
     </Sheet>
   )

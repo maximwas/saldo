@@ -2,17 +2,13 @@
 
 import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge.component'
-import { CategoryIcon } from '@/components/ui/category-icon.component'
+import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Menu, type MenuItem } from '@/components/ui/menu.component'
 import { useCanWrite } from '@/contexts/ledger.context'
-import { cn } from '@/lib/utils/cn.utils'
 import type { CategoryView } from '../utils/categories.utils'
 
 type CategoryRowProps = {
   category: CategoryView
-  /** a subcategory: indented, small icon, no «add subcategory» */
-  nested?: boolean
-  subcategoryCount?: number
   archived?: boolean
   /** a subcategory of an archived category cannot come back alone */
   restoreDisabled?: boolean
@@ -20,7 +16,6 @@ type CategoryRowProps = {
   canMoveDown?: boolean
   onMoveAction?: (direction: 'up' | 'down') => void
   onEditAction?: () => void
-  onAddSubAction?: () => void
   onArchiveAction?: () => void
   onRestoreAction?: () => void
 }
@@ -29,15 +24,12 @@ type CategoryRowProps = {
 // a label-size line under it, «···» 44, border-bottom. Order is set from the menu («Up» / «Down»), not by dragging.
 export function CategoryRow({
   category,
-  nested = false,
-  subcategoryCount = 0,
   archived = false,
   restoreDisabled = false,
   canMoveUp = false,
   canMoveDown = false,
   onMoveAction,
   onEditAction,
-  onAddSubAction,
   onArchiveAction,
   onRestoreAction,
 }: CategoryRowProps) {
@@ -67,31 +59,19 @@ export function CategoryRow({
           label: translate('menu.edit'),
           onSelect: () => onEditAction?.(),
         },
-        ...(nested
-          ? []
-          : [
-              {
-                label: translate('menu.addSub'),
-                onSelect: () => onAddSubAction?.(),
-              },
-            ]),
         {
-          label: translate('menu.archive'),
+          label: translate('menu.delete'),
           onSelect: () => onArchiveAction?.(),
           danger: true,
         },
       ]
 
   return (
-    <li className={cn('flex items-center gap-3 border-b border-border py-3', nested && 'pl-10 lg:pl-14')}>
-      <CategoryIcon icon={category.icon} color={category.color} size={nested ? 'sm' : 'md'} />
+    // Figma CategoryRow: 64 high, gap 12, name body-medium; no subcategories in the UI
+    <li className="flex min-h-16 items-center gap-3 border-b border-border">
+      <CategoryBadge icon={category.icon} color={category.color} />
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-body font-medium text-text-primary">{category.name}</span>
-        {subcategoryCount > 0 ? (
-          <span className="text-caption text-text-secondary">
-            {translate('subcategories', { count: subcategoryCount })}
-          </span>
-        ) : null}
       </div>
       {archived ? <Badge tone="muted">{translate('archivedBadge')}</Badge> : null}
       {canWrite ? <Menu label={translate('menu.label')} items={items} /> : null}

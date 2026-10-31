@@ -48,7 +48,7 @@ export function accountOptions(accounts: AccountOption[], keepId?: string): Sele
     .filter((account) => !account.archived || account.id === keepId)
     .map((account) => ({
       value: account.id,
-      label: `${account.name} · ${account.currency}`,
+      label: account.name,
     }))
 }
 

@@ -1,17 +1,8 @@
-import { expect, type Page } from '@playwright/test'
+import { expect } from '@playwright/test'
+import { pickCategory } from '../fixtures/category.fixture'
 import { test } from '../fixtures/roles.fixture'
 
 const CATEGORY = 'Продукти'
-
-async function pickCategory(page: Page, dialog: ReturnType<Page['getByRole']>) {
-  await dialog.getByLabel('Категорія').click()
-  await page
-    .getByRole('option', {
-      name: CATEGORY,
-      exact: true,
-    })
-    .click()
-}
 
 test('витрата понад ліміт категорії показує «Понад ліміт» у Бюджеті', async ({ pageAs }) => {
   const page = await pageAs('owner')
@@ -22,7 +13,7 @@ test('витрата понад ліміт категорії показує «�
 
   const limit = page.getByRole('dialog')
 
-  await pickCategory(page, limit)
+  await pickCategory(page, limit, CATEGORY)
   await limit.getByLabel('Ліміт на місяць').fill('1')
   await limit.getByRole('button', { name: 'Зберегти' }).click()
   await expect(limit).toBeHidden()
@@ -33,7 +24,7 @@ test('витрата понад ліміт категорії показує «�
 
   await expense.getByLabel('Сума').fill('50')
   await expense.getByLabel('Одержувач').fill(mark)
-  await pickCategory(page, expense)
+  await pickCategory(page, expense, CATEGORY)
   await expense.getByRole('button', { name: 'Зберегти' }).click()
   await expect(expense).toBeHidden()
 

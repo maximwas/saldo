@@ -8,7 +8,8 @@ import { TabBar } from '@/components/layout/tab-bar.component'
 import { Topbar } from '@/components/layout/topbar.component'
 import { AddOperationHost } from '@/features/operations/components/add-operation-host.component'
 
-// Overview desktop 2:8237: Sidebar 232 + Main (content padding 0 32 48); mobile 2:8735: content padding 4 20 32,
+// Overview desktop 2:8237: Sidebar 232 + Main (content padding 0 32 48) that grows with the window, no max width (Maxim,
+// 31.10.2026: no void on the right of wide screens); mobile 2:8735: content padding 4 20 32,
 // TabBar fixed at the bottom, FAB over it. Desktop starts at lg (Figma has no tablet frame). Between pages only the
 // content inside PageTransition animates; the shell stays still.
 export default function AppLayout({ children }: LayoutProps<'/'>) {
@@ -19,7 +20,7 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
         <Topbar />
         <main className="px-5 pt-1 pb-8 lg:px-8 lg:pt-0 lg:pb-12">
           <OfflineBanner />
-          <PageTransition className="flex max-w-(--content-max) flex-col gap-4 lg:gap-6">{children}</PageTransition>
+          <PageTransition className="flex flex-col gap-4 lg:gap-6">{children}</PageTransition>
         </main>
       </div>
       <TabBar />

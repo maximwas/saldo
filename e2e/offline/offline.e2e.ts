@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/types/database.types'
+import { pickCategory } from '../fixtures/category.fixture'
 import { DEMO } from '../fixtures/demo-data.fixture'
 import { test } from '../fixtures/roles.fixture'
 import { E2E_PASSWORD, emailOf } from '../fixtures/users.fixture'
@@ -57,6 +58,7 @@ test('офлайн-витрата чекає в черзі, переживає r
 
   await sheet.getByLabel('Сума').fill('77,10')
   await sheet.getByLabel('Одержувач').fill(mark)
+  await pickCategory(page, sheet)
   await sheet.getByRole('button', { name: 'Зберегти' }).click()
   await expect(sheet).toBeHidden()
   await expect(status(page, /очікує \(1\)/i)).toBeVisible()

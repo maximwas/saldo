@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { DynamicMarker } from '@/components/layout/dynamic-marker.component'
 import { CalendarScreen } from '@/features/calendar/components/calendar-screen.component'
 import { ObligationSheetsHost } from '@/features/obligations/components/obligation-sheets-host.component'
 
@@ -7,9 +8,12 @@ import { ObligationSheetsHost } from '@/features/obligations/components/obligati
 // never import each other.
 export default function CalendarPage() {
   return (
-    <Suspense>
-      <CalendarScreen />
-      <ObligationSheetsHost />
-    </Suspense>
+    <>
+      <Suspense>
+        <CalendarScreen />
+        <ObligationSheetsHost />
+      </Suspense>
+      <DynamicMarker />
+    </>
   )
 }

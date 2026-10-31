@@ -29,7 +29,10 @@
     "income": "Доходи",
     "expenses": "Витрати",
     "result": "Результат",
-    "unknownRate": "Без курсу: {count}"
+    "unknownRate": "Без курсу: {count}",
+    "incomeOf": "Доходи за {month}",
+    "expensesOf": "Витрати за {month}",
+    "withPlan": "з планом до кінця місяця"
   },
   "table": {
     "date": "Дата",
@@ -42,6 +45,15 @@
     "today": "Сьогодні, {date}",
     "yesterday": "Учора, {date}",
     "count": "{count, plural, one {# операція} few {# операції} many {# операцій} other {# операцій}}"
+  },
+  "plan": {
+    "title": "Заплановано",
+    "count": "{count, plural, one {# платіж} few {# платежі} many {# платежів} other {# платежу}}",
+    "notFact": "ще не факт",
+    "pill": "План",
+    "installment": "внесок {number} з {count}",
+    "interval": "{unit, select, day {{count, plural, =1 {щодня} =7 {щотижня} other {кожні # дн.}}} month {{count, plural, =1 {щомісяця} other {кожні # міс.}}} other {{count, plural, =1 {щороку} other {кожні # р.}}}}",
+    "creditCategory": "Кредити"
   },
   "row": {
     "receipt": "Є чек",
@@ -70,6 +82,7 @@
     "date": "Дата",
     "counterparty": "Одержувач",
     "counterpartyHint": "Як у виписці банку",
+    "payer": "Джерело",
     "note": "Коментар",
     "noteHint": "До 500 символів",
     "save": "Зберегти",
@@ -78,6 +91,7 @@
     "close": "Закрити",
     "delete": "Видалити",
     "duplicate": "Дублювати",
+    "actions": "Дії з операцією",
     "receipt": "Чек",
     "addReceipt": "Додати чек",
     "receiptHint": "Фото або PDF, необов’язково",
@@ -113,7 +127,11 @@
       "fee": "Комісія",
       "rate": "Курс",
       "purchase": "Покупка"
-    }
+    },
+    "time": "Час",
+    "balance": "Залишок {amount}",
+    "editingTitle": "Редагувати операцію",
+    "saveChanges": "Зберегти зміни"
   },
   "deleteConfirm": {
     "balanceUp": "Залишок «{account}» зросте на {amount}, суми за період перерахуються.",
@@ -143,7 +161,10 @@
     "submit": "Записати повернення",
     "done": "Повернення записано",
     "purchase": "Покупка {date}",
-    "refunded": "повернено {amount}"
+    "refunded": "повернено {amount}",
+    "amount": "Сума повернення",
+    "noteHint": "Необов’язково",
+    "effect": "Витрати {month} й бюджет «{category}» зменшаться на {amount}. Повернення не рахується доходом."
   },
   "source": {
     "paid": "Оплата: {title} · {date}",

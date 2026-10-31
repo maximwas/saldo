@@ -1,11 +1,12 @@
 import { accountBaseMinor, accountRate } from '@/lib/finance/base-balance.utils'
 import type { FxRate } from '@/lib/money/fx.utils'
 
-export const ACCOUNT_KINDS = ['bank', 'cash', 'savings'] as const
+// no cash accounts in Saldo (Maxim, 31.10.2026); the DB check still allows «cash» for rows made before
+export const ACCOUNT_KINDS = ['bank', 'savings'] as const
 
 export type AccountKind = (typeof ACCOUNT_KINDS)[number]
 
-/** icon and colour a new account gets from its kind (Figma «Saldo» → 2:21073: card blue, wallet teal, savings green) */
+/** icon and colour a new account gets from its kind (Figma «Saldo» → 2:21073: card blue, savings green) */
 export const ACCOUNT_KIND_STYLE: Record<
   AccountKind,
   {
@@ -16,10 +17,6 @@ export const ACCOUNT_KIND_STYLE: Record<
   bank: {
     icon: 'credit-card',
     color: 'blue',
-  },
-  cash: {
-    icon: 'banknote',
-    color: 'teal',
   },
   savings: {
     icon: 'piggy-bank',
@@ -121,7 +118,8 @@ export function toAccount(row: AccountRow, { balanceOf, baseCurrency, rates, tod
   return {
     id: row.id,
     name: row.name,
-    kind: row.kind as AccountKind,
+    // a legacy «cash» row shows as a card
+    kind: ACCOUNT_KINDS.includes(row.kind as AccountKind) ? (row.kind as AccountKind) : 'bank',
     currency: row.currency,
     color: row.color,
     icon: row.icon,

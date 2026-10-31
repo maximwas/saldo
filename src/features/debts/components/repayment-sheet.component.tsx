@@ -111,6 +111,7 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
             control={methods.control}
             name="amount"
             label={translate('repay.amount')}
+            required
             render={(field) => (
               <MoneyInput
                 autoFocus
@@ -126,6 +127,7 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
             control={methods.control}
             name="occurredOn"
             label={translate('repay.date')}
+            required
             render={(field) => (
               <DatePicker
                 value={field.value}

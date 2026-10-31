@@ -32,8 +32,7 @@ begin
   insert into public.accounts (id, ledger_id, name, kind, currency, opening_balance_minor, opening_balance_on,
     include_in_available, sort_order) values
     (v_card, v_ledger, 'Основна картка', 'bank', 'UAH', 4621580, '2026-10-30', true, 1),
-    ('de000000-0000-4000-8000-0000000000a2', v_ledger, 'Готівка', 'cash', 'UAH', 240000, '2026-10-30', true, 2),
-    ('de000000-0000-4000-8000-0000000000a3', v_ledger, 'Валютний EUR', 'bank', 'EUR', 120000, '2026-10-30', false, 3);
+    ('de000000-0000-4000-8000-0000000000a3', v_ledger, 'Валютний EUR', 'savings', 'EUR', 120000, '2026-10-30', false, 3);
   insert into public.fx_rates (ledger_id, base_currency, quote_currency, rate, rate_on) values
     (v_ledger, 'EUR', 'UAH', 41.5, '2026-10-01'),
     (v_ledger, 'USD', 'UAH', 41.6, '2026-10-01');

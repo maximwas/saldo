@@ -1,24 +1,60 @@
-import { CATEGORY_COLORS, CATEGORY_TONES } from '@/constants/category-colors.constants'
+import Image from 'next/image'
+import { CATEGORY_COLORS, CATEGORY_LETTER_TONES } from '@/constants/category-colors.constants'
 import { cn } from '@/lib/utils/cn.utils'
+import { serviceLogoOf } from './service-logo.utils'
 
 type ServiceLogoProps = {
   name: string
+  /** px: 40 in lists and cards, 32 in table rows, 24 in fields */
+  size?: 40 | 32 | 24
   className?: string
 }
 
+const SIZES = {
+  40: {
+    box: 'size-10 rounded-md',
+    letter: 'text-body font-semibold',
+  },
+  32: {
+    box: 'size-8 rounded-logo-md',
+    letter: 'text-label font-semibold',
+  },
+  24: {
+    box: 'size-6 rounded-sm',
+    letter: 'text-micro',
+  },
+} as const
+
+// the first eight presets, the LetterAvatar colours of the Figma frames (the two credits are yellow and blue on Overview 2:8326)
+const LETTER_COLORS = CATEGORY_COLORS.slice(0, 8)
+
 /** the same name always gets the same colour, so a service is recognisable across lists */
 const colorOf = (name: string) =>
-  CATEGORY_COLORS[[...name].reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0) % CATEGORY_COLORS.length]
+  LETTER_COLORS[[...name].reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0) % LETTER_COLORS.length]
 
-// Figma «Saldo» → ServiceLogo 2:7882 (40, radius logo-md) in its LetterAvatar form: brand images do not ship with the
-// app, so the first letter of the service on a colour picked from its name stands in for the logo
-export function ServiceLogo({ name, className }: ServiceLogoProps) {
+// Figma «Saldo» → ServiceLogo 2:7882 (40/32/24, radius md/logo-md/sm, card fill, 1px border ring over the logo from
+// Service logos 1:167); a name without a logo gets LetterAvatar 2:7963: its first letter in cat-<colour>-text on the soft fill
+export function ServiceLogo({ name, size = 40, className }: ServiceLogoProps) {
+  const logo = serviceLogoOf(name)
+  const { box, letter } = SIZES[size]
+
+  if (logo) {
+    return (
+      <span aria-hidden className={cn('relative shrink-0 overflow-hidden bg-card', box, className)}>
+        <Image src={logo} alt="" fill unoptimized />
+        <span className={cn('absolute inset-0 border border-border', box)} />
+      </span>
+    )
+  }
+
   return (
     <span
       aria-hidden
       className={cn(
-        'flex size-10 shrink-0 items-center justify-center rounded-logo-md text-body font-semibold',
-        CATEGORY_TONES[colorOf(name.trim())],
+        'flex shrink-0 items-center justify-center',
+        box,
+        letter,
+        CATEGORY_LETTER_TONES[colorOf(name.trim())],
         className,
       )}
     >

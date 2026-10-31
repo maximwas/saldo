@@ -99,6 +99,7 @@ export function PriceSheet({ subscriptionId, onCloseAction }: PriceSheetProps) {
           control={form.control}
           name="amountMinor"
           label={translate('amount')}
+          required
           render={(field) => (
             <MoneyInput
               ref={field.ref}
@@ -116,6 +117,7 @@ export function PriceSheet({ subscriptionId, onCloseAction }: PriceSheetProps) {
           control={form.control}
           name="effectiveOn"
           label={translate('effectiveOn')}
+          required
           hint={translate('effectiveHint')}
           render={(field) => (
             <DatePicker name={field.name} value={field.value} onValueChange={field.onChange} onBlur={field.onBlur} />

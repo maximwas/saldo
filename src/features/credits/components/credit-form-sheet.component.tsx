@@ -127,6 +127,7 @@ export function CreditFormSheet({ credit, onCloseAction }: CreditFormSheetProps)
               control={form.control}
               name="name"
               label={translate('form.name')}
+              required
               render={(field) => <Input {...field} autoFocus />}
             />
             <FormField

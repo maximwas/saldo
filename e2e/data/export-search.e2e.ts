@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { expect, type Page } from '@playwright/test'
+import { pickCategory } from '../fixtures/category.fixture'
 import { test } from '../fixtures/roles.fixture'
 
 // an expense of 125,50 with the mark as its note, saved through the global «Add»
@@ -9,6 +10,8 @@ async function addExpense(page: Page, mark: string) {
   const sheet = page.getByRole('dialog')
 
   await sheet.getByLabel('Сума').fill('125,50')
+  await sheet.getByLabel('Одержувач').fill(mark)
+  await pickCategory(page, sheet)
   await sheet.getByLabel('Коментар').fill(mark)
   await sheet.getByRole('button', { name: 'Зберегти' }).click()
   await expect(sheet).toBeHidden()

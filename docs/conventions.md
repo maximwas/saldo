@@ -944,7 +944,8 @@ pre-commit:
   "deps": "depcruise src --config .dependency-cruiser.cjs",
   "test": "vitest run",
   "test:db": "supabase test db",
-  "test:e2e": "playwright test",
+  "test:e2e": "playwright test --project=desktop --project=mobile",
+  "test:visual": "E2E_SKIP_RESET=1 playwright test --project=visual --update-snapshots=none",
   "test:e2e:ui": "playwright test --ui",
   "check": "biome check . && pnpm typecheck && depcruise src --config .dependency-cruiser.cjs && knip && vitest run",
   "db:types": "supabase gen types typescript --local > src/types/database.types.ts"
@@ -1155,6 +1156,14 @@ worker). У WebKit `setOffline` ламає навігацію під service wor
 `supabase start` (а не `supabase db start`) — інакше Auth і ключі не підіймуться (supabase discussion #32522).
 Оцінка часу: стек 2–3 хв (образи Docker), install ~0,5 хв, `next build` 1–2 хв, Chromium ~1 хв (з кешем ~10 с),
 тести 2–5 хв — разом 7–12 хв на PR; Actions для публічного репо безкоштовні.
+
+**Піксельне порівняння з Figma.** Проєкт `visual` (`e2e/visual/*.visual.ts`, у `pnpm test:e2e` не входить):
+`matchFrame(page, { frameId, width, height })` ставить viewport розміром фрейму й порівнює його з PNG фрейму,
+експортованим Pixelwright `screenshot` (scale 1) у `e2e/visual/figma/<frameId з «-» замість «:»>.png`; без PNG тест
+падає, сайт ніколи не стає еталоном. Годинник — 31.10.2026, як у фреймах. Запуск (лише локальний стек):
+1. `pnpm exec supabase start`; 2. `pnpm exec supabase db reset` (seed.sql: demo@example.com);
+3. `node scripts/seed-visual.mjs` (операції, переказ і бюджет жовтня з `docs/design/demo-data.md`); 4. `pnpm test:visual`.
+Тест упав — дивіться лише `test-results/**/*-diff.png`, не обидва скріншоти.
 
 **Сценарії.** По 2–6 на фазу, лише головні потоки (`docs/plan.md`, пункти «E2E» кожної фази). Новий баг, який
 дійшов до UI, — спершу unit або pgTAP; e2e додається, лише якщо зламався саме потік.

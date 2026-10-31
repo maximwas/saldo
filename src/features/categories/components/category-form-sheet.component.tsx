@@ -26,14 +26,11 @@ import { CategoryIconPicker } from './category-icon-picker.component'
 const FORM_ID = 'category-form'
 
 // a sentinel for «no value» in a Select: its value is a string, the form keeps null
-const NONE = 'none'
 
 export type CategoryFormTarget = {
   /** the category being edited; null = a new one */
   category: CategoryView | null
   kind: CategoryKind
-  /** the parent a new subcategory starts with */
-  parentId: string | null
 }
 
 // the screen shows the sheet only after the categories are loaded; the query cache hands the same rows over
@@ -46,7 +43,7 @@ type CategoryFormSheetProps = {
 }
 
 // no Figma frame for the category form: it is the accounts edit Dialog ( · 5:106946) with the
-// fields of §6 — name, kind and parent on create, colour and icon always
+// fields of §6 — name and kind on create, colour and icon always (no subcategories in the UI)
 export function CategoryFormSheet({ target, onCloseAction }: CategoryFormSheetProps) {
   const translate = useTranslations('categories')
   const categories = useCategories().data ?? NO_CATEGORIES
@@ -124,26 +121,20 @@ type CategoryFormProps = {
 
 function CategoryForm({ target, onSubmitAction }: CategoryFormProps) {
   const translate = useTranslations('categories')
-  const categories = useCategories().data ?? NO_CATEGORIES
   const { category } = target
   // one id per opened form: a double click on «Save» sends the same id, so it is one category
   const [newId] = useState(() => crypto.randomUUID())
-  const parent = categories.find((row) => row.id === target.parentId)
   const form = useForm<CategoryFormValues>({
     resolver: useZodResolver(categoryFormSchema),
     defaultValues: {
       name: category?.name ?? '',
       kind: category?.kind ?? target.kind,
-      parentId: category?.parentId ?? target.parentId,
-      color: (category?.color ?? parent?.color ?? CATEGORY_COLORS[0]) as CategoryFormValues['color'],
-      icon: category?.icon ?? parent?.icon ?? 'tag',
+      parentId: category?.parentId ?? null,
+      color: (category?.color ?? CATEGORY_COLORS[0]) as CategoryFormValues['color'],
+      icon: category?.icon ?? 'tag',
     },
   })
-  const kind = form.watch('kind')
   const color = form.watch('color')
-  const parentOptions = categories.filter(
-    (row) => row.archivedAt === null && row.parentId === null && row.kind === kind,
-  )
 
   return (
     <form
@@ -156,6 +147,7 @@ function CategoryForm({ target, onSubmitAction }: CategoryFormProps) {
         control={form.control}
         name="name"
         label={translate('form.name')}
+        required
         render={(field) => <Input {...field} autoComplete="off" />}
       />
       <FormField
@@ -173,51 +165,23 @@ function CategoryForm({ target, onSubmitAction }: CategoryFormProps) {
         render={(field) => <CategoryIconPicker value={field.value} color={color} onChange={field.onChange} />}
       />
       {category ? null : (
-        <>
-          <FormField
-            control={form.control}
-            name="kind"
-            label={translate('form.kind')}
-            render={(field) => (
-              <Select
-                name={field.name}
-                value={field.value}
-                onBlur={field.onBlur}
-                onValueChange={(value) => {
-                  field.onChange(value)
-                  form.setValue('parentId', null)
-                }}
-                options={CATEGORY_KINDS.map((option) => ({
-                  value: option,
-                  label: translate(`kind.${option}`),
-                }))}
-              />
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="parentId"
-            label={translate('form.parent')}
-            render={(field) => (
-              <Select
-                name={field.name}
-                value={field.value ?? NONE}
-                onBlur={field.onBlur}
-                onValueChange={(value) => field.onChange(value === NONE ? null : value)}
-                options={[
-                  {
-                    value: NONE,
-                    label: translate('form.noParent'),
-                  },
-                  ...parentOptions.map((row) => ({
-                    value: row.id,
-                    label: row.name,
-                  })),
-                ]}
-              />
-            )}
-          />
-        </>
+        <FormField
+          control={form.control}
+          name="kind"
+          label={translate('form.kind')}
+          render={(field) => (
+            <Select
+              name={field.name}
+              value={field.value}
+              onBlur={field.onBlur}
+              onValueChange={field.onChange}
+              options={CATEGORY_KINDS.map((option) => ({
+                value: option,
+                label: translate(`kind.${option}`),
+              }))}
+            />
+          )}
+        />
       )}
     </form>
   )

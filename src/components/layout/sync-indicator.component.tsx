@@ -1,7 +1,7 @@
 'use client'
 
 import { useFormatter, useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { SyncQueueSheet } from '@/features/sync/components/sync-queue-sheet.component'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
@@ -25,13 +25,20 @@ export function SyncIndicator({ className }: SyncIndicatorProps) {
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const { summary, updatedAt } = useSyncQueue()
   const [open, setOpen] = useState(false)
-  const time = updatedAt
-    ? format.dateTime(new Date(updatedAt), {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone,
-      })
-    : null
+  // the restored cache gives the browser a time the server never had: show it only after hydration, so both match
+  const hydrated = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  )
+  const time =
+    hydrated && updatedAt
+      ? format.dateTime(new Date(updatedAt), {
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone,
+        })
+      : null
 
   function label({ summary: { state, count }, time: syncedAt }: LabelParams) {
     if (state === 'synced') {

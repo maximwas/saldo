@@ -1,12 +1,13 @@
 'use client'
 
 import { Info } from 'lucide-react'
-import { useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
-import { useAccountOperationCount, useUpdateAccount } from '../hooks/accounts.hook'
+import { useClock } from '@/contexts/clock.context'
+import { formatMinor } from '@/lib/money/money.utils'
+import { useAccountActivity, useUpdateAccount } from '../hooks/accounts.hook'
 import type { AccountView } from '../utils/accounts.utils'
 
 type ArchiveAccountSheetProps = {
@@ -16,11 +17,14 @@ type ArchiveAccountSheetProps = {
 }
 
 // Figma «Saldo» (account delete → archive) 5:106214 / 5:106467: an account with operations is never deleted, only
-// archived — the operations stay, the account leaves the lists and «Available»
+// archived — the operations stay, the account leaves the lists and «Available». The body counts operations and
+// transfers of the account; a single one is named by its date and title.
 export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSheetProps) {
   const translate = useTranslations('accounts')
+  const locale = useLocale()
+  const { timeZone } = useClock()
   const update = useUpdateAccount()
-  const operations = useAccountOperationCount(account?.id ?? '', account !== null)
+  const activity = useAccountActivity(account?.id ?? '', account !== null)
 
   const archive = () => {
     if (!account) {
@@ -40,6 +44,30 @@ export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSh
         },
       },
     )
+  }
+
+  const summaryOf = (target: AccountView) => {
+    const balance = formatMinor(target.balanceMinor, target.currency, locale)
+    const data = activity.data
+
+    if (data === undefined) {
+      return translate('archive.balanceOnly', { balance })
+    }
+
+    const only = data.count === 1 ? data.latest : null
+    const date = only
+      ? new Intl.DateTimeFormat(locale, {
+          day: '2-digit',
+          month: '2-digit',
+          timeZone,
+        }).format(new Date(only.occurredAt))
+      : ''
+
+    return translate('archive.summary', {
+      count: data.count,
+      detail: only ? ` (${only.title ? `${date}, «${only.title}»` : date})` : '',
+      balance,
+    })
   }
 
   return (
@@ -64,15 +92,12 @@ export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSh
     >
       {account ? (
         <>
-          <p className="text-label text-text-secondary">
-            {operations.data === undefined
-              ? translate('archive.balanceOnly')
-              : translate('archive.summary', { count: operations.data })}{' '}
-            <Amount minor={account.balanceMinor} currency={account.currency} className="text-label font-medium" />
-          </p>
-          <p className="flex gap-3 rounded-inner bg-primary-soft p-4 text-body-medium text-primary-text">
-            <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
-            {translate('archive.info')}
+          <p className="text-label text-text-secondary">{summaryOf(account)}</p>
+          <p className="flex gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body-medium text-primary-text">
+            <span className="py-0.5">
+              <Info className="size-5 shrink-0" aria-hidden />
+            </span>
+            <span className="flex-1">{translate('archive.info')}</span>
           </p>
         </>
       ) : null}

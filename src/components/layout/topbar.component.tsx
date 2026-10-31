@@ -19,7 +19,6 @@ export function Topbar() {
   const pathname = usePathname()
   const ledger = useLedger()
   const { now, timeZone } = useClock()
-  const translate = useTranslations('shell')
   const translateNav = useTranslations('nav')
   const translateCommon = useTranslations('common')
   const formatter = useFormatter()

@@ -73,6 +73,8 @@
       "email": "Email",
       "emailHint": "The link is valid for 7 days and works once. Send it to the person yourself.",
       "emailInvalid": "Enter a valid address",
+      "noAccount": "There is no Saldo user with this email",
+      "alreadyMember": "This person is already in the space",
       "role": "Role",
       "roleNote": "You can change the role or revoke access at any time.",
       "cancel": "Cancel",

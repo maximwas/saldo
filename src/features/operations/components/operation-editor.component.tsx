@@ -1,18 +1,20 @@
 'use client'
 
 import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query'
-import { TriangleAlert, Undo2 } from 'lucide-react'
+import { Copy, Trash2, TriangleAlert, Undo2 } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
+import { Menu } from '@/components/ui/menu.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { formatMinor, fromMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { localTime } from '@/lib/utils/clock.utils'
 import { useDraftsStore } from '@/store/drafts.store'
 import {
   useCreateOperation,
@@ -65,7 +67,7 @@ type OperationEditorProps = {
 const FORM_ID = 'operation-editor-form'
 const REFUND_FORM_ID = 'operation-refund-form'
 
-const toFormValues = (item: OperationItem): Partial<OperationFormValues> => ({
+const toFormValues = (item: OperationItem, timeZone: string): Partial<OperationFormValues> => ({
   kind: item.row.kind as OperationFormValues['kind'],
   direction: item.row.direction,
   amount: fromMinor(item.row.amountMinor, item.row.currency),
@@ -73,6 +75,7 @@ const toFormValues = (item: OperationItem): Partial<OperationFormValues> => ({
   accountId: item.row.accountId,
   categoryId: item.row.categoryId,
   occurredOn: item.row.occurredOn,
+  occurredTime: localTime(new Date(item.row.occurredAt), timeZone),
   counterparty: item.row.counterparty ?? '',
   note: item.row.note ?? '',
 })
@@ -97,15 +100,24 @@ export function OperationEditor({
   const formatter = useFormatter()
   const clock = useClock()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const canWrite = useCanWrite()
   const queryClient = useQueryClient()
   const options = useQuery(operationQueries.options(ledgerId))
   const [newId] = useState(() => crypto.randomUUID())
   // a blank new operation keeps a draft per space; a duplicate starts from its source instead
   const draftKey = target.mode === 'create' && !target.defaults ? `operations:create:${ledgerId}` : undefined
-  const [kind, setKind] = useState<AddKind>(target.mode === 'create' ? target.kind : 'expense')
+  // an edited income / expense starts on its own kind; the switch flips it (update_operation takes kind + direction)
+  const [kind, setKind] = useState<AddKind>(() => {
+    if (target.mode === 'create') {
+      return target.kind
+    }
+
+    return target.item.kind === 'income' ? 'income' : 'expense'
+  })
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const desktop = useIsDesktop()
   const [refunding, setRefunding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
@@ -160,6 +172,10 @@ export function OperationEditor({
       return translate(kind === 'transfer' ? 'form.transferTitle' : 'form.newTitle')
     }
 
+    if (mode === 'edit') {
+      return translate('form.editingTitle')
+    }
+
     return translate(isTransfer ? 'form.transferTitle' : 'form.editTitle')
   }
 
@@ -180,7 +196,10 @@ export function OperationEditor({
         draftKey={draftKey}
         onSubmitAction={saveOperation}
       >
-        <ReceiptField operationId={null} file={receipt} onFileChangeAction={setReceipt} canEdit />
+        {/* Figma 2:17848 / 2:19885: the income form has no receipt */}
+        {kind === 'expense' ? (
+          <ReceiptField operationId={null} file={receipt} onFileChangeAction={setReceipt} canEdit />
+        ) : null}
       </OperationForm>
     )
   }
@@ -371,21 +390,12 @@ export function OperationEditor({
       </>
     )
   } else if (mode === 'edit' && item) {
+    // Figma 5:101464 / 32:95477: Duplicate and Delete live in the header «···» menu (33:101623 / 33:101738)
     footer = (
       <>
-        <Button type="button" variant="danger" disabled={pending} onClick={() => setConfirmingDelete(true)}>
-          {translate('form.delete')}
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={pending}
-          onClick={() => onDuplicateAction?.(toFormValues(item), item.row.id)}
-        >
-          {translate('form.duplicate')}
-        </Button>
+        {cancel}
         <Button type="submit" form={FORM_ID} disabled={pending || options.isPending || conflict}>
-          {translate('form.save')}
+          {translate('form.saveChanges')}
         </Button>
       </>
     )
@@ -407,6 +417,32 @@ export function OperationEditor({
       </Button>
     )
   }
+
+  const editMenu =
+    mode === 'edit' && item && !refunding && !confirmingDelete ? (
+      <Menu
+        label={translate('form.actions')}
+        items={[
+          {
+            label: translate('form.duplicate'),
+            Icon: Copy,
+            disabled: pending,
+            onSelect: () => onDuplicateAction?.(toFormValues(item, timeZone), item.row.id),
+          },
+          {
+            label: translate('form.delete'),
+            Icon: Trash2,
+            danger: true,
+            disabled: pending,
+            onSelect: () => setConfirmingDelete(true),
+          },
+        ]}
+        // Figma: 36 like ✕ in the dialog (33:101623); in the sheet (33:101738) the popup ends 4 short of ✕'s right
+        // edge, 52 px right of the trigger's
+        alignOffset={desktop ? 0 : -52}
+        className={`text-text-secondary data-popup-open:bg-transparent ${desktop ? 'size-9' : ''}`}
+      />
+    ) : null
 
   const dateLabel = (date: string) =>
     formatter.dateTime(new Date(`${date}T12:00:00Z`), {
@@ -466,6 +502,7 @@ export function OperationEditor({
     body = (
       <>
         <SegmentedControl
+          stretch="track"
           label={translate('add.typeLabel')}
           options={ADD_KINDS.map((value) => ({
             value,
@@ -482,11 +519,22 @@ export function OperationEditor({
       <div aria-busy className="h-64 rounded-md bg-subtle" />
     ) : (
       <>
+        {/* Figma 5:101464: the edit sheet keeps the type switch; a transfer is made anew, so only the two kinds flip */}
+        <SegmentedControl
+          stretch="track"
+          label={translate('add.typeLabel')}
+          options={ADD_KINDS.map((value) => ({
+            value,
+            label: translate(`add.${value}`),
+          }))}
+          value={kind}
+          onValueChange={(next) => (next === 'transfer' ? undefined : setKind(next))}
+        />
         <OperationSource operationId={item.row.id} />
         <OperationForm
           formId={FORM_ID}
-          kind={item.kind as 'expense' | 'income'}
-          defaults={toFormValues(item)}
+          kind={kind === 'income' ? 'income' : 'expense'}
+          defaults={toFormValues(item, timeZone)}
           onSubmitAction={saveOperation}
         >
           <ReceiptField operationId={item.row.id} file={receipt} onFileChangeAction={setReceipt} canEdit />
@@ -496,11 +544,18 @@ export function OperationEditor({
             {translate('refund.refunded', { amount: formatMinor(refundedMinor, item.row.currency, locale) })}
           </p>
         ) : null}
+        {/* Figma 15:76568 «Refund»: a top border, padding-top 12, a full-width Ghost «record refund», the limit
+            (caption) centred under it, gap 4 */}
         {canRefund ? (
-          <Button type="button" variant="ghost" className="self-start" onClick={() => setRefunding(true)}>
-            <Undo2 aria-hidden className="size-5" />
-            {translate('refund.action')}
-          </Button>
+          <div className="flex flex-col items-center gap-1 border-t border-border pt-3">
+            <Button type="button" variant="ghost" className="self-stretch" onClick={() => setRefunding(true)}>
+              <Undo2 aria-hidden className="size-5" />
+              {translate('refund.submit')}
+            </Button>
+            <span className="text-caption text-text-tertiary">
+              {translate('refund.limit', { amount: formatMinor(refundLeft, item.row.currency, locale) })}
+            </span>
+          </div>
         ) : null}
       </>
     )
@@ -596,7 +651,15 @@ export function OperationEditor({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChangeAction} title={title} footer={footer}>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChangeAction}
+      title={title}
+      footer={footer}
+      headerAction={editMenu}
+      // Figma: the operation and transfer forms are 640 wide (2:16567, 2:22322, 5:101464); delete and refund keep 480
+      size={(mode === 'create' || mode === 'edit') && !refunding && !confirmingDelete ? 'lg' : 'md'}
+    >
       {body}
       {conflict ? (
         <p

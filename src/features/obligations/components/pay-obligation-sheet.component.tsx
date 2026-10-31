@@ -173,6 +173,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           control={form.control}
           name="amount"
           label={translate('pay.amount')}
+          required
           render={(field) => (
             <MoneyInput
               autoFocus
@@ -188,6 +189,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           control={form.control}
           name="occurredOn"
           label={translate('pay.date')}
+          required
           render={(field) => (
             <DatePicker
               value={field.value}
@@ -200,6 +202,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           control={form.control}
           name="accountId"
           label={translate('pay.account')}
+          required
           hint={translate('pay.accountHint')}
           render={(field) => (
             <Select

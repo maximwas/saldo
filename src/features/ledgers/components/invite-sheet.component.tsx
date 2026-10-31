@@ -89,7 +89,14 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
       })
       router.refresh()
     } catch (caught) {
-      setError(translateError(toPgError(caught as { code?: string }).kind))
+      const { code } = caught as { code?: string }
+
+      // create_ledger_invite: SL404 no Saldo account with the email, SL409 already in the space (Figma 32:94877 / 32:95165)
+      if (code === 'SL404' || code === 'SL409') {
+        setEmailError(translate(code === 'SL404' ? 'inviteSheet.noAccount' : 'inviteSheet.alreadyMember'))
+      } else {
+        setError(translateError(toPgError({ code }).kind))
+      }
     } finally {
       setIsPending(false)
     }
@@ -148,6 +155,7 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
       <form id="invite-form" onSubmit={submit} noValidate className="flex flex-col gap-4">
         <Field
           label={translate('inviteSheet.email')}
+          required
           hint={translate('inviteSheet.emailHint')}
           error={emailError ?? undefined}
         >
@@ -159,7 +167,7 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
             onChange={(event) => setEmail(event.target.value)}
           />
         </Field>
-        <Field label={translate('inviteSheet.role')}>
+        <Field label={translate('inviteSheet.role')} required>
           <Select
             options={roleOptions}
             value={role}

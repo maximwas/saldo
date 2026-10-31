@@ -3,8 +3,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button.component'
+import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { mergeQueued } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
@@ -17,14 +18,42 @@ import { OperationFilters } from './operation-filters.component'
 import { OperationList } from './operation-list.component'
 import { OperationSummary } from './operation-summary.component'
 
+const subscribeNever = () => () => undefined
+
 // Figma Saldo file → Operations 2:11403 / 2:13681: type switch and chips, the totals of the filter, then the list by day.
 // Adding goes through the global «Add» (?add=), here only a row opens the sheet (edit / view) or a duplicate of it.
 export function OperationsScreen() {
   const translate = useTranslations('operations')
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
-  const { url, filters, period, active, setUrl, reset } = useOperationFilters()
+  const { url, filters, period, today, active, setUrl, reset } = useOperationFilters()
   const list = useQuery(operationQueries.list(ledgerId, filters))
+  const timeZone = useLedgerStore((ledger) => ledger.timeZone)
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
+  // the «with plan to the month end» line belongs to the whole current month: a type, account or category filter hides it
+  const wholeMonth = period === today.slice(0, 7) && url.type === 'all' && !url.account && !url.category && !url.who
+  const planned = useQuery({
+    ...operationQueries.planned(
+      {
+        ledgerId,
+        baseCurrency,
+        timeZone,
+      },
+      today,
+    ),
+    enabled: wholeMonth,
+  })
+  const upcoming = useQuery({
+    ...operationQueries.upcoming(ledgerId, today),
+    enabled: wholeMonth,
+  })
   const options = useQuery(operationQueries.options(ledgerId))
+  // the screen is a streamed Suspense boundary: it hydrates after the device cache is restored, so the first client
+  // render repeats the server's skeleton and the data comes one render later (no hydration mismatch)
+  const hydrated = useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false,
+  )
   // `key` changes with every target, so a row, then its duplicate, each get a fresh form and fresh ids
   const [editor, setEditor] = useState<{
     open: boolean
@@ -74,11 +103,24 @@ export function OperationsScreen() {
 
   let content: React.ReactNode
 
-  if (list.isPending || options.isPending) {
+  if (!hydrated || list.isPending || options.isPending) {
     content = (
+      // Figma operations loading frame 5:103704 (mobile; desktop has no frame and takes the same): the totals card
+      // (padding 16, gap 12, two 56 bars) and day cards (padding 16, gap 16, a 140×14 title, lines with a 72 end bar)
       <div aria-busy className="flex flex-col gap-4">
-        <div className="h-28 rounded-card bg-subtle" />
-        <div className="h-80 rounded-card bg-subtle" />
+        <SkeletonCard className="flex-row gap-3 p-4">
+          <Bone className="h-14 flex-1 rounded-md" />
+          <Bone className="h-14 flex-1 rounded-md" />
+        </SkeletonCard>
+        <SkeletonCard className="gap-4 p-4">
+          <Bone className="h-3.5 w-35 rounded-sm" />
+          <SkeletonLine end="w-18" />
+          <SkeletonLine end="w-18" />
+        </SkeletonCard>
+        <SkeletonCard className="gap-4 p-4">
+          <Bone className="h-3.5 w-35 rounded-sm" />
+          <SkeletonLine end="w-18" />
+        </SkeletonCard>
       </div>
     )
   } else if (list.isError || options.isError) {
@@ -103,11 +145,21 @@ export function OperationsScreen() {
   } else {
     content = (
       <>
-        <OperationSummary totals={totals} />
+        <OperationSummary
+          totals={totals}
+          period={period}
+          withPlanMinor={wholeMonth && planned.data != null ? totals.resultMinor - planned.data : null}
+        />
         {list.data.truncated ? (
           <p className="text-caption text-text-tertiary">{translate('truncated', { count: list.data.rows.length })}</p>
         ) : null}
-        <OperationList items={items} receiptIds={receiptIds} syncStates={queued.states} onSelectAction={select} />
+        <OperationList
+          items={items}
+          receiptIds={receiptIds}
+          syncStates={queued.states}
+          planned={wholeMonth ? upcoming.data : undefined}
+          onSelectAction={select}
+        />
       </>
     )
   }
@@ -139,7 +191,7 @@ export function OperationsScreen() {
             )
           }
           onOpenAction={select}
-          onDuplicateAction={({ occurredOn: _date, ...defaults }, sourceId) =>
+          onDuplicateAction={({ occurredOn: _date, occurredTime: _time, ...defaults }, sourceId) =>
             openEditor({
               mode: 'create',
               kind: defaults.kind === 'income' ? 'income' : 'expense',

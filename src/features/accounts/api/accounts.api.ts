@@ -63,24 +63,44 @@ type CountOperationsParams = {
 }
 
 /** how many operations an account has: the archive dialog says what stays in the history */
-export async function countAccountOperations(
+export type AccountActivity = {
+  /** operations of the account, the legs of its transfers included */
+  count: number
+  /** the latest of them: the archive dialog names a single one */
+  latest: {
+    occurredAt: string
+    title: string | null
+  } | null
+}
+
+// the exact count comes with the latest row (a GET, not a HEAD request), so the dialog can name a single operation
+export async function getAccountActivity(
   supabase: SaldoClient,
   { ledgerId, accountId }: CountOperationsParams,
-): Promise<number> {
-  const { count, error } = await supabase
+): Promise<AccountActivity> {
+  const { data, count, error } = await supabase
     .from('operations')
-    .select('id', {
-      count: 'exact',
-      head: true,
-    })
+    .select('occurred_at, counterparty, note', { count: 'exact' })
     .eq('ledger_id', ledgerId)
     .eq('account_id', accountId)
+    .order('occurred_at', { ascending: false })
+    .limit(1)
 
   if (error) {
     throw error
   }
 
-  return count ?? 0
+  const latest = data[0]
+
+  return {
+    count: count ?? data.length,
+    latest: latest
+      ? {
+          occurredAt: latest.occurred_at,
+          title: latest.counterparty ?? latest.note,
+        }
+      : null,
+  }
 }
 
 export async function createAccount(supabase: SaldoClient, input: CreateAccountInput): Promise<void> {
