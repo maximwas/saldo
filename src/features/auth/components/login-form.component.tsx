@@ -129,58 +129,68 @@ export function LoginForm() {
 
   if (step === 'code') {
     return (
-      <form onSubmit={submitCode} noValidate className="flex flex-col gap-4">
-        <span className="flex size-10 items-center justify-center self-center rounded-full bg-cat-blue-soft">
-          <ShieldCheckIcon />
-        </span>
-        <h1 className="text-center font-display text-number text-text-primary">{translate('codeTitle')}</h1>
-        <p className="text-center text-body text-text-secondary">{translate('codeHint')}</p>
-        <Field label={translate('code')} required error={error ?? undefined}>
-          <Input
-            name="code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            autoFocus
-            value={code}
-            onValueChange={(value) => setCode(value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
-          />
-        </Field>
-        <Button type="submit" className="w-full" disabled={code.length !== CODE_LENGTH || isPending}>
-          {translate('confirm')}
-        </Button>
-        <Button type="button" variant="ghost" className="w-full" onClick={backToLogin}>
-          {translate('backToLogin')}
-        </Button>
-      </form>
+      <div className="flex flex-col rounded-card bg-card p-5 shadow-card md:w-110 md:p-8">
+        <form onSubmit={submitCode} noValidate className="flex flex-col gap-4">
+          <span className="flex size-10 items-center justify-center self-center rounded-full bg-cat-blue-soft">
+            <ShieldCheckIcon />
+          </span>
+          <h1 className="text-center font-display text-number text-text-primary">{translate('codeTitle')}</h1>
+          <p className="text-center text-body text-text-secondary">{translate('codeHint')}</p>
+          <Field label={translate('code')} required error={error ?? undefined}>
+            <Input
+              name="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              value={code}
+              onValueChange={(value) => setCode(value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+            />
+          </Field>
+          <Button type="submit" className="w-full" disabled={code.length !== CODE_LENGTH || isPending}>
+            {translate('confirm')}
+          </Button>
+          <Button type="button" variant="ghost" className="w-full" onClick={backToLogin}>
+            {translate('backToLogin')}
+          </Button>
+        </form>
+      </div>
     )
   }
 
   return (
-    <form onSubmit={submitPassword} noValidate className="flex flex-col gap-4 md:gap-5">
-      <Brand className="hidden self-center md:flex" />
-      <div className="flex flex-col items-center gap-1 text-center">
-        <h1 className="font-display text-number text-text-primary md:text-page-title">{translate('title')}</h1>
-        <p className="hidden text-body text-text-secondary md:block">{translate('subtitle')}</p>
+    <>
+      <div className="flex flex-col rounded-card bg-card p-5 shadow-card md:w-110 md:p-8">
+        <form onSubmit={submitPassword} noValidate className="flex flex-col gap-4 md:gap-5">
+          <Brand className="hidden self-center md:flex" />
+          <div className="flex flex-col items-center gap-1 text-center">
+            <h1 className="font-display text-number text-text-primary md:text-page-title">{translate('title')}</h1>
+            <p className="hidden text-body text-text-secondary md:block">{translate('subtitle')}</p>
+          </div>
+          <Field label={translate('email')} required error={invalid.email}>
+            <Input name="email" type="email" autoComplete="email" />
+          </Field>
+          <Field label={translate('password')} required error={invalid.password ?? error ?? undefined}>
+            <Input name="password" type="password" autoComplete="current-password" />
+          </Field>
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {translate('submit')}
+          </Button>
+          <div className="hidden gap-2 border-t border-border pt-4 text-caption md:flex">
+            {/* icon box = one text line (h-lh), so the icon is centred on the first line, however many lines follow */}
+            <span className="flex h-lh items-center">
+              <InfoIcon />
+            </span>
+            <p className="flex-1 text-text-secondary">
+              {translate('inviteOnly')} {translate('twoStepNote')}
+            </p>
+          </div>
+        </form>
       </div>
-      <Field label={translate('email')} required error={invalid.email}>
-        <Input name="email" type="email" autoComplete="email" />
-      </Field>
-      <Field label={translate('password')} required error={invalid.password ?? error ?? undefined}>
-        <Input name="password" type="password" autoComplete="current-password" />
-      </Field>
-      <Button type="submit" className="w-full" disabled={isPending}>
-        {translate('submit')}
-      </Button>
-      <div className="hidden gap-2 border-t border-border pt-4 text-caption md:flex">
-        {/* icon box = one text line (h-lh), so the icon is centred on the first line, however many lines follow */}
-        <span className="flex h-lh items-center">
-          <InfoIcon />
-        </span>
-        <p className="flex-1 text-text-secondary">
-          {translate('inviteOnly')} {translate('twoStepNote')}
-        </p>
-      </div>
-    </form>
+      {/* Figma 4:79982 has the note under the card; the error frame 4:80005 and the code frame 4:80027 do not */}
+      {!(error || invalid.email || invalid.password) && (
+        <p className="text-center text-caption text-text-secondary md:hidden">{translate('inviteOnly')}</p>
+      )}
+    </>
   )
 }
 

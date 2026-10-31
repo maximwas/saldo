@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { useTranslations } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
 import { Brand } from '@/components/layout/brand.component'
@@ -24,15 +23,10 @@ export default function LoginPage() {
 }
 
 function LoginContent() {
-  const translate = useTranslations('auth')
-
   return (
     <main className="flex min-h-dvh flex-col justify-center-safe gap-6 bg-app px-5 pt-12 pb-8 md:items-center md:justify-center md:p-0">
       <Brand className="self-center md:hidden" />
-      <div className="flex flex-col rounded-card bg-card p-5 shadow-card md:w-110 md:p-8">
-        <LoginForm />
-      </div>
-      <p className="text-center text-caption text-text-secondary md:hidden">{translate('inviteOnly')}</p>
+      <LoginForm />
     </main>
   )
 }
