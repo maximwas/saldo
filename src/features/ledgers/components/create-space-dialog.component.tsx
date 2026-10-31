@@ -75,7 +75,7 @@ export function CreateSpaceDialog({ open, onOpenChange }: CreateSpaceDialogProps
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-text-primary/40" />
         <Dialog.Popup className="fixed inset-x-5 top-1/2 z-50 mx-auto flex max-w-110 -translate-y-1/2 flex-col gap-5 rounded-card bg-card p-6 shadow-float outline-none">
           <Dialog.Title className="text-card-title text-text-primary">{translate('title')}</Dialog.Title>
-          <form onSubmit={submit} className="flex flex-col gap-5">
+          <form onSubmit={submit} noValidate className="flex flex-col gap-5">
             <div className="flex flex-col gap-1.5">
               <label htmlFor={ids.name} className="text-label font-medium text-text-secondary">
                 {translate('name')}

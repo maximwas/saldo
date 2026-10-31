@@ -97,6 +97,7 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
         control={form.control}
         name="amount"
         label={translate('refund.amount')}
+        required
         hint={translate('refund.limit', { amount: limit })}
         render={(field) => (
           <MoneyInput
@@ -115,6 +116,7 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
           control={form.control}
           name="accountId"
           label={translate('form.account')}
+          required
           render={(field) => (
             <Select
               options={accountOptions(accounts, field.value)}
@@ -128,6 +130,7 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
           control={form.control}
           name="occurredOn"
           label={translate('form.date')}
+          required
           render={(field) => (
             <DatePicker
               value={field.value}

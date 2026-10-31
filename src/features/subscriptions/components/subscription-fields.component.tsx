@@ -48,6 +48,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
             control={control}
             name="name"
             label={translate('name')}
+            required
             render={(field) => <Input {...field} autoComplete="off" />}
           />
         </div>
@@ -75,6 +76,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
             control={control}
             name="currency"
             label={translate('currency')}
+            required
             render={(field) => (
               <Select
                 name={field.name}
@@ -94,6 +96,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
         control={control}
         name="accountId"
         label={translate('account')}
+        required
         hint={translate('accountHint')}
         render={(field) => (
           <Select
@@ -161,6 +164,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
         control={control}
         name="firstOn"
         label={translate('firstOn')}
+        required
         hint={translate('firstOnHint')}
         render={(field) => (
           <DatePicker name={field.name} value={field.value} onValueChange={field.onChange} onBlur={field.onBlur} />
@@ -171,6 +175,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
           control={control}
           name="shortMonthRule"
           label={translate('shortMonthRule')}
+          required
           hint={translate('shortMonthHint')}
           render={(field) => (
             <Select

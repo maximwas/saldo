@@ -148,6 +148,7 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
       <form id="invite-form" onSubmit={submit} noValidate className="flex flex-col gap-4">
         <Field
           label={translate('inviteSheet.email')}
+          required
           hint={translate('inviteSheet.emailHint')}
           error={emailError ?? undefined}
         >
@@ -159,7 +160,7 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
             onChange={(event) => setEmail(event.target.value)}
           />
         </Field>
-        <Field label={translate('inviteSheet.role')}>
+        <Field label={translate('inviteSheet.role')} required>
           <Select
             options={roleOptions}
             value={role}

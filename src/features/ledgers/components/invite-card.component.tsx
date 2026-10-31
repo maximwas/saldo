@@ -143,6 +143,13 @@ export function InviteCard({ token, status: initialStatus, invite, sessionEmail 
 
     const password = String(new FormData(event.currentTarget).get('password'))
 
+    // the browser check is off (noValidate): the 8-character rule of the hint is checked here
+    if (password.length < 8) {
+      setNotice('weakPassword')
+
+      return
+    }
+
     start()
 
     try {
@@ -271,7 +278,7 @@ export function InviteCard({ token, status: initialStatus, invite, sessionEmail 
             </Button>
           </>
         ) : (
-          <form onSubmit={createAccount} className="flex w-full flex-col gap-4">
+          <form onSubmit={createAccount} noValidate className="flex w-full flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor={ids.password} className="text-label font-medium text-text-secondary">
                 {translate('newPassword')}

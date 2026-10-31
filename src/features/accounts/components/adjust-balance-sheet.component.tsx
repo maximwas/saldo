@@ -96,6 +96,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
           control={form.control}
           name="actual"
           label={translate('actual')}
+          required
           hint={translate('actualHint')}
           render={(field) => (
             <MoneyInput
@@ -126,6 +127,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
           control={form.control}
           name="occurredOn"
           label={translate('date')}
+          required
           render={(field) => (
             <DatePicker
               value={field.value}
@@ -138,6 +140,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
           control={form.control}
           name="note"
           label={translate('note')}
+          required
           hint={translate('noteHint')}
           render={(field) => <Textarea {...field} />}
         />

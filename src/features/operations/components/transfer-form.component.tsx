@@ -88,9 +88,11 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
 
   return (
     <form id={formId} noValidate onSubmit={form.handleSubmit(onSubmitAction)} className="flex flex-col gap-4">
-      {/* Figma Banner Kind=Info: padding 12/16, gap 12, text body-medium, icon centred */}
-      <p className="flex items-center gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body font-medium text-primary-text">
-        <Info aria-hidden size={20} className="shrink-0" />
+      {/* Figma Banner 2:10028: padding 12/16, gap 12, text body-medium; the icon box (20 + 2/2) sits on the first line */}
+      <p className="flex items-start gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body font-medium text-primary-text">
+        <span className="flex shrink-0 py-0.5">
+          <Info aria-hidden size={20} />
+        </span>
         {translate('transferNote')}
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -98,6 +100,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           control={form.control}
           name="fromAccountId"
           label={translate('from')}
+          required
           hint={balanceHint(form.watch('fromAccountId'), fromCurrency)}
           render={(field) => (
             <Select
@@ -112,6 +115,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           control={form.control}
           name="fromAmount"
           label={translate('fromAmount')}
+          required
           render={(field) => (
             <MoneyInput
               value={fromMinorValue}
@@ -127,6 +131,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           control={form.control}
           name="toAccountId"
           label={translate('to')}
+          required
           hint={balanceHint(form.watch('toAccountId'), toCurrency)}
           render={(field) => (
             <Select
@@ -142,6 +147,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
             control={form.control}
             name="toAmount"
             label={translate('toAmount')}
+            required
             render={(field) => (
               <MoneyInput
                 value={toMinorValue}
@@ -185,6 +191,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           control={form.control}
           name="occurredOn"
           label={translate('date')}
+          required
           render={(field) => (
             <DatePicker
               value={field.value}

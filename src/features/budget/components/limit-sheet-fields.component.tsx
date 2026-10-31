@@ -45,6 +45,7 @@ export function LimitSheetFields({ control, choices, carryMode }: LimitSheetFiel
         control={control}
         name="limitMinor"
         label={translate('amount')}
+        required
         render={(field) => (
           <MoneyInput
             ref={field.ref}
@@ -62,6 +63,7 @@ export function LimitSheetFields({ control, choices, carryMode }: LimitSheetFiel
         control={control}
         name="carryMode"
         label={translate('carry')}
+        required
         hint={translate(carryMode === 'carry' ? 'carryHintCarry' : 'carryHintReset')}
         render={(field) => (
           <Select

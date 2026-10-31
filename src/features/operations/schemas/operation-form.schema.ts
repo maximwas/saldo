@@ -35,6 +35,15 @@ export const operationFormSchema = z
     path: ['note'],
     message: 'adjustmentNote',
   })
+  // Figma new-operation error frames 5:93500 / 5:101464: an expense needs both
+  .refine((values) => values.kind !== 'expense' || values.categoryId !== null, {
+    path: ['categoryId'],
+    message: 'categoryRequired',
+  })
+  .refine((values) => values.kind !== 'expense' || values.counterparty.trim() !== '', {
+    path: ['counterparty'],
+    message: 'counterpartyRequired',
+  })
 
 export type OperationFormValues = z.infer<typeof operationFormSchema>
 

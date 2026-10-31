@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test'
+import { pickCategory } from '../fixtures/category.fixture'
 import { DEMO } from '../fixtures/demo-data.fixture'
 import {
   accountBalanceMinor,
@@ -31,6 +32,7 @@ test('повернення зменшує витрати місяця, а не �
 
   await sheet.getByLabel('Сума').fill(typed(PURCHASE_MINOR))
   await sheet.getByLabel('Одержувач').fill(mark)
+  await pickCategory(page, sheet)
   await sheet.getByRole('button', { name: 'Зберегти' }).click()
   await expect(sheet).toBeHidden()
 

@@ -6,8 +6,8 @@ type FormFieldProps<Values extends FieldValues, Name extends FieldPath<Values>> 
   name: Name
   label: string
   hint?: string
-  /** the hint shows from md up only */
-  hintOnDesktop?: boolean
+  /** «*» after the label */
+  required?: boolean
   /** (field) → control; spread `field` on Input / Textarea, or map value and onChange for the others */
   render: (field: ControllerRenderProps<Values, Name>) => React.ReactElement<FieldControlProps>
 }
@@ -18,7 +18,7 @@ export function FormField<Values extends FieldValues, Name extends FieldPath<Val
   name,
   label,
   hint,
-  hintOnDesktop,
+  required,
   render,
 }: FormFieldProps<Values, Name>) {
   return (
@@ -26,7 +26,7 @@ export function FormField<Values extends FieldValues, Name extends FieldPath<Val
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <Field label={label} hint={hint} hintOnDesktop={hintOnDesktop} error={fieldState.error?.message}>
+        <Field label={label} hint={hint} required={required} error={fieldState.error?.message}>
           {render(field)}
         </Field>
       )}

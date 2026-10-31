@@ -12,6 +12,7 @@ const ACCOUNT = '0b6f7a52-1d2e-4c3b-9a8f-1e2d3c4b5a69'
 const LEDGER = '7c1d2e3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f'
 const OPERATION = '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b'
 const SOURCE = '5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d'
+const CATEGORY = '6b7c8d9e-0f1a-4b2c-8d3e-4f5a6b7c8d9e'
 
 // Friday 30.10.2026, 14:00 in Kyiv
 const clock = {
@@ -25,7 +26,7 @@ const expense: OperationFormValues = {
   amount: '1 234,56',
   currency: 'UAH',
   accountId: ACCOUNT,
-  categoryId: null,
+  categoryId: CATEGORY,
   occurredOn: '2026-10-30',
   occurredTime: '',
   counterparty: ' Сільпо ',
@@ -69,6 +70,28 @@ describe('operationFormSchema', () => {
     }
   })
 
+  it('requires a category and a recipient on an expense only (Figma 5:93500, 5:101464)', () => {
+    const blank = {
+      ...expense,
+      categoryId: null,
+      counterparty: ' ',
+    }
+    const issues = operationFormSchema
+      .safeParse(blank)
+      .error?.issues.map((issue) => [issue.path.join('.'), issue.message])
+
+    expect(issues).toEqual([
+      ['categoryId', 'categoryRequired'],
+      ['counterparty', 'counterpartyRequired'],
+    ])
+    expect(
+      operationFormSchema.safeParse({
+        ...blank,
+        kind: 'income',
+      }).success,
+    ).toBe(true)
+  })
+
   it('requires a note on an adjustment (§5)', () => {
     const result = operationFormSchema.safeParse({
       ...expense,
@@ -100,7 +123,7 @@ describe('toCreateOperationInput', () => {
       currency: 'UAH',
       occurred_at: '2026-10-30T12:00:00.000Z',
       occurred_on: '2026-10-30',
-      category_id: null,
+      category_id: CATEGORY,
       counterparty: 'Сільпо',
       note: null,
       refund_of_id: null,

@@ -51,7 +51,7 @@ const BACKDROP_CLASS =
 
 // Figma «Saldo» → BottomSheet 2:10281 (mobile: radius card on top, handle 36x4, header with 44 close, scrolling body
 // padding 8/20/20, sticky footer with top border and full-width buttons) and Dialog 2:10240 (desktop: 480 wide, 640 for the operation form,
-// padding 24, gap 20, 36 close, footer right-aligned). The same props render either, so screens write one sheet.
+// padding 24, gap 20, 36 close, footer: two equal buttons, flex 1 each, gap 12). The same props render either, so screens write one sheet.
 export function Sheet({ open, onOpenChange, title, children, footer, initialFocus, size = 'md' }: SheetProps) {
   const translate = useTranslations('common')
   // a sheet is opened by a click, so it never renders during hydration
@@ -76,7 +76,7 @@ export function Sheet({ open, onOpenChange, title, children, footer, initialFocu
               </Dialog.Close>
             </div>
             <div className="-m-1 flex min-h-0 flex-col gap-4 overflow-y-auto p-1 scrollbar-none">{children}</div>
-            {footer ? <div className="flex items-center justify-end gap-3">{footer}</div> : null}
+            {footer ? <div className="flex items-center gap-3 *:flex-1">{footer}</div> : null}
           </Dialog.Popup>
         </Dialog.Portal>
       </Dialog.Root>

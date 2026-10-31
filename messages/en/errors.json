@@ -26,7 +26,7 @@
   "accountRequired": "Pick an account",
   "oneOperationSource": "Pick a new operation or an existing one, not both",
   "kindDirection": "The operation type does not match its direction",
-  "required": "Fill in this field",
+  "required": "Required field",
   "amountOptionalInvalid": "Enter an amount above zero or leave it empty",
   "installmentsCountInvalid": "From 1 to 360 instalments",
   "scheduleRequired": "Add 1 to 360 instalments",
@@ -34,5 +34,13 @@
   "adjustmentNoChange": "The balance has not changed: nothing to adjust",
   "countInvalid": "Enter a whole number from 1 to 999",
   "limitInvalid": "The limit must be above 0. To remove a limit, delete it",
-  "timeInvalid": "Enter the time as 18:40"
+  "timeInvalid": "Enter the time as 18:40",
+  "tooShort": "At least {count, plural, one {# character} other {# characters}}",
+  "tooLong": "No more than {count, plural, one {# character} other {# characters}}",
+  "outOfRange": "The value is out of range",
+  "emailInvalid": "Enter an email like name@example.com",
+  "formatInvalid": "Check the format",
+  "invalid": "Check the value",
+  "categoryRequired": "Choose a category",
+  "counterpartyRequired": "Enter a recipient"
 }

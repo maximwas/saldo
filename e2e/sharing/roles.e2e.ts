@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test'
+import { pickCategory } from '../fixtures/category.fixture'
 import { DEMO } from '../fixtures/demo-data.fixture'
 import { test } from '../fixtures/roles.fixture'
 
@@ -12,6 +13,7 @@ test('editor вносить витрату — owner бачить її з іні
 
   await sheet.getByLabel('Сума').fill('125,50')
   await sheet.getByLabel('Одержувач').fill(mark)
+  await pickCategory(editor, sheet)
   await sheet.getByRole('button', { name: 'Зберегти' }).click()
   await expect(sheet).toBeHidden()
 

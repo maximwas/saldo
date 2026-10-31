@@ -2,11 +2,14 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { type SubmitEvent, useId, useState } from 'react'
+import { type SubmitEvent, useState } from 'react'
 import { Brand } from '@/components/layout/brand.component'
 import { Button } from '@/components/ui/button.component'
+import { Field } from '@/components/ui/field.component'
 import { Input } from '@/components/ui/input.component'
+import { issueKey } from '@/lib/forms/issue-key.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
+import { loginFormSchema } from '../schemas/login-form.schema'
 import { safeNextPath } from '../utils/safe-next.utils'
 
 type Step = 'password' | 'code'
@@ -19,17 +22,16 @@ export function LoginForm() {
   const router = useRouter()
   const translate = useTranslations('auth')
   const translateError = useTranslations('errors.auth')
-  const ids = {
-    email: useId(),
-    password: useId(),
-    passwordHint: useId(),
-    code: useId(),
-    codeHint: useId(),
-  }
+  const translateField = useTranslations('errors')
   const [step, setStep] = useState<Step>('password')
   const [factorId, setFactorId] = useState<string | null>(null)
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
+  /** messages under the fields, before anything goes to Supabase */
+  const [invalid, setInvalid] = useState<{
+    email?: string
+    password?: string
+  }>({})
   const [isPending, setIsPending] = useState(false)
 
   function finish() {
@@ -43,13 +45,33 @@ export function LoginForm() {
   async function submitPassword(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
+    const parsed = loginFormSchema.safeParse(
+      {
+        email: String(form.get('email')).trim(),
+        password: String(form.get('password')),
+      },
+      { error: issueKey },
+    )
+
+    setInvalid(
+      parsed.success
+        ? {}
+        : Object.fromEntries(
+            parsed.error.issues.map((issue) => [issue.path[0], translateField(issue.message as 'required')]),
+          ),
+    )
+
+    if (!parsed.success) {
+      return
+    }
+
     const supabase = getBrowserSupabase()
 
     setIsPending(true)
     setError(null)
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: String(form.get('email')),
-      password: String(form.get('password')),
+      email: parsed.data.email,
+      password: parsed.data.password,
     })
 
     if (signInError) {
@@ -107,33 +129,22 @@ export function LoginForm() {
 
   if (step === 'code') {
     return (
-      <form onSubmit={submitCode} className="flex flex-col gap-4">
+      <form onSubmit={submitCode} noValidate className="flex flex-col gap-4">
         <span className="flex size-10 items-center justify-center self-center rounded-full bg-cat-blue-soft">
           <ShieldCheckIcon />
         </span>
         <h1 className="text-center font-display text-number text-text-primary">{translate('codeTitle')}</h1>
         <p className="text-center text-body text-text-secondary">{translate('codeHint')}</p>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={ids.code} className="text-label font-medium text-text-secondary">
-            {translate('code')}
-          </label>
+        <Field label={translate('code')} required error={error ?? undefined}>
           <Input
-            id={ids.code}
             name="code"
             inputMode="numeric"
             autoComplete="one-time-code"
             autoFocus
             value={code}
             onValueChange={(value) => setCode(value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? ids.codeHint : undefined}
           />
-          {error ? (
-            <p id={ids.codeHint} className="text-caption text-negative-text">
-              {error}
-            </p>
-          ) : null}
-        </div>
+        </Field>
         <Button type="submit" className="w-full" disabled={code.length !== CODE_LENGTH || isPending}>
           {translate('confirm')}
         </Button>
@@ -145,37 +156,18 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={submitPassword} className="flex flex-col gap-4 md:gap-5">
+    <form onSubmit={submitPassword} noValidate className="flex flex-col gap-4 md:gap-5">
       <Brand className="hidden self-center md:flex" />
       <div className="flex flex-col items-center gap-1 text-center">
         <h1 className="font-display text-number text-text-primary md:text-page-title">{translate('title')}</h1>
         <p className="hidden text-body text-text-secondary md:block">{translate('subtitle')}</p>
       </div>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor={ids.email} className="text-label font-medium text-text-secondary">
-          {translate('email')}
-        </label>
-        <Input id={ids.email} name="email" type="email" autoComplete="email" required />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor={ids.password} className="text-label font-medium text-text-secondary">
-          {translate('password')}
-        </label>
-        <Input
-          id={ids.password}
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? ids.passwordHint : undefined}
-        />
-        {error ? (
-          <p id={ids.passwordHint} className="text-caption text-negative-text">
-            {error}
-          </p>
-        ) : null}
-      </div>
+      <Field label={translate('email')} required error={invalid.email}>
+        <Input name="email" type="email" autoComplete="email" />
+      </Field>
+      <Field label={translate('password')} required error={invalid.password ?? error ?? undefined}>
+        <Input name="password" type="password" autoComplete="current-password" />
+      </Field>
       <Button type="submit" className="w-full" disabled={isPending}>
         {translate('submit')}
       </Button>

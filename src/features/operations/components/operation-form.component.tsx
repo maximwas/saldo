@@ -105,6 +105,7 @@ export function OperationForm({
         control={form.control}
         name="amount"
         label={translate('amount')}
+        required
         render={(field) => (
           <MoneyInput
             value={toMinor(field.value, currency)}
@@ -122,10 +123,10 @@ export function OperationForm({
           control={form.control}
           name="accountId"
           label={translate('account')}
+          required
           hint={
             balance === undefined ? undefined : translate('balance', { amount: formatMinor(balance, currency, locale) })
           }
-          hintOnDesktop
           render={(field) => (
             <Select
               options={accountOptions(accounts, field.value)}
@@ -144,8 +145,8 @@ export function OperationForm({
           control={form.control}
           name="categoryId"
           label={translate('category')}
+          required={editedKind === 'expense'}
           hint={translate('categoryHint')}
-          hintOnDesktop
           render={(field) => (
             <CategorySelect
               categories={categories}
@@ -164,6 +165,7 @@ export function OperationForm({
           control={form.control}
           name="occurredOn"
           label={translate('date')}
+          required
           render={(field) => (
             <DatePicker
               value={field.value}
@@ -186,8 +188,8 @@ export function OperationForm({
         control={form.control}
         name="counterparty"
         label={translate('counterparty')}
+        required={editedKind === 'expense'}
         hint={translate('counterpartyHint')}
-        hintOnDesktop
         render={(field) => <Input {...field} disabled={disabled} autoComplete="off" />}
       />
       <FormField

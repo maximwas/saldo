@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test'
+import { pickCategory } from '../fixtures/category.fixture'
 import { DEMO } from '../fixtures/demo-data.fixture'
 import { accountBalanceMinor, availableMinor, ensureIncomeDate, monthExpenseMinor } from '../fixtures/overview.fixture'
 import { test } from '../fixtures/roles.fixture'
@@ -23,6 +24,7 @@ test('витрата змінює залишок і «Доступно» рів�
 
   await sheet.getByLabel('Сума').fill('125,50')
   await sheet.getByLabel('Одержувач').fill(mark)
+  await pickCategory(page, sheet)
   await sheet.getByRole('button', { name: 'Зберегти' }).dblclick()
   await expect(sheet).toBeHidden()
   await expect(page.getByRole('row', { name: new RegExp(mark) })).toHaveCount(1)

@@ -257,6 +257,7 @@ function AmountFields() {
         control={control}
         name="amount"
         label={translate('form.amount')}
+        required
         render={(field) => (
           <MoneyInput
             value={toMinor(field.value, currency)}
@@ -320,6 +321,7 @@ function AmountFields() {
         control={control}
         name="arisenOn"
         label={translate('form.arisenOn')}
+        required
         render={(field) => (
           <DatePicker value={field.value} onValueChange={(next) => field.onChange(next ?? '')} onBlur={field.onBlur} />
         )}
