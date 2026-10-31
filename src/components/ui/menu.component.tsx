@@ -19,15 +19,22 @@ type MenuProps = {
   label: string
   items: readonly MenuItem[]
   className?: string
+  /** px along the trigger edge; with the popup aligned to the trigger's end a negative value moves it right */
+  alignOffset?: number
 }
 
 const ITEM_CLASS =
   'flex cursor-pointer items-center gap-3 rounded-sm px-3 text-body outline-none data-disabled:cursor-not-allowed data-disabled:text-text-tertiary data-highlighted:bg-subtle'
 
-function ItemContent({ item }: { item: MenuItem }) {
+type ItemContentProps = {
+  item: MenuItem
+  iconClassName?: string
+}
+
+function ItemContent({ item, iconClassName }: ItemContentProps) {
   return (
     <>
-      {item.Icon ? <item.Icon className="size-5 shrink-0" aria-hidden /> : null}
+      {item.Icon ? <item.Icon className={cn('size-5 shrink-0', iconClassName)} aria-hidden /> : null}
       <span className="flex-1">{item.label}</span>
     </>
   )
@@ -35,8 +42,9 @@ function ItemContent({ item }: { item: MenuItem }) {
 
 // Figma «Saldo» → Menu 2:10341 / 15:85158: 240 wide, raised, border, radius inner, shadow-float, padding 6, gap 2; rows
 // 40 high (padding 0/12, gap 12, a 20 icon, radius sm, hover subtle); a divider (padding 4/0) before the red items.
-// The «···» trigger is a 44 square (radius md) with a 20px ellipsis.
-export function Menu({ label, items, className }: MenuProps) {
+// The «···» trigger is a 44 square (radius md) with a 20px ellipsis. MenuItem 2:10325 paints the icon text-secondary,
+// the danger one text-primary (33:101623).
+export function Menu({ label, items, className, alignOffset }: MenuProps) {
   return (
     <MenuPrimitive.Root>
       <MenuPrimitive.Trigger
@@ -49,7 +57,7 @@ export function Menu({ label, items, className }: MenuProps) {
         <Ellipsis className="size-5" aria-hidden />
       </MenuPrimitive.Trigger>
       <MenuPrimitive.Portal>
-        <MenuPrimitive.Positioner align="end" sideOffset={4} className="z-50">
+        <MenuPrimitive.Positioner align="end" alignOffset={alignOffset} sideOffset={4} className="z-50">
           <MenuPrimitive.Popup className="flex w-60 origin-(--transform-origin) flex-col gap-0.5 rounded-inner border border-border bg-raised p-1.5 shadow-float outline-none transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0">
             {items.map((item, index) => (
               <Fragment key={item.label}>
@@ -63,7 +71,7 @@ export function Menu({ label, items, className }: MenuProps) {
                   onClick={item.onSelect}
                   className={cn(ITEM_CLASS, 'h-10', item.danger ? 'text-negative-text' : 'text-text-primary')}
                 >
-                  <ItemContent item={item} />
+                  <ItemContent item={item} iconClassName={item.danger ? 'text-text-primary' : 'text-text-secondary'} />
                 </MenuPrimitive.Item>
               </Fragment>
             ))}

@@ -11,6 +11,7 @@ import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { Select } from '@/components/ui/select.component'
+import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Textarea } from '@/components/ui/textarea.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
@@ -36,7 +37,9 @@ type OperationFormProps = {
 }
 
 // Figma Saldo file → New operation 2:16567 / 2:18677: amount; account + category and date + time in rows (gap 16, 12 on
-// mobile); payee; comment; receipt. The account, category and payee hints show on desktop only, as in the frames.
+// mobile); payee; comment; receipt. The account and payee hints show on desktop only, as in the frames.
+// Income 2:17848 / 2:19885 shows neither hint (and no receipt, see the editor). No category hint: there are no
+// subcategories (Figma 31.10; 5:101464, 2:17848 hide it).
 // An empty time keeps the old rule: now for today, noon for another date (toOccurredAt)
 export function OperationForm({
   formId,
@@ -81,6 +84,10 @@ export function OperationForm({
   const balance = balances[accountId]
   const editedKind = form.watch('kind')
   const categoryKind = editedKind === 'income' ? 'income' : 'expense'
+  const expense = editedKind === 'expense'
+  // the hints show in the desktop dialog only (2:16567 vs 2:18677) and never for an income (2:17848)
+  const desktop = useIsDesktop()
+  const hints = expense && desktop
 
   // the sheet's Expense / Income switch: a category of the other kind no longer fits
   useEffect(() => {
@@ -125,7 +132,9 @@ export function OperationForm({
           label={translate('account')}
           required
           hint={
-            balance === undefined ? undefined : translate('balance', { amount: formatMinor(balance, currency, locale) })
+            !hints || balance === undefined
+              ? undefined
+              : translate('balance', { amount: formatMinor(balance, currency, locale) })
           }
           render={(field) => (
             <Select
@@ -145,8 +154,7 @@ export function OperationForm({
           control={form.control}
           name="categoryId"
           label={translate('category')}
-          required={editedKind === 'expense'}
-          hint={translate('categoryHint')}
+          required={expense}
           render={(field) => (
             <CategorySelect
               categories={categories}
@@ -187,9 +195,10 @@ export function OperationForm({
       <FormField
         control={form.control}
         name="counterparty"
-        label={translate('counterparty')}
-        required={editedKind === 'expense'}
-        hint={translate('counterpartyHint')}
+        // Figma 2:17848: an income names its payer (the source label)
+        label={translate(expense ? 'counterparty' : 'payer')}
+        required={expense}
+        hint={hints ? translate('counterpartyHint') : undefined}
         render={(field) => <Input {...field} disabled={disabled} autoComplete="off" />}
       />
       <FormField

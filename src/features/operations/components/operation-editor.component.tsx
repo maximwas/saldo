@@ -1,13 +1,14 @@
 'use client'
 
 import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query'
-import { TriangleAlert, Undo2 } from 'lucide-react'
+import { Copy, Trash2, TriangleAlert, Undo2 } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
+import { Menu } from '@/components/ui/menu.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
@@ -116,6 +117,7 @@ export function OperationEditor({
   })
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const desktop = useIsDesktop()
   const [refunding, setRefunding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
@@ -194,7 +196,10 @@ export function OperationEditor({
         draftKey={draftKey}
         onSubmitAction={saveOperation}
       >
-        <ReceiptField operationId={null} file={receipt} onFileChangeAction={setReceipt} canEdit />
+        {/* Figma 2:17848 / 2:19885: the income form has no receipt */}
+        {kind === 'expense' ? (
+          <ReceiptField operationId={null} file={receipt} onFileChangeAction={setReceipt} canEdit />
+        ) : null}
       </OperationForm>
     )
   }
@@ -385,19 +390,10 @@ export function OperationEditor({
       </>
     )
   } else if (mode === 'edit' && item) {
+    // Figma 5:101464 / 32:95477: Duplicate and Delete live in the header «···» menu (33:101623 / 33:101738)
     footer = (
       <>
-        <Button type="button" variant="danger" disabled={pending} onClick={() => setConfirmingDelete(true)}>
-          {translate('form.delete')}
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={pending}
-          onClick={() => onDuplicateAction?.(toFormValues(item, timeZone), item.row.id)}
-        >
-          {translate('form.duplicate')}
-        </Button>
+        {cancel}
         <Button type="submit" form={FORM_ID} disabled={pending || options.isPending || conflict}>
           {translate('form.saveChanges')}
         </Button>
@@ -421,6 +417,32 @@ export function OperationEditor({
       </Button>
     )
   }
+
+  const editMenu =
+    mode === 'edit' && item && !refunding && !confirmingDelete ? (
+      <Menu
+        label={translate('form.actions')}
+        items={[
+          {
+            label: translate('form.duplicate'),
+            Icon: Copy,
+            disabled: pending,
+            onSelect: () => onDuplicateAction?.(toFormValues(item, timeZone), item.row.id),
+          },
+          {
+            label: translate('form.delete'),
+            Icon: Trash2,
+            danger: true,
+            disabled: pending,
+            onSelect: () => setConfirmingDelete(true),
+          },
+        ]}
+        // Figma: 36 like ✕ in the dialog (33:101623); in the sheet (33:101738) the popup ends 4 short of ✕'s right
+        // edge, 52 px right of the trigger's
+        alignOffset={desktop ? 0 : -52}
+        className={`text-text-secondary data-popup-open:bg-transparent ${desktop ? 'size-9' : ''}`}
+      />
+    ) : null
 
   const dateLabel = (date: string) =>
     formatter.dateTime(new Date(`${date}T12:00:00Z`), {
@@ -480,7 +502,7 @@ export function OperationEditor({
     body = (
       <>
         <SegmentedControl
-          stretch
+          stretch="track"
           label={translate('add.typeLabel')}
           options={ADD_KINDS.map((value) => ({
             value,
@@ -499,7 +521,7 @@ export function OperationEditor({
       <>
         {/* Figma 5:101464: the edit sheet keeps the type switch; a transfer is made anew, so only the two kinds flip */}
         <SegmentedControl
-          stretch
+          stretch="track"
           label={translate('add.typeLabel')}
           options={ADD_KINDS.map((value) => ({
             value,
@@ -634,6 +656,7 @@ export function OperationEditor({
       onOpenChange={onOpenChangeAction}
       title={title}
       footer={footer}
+      headerAction={editMenu}
       // Figma: the operation and transfer forms are 640 wide (2:16567, 2:22322, 5:101464); delete and refund keep 480
       size={(mode === 'create' || mode === 'edit') && !refunding && !confirmingDelete ? 'lg' : 'md'}
     >

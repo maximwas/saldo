@@ -73,6 +73,7 @@
     "date": "Date",
     "counterparty": "Payee",
     "counterpartyHint": "As on the bank statement",
+    "payer": "Source",
     "note": "Comment",
     "noteHint": "Up to 500 characters",
     "save": "Save",
@@ -81,6 +82,7 @@
     "close": "Close",
     "delete": "Delete",
     "duplicate": "Duplicate",
+    "actions": "Operation actions",
     "receipt": "Receipt",
     "addReceipt": "Add receipt",
     "receiptHint": "Photo or PDF, optional",
@@ -119,7 +121,6 @@
     },
     "time": "Time",
     "balance": "Balance {amount}",
-    "categoryHint": "A subcategory is optional",
     "editingTitle": "Edit operation",
     "saveChanges": "Save changes"
   },

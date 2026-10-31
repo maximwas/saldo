@@ -73,6 +73,7 @@
     "date": "Дата",
     "counterparty": "Одержувач",
     "counterpartyHint": "Як у виписці банку",
+    "payer": "Джерело",
     "note": "Коментар",
     "noteHint": "До 500 символів",
     "save": "Зберегти",
@@ -81,6 +82,7 @@
     "close": "Закрити",
     "delete": "Видалити",
     "duplicate": "Дублювати",
+    "actions": "Дії з операцією",
     "receipt": "Чек",
     "addReceipt": "Додати чек",
     "receiptHint": "Фото або PDF, необов’язково",
@@ -119,7 +121,6 @@
     },
     "time": "Час",
     "balance": "Залишок {amount}",
-    "categoryHint": "Підкатегорію можна не вказувати",
     "editingTitle": "Редагувати операцію",
     "saveChanges": "Зберегти зміни"
   },

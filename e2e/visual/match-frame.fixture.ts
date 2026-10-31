@@ -30,3 +30,25 @@ export async function matchFrame(page: Page, { frameId, width, height }: Frame) 
   await page.evaluate(() => document.fonts.ready)
   await expect(page).toHaveScreenshot(`${frameId.replace(':', '-')}.png`)
 }
+
+/**
+ * a desktop dialog frame: Figma puts the Dialog where it fits the frame (2:16567 y 48, 2:17848 y 24) while the app
+ * centres it, so only the dialog's box is compared, against `<frameId>-dialog.png` = the frame exported with the
+ * Dialog's box as the clip (Pixelwright `screenshot` clip, scale 1); an open menu over the dialog is in both
+ */
+export async function matchDialog(page: Page, { frameId, width, height }: Frame) {
+  await page.setViewportSize({
+    width,
+    height,
+  })
+  await page.waitForLoadState('networkidle')
+  await page.evaluate(() => document.fonts.ready)
+
+  const box = await page.getByRole('dialog').boundingBox()
+
+  if (!box) {
+    throw new Error(`${frameId}: no dialog on the page`)
+  }
+
+  await expect(page).toHaveScreenshot(`${frameId.replace(':', '-')}-dialog.png`, { clip: box })
+}
