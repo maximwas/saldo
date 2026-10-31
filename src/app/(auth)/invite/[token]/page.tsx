@@ -12,8 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: translate('metaTitle') }
 }
 
-// Figma «Saldo» → accept-invite section 2:47551: 2:47552 desktop (brand over a centred 480 card), 2:49212 mobile; states
-// 2:47591 already accepted, 2:47630 invalid link, 2:49335 error banner. No app shell, like the login screen.
+// Figma «Saldo» → accept-invite section 2:47551: 2:47552 desktop (brand over a centred 480 card), 2:49212 mobile (from the
+// top: padding 64/20/32); states 2:47591 already accepted, 2:47630 invalid link, 2:49335 error banner. No app shell.
 export default async function InvitePage({ params }: PageProps<'/invite/[token]'>) {
   const { token } = await params
   // session first: it waits for the real request (connection()), so the lookup never runs in a prerender
@@ -40,7 +40,7 @@ export default async function InvitePage({ params }: PageProps<'/invite/[token]'
       : null
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center-safe gap-6 bg-app px-5 pt-12 pb-8">
+    <main className="flex min-h-dvh flex-col items-center gap-6 bg-app px-5 pt-16 pb-8 md:justify-center-safe md:py-8">
       <Brand />
       <InviteCard token={token} status={status} invite={invite} sessionEmail={session?.email ?? null} />
     </main>

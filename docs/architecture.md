@@ -51,7 +51,7 @@
 | 17 | Бекап: GitHub Actions щоночі `supabase db dump`, шифрований артефакт | на Free немає автоматичних бекапів | бекап у git — витік фінансових даних |
 | 18 | MCP (фаза 10): remote Streamable HTTP у тому самому Next (`mcp-handler` 2), OAuth 2.1 через Supabase Auth OAuth Server, RLS за токеном учасника | один деплой; Claude Code і Perplexity підтримують OAuth + DCR; tools використовують ті самі схеми, `*.api.ts` і RPC, що й UI (`docs/research/mcp.md`) | stdio — Perplexity лише в Mac App Store; service-role — обхід RLS; Edge Functions — другий рантайм |
 | 19 | **Спільний доступ: простори (ledgers) з учасниками й ролями.** Рішення Максима 30.10.2026 («можу розшарити свій з кимось»), розширює §1. У кожного користувача свій простір (створюється тригером при реєстрації), приватний за замовчуванням. Власник (owner) запрошує людину з роллю `editor` (вносить операції, позначає оплати) або `viewer` (лише бачить) і може відкликати доступ. Людина буває в кількох просторах і перемикається між ними. Усі дані, «Доступно», бюджет, нагадування, календарі й податки рахуються в межах одного простору. Межа — RLS: `ledger_id in (select private.my_ledger_ids(…))`, функція `security definer` у схемі `private` (§5.0). Шаринг — з фаз 0–1, не «на потім» | двоє людей ведуть спільний бюджет; приватність = окремий простір, тож не треба прапорця видимості на кожному рядку й окремої логіки «Доступно» для двох; модель YNAB shared budgets | одна «сім'я» з прапорцем `visibility` personal/shared на рахунках: кожна залежна таблиця (операції, оплати, резерви, податки) успадковує видимість — складні політики й «Доступно», що різниться між глядачами; шаринг окремих рахунків; `user_id` + список «друзів» |
-| 20 | Запрошення — власна таблиця `ledger_invites` з одноразовим токеном (у БД лише SHA-256), посилання власник пересилає сам (месенджер); прийняття — RPC `accept_ledger_invite` (`security definer`); новий акаунт для запрошеного створює Route Handler через `auth.admin.createUser` лише за дійсним токеном | реєстрацію вимкнено; вбудований SMTP Supabase шле лише на адреси команди організації (з 26.09.2024) і 2 листи/год; не потрібен власний SMTP | `auth.admin.inviteUserByEmail` — потребує custom SMTP, не знає про простір і роль, PKCE не підтримує; відкрита реєстрація |
+| 20 | Запрошення — власна таблиця `ledger_invites` з одноразовим токеном (у БД лише SHA-256), посилання власник пересилає сам (месенджер); прийняття — RPC `accept_ledger_invite` (`security definer`); запросити можна лише людину, що вже має акаунт Saldo і ще не в просторі (`create_ledger_invite` кидає SL404 / SL409, рішення 31.10.2026), тож окремого Route Handler для створення акаунта немає | реєстрацію вимкнено; вбудований SMTP Supabase шле лише на адреси команди організації (з 26.09.2024) і 2 листи/год; не потрібен власний SMTP | `auth.admin.inviteUserByEmail` — потребує custom SMTP, не знає про простір і роль, PKCE не підтримує; відкрита реєстрація |
 | 21 | Одночасні правки двох людей: та сама модель, що й між пристроями — UUID клієнта + `version` + `PT409`; `pay_obligation` бере `p_expected_version` зобов'язання й блокує рядок `for update` | дві оплати одного платежу офлайн з різних телефонів інакше дали б подвійну оплату (у кожної свій UUID, тож ідемпотентність не рятує) | last-write-wins; Realtime-блокування |
 | 22 | **Репозиторій GitHub публічний** (рішення Максима 30.10.2026). Особисті дані — лише поза git: `.gitignore` ховає `.private/`, `docs/spec/`, `docs/design/screens/`, `.env*` (крім `.env.example`); gitleaks у lefthook + GitHub secret scanning і push protection; workflow з секретами не запускаються з PR (§8) | відкритий код; у специфікації й демо-екранах — реальні доходи й кредити | приватний репозиторій — рішення Максима інше |
 | 23 | Нічний бекап шифрується **age** на публічний ключ (recipient); приватний ключ лише в Максима, поза GitHub (§9) | у публічному репозиторії артефакти Actions може завантажити будь-хто з акаунтом GitHub; CI не має чим розшифрувати — витік secrets не відкриває бекапи | `gpg --symmetric` з паролем у secrets (пароль і шифротекст в одному місці); приватне сховище (R2/S3) — ще один акаунт і ключі |
@@ -399,24 +399,15 @@ sequenceDiagram
   participant PG as Postgres
   actor I as Запрошена людина
   participant P as /invite/[token]
-  participant R as /api/invites/accept (Node, service role)
 
   O->>UI: email, роль editor / viewer
   UI->>UI: token = 32 випадкові байти (crypto), лише в браузері
   UI->>PG: rpc create_ledger_invite(id, ledger_id, email, role, sha256(token))
-  PG->>PG: RLS: лише owner; строк 7 днів
+  PG->>PG: лише owner; email має акаунт (інакше SL404), ще не учасник (інакше SL409); строк 7 днів
   UI-->>O: посилання …/invite/{token}, «Копіювати» (надіслати самому)
   I->>P: відкриває посилання
-  alt уже має акаунт
-    P->>P: вхід (/login?next=/invite/{token})
-    P->>PG: rpc accept_ledger_invite(token)
-  else акаунта немає
-    P->>R: POST token, пароль
-    R->>PG: перевірка: hash є, не прийнято, не прострочено
-    R->>R: auth.admin.createUser(email з запрошення, пароль, email_confirm)
-    Note over R: тригер on auth.users створює власний простір і user_settings
-    R-->>P: вхід signInWithPassword, далі accept_ledger_invite(token)
-  end
+  P->>P: вхід, якщо сесії немає (/login?next=/invite/{token})
+  P->>PG: rpc accept_ledger_invite(token)
   PG->>PG: security definer: hash, строк, email = auth.jwt() email; insert ledger_members; accepted_at
   PG-->>P: ledger_id → перемикання на простір
   O->>UI: пізніше «Відкликати» → delete ledger_members, доступ зникає з наступним запитом
@@ -954,7 +945,6 @@ text)` (security definer, Vault). `revoke execute … from anon, authenticated`.
 | `api/cron/reminders` | pg_cron + pg_net кожні 10 хв (POST), `Authorization: Bearer CRON_SECRET` | нагадування → notifications → Web Push |
 | `api/cron/calendar-sync` | pg_cron кожні 15 хв | `claim_sync_jobs`, push у Google/iCloud, опитування iCloud |
 | `api/cron/daily` | Vercel cron раз на добу, `Authorization: Bearer CRON_SECRET` | прибирання файлів `attachments` без рядка (фаза 1), матеріалізація зобов'язань до +13 міс. (той самий `recurrence.utils.ts`), довідкові курси, поновлення каналів `events.watch`, страховий sync; тримає БД активною |
-| `api/invites/accept` | запрошена людина без акаунта | перевірка токена (hash, строк, не прийнято) → `auth.admin.createUser` з email запрошення → відповідь; саме прийняття — rpc `accept_ledger_invite` уже від імені нового користувача |
 | `api/integrations/google/start` | учасник простору | OAuth redirect зі `state` (cookie) |
 | `api/integrations/google/callback` | Google | обмін коду, refresh token → Vault, створення каналу |
 | `api/integrations/google/webhook` | Google push | перевірка `X-Goog-Channel-Token`, задача `incremental` |

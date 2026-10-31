@@ -8,7 +8,7 @@ import {
   type UpdateAccountInput,
   updateAccountInputSchema,
 } from '../schemas/account-input.schema'
-import { type AccountView, toAccount } from '../utils/accounts.utils'
+import { type AccountView, type RecentTransfer, toAccount, toRecentTransfer } from '../utils/accounts.utils'
 
 type AccountsParams = {
   ledgerId: string
@@ -142,4 +142,26 @@ export async function adjustBalance(supabase: SaldoClient, input: CreateOperatio
   if (error) {
     throw error
   }
+}
+
+/** the latest transfers for the Latest-transfers card of the accounts page */
+export async function getRecentTransfers(
+  supabase: SaldoClient,
+  ledgerId: string,
+  limit: number,
+): Promise<RecentTransfer[]> {
+  const { data, error } = await supabase
+    .from('transfers')
+    .select(
+      'id, from_account_id, to_account_id, from_amount_minor, from_currency, to_amount_minor, to_currency, fee_minor, occurred_at, note',
+    )
+    .eq('ledger_id', ledgerId)
+    .order('occurred_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    throw error
+  }
+
+  return data.map(toRecentTransfer)
 }

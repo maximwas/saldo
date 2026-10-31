@@ -3,7 +3,7 @@ import type { PgError } from '@/lib/supabase/pg-error.utils'
 import type { LedgerRole } from '@/types/supabase.types'
 
 // 32 random bytes as base64url without padding = 43 characters; anything else never reaches the database
-export const INVITE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/
+const INVITE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/
 
 export const isInviteToken = (token: string) => INVITE_TOKEN_PATTERN.test(token)
 

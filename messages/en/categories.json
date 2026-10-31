@@ -203,12 +203,25 @@
     "info": "Rather not move them? Archive it — the category leaves the pickers and its history stays.",
     "confirm": "Delete and move",
     "archiveOnly": "Archive",
-    "done": "Category archived"
+    "done": "Category archived",
+    "deleted": "Category deleted"
+  },
+  "meta": {
+    "operations": "{count, plural, one {# operation} other {# operations}}",
+    "unused": "Not used yet",
+    "inHistory": "{count, plural, one {# operation} other {# operations}} in history",
+    "hidden": "Not offered in forms"
+  },
+  "grip": "Drag “{name}”",
+  "reorder": {
+    "start": "Change order",
+    "cancel": "Cancel",
+    "done": "Done"
   },
   "howTitle": "How it works",
   "how": {
-    "order": "Change the order from the row menu: «Move up» and «Move down». Forms list categories the same way.",
-    "delete": "Deleting never destroys operations: move them to another category or archive.",
+    "order": "Drag the handle to change the order. Forms list categories the same way.",
+    "delete": "Deleting never destroys operations: we will offer to move them to another category or archive.",
     "archive": "An archived category leaves the pickers, while history and statistics stay.",
     "taxes": "The «Taxes» category does not define a tax base — that is a separate setting."
   }

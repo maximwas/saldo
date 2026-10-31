@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCategoryTree, type CategoryView, moveWithinSiblings, toCategory } from './categories.utils'
+import { buildCategoryTree, type CategoryView, moveWithinSiblings, orderChanges, toCategory } from './categories.utils'
 
 const category = (patch: Partial<CategoryView> & Pick<CategoryView, 'id'>): CategoryView => ({
   kind: 'expense',
@@ -147,5 +147,33 @@ describe('toCategory', () => {
       archivedAt: null,
       version: 2,
     })
+  })
+})
+
+describe('orderChanges', () => {
+  const siblings = ['a', 'b', 'c'].map((id, index) =>
+    category({
+      id,
+      sortOrder: index + 1,
+    }),
+  )
+
+  it('renumbers by the new order and keeps unchanged rows out', () => {
+    expect(orderChanges(siblings, ['a', 'c', 'b'])).toEqual([
+      {
+        id: 'c',
+        version: 1,
+        sortOrder: 2,
+      },
+      {
+        id: 'b',
+        version: 1,
+        sortOrder: 3,
+      },
+    ])
+  })
+
+  it('returns nothing for the same order', () => {
+    expect(orderChanges(siblings, ['a', 'b', 'c'])).toEqual([])
   })
 })

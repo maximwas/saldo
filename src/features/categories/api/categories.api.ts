@@ -82,21 +82,19 @@ export async function updateCategory(supabase: SaldoClient, input: UpdateCategor
   }
 }
 
-/**
- * New order of siblings: one versioned update per changed row.
- * shortcut: separate requests, not one transaction; a failure halfway leaves two siblings with one place, and the
- * next move renumbers them (moveWithinSiblings). Move to an RPC when ordering needs to be atomic.
- */
+/** a new order of any categories in one transaction (RPC reorder_categories); a stale version raises PT409 */
 export async function reorderCategories(supabase: SaldoClient, changes: SortChange[]): Promise<void> {
-  await Promise.all(
-    changes.map((change) =>
-      updateCategory(supabase, {
-        id: change.id,
-        expectedVersion: change.version,
-        patch: { sort_order: change.sortOrder },
-      }),
-    ),
-  )
+  const { error } = await supabase.rpc('reorder_categories', {
+    p_items: changes.map((change) => ({
+      id: change.id,
+      version: change.version,
+      sort_order: change.sortOrder,
+    })),
+  })
+
+  if (error) {
+    throw error
+  }
 }
 
 /** archive with moving operations: the RPC re-points operations and obligations, then archives category and children */
@@ -110,4 +108,36 @@ export async function archiveCategory(supabase: SaldoClient, input: ArchiveCateg
   if (error) {
     throw error
   }
+}
+
+/** delete with moving: the RPC re-points operations, obligations and subscriptions, then deletes category and children */
+export async function deleteCategory(supabase: SaldoClient, input: ArchiveCategoryInput): Promise<void> {
+  const { id, moveTo } = archiveCategoryInputSchema.parse(input)
+  const { error } = await supabase.rpc('delete_category', {
+    p_id: id,
+    p_move_to: moveTo ?? undefined,
+  })
+
+  if (error) {
+    throw error
+  }
+}
+
+/** operations per category for the operations-count line; categories without operations are absent */
+export async function getCategoryOperationCounts(
+  supabase: SaldoClient,
+  ledgerId: string,
+): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('category_operation_counts')
+    .select('category_id, operation_count')
+    .eq('ledger_id', ledgerId)
+
+  if (error) {
+    throw error
+  }
+
+  return Object.fromEntries(
+    data.flatMap((row) => (row.category_id ? [[row.category_id, row.operation_count ?? 0]] : [])),
+  )
 }

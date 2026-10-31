@@ -29,5 +29,6 @@
   "source": {
     "manual": "Manual",
     "reference": "Reference"
-  }
+  },
+  "summaryBase": "{symbol} base"
 }

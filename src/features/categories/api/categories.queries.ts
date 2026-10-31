@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { countCategoryOperations, getCategories } from './categories.api'
+import { countCategoryOperations, getCategories, getCategoryOperationCounts } from './categories.api'
 
 // [root, ledgerId, …]: root «categories» is in MONEY_QUERY_ROOTS, so every money write refetches it
 export const categoriesQueries = {
@@ -9,6 +9,11 @@ export const categoriesQueries = {
     queryOptions({
       queryKey: ledgerQueryKey('categories', ledgerId, 'list'),
       queryFn: () => getCategories(getBrowserSupabase(), ledgerId),
+    }),
+  operationCounts: (ledgerId: string) =>
+    queryOptions({
+      queryKey: ledgerQueryKey('categories', ledgerId, 'operation-counts'),
+      queryFn: () => getCategoryOperationCounts(getBrowserSupabase(), ledgerId),
     }),
   operationCount: (ledgerId: string, categoryIds: string[]) =>
     queryOptions({

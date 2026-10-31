@@ -20,9 +20,19 @@
   "convertedShort": "≈ {amount}",
   "noRate": "No rate",
   "total": "Total in {currency}",
-  "totalWith": "With {accounts} — {amount} in balance.",
-  "totalRate": "{name} at the NBU rate {rate}",
-  "totalRateShort": "{name} at {rate}",
+  "totalWith": "With {count, plural, one {account} other {accounts}} {accounts} — {amount} in balance.",
+  "totalRate": "“{name}” at {rate}",
+  "recent": {
+    "title": "Recent transfers",
+    "all": "All transfers",
+    "allShort": "All",
+    "untitled": "Transfer",
+    "category": "Transfer",
+    "rate": "Rate {rate}",
+    "noFee": "no fee",
+    "fee": "fee {amount}",
+    "note": "A transfer or exchange counts as neither spending nor income."
+  },
   "totalUnknown": "No rate for {currencies}: those accounts are not in the sum.",
   "empty": {
     "title": "No accounts yet",

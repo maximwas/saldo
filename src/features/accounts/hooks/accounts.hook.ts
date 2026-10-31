@@ -26,6 +26,12 @@ export function useAccounts() {
   )
 }
 
+export function useRecentTransfers() {
+  const { ledgerId } = useLedger()
+
+  return useQuery(accountsQueries.recentTransfers(ledgerId))
+}
+
 export function useAccountActivity(accountId: string, enabled: boolean) {
   const { ledgerId } = useLedger()
 

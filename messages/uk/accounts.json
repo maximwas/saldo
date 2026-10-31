@@ -20,9 +20,19 @@
   "convertedShort": "≈ {amount}",
   "noRate": "Курсу немає",
   "total": "Разом {currency, select, UAH {у гривні} USD {у доларах} EUR {у євро} other {у {currency}}}",
-  "totalWith": "З {accounts} — {amount} у балансі.",
-  "totalRate": "{name} за курсом НБУ {rate}",
-  "totalRateShort": "{name} за курсом {rate}",
+  "totalWith": "З {count, plural, one {рахунком} other {рахунками}} {accounts} — {amount} у балансі.",
+  "totalRate": "«{name}» за курсом {rate}",
+  "recent": {
+    "title": "Останні перекази",
+    "all": "Усі перекази",
+    "allShort": "Усі",
+    "untitled": "Переказ",
+    "category": "Переказ",
+    "rate": "Курс {rate}",
+    "noFee": "без комісії",
+    "fee": "комісія {amount}",
+    "note": "Переказ і обмін не рахуються ні витратою, ні доходом."
+  },
   "totalUnknown": "Немає курсу для {currencies}: ці рахунки не входять у суму.",
   "empty": {
     "title": "Ще немає рахунків",

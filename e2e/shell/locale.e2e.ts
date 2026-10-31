@@ -5,7 +5,7 @@ import { test } from '../fixtures/roles.fixture'
 test('owner switches the interface to English and back', async ({ pageAs }) => {
   const page = await pageAs('owner')
 
-  await page.goto('/settings')
+  await page.goto('/settings/general')
   await page.getByRole('button', { name: 'English' }).click()
 
   await expect(
