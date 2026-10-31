@@ -1,7 +1,7 @@
 import { useFormatter, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Card } from '@/components/ui/card.component'
-import { CategoryIcon } from '@/components/ui/category-icon.component'
+import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { CATEGORY_SWATCHES, type CategoryColor } from '@/constants/category-colors.constants'
 import type { Overview } from '../api/overview.api'
 import { isoToDate } from '../utils/overview.utils'
@@ -12,7 +12,7 @@ type MonthCardProps = {
 
 // Figma «Saldo» → Overview 2:8521 month card: three tiles in a row (gap 16; subtle fill, radius inner, padding 16, gap 4,
 // label-medium, a signed M sum; on mobile 2:8962 a column of rows, gap 8, padding 12/16), the result tile with the
-// «with plan to the month end» caption (label, secondary) under its sum, then the top expense categories (label-medium): CategoryIcon 40, name
+// «with plan to the month end» caption (label, secondary) under its sum, then the top expense categories (label-medium): CategoryBadge 40, name
 // body-medium, share label, sum body-semibold, a ProgressBar 8 in the category colour under them (gap 8; rows gap 16)
 export function MonthCard({ overview }: MonthCardProps) {
   const translate = useTranslations('overview')
@@ -95,7 +95,7 @@ function TopCategories({ overview }: MonthCardProps) {
       <ul className="flex flex-col gap-4">
         {(overview.month.top ?? []).map((top) => (
           <li key={top.categoryId} className="flex items-center gap-3">
-            <CategoryIcon
+            <CategoryBadge
               icon={category(top.categoryId)?.icon ?? null}
               color={category(top.categoryId)?.color ?? null}
             />

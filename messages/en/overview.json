@@ -66,12 +66,11 @@
     "cancel": "Cancel",
     "saved": "Date saved"
   },
-  "debts": {
-    "title": "Debts",
-    "all": "All debts",
-    "owedToMe": "Owed to me",
-    "iOwe": "I owe",
-    "apart": "Not part of the month result and not taken from «Available»: a loan is neither income nor an expense.",
-    "unknown": "{count, plural, one {# debt without a rate is not counted} other {# debts without a rate are not counted}}"
-  }
+  "welcome": {
+    "title": "Start with an account",
+    "text": "Add an account and a first operation, and Saldo will work out how much you can spend until the next income.",
+    "addAccount": "Add account",
+    "addOperation": "Add operation"
+  },
+  "viewOnly": "View only: in the «{space}» space you can read the data but not change it."
 }
