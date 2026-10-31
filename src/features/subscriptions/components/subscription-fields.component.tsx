@@ -53,7 +53,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
         </div>
       </div>
       {mode === 'create' ? (
-        <div className="grid grid-cols-2 items-start gap-4">
+        <div className="grid items-start gap-4 sm:grid-cols-2">
           <FormField
             control={control}
             name="amountMinor"
