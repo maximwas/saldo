@@ -153,7 +153,7 @@ test('вихід очищає IndexedDB і кеші пристрою', async ({ 
   await expect(page).toHaveURL('/')
   await expect.poll(deviceData).toBeGreaterThan(0)
 
-  await page.goto('/settings')
+  await page.goto('/settings/general')
   await page.getByRole('button', { name: 'Вийти з акаунта' }).click()
   await expect(page).toHaveURL(/\/login/)
   // the worker's own cache-expiry bookkeeping (Serwist) opens again with /login; nothing of the person is left
@@ -165,6 +165,6 @@ test('вихід очищає IndexedDB і кеші пристрою', async ({ 
     )
     .toEqual([])
   // the worker caches /login itself again at once; no signed-in page survives in any cache
-  expect(await page.evaluate(async () => Boolean(await caches.match('/settings')))).toBe(false)
+  expect(await page.evaluate(async () => Boolean(await caches.match('/settings/general')))).toBe(false)
   await context.close()
 })

@@ -29,5 +29,6 @@
   "source": {
     "manual": "Ручний",
     "reference": "Довідковий"
-  }
+  },
+  "summaryBase": "{symbol} базова"
 }
