@@ -35,14 +35,15 @@ type SheetProps = {
   footer?: React.ReactNode
   /** the element focused on open; by default the first tabbable one, which is the close button */
   initialFocus?: React.RefObject<HTMLElement | null>
-  /** desktop width: md 480 (Dialog 2:10240), lg 640 (the operation form, 2:16567) */
-  size?: 'md' | 'lg'
+  /** desktop width: md 480 (Dialog 2:10240), list 560 (the rates, 50:122579), lg 640 (the operation form, 2:16567) */
+  size?: 'md' | 'list' | 'lg'
   /** Figma Dialog / BottomSheet «More» (33:101623, 33:101738): a «···» menu left of ✕ */
   headerAction?: React.ReactNode
 }
 
 const DIALOG_WIDTH = {
   md: 'w-120',
+  list: 'w-140',
   lg: 'w-160',
 } as const
 
@@ -161,11 +162,13 @@ type SheetCloseProps = {
   children: React.ReactNode
   /** e.g. max-md:flex-none: the button hugs its label instead of sharing the footer equally */
   className?: string
+  /** secondary «Cancel» by default; primary for a «Done» that only closes */
+  variant?: 'primary' | 'secondary'
 }
 
-/** the secondary footer button that closes the sheet through its exit transition (Drawer.Close is Dialog.Close) */
-export function SheetClose({ children, className }: SheetCloseProps) {
+/** a footer button that closes the sheet through its exit transition (Drawer.Close is Dialog.Close) */
+export function SheetClose({ children, className, variant = 'secondary' }: SheetCloseProps) {
   return (
-    <Dialog.Close render={<Button variant="secondary" type="button" className={className} />}>{children}</Dialog.Close>
+    <Dialog.Close render={<Button variant={variant} type="button" className={className} />}>{children}</Dialog.Close>
   )
 }

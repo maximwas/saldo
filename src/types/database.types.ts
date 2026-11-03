@@ -850,6 +850,7 @@ export type Database = {
           joined_at: string
           ledger_id: string
           notify_channels: string[]
+          pinned_currencies: string[]
           role: string
           user_id: string
         }
@@ -860,6 +861,7 @@ export type Database = {
           joined_at?: string
           ledger_id: string
           notify_channels?: string[]
+          pinned_currencies?: string[]
           role: string
           user_id: string
         }
@@ -869,6 +871,7 @@ export type Database = {
           joined_at?: string
           ledger_id?: string
           notify_channels?: string[]
+          pinned_currencies?: string[]
           role?: string
           user_id?: string
         }
@@ -2395,6 +2398,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string[]
       }
+      my_pinned_currencies: {
+        Args: {
+          p_ledger_id: string
+        }
+        Returns: string[]
+      }
       pay_obligation: {
         Args: {
           p_amount_minor: number
@@ -2588,6 +2597,13 @@ export type Database = {
       set_my_notify_channels: {
         Args: {
           p_channels: string[]
+          p_ledger_id: string
+        }
+        Returns: undefined
+      }
+      set_my_pinned_currencies: {
+        Args: {
+          p_currencies: string[]
           p_ledger_id: string
         }
         Returns: undefined

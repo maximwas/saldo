@@ -4,7 +4,9 @@ import {
   convertMinor,
   type FxRate,
   findRate,
+  findRateRow,
   formatRate,
+  formatRateChange,
   impliedRate,
   scaleMinor,
   toFxRate,
@@ -150,5 +152,37 @@ describe('formatRate', () => {
     expect(formatRate(impliedRate(300, 'USD', 12_480, 'UAH') as never, 'en')).toBe('41.60')
     expect(formatRate(impliedRate(300, 'USD', 12_481, 'UAH') as never, 'en')).toBe('41.6033')
     expect(formatRate('0.0240963855', 'en', 6)).toBe('0.024096')
+  })
+})
+
+describe('findRateRow', () => {
+  it('gives the row rule A picks: the newest on or before the day, manual on a tie', () => {
+    const rows = [
+      {
+        baseCurrency: 'EUR',
+        quoteCurrency: 'UAH',
+        rate: '41.38',
+        rateOn: '2026-11-03',
+        source: 'reference' as const,
+      },
+      {
+        baseCurrency: 'EUR',
+        quoteCurrency: 'UAH',
+        rate: '41.5',
+        rateOn: '2026-11-03',
+        source: 'manual' as const,
+      },
+    ]
+
+    expect(findRateRow(rows, 'EUR', 'UAH', '2026-11-03')?.rate).toBe('41.5')
+    expect(findRateRow(rows, 'EUR', 'UAH', '2026-11-02')).toBeNull()
+  })
+})
+
+describe('formatRateChange', () => {
+  it('signs a change with plus or a real minus, and zero without a sign', () => {
+    expect(formatRateChange('0.12', 'uk', 2)).toBe('+0,12')
+    expect(formatRateChange('-0.03', 'uk', 2)).toBe('\u22120,03')
+    expect(formatRateChange('0', 'uk', 2)).toBe('0,00')
   })
 })

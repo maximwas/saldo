@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { CATEGORY_COLORS, CATEGORY_LETTER_TONES } from '@/constants/category-colors.constants'
+import { CATEGORY_COLORS, CATEGORY_LETTER_TONES, type CategoryColor } from '@/constants/category-colors.constants'
 import { cn } from '@/lib/utils/cn.utils'
 import { serviceLogoIsInset, serviceLogoOf } from './service-logo.utils'
 
@@ -35,13 +35,17 @@ const colorOf = (name: string) =>
 type LetterAvatarProps = {
   name: string
   size?: ServiceLogoProps['size']
+  /** shown instead of the first letter of the name: a currency symbol («$», «zł») */
+  letter?: string
+  /** instead of the colour of the name: the rate rows colour by their place (Figma 50:122598) */
+  color?: CategoryColor
   className?: string
 }
 
 // Figma «Saldo» → LetterAvatar 2:7963: the first letter in cat-<colour>-text on the soft fill; the colour follows the
 // name, so a person or a service looks the same everywhere
-export function LetterAvatar({ name, size = 40, className }: LetterAvatarProps) {
-  const { box, letter } = SIZES[size]
+export function LetterAvatar({ name, size = 40, letter, color, className }: LetterAvatarProps) {
+  const { box, letter: letterClass } = SIZES[size]
 
   return (
     <span
@@ -49,12 +53,12 @@ export function LetterAvatar({ name, size = 40, className }: LetterAvatarProps) 
       className={cn(
         'flex shrink-0 items-center justify-center',
         box,
-        letter,
-        CATEGORY_LETTER_TONES[colorOf(name.trim())],
+        letterClass,
+        CATEGORY_LETTER_TONES[color ?? colorOf(name.trim())],
         className,
       )}
     >
-      {name.trim().charAt(0).toUpperCase()}
+      {letter ?? name.trim().charAt(0).toUpperCase()}
     </span>
   )
 }

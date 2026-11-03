@@ -336,6 +336,7 @@ erDiagram
     uuid user_id PK
     text role "owner / editor / viewer"
     text[] notify_channels
+    text[] pinned_currencies
   }
   OPERATIONS {
     uuid id PK
@@ -506,7 +507,8 @@ null`, змінити вручну не можна — тригер `keep_create
 
 **ledger_members** — PK `(ledger_id, user_id)`, `role text check in ('owner','editor','viewer')`,
 `display_name text` (ім'я в просторі, ініціал для аватара), `notify_channels text[] default '{in_app,push}'`
-(порожній масив = не надсилати цьому учаснику), `calendar_sync bool default true` (чи синхронізувати зобов'язання
+(порожній масив = не надсилати цьому учаснику), `pinned_currencies text[] default '{USD,EUR}'` (до 3 курсів на Огляді
+цього учасника; читає `my_pinned_currencies`, змінює `set_my_pinned_currencies`), `calendar_sync bool default true` (чи синхронізувати зобов'язання
 простору в календар цього учасника), `joined_at`. `ledger_members_one_owner unique (ledger_id) where role =
 'owner'`. Індекс `(user_id)` — його читає функція членства. Політики: читати — учасники простору; змінювати роль і
 видаляти — лише owner (`private.my_owned_ledger_ids()`); учасник може видалити свій рядок («Вийти»), крім owner. Своє `display_name` кожен учасник (owner теж) змінює лише через RPC `set_my_display_name`: RLS обирає рядки, а не колонки, а колонковий грант `update` містить `role`, тож політика «свій рядок» дала б учаснику підняти собі роль.
@@ -566,8 +568,10 @@ parent_depth)` → `categories (ledger_id, id, kind, depth)`: підкатего
 ('manual','reference')`, `source_name text` (напр. назва банку-джерела). Unique
 `fx_rates_unique (ledger_id, base_currency, quote_currency, rate_on, source)`. `rate` — скільки `quote_currency` за 1
 `base_currency` (EUR→UAH 41.5). Довідкові курси — НБУ (`source = 'reference'`, `source_name = 'nbu'`): щоденний
-`api/cron/daily` пише в кожен простір пари «інша дозволена валюта → базова валюта простору» (той самий напрям, що й
-ручний курс, тому правило A порівнює їх як одну пару); для небазової гривні — крос через UAH (`findRate`), 10 знаків.
+`api/cron/daily` пише в кожен простір пари «гривня й кожна валюта НБУ → базова валюта простору» (той самий напрям, що
+й ручний курс, тому правило A порівнює їх як одну пару); для небазової гривні — крос через UAH (`findRate`), 10 знаків.
+`fx_rates` приймає будь-який код ISO 4217; валюти рахунків лишаються UAH / USD / EUR (`CURRENCIES`), і
+`getLedgerRates` за замовчуванням читає лише їхні пари, щоб щоденні рядки ~45 валют не витісняли старіші курси з вікна.
 Курс для дати D (правило A, Максим 30.10.2026; `findRate` і `private.convert_minor`): береться курс із найпізнішою `rate_on <= D`, за однакової дати ручний перемагає довідковий, а старіший ручний ніколи не перемагає новіший довідковий; пряма пара — раніше за обернену.
 
 ### 5.2 Операції й перекази

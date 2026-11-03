@@ -54,8 +54,8 @@ function beats(candidate: FxRate, best: FxRate | null) {
   return candidate.rateOn === best.rateOn && candidate.source === 'manual'
 }
 
-/** the newest rate of the exact pair on or before `on`; manual beats reference on the same day */
-function directRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
+/** the newest row of the exact pair on or before `date`; manual beats reference on the same day (rule A) */
+export function findRateRow(rates: readonly FxRate[], from: string, target: string, date: string): FxRate | null {
   let best: FxRate | null = null
 
   for (const row of rates) {
@@ -64,10 +64,16 @@ function directRate(rates: FxRate[], from: string, target: string, date: string)
     }
   }
 
+  return best
+}
+
+function directRate(rates: readonly FxRate[], from: string, target: string, date: string): Decimal | null {
+  const best = findRateRow(rates, from, target, date)
+
   return best ? new Exact(best.rate) : null
 }
 
-function pairRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
+function pairRate(rates: readonly FxRate[], from: string, target: string, date: string): Decimal | null {
   const direct = directRate(rates, from, target, date)
 
   if (direct) {
@@ -80,7 +86,7 @@ function pairRate(rates: FxRate[], from: string, target: string, date: string): 
 }
 
 /** units of `target` per unit of `from` on the date: direct, inverted or crossed through one shared currency; null = unknown */
-export function findRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
+export function findRate(rates: readonly FxRate[], from: string, target: string, date: string): Decimal | null {
   if (from === target) {
     return new Exact(1)
   }
@@ -95,7 +101,7 @@ export function findRate(rates: FxRate[], from: string, target: string, date: st
 }
 
 /** from → bridge → target through the first currency both legs are known for */
-function crossRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
+function crossRate(rates: readonly FxRate[], from: string, target: string, date: string): Decimal | null {
   const bridges = new Set(rates.flatMap((row) => [row.baseCurrency, row.quoteCurrency]))
 
   for (const bridge of bridges) {
@@ -184,3 +190,13 @@ export const formatRate = (rate: Decimal.Value, locale: string, maxDigits = 4) =
     minimumFractionDigits: 2,
     maximumFractionDigits: maxDigits,
   }).format(new Decimal(rate).toFixed() as Intl.StringNumericLiteral)
+
+/** a day's change of a rate: «+0,12», «−0,03», «0,00» with the digits of formatRate and a real minus sign */
+export const formatRateChange = (change: Decimal.Value, locale: string, maxDigits = 4) =>
+  new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: maxDigits,
+    signDisplay: 'exceptZero',
+  })
+    .format(new Decimal(change).toFixed() as Intl.StringNumericLiteral)
+    .replace('-', '\u2212')

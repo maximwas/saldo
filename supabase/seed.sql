@@ -39,7 +39,22 @@ begin
     ('de000000-0000-4000-8000-0000000000a3', v_ledger, 'Валютний EUR', 'savings', 'EUR', 120000, date '2026-10-30' + v_shift, false, 3);
   insert into public.fx_rates (ledger_id, base_currency, quote_currency, rate, rate_on) values
     (v_ledger, 'EUR', 'UAH', 41.5, date '2026-10-01' + v_shift),
-    (v_ledger, 'USD', 'UAH', 41.6, date '2026-10-01' + v_shift);
+    (v_ledger, 'USD', 'UAH', 41.6, date '2026-10-01' + v_shift),
+    (v_ledger, 'EUR', 'UAH', 41.5, date '2026-10-30' + v_shift);
+  -- NBU rates of the day before and of today (Figma section «F1 currency rates» 50:120346), so the day's change shows; today's
+  -- manual EUR rate above beats NBU's 41,38
+  insert into public.fx_rates (ledger_id, base_currency, quote_currency, rate, rate_on, source, source_name)
+  select v_ledger, x.code, 'UAH', d.rate, date '2026-10-30' + v_shift - d.back, 'reference', 'nbu'
+  from (values
+    ('USD', 41.60, 41.48),
+    ('EUR', 41.38, 41.44),
+    ('PLN', 9.65, 9.68),
+    ('GBP', 48.80, 48.59),
+    ('CHF', 44.10, 44.05),
+    ('CZK', 1.66, 1.66),
+    ('CAD', 30.14, 30.21)
+  ) as x (code, today_rate, yesterday_rate)
+  cross join lateral (values (0, x.today_rate), (1, x.yesterday_rate)) as d (back, rate);
 
   -- subscriptions, a year of dates from the story's November
   for c in select * from (values

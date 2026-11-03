@@ -16,3 +16,31 @@ export async function saveRate(supabase: SaldoClient, input: SaveRateInput): Pro
     throw error
   }
 }
+
+/** the rates the member sees on the Overview, in their order (ledger_members.pinned_currencies, default USD and EUR) */
+export async function getMyPinnedCurrencies(supabase: SaldoClient, ledgerId: string): Promise<string[]> {
+  const { data, error } = await supabase.rpc('my_pinned_currencies', { p_ledger_id: ledgerId })
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
+}
+
+type MyPinnedCurrenciesInput = {
+  ledgerId: string
+  currencies: string[]
+}
+
+/** the member's own pins, at most three; the RPC is the only way to change them, a viewer included */
+export async function setMyPinnedCurrencies(supabase: SaldoClient, input: MyPinnedCurrenciesInput) {
+  const { error } = await supabase.rpc('set_my_pinned_currencies', {
+    p_ledger_id: input.ledgerId,
+    p_currencies: input.currencies,
+  })
+
+  if (error) {
+    throw error
+  }
+}

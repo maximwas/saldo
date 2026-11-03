@@ -13,9 +13,16 @@ import { MonthCard } from './month-card.component'
 import { OverviewWelcome } from './overview-welcome.component'
 import { UpcomingCard } from './upcoming-card.component'
 
+type OverviewScreenProps = {
+  /** the «Rates» card under «Accounts» from md up (Figma 50:120347); the page composes it, features never import each other */
+  ratesCard?: React.ReactNode
+  /** the rates pill above the hero below md (Figma 50:122084) */
+  ratesStrip?: React.ReactNode
+}
+
 // Figma «Saldo» → Overview 2:8237 (desktop: hero, then "Upcoming" 2/3 + "Accounts" 1/3) and 2:8735 (mobile: one column).
 // reserves, auto and taxes cards are hidden in Figma until their phases (4, 5, 6, 9): no placeholder rows.
-export function OverviewScreen() {
+export function OverviewScreen({ ratesCard, ratesStrip }: OverviewScreenProps) {
   const translateCommon = useTranslations('overview')
   const query = useOverview()
   const { data } = query
@@ -69,14 +76,17 @@ export function OverviewScreen() {
     <div className="flex flex-col gap-4 lg:gap-6">
       {/* Figma viewer 5:90719: an Info banner above the hero */}
       {canWrite ? null : <Banner>{translateCommon('viewOnly', { space })}</Banner>}
+      <div className="md:hidden">{ratesStrip}</div>
       <HeroAvailable overview={data} />
       {/* Figma 2:8237 rows: the left card flex 1, the right one 400, gap 24; cards in a row share the height */}
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
         <div className="flex flex-col *:flex-1 lg:min-w-0 lg:flex-1">
           <UpcomingCard overview={data} />
         </div>
-        <div className="flex flex-col *:flex-1 lg:w-100 lg:shrink-0">
+        {/* Figma 50:120347: «Rates» under «Accounts», the pair as tall as «Upcoming» */}
+        <div className="flex flex-col gap-4 lg:w-100 lg:shrink-0 lg:gap-6">
           <AccountsCard overview={data} />
+          <div className="hidden flex-col *:flex-1 md:flex lg:flex-1">{ratesCard}</div>
         </div>
       </div>
       {/* Figma: the month card alone, full width (reserves, auto and taxes cards are hidden until their phases) */}
