@@ -279,12 +279,6 @@ function registerCreatePlanned(server: McpServer) {
   )
 }
 
-/** mark_paid and create_planned_payment (plan 10.8) */
-export function registerObligationsWriteTools(server: McpServer) {
-  registerMarkPaid(server)
-  registerCreatePlanned(server)
-}
-
 const openObligationField = z.uuid().describe('An open planned payment from list_upcoming')
 
 const updatePlannedArgs = z.object({
@@ -367,6 +361,8 @@ async function planCancelPlanned(args: z.infer<typeof cancelPlannedArgs>, contex
 
 /** the planned payment form and «Remove the entry» of the calendar */
 export const OBLIGATIONS_WRITE_TOOLS = [
+  registerMarkPaid,
+  registerCreatePlanned,
   confirmedWriteTool(
     'update_planned_payment',
     {

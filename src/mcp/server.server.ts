@@ -10,16 +10,8 @@ import { CURRENCIES_WRITE_TOOLS, registerCurrenciesTools } from './tools/currenc
 import { DEBTS_WRITE_TOOLS, registerDebtsTools } from './tools/debts.tools.server'
 import { registerLedgersTools } from './tools/ledgers.tools.server'
 import { registerNotificationsTools } from './tools/notifications.tools.server'
-import {
-  OBLIGATIONS_WRITE_TOOLS,
-  registerObligationsTools,
-  registerObligationsWriteTools,
-} from './tools/obligations.tools.server'
-import {
-  OPERATIONS_WRITE_TOOLS,
-  registerOperationsTools,
-  registerOperationsWriteTools,
-} from './tools/operations.tools.server'
+import { OBLIGATIONS_WRITE_TOOLS, registerObligationsTools } from './tools/obligations.tools.server'
+import { OPERATIONS_WRITE_TOOLS, registerOperationsTools } from './tools/operations.tools.server'
 import { registerOverviewTools } from './tools/overview.tools.server'
 import { registerSearchTools } from './tools/search.tools.server'
 import { registerStatisticsTools } from './tools/statistics.tools.server'
@@ -65,9 +57,6 @@ export function registerSaldoTools(server: McpServer) {
 
   // off unless MCP_WRITE_ENABLED=true: a client without the flag sees read tools only
   if (env.MCP_WRITE_ENABLED === 'true') {
-    registerOperationsWriteTools(server)
-    registerObligationsWriteTools(server)
-
     for (const register of WRITE_TOOLS) {
       register(server)
     }

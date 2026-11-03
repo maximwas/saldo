@@ -144,7 +144,7 @@ async function toCreateInput(args: AddInput, id: string, context: ToolContext): 
 }
 
 /** add_operation (plan 10.8): the same create_operation RPC and input schema as the form */
-export function registerOperationsWriteTools(server: McpServer) {
+function registerAddOperation(server: McpServer) {
   registerWriteTool(
     server,
     'add_operation',
@@ -428,6 +428,7 @@ async function planRefund(args: RefundArgs, context: ToolContext): Promise<Write
 
 /** the operation editor, the transfer form and «Refund» of an expense */
 export const OPERATIONS_WRITE_TOOLS = [
+  registerAddOperation,
   confirmedWriteTool(
     'update_operation',
     {
