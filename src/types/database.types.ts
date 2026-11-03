@@ -1927,6 +1927,8 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          avatar_path: string | null
+          avatar_updated_at: string | null
           created_at: string
           last_ledger_id: string | null
           locale: string
@@ -1938,6 +1940,8 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          avatar_path?: string | null
+          avatar_updated_at?: string | null
           created_at?: string
           last_ledger_id?: string | null
           locale?: string
@@ -1948,6 +1952,8 @@ export type Database = {
           version?: number
         }
         Update: {
+          avatar_path?: string | null
+          avatar_updated_at?: string | null
           created_at?: string
           last_ledger_id?: string | null
           locale?: string
@@ -2020,6 +2026,7 @@ export type Database = {
         Row: {
           account_id: string | null
           category_id: string | null
+          created_by: string | null
           currency: string
           direction: string
           due_on: string
@@ -2339,6 +2346,7 @@ export type Database = {
         Returns: {
           account_id: string | null
           category_id: string | null
+          created_by: string | null
           currency: string
           direction: string
           due_on: string
@@ -2417,6 +2425,7 @@ export type Database = {
         Returns: {
           account_id: string | null
           category_id: string | null
+          created_by: string | null
           currency: string
           direction: string
           due_on: string
