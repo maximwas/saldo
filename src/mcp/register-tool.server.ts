@@ -2,7 +2,7 @@ import 'server-only'
 import type { McpServer, ToolAnnotations } from '@modelcontextprotocol/server'
 import type { z } from 'zod'
 import { findEarlierWrite, type ToolBody, type ToolContext, toolHandler } from './tool-context.server'
-import { toPreview } from './tool-result.utils'
+import { assertPreviewVersion, toPreview } from './tool-result.utils'
 import { assertWriter } from './write-checks.server'
 
 type ToolConfig<Schema extends z.ZodObject> = {
@@ -71,6 +71,8 @@ export type WritePlan = {
   /** the arguments with every generated id filled in: sent back with confirm true they make exactly this write */
   replayArgs: object
   createdIds?: string[]
+  /** an edit: the version of the record it is made from (null = none yet); a confirm must send the same one back */
+  version?: number | null
   write: () => Promise<unknown>
 }
 
@@ -93,13 +95,26 @@ function confirmedBody<Args extends object>(name: string, plan: Planner<Args>): 
       }
     }
 
-    const { willWrite, replayArgs, createdIds, write } = await plan(args, context)
+    const { willWrite, replayArgs, createdIds, version, write } = await plan(args, context)
 
     if (!confirm) {
+      const confirmArgs =
+        version === undefined
+          ? replayArgs
+          : {
+              ...replayArgs,
+              version,
+            }
+
       return {
         preview: true,
-        data: toPreview(name, willWrite, replayArgs),
+        data: toPreview(name, willWrite, confirmArgs),
       }
+    }
+
+    // a versioned app update gets this same version, so the DB still refuses a change landing after this check
+    if (version !== undefined) {
+      assertPreviewVersion((args as { version?: number | null }).version, version)
     }
 
     const result = await write()
@@ -124,9 +139,10 @@ export function confirmedWriteTool<Schema extends z.ZodObject>(
   plan: Planner<z.infer<Schema>>,
 ): Registrar {
   const { destructive, ...toolConfig } = config
+  const versioned = 'version' in toolConfig.inputSchema.shape
   const described = {
     ...toolConfig,
-    description: `${toolConfig.description} Without confirm true it only returns a preview and writes nothing.`,
+    description: `${toolConfig.description} Without confirm true it only returns a preview and writes nothing.${versioned ? ' A confirmed edit needs the version from its preview.' : ''}`,
   }
 
   return (server) => registerWriteTool(server, name, described, confirmedBody(name, plan), destructive)

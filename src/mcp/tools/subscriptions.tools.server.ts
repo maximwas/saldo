@@ -24,7 +24,7 @@ import { RECURRENCE_UNITS, SHORT_MONTH_RULES } from '@/features/subscriptions/sc
 import { SUBSCRIPTION_VERDICTS } from '@/features/subscriptions/utils/subscription-series.utils'
 import { confirmedWriteTool, registerReadTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { confirmField, dayField, ledgerIdField, newIdField, spaceInput } from '../tool-input.schema'
+import { confirmField, dayField, ledgerIdField, newIdField, spaceInput, versionField } from '../tool-input.schema'
 import { required } from '../tool-result.utils'
 import { findAccount, orCurrent } from '../write-checks.server'
 
@@ -170,6 +170,7 @@ const updateInput = z.object({
     .nullable()
     .optional()
     .describe("keep, review or cancel: the person's own assessment"),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -214,6 +215,7 @@ async function planUpdate(args: UpdateInput, context: ToolContext): Promise<Writ
   return {
     willWrite: input,
     replayArgs: args,
+    version: subscription.version,
     write: () => updateSubscription(context.supabase, input),
   }
 }
@@ -224,6 +226,7 @@ const priceInput = z.object({
   id: newIdField,
   amount_minor: z.int().positive().describe('The new price per period in minor units'),
   effective_on: dayField.describe('The first charge date it applies to, YYYY-MM-DD; default today'),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -245,6 +248,7 @@ async function planPrice(args: PriceInput, context: ToolContext): Promise<WriteP
       id,
     },
     createdIds: [id],
+    version: subscription.version,
     write: () => setSubscriptionPrice(context.supabase, input),
   }
 }
@@ -260,6 +264,7 @@ const statusInput = z.object({
       'pause; resume = active again; cancel = cancelled at the service, no charges from today; cancel_intended = going to cancel, charged until confirmed; archive = stop tracking, the history stays; restore = back from the archive',
     ),
   access_ends_on: z.iso.date().optional().describe('cancel: the paid access lasts until this day'),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -291,11 +296,13 @@ function statusUpdate(args: StatusInput, subscription: SubscriptionView, { today
 }
 
 async function planStatus(args: StatusInput, context: ToolContext): Promise<WritePlan> {
-  const input = statusUpdate(args, await findSubscription(context, args.subscription_id), context)
+  const subscription = await findSubscription(context, args.subscription_id)
+  const input = statusUpdate(args, subscription, context)
 
   return {
     willWrite: input,
     replayArgs: args,
+    version: subscription.version,
     write: () => updateSubscription(context.supabase, input),
   }
 }

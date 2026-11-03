@@ -20,7 +20,7 @@ import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { toOccurredAt } from '@/lib/utils/clock.utils'
 import { confirmedWriteTool, registerReadTool, registerWriteTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { confirmField, ledgerIdField } from '../tool-input.schema'
+import { confirmField, ledgerIdField, versionField } from '../tool-input.schema'
 import { ToolError, toPreview } from '../tool-result.utils'
 import { assertWriter, findAccount, orCurrent } from '../write-checks.server'
 
@@ -297,6 +297,7 @@ const updatePlannedArgs = z.object({
   due_on: z.iso.date().optional(),
   account_id: z.uuid().nullable().optional(),
   category_id: z.uuid().nullable().optional(),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -328,6 +329,7 @@ async function planUpdatePlanned(args: UpdatePlannedArgs, context: ToolContext):
   return {
     willWrite: input,
     replayArgs: args,
+    version: obligation.version,
     write: () => updateObligation(context.supabase, input),
   }
 }
@@ -335,6 +337,7 @@ async function planUpdatePlanned(args: UpdatePlannedArgs, context: ToolContext):
 const cancelPlannedArgs = z.object({
   ledger_id: ledgerIdField,
   obligation_id: openObligationField,
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -357,6 +360,7 @@ async function planCancelPlanned(args: z.infer<typeof cancelPlannedArgs>, contex
       dueOn: obligation.dueOn,
     },
     replayArgs: args,
+    version: obligation.version,
     write: () => cancelPlanEntry(context.supabase, input),
   }
 }

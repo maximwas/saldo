@@ -17,7 +17,7 @@ import { listOperations } from '@/features/operations/api/operations.api'
 import { fromMinor } from '@/lib/money/money.utils'
 import { confirmedWriteTool, registerReadTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { confirmField, dayField, ledgerIdField, newIdField, spaceInput } from '../tool-input.schema'
+import { confirmField, dayField, ledgerIdField, newIdField, spaceInput, versionField } from '../tool-input.schema'
 import { required, ToolError } from '../tool-result.utils'
 import { assertChanges, assertPast, clockOf } from '../write-checks.server'
 
@@ -166,6 +166,7 @@ const updateAccountArgs = z.object({
   kind: z.enum(ACCOUNT_KINDS).optional(),
   include_in_total: z.boolean().optional().describe('Counts in the total of all accounts'),
   include_in_available: z.boolean().optional().describe('Counts in «Available to date»'),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -189,6 +190,7 @@ async function planUpdateAccount(args: z.infer<typeof updateAccountArgs>, contex
   return {
     willWrite: input,
     replayArgs: args,
+    version: account.version,
     write: () => updateAccount(context.supabase, input),
   }
 }
@@ -197,6 +199,7 @@ const archiveAccountArgs = z.object({
   ledger_id: ledgerIdField,
   account_id: accountIdField,
   archived: z.boolean().default(true).describe('false brings it back from the archive'),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -211,6 +214,7 @@ async function planArchiveAccount(args: z.infer<typeof archiveAccountArgs>, cont
   return {
     willWrite: input,
     replayArgs: args,
+    version: account.version,
     write: () => updateAccount(context.supabase, input),
   }
 }

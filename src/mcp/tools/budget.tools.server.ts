@@ -7,7 +7,7 @@ import type { SaveLimitInput, SetIncomePlanInput } from '@/features/budget/schem
 import { CARRY_MODES } from '@/features/budget/utils/budget.utils'
 import { confirmedWriteTool, registerReadTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { confirmField, ledgerIdField, monthField, newIdField } from '../tool-input.schema'
+import { confirmField, ledgerIdField, monthField, newIdField, versionField } from '../tool-input.schema'
 import { orNewId } from '../write-checks.server'
 
 const monthInput = z.object({
@@ -66,6 +66,7 @@ const limitArgs = z.object({
     ),
   id: newIdField,
   month_id: newIdField,
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -92,6 +93,7 @@ async function planLimit(args: z.infer<typeof limitArgs>, context: ToolContext):
       month_id: input.monthId,
     },
     createdIds: [input.limitId],
+    version: input.expectedVersion,
     write: () => saveLimit(context.supabase, input),
   }
 }
@@ -105,6 +107,7 @@ const incomeArgs = z.object({
     .nullable()
     .describe('Planned income of the month in minor units of the base currency; null = no plan'),
   month_id: newIdField,
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -125,6 +128,7 @@ async function planIncome(args: z.infer<typeof incomeArgs>, context: ToolContext
       month,
       month_id: input.monthId,
     },
+    version: input.expectedVersion,
     write: () => setIncomePlan(context.supabase, input),
   }
 }
