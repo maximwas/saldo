@@ -555,6 +555,11 @@ parent_depth)` → `categories (ledger_id, id, kind, depth)`: підкатего
 Видалення з операціями заборонене FK (`no action`, не `restrict`: видалення простору каскадить батька й дитину
 одним оператором); rpc `archive_category(p_id, p_move_to uuid null)`
 переносить операції або архівує (§6). Оподатковуваність не виводиться з категорії (§6) — вона в `income_tax_details`.
+`system_key text null check in ('subscriptions')`, унікальний у просторі: системна «Підписки» (рішення Максима
+3.11.2026) є в кожному просторі (сід і backfill), її не перейменувати, не архівувати й не видалити (тригер
+`private.guard_system_category`, `42501`; видаляється лише з простором); колір, іконка й місце змінюються. Кожна
+підписка отримує її тригером `private.subscription_system_category`, тож і кожна дата серії; поля категорії у формі
+підписки немає.
 
 **fx_rates**
 `base_currency`, `quote_currency`, `rate numeric(20,10) check (> 0)`, `rate_on date`, `source text check in
