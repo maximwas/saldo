@@ -29,12 +29,11 @@ type RatesSheetProps = {
   onPinnedChange: (currencies: string[]) => void
 }
 
-const GROUP_CLASS = 'pt-2 text-label font-medium text-text-secondary'
-
 // Figma «Saldo» → Rates · All rates: Dialog 560 on desktop (50:122579), BottomSheet on the phone (50:123557). A hint, a
 // search, the pinned group «On the overview · N» and «Other NBU rates · N»; a row is a 44 high label with a Checkbox,
 // a LetterAvatar 32 with the symbol, the name, «USD · NBU 03.11» (a manual rate: the «manual» pill, its day and NBU's rate),
-// the rate and the day's change. A tick saves at once; at three pins the other boxes are disabled with a plain hint
+// the rate and the day's change, whose column says «change for the day» quietly by the group title. A tick saves at once;
+// at three pins the other boxes are disabled with a plain hint. The phone hint says «tap», the desktop one «tick»
 export function RatesSheet({ onOpenChange, baseCurrency, board, pinned, nbuDay, onPinnedChange }: RatesSheetProps) {
   const translate = useTranslations('currencies.board')
   const translateCurrencies = useTranslations('currencies')
@@ -76,6 +75,22 @@ export function RatesSheet({ onOpenChange, baseCurrency, board, pinned, nbuDay, 
           date: formatDay(row.rateOn),
           nbu: formatRate(row.nbuRate, locale, boardDigits(row.nbuRate)),
         })
+  }
+
+  function renderGroup(title: string, rows: BoardRate[], note: string | null = null) {
+    return (
+      <>
+        <div className="flex items-baseline justify-between gap-3 pt-2">
+          <h3 className="text-label font-medium text-text-secondary">{title}</h3>
+          {/* each figure has the same words for a screen reader */}
+          <span aria-hidden className="text-caption text-text-tertiary">
+            {translate('card.change')}
+          </span>
+        </div>
+        {note ? <p className="text-label text-text-tertiary">{note}</p> : null}
+        <ul className="flex flex-col">{rows.map(renderRow)}</ul>
+      </>
+    )
   }
 
   function renderRow(row: BoardRate) {
@@ -136,7 +151,8 @@ export function RatesSheet({ onOpenChange, baseCurrency, board, pinned, nbuDay, 
           : translate('sheet.hint', {
               date: formatDay(nbuDay),
               base: baseCurrency,
-            })}
+            })}{' '}
+        {translate(desktop ? 'sheet.pick' : 'sheet.pickPhone')}
       </p>
       <Input
         type="search"
@@ -155,19 +171,16 @@ export function RatesSheet({ onOpenChange, baseCurrency, board, pinned, nbuDay, 
         />
       ) : (
         <div className="flex flex-col gap-1">
-          {shownMatches.length > 0 ? (
-            <>
-              <h3 className={GROUP_CLASS}>{translate('sheet.pinned', { count: shown.length })}</h3>
-              {full ? <p className="text-label text-text-tertiary">{translate('sheet.limit')}</p> : null}
-              <ul className="flex flex-col">{shownMatches.map(renderRow)}</ul>
-            </>
-          ) : null}
-          {otherMatches.length > 0 ? (
-            <>
-              <h3 className={GROUP_CLASS}>{translate('sheet.others', { count: others.length })}</h3>
-              <ul className="flex flex-col">{otherMatches.map(renderRow)}</ul>
-            </>
-          ) : null}
+          {shownMatches.length > 0
+            ? renderGroup(
+                translate('sheet.pinned', { count: shown.length }),
+                shownMatches,
+                full ? translate('sheet.limit') : null,
+              )
+            : null}
+          {otherMatches.length > 0
+            ? renderGroup(translate('sheet.others', { count: others.length }), otherMatches)
+            : null}
         </div>
       )}
     </Sheet>

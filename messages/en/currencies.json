@@ -51,8 +51,10 @@
     },
     "sheet": {
       "title": "Exchange rates",
-      "hint": "Official NBU rates on {date}{base, select, UAH { against the hryvnia} USD { against the dollar} EUR { against the euro} other {}}. If you have your own rate that day, Saldo takes it. Tick the currencies to show on the overview.",
-      "hintNoDate": "Official NBU rates. If you have your own rate on the rate's day, Saldo takes it. Tick the currencies to show on the overview.",
+      "hint": "Official NBU rates on {date}{base, select, UAH { against the hryvnia} USD { against the dollar} EUR { against the euro} other {}}. If you have your own rate that day, Saldo takes it.",
+      "hintNoDate": "Official NBU rates. If you have your own rate on the rate's day, Saldo takes it.",
+      "pick": "Tick the currencies to show on the overview.",
+      "pickPhone": "Tap a currency to show it on the overview.",
       "search": "Search currency",
       "searchPlaceholder": "Code or name: USD, zloty…",
       "pinned": "On the overview · {count}",
