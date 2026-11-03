@@ -44,27 +44,6 @@ export function registerReadTool<Schema extends z.ZodObject>(
   registerTool(server, name, config, { readOnlyHint: true }, body)
 }
 
-/** adds a record through the app's own RPC: a preview unless confirm is true, the same id never writes twice */
-export function registerWriteTool<Schema extends z.ZodObject>(
-  server: McpServer,
-  name: string,
-  config: ToolConfig<Schema>,
-  body: ToolBody<z.infer<Schema>>,
-  destructive = false,
-) {
-  registerTool(
-    server,
-    name,
-    config,
-    {
-      readOnlyHint: false,
-      destructiveHint: destructive,
-      idempotentHint: true,
-    },
-    body,
-  )
-}
-
 /** one write through the app's own api: the preview shows willWrite, a confirm runs write */
 export type WritePlan = {
   willWrite: Record<string, unknown>
@@ -145,5 +124,16 @@ export function confirmedWriteTool<Schema extends z.ZodObject>(
     description: `${toolConfig.description} Without confirm true it only returns a preview and writes nothing.${versioned ? ' A confirmed edit needs the version from its preview.' : ''}`,
   }
 
-  return (server) => registerWriteTool(server, name, described, confirmedBody(name, plan), destructive)
+  return (server) =>
+    registerTool(
+      server,
+      name,
+      described,
+      {
+        readOnlyHint: false,
+        destructiveHint: destructive,
+        idempotentHint: true,
+      },
+      confirmedBody(name, plan),
+    )
 }

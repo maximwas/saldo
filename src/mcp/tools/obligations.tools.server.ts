@@ -6,7 +6,6 @@ import { CURRENCIES } from '@/constants/currencies.constants'
 import { cancelPlanEntry } from '@/features/calendar/api/calendar.api'
 import {
   createObligation,
-  listObligationPayments,
   listObligations,
   payObligation,
   updateObligation,
@@ -18,11 +17,11 @@ import {
 import { payObligationInputSchema } from '@/features/obligations/schemas/pay-obligation-input.schema'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { toOccurredAt } from '@/lib/utils/clock.utils'
-import { confirmedWriteTool, registerReadTool, registerWriteTool, type WritePlan } from '../register-tool.server'
+import { confirmedWriteTool, registerReadTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { confirmField, ledgerIdField, versionField } from '../tool-input.schema'
-import { ToolError, toPreview } from '../tool-result.utils'
-import { assertWriter, findAccount, orCurrent } from '../write-checks.server'
+import { confirmField, ledgerIdField, newIdField, versionField } from '../tool-input.schema'
+import { ToolError } from '../tool-result.utils'
+import { findAccount, orCurrent } from '../write-checks.server'
 
 const upcomingInput = z.object({
   ledger_id: ledgerIdField,
@@ -91,9 +90,6 @@ async function findOpenObligation({ supabase, ledger }: ToolContext, obligationI
   return obligation
 }
 
-const isPaid = async ({ supabase }: ToolContext, obligationId: string, paymentId: string) =>
-  (await listObligationPayments(supabase, obligationId)).some((payment) => payment.id === paymentId)
-
 type Obligation = Awaited<ReturnType<typeof findOpenObligation>>
 
 async function newPaymentOperation(args: MarkPaidInput, obligation: Obligation, context: ToolContext) {
@@ -152,10 +148,7 @@ async function toPayInput(args: MarkPaidInput, paymentId: string, context: ToolC
 
 const plannedInput = z.object({
   ledger_id: ledgerIdField,
-  id: z
-    .uuid()
-    .optional()
-    .describe('Idempotency key. The preview returns one: send it back with confirm true; a repeat adds nothing.'),
+  id: newIdField,
   title: z.string().trim().min(1).max(200),
   direction: z.enum(['out', 'in']).default('out').describe('out = a payment to make, in = an expected income'),
   planned_amount_minor: z.int().positive().nullable().describe('Minor units; null = the amount is not known yet'),
@@ -201,82 +194,35 @@ async function createOnce(context: ToolContext, input: ReturnType<typeof toOblig
   }
 }
 
-function registerMarkPaid(server: McpServer) {
-  registerWriteTool(
-    server,
-    'mark_paid',
-    {
-      title: 'Mark a planned payment paid',
-      description:
-        'Confirms a planned payment from list_upcoming: links an operation already recorded (preferred, nothing new is added) or records a new one, through the same pay_obligation as the app. Without confirm true it only returns a preview.',
-      inputSchema: markPaidInput,
+/** no version: pay_obligation takes the plan's version read at confirm, and a payment id it has pays nothing */
+async function planMarkPaid(args: MarkPaidInput, context: ToolContext): Promise<WritePlan> {
+  const paymentId = args.payment_id ?? crypto.randomUUID()
+  const input = await toPayInput(args, paymentId, context)
+
+  return {
+    willWrite: input,
+    replayArgs: {
+      ...args,
+      payment_id: paymentId,
     },
-    async (args, context) => {
-      assertWriter(context)
-
-      const paymentId = args.payment_id ?? crypto.randomUUID()
-
-      // a repeat after the payment went through: the plan is no longer open, the same payment id says it is done
-      if (args.confirm && (await isPaid(context, args.obligation_id, paymentId))) {
-        return { data: { alreadyWritten: { paymentId } } }
-      }
-
-      const input = await toPayInput(args, paymentId, context)
-
-      if (!args.confirm) {
-        return {
-          preview: true,
-          data: toPreview('mark_paid', input, {
-            ...args,
-            payment_id: paymentId,
-          }),
-        }
-      }
-
-      await payObligation(context.supabase, input)
-
-      return {
-        data: { written: input },
-        createdIds: [paymentId, ...(input.newOperation ? [input.newOperation.id] : [])],
-      }
-    },
-  )
+    createdIds: [paymentId, ...(input.newOperation ? [input.newOperation.id] : [])],
+    write: () => payObligation(context.supabase, input),
+  }
 }
 
-function registerCreatePlanned(server: McpServer) {
-  registerWriteTool(
-    server,
-    'create_planned_payment',
-    {
-      title: 'Plan a one-off payment',
-      description:
-        'Adds a one-off planned payment or expected income (a plan, not a fact). Subscriptions and credits are made in the app. Without confirm true it only returns a preview.',
-      inputSchema: plannedInput,
+function planCreatePlanned(args: PlannedInput, context: ToolContext): WritePlan {
+  const id = args.id ?? crypto.randomUUID()
+  const input = toObligationInput(args, id, context)
+
+  return {
+    willWrite: input,
+    replayArgs: {
+      ...args,
+      id,
     },
-    async (args, context) => {
-      assertWriter(context)
-
-      const id = args.id ?? crypto.randomUUID()
-      const input = toObligationInput(args, id, context)
-
-      if (!args.confirm) {
-        return {
-          preview: true,
-          data: toPreview('create_planned_payment', input, {
-            ...args,
-            id,
-          }),
-        }
-      }
-
-      await createOnce(context, input)
-
-      return {
-        data: { written: input },
-        createdIds: [id],
-      }
-    },
-  )
+    createdIds: [id],
+    write: () => createOnce(context, input),
+  }
 }
 
 const openObligationField = z.uuid().describe('An open planned payment from list_upcoming')
@@ -361,8 +307,28 @@ async function planCancelPlanned(args: z.infer<typeof cancelPlannedArgs>, contex
 
 /** the planned payment form and «Remove the entry» of the calendar */
 export const OBLIGATIONS_WRITE_TOOLS = [
-  registerMarkPaid,
-  registerCreatePlanned,
+  confirmedWriteTool(
+    'mark_paid',
+    {
+      title: 'Mark a planned payment paid',
+      description:
+        'Confirms a planned payment from list_upcoming: links an operation already recorded (preferred, nothing new is added) or records a new one, through the same pay_obligation as the app.',
+      inputSchema: markPaidInput,
+      destructive: false,
+    },
+    planMarkPaid,
+  ),
+  confirmedWriteTool(
+    'create_planned_payment',
+    {
+      title: 'Plan a one-off payment',
+      description:
+        'Adds a one-off planned payment or expected income (a plan, not a fact); a subscription is create_subscription, a credit create_credit.',
+      inputSchema: plannedInput,
+      destructive: false,
+    },
+    planCreatePlanned,
+  ),
   confirmedWriteTool(
     'update_planned_payment',
     {
