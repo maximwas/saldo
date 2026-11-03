@@ -7,6 +7,7 @@
     "income": "Доходи",
     "expense": "Витрати",
     "result": "Результат",
+    "incomeCaption": "{operations, plural, one {# надходження} few {# надходження} many {# надходжень} other {# надходження}} · {names}",
     "expenseCaption": "{operations, plural, one {# операція} few {# операції} many {# операцій} other {# операції}} · {categories, plural, one {# категорія} few {# категорії} many {# категорій} other {# категорії}}",
     "excluded": "Перекази, резерви, позики й коригування не враховано; повернення зменшує витрати.",
     "unknown": "Без відомого курсу не враховано: {count}."

@@ -20,6 +20,11 @@ export function LedgerProvider({ ledger, children }: LedgerProviderProps) {
   return <LedgerStoreContext value={store}>{children}</LedgerStoreContext>
 }
 
+/** false on /login and other signed-out pages, and when a token outlives its person's space */
+export function useHasLedger() {
+  return use(LedgerStoreContext) !== null
+}
+
 /** read one value of the active space; the component re-renders only when that value changes */
 export function useLedgerStore<T>(selector: (ledger: ActiveLedger) => T): T {
   const store = use(LedgerStoreContext)
