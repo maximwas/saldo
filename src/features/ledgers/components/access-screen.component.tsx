@@ -5,14 +5,16 @@ import { UserPlus, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { Avatar } from '@/components/ui/avatar.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { EmptyState } from '@/components/ui/empty-state.component'
 import { Select } from '@/components/ui/select.component'
-import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useMembers } from '@/lib/members/members.hook'
+import { memberName } from '@/lib/members/members.utils'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
@@ -20,7 +22,6 @@ import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { cancelLedgerInvite, getMemberContributions, removeMember, setMemberRole } from '../api/access.api'
 import type { Member, PendingInvite } from '../api/access.server'
 import { INVITE_ROLES } from '../schemas/access.schema'
-import { memberName } from '../utils/members.utils'
 import { ConfirmSheet } from './confirm-sheet.component'
 import { InviteSheet } from './invite-sheet.component'
 import { LeaveSpaceButton } from './leave-space-button.component'
@@ -60,6 +61,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
   const [isPending, setIsPending] = useState(false)
   const [dialogError, setDialogError] = useState<string | null>(null)
   const isOwner = role === 'owner'
+  const profiles = useMembers()
   const owner = members.find((member) => member.role === 'owner')
   const ownerName = owner ? memberName(owner) : '—'
   const revokeMember = dialog?.kind === 'revoke' ? dialog.member : null
@@ -196,7 +198,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
                         key={member.userId}
                         className="flex flex-wrap items-start gap-x-4 gap-y-3 border-b border-border py-4 last:border-b-0"
                       >
-                        <LetterAvatar name={name} />
+                        <Avatar name={name} src={profiles[member.userId]?.avatarUrl} />
                         <div className="flex min-w-0 flex-1 basis-40 flex-col">
                           <span className="truncate text-body font-semibold text-text-primary">
                             {member.userId === currentUserId ? translate('you', { name }) : name}
@@ -255,7 +257,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
                 <ul className="flex flex-col gap-4">
                   {invites.map((invite) => (
                     <li key={invite.id} className="flex flex-wrap items-start gap-x-4 gap-y-3">
-                      <LetterAvatar name={invite.email} />
+                      <Avatar name={invite.email} />
                       <div className="flex min-w-0 flex-1 basis-40 flex-col">
                         <span className="truncate text-body font-semibold text-text-primary">{invite.email}</span>
                         <span className="text-caption text-text-tertiary">

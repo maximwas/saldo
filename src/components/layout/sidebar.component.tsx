@@ -13,6 +13,7 @@ import {
 import { useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { cn } from '@/lib/utils/cn.utils'
+import { AccountMenu } from './account-menu.component'
 import { Brand } from './brand.component'
 import { activeHref } from './navigation.utils'
 import { SpaceSwitcher } from './space-switcher.component'
@@ -103,6 +104,10 @@ export function Sidebar() {
         <SyncIndicator />
         <NavItem section={SIDEBAR_FOOTER_SECTION} active={SIDEBAR_FOOTER_SECTION.href === current} />
       </nav>
+      {/* Figma Sidebar 2:11401: my account under a divider at the very bottom */}
+      <div className="mt-3 border-t border-border pt-3">
+        <AccountMenu />
+      </div>
     </aside>
   )
 }

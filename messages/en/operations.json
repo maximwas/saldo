@@ -140,8 +140,7 @@
       "to": "To",
       "fee": "Fee",
       "rate": "Rate",
-      "purchase": "Purchase",
-      "author": "Added by"
+      "purchase": "Purchase"
     },
     "time": "Time",
     "balance": "Balance {amount}",

@@ -25,11 +25,16 @@
     "hideAmounts": "Hide amounts"
   },
   "myName": {
-    "title": "Your name",
+    "title": "Your name and photo",
     "label": "Name in this space",
     "hint": "Other members see it. Without a name, the start of your email is shown.",
-    "save": "Save",
-    "saved": "Name saved"
+    "save": "Save name",
+    "saved": "Name saved",
+    "photoHint": "One photo for all your spaces. Other members see it.",
+    "changePhoto": "Change photo",
+    "removePhoto": "Remove photo",
+    "photoRemoved": "Photo removed",
+    "removeFailed": "Could not remove the photo. Check the connection and try again."
   },
   "space": {
     "title": "Space",
@@ -187,5 +192,18 @@
     "revokeConfirm": "Revoke access",
     "revoked": "Access revoked",
     "revokeFailed": "Could not revoke the access. Try again."
+  },
+  "avatarEditor": {
+    "title": "Profile photo",
+    "dragHint": "Drag the photo so the circle shows what you want.",
+    "zoom": "Zoom",
+    "preview": "This is how others will see you",
+    "cancel": "Cancel",
+    "save": "Save",
+    "choose": "Choose a photo",
+    "tooBig": "The photo is too big ({size} MB). Choose a photo up to 10 MB.",
+    "notImage": "This is not a photo. Choose a JPG, PNG or WebP photo.",
+    "saved": "Photo saved",
+    "saveFailed": "Could not save the photo. Check the connection and try again."
   }
 }

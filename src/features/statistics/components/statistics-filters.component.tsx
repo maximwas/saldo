@@ -3,7 +3,7 @@
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select, type SelectOption } from '@/components/ui/select.component'
-import { useMemberNames } from '@/lib/members/member-names.hook'
+import { useMemberNames } from '@/lib/members/members.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
 import { BUCKETS, isRolling, periodOptions, VIEWS } from '../utils/statistics-period.utils'

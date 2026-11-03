@@ -1,3 +1,5 @@
+import { CATEGORY_COLORS } from '@/constants/category-colors.constants'
+
 type LogoEntry = {
   /** file in public/logos: the brand's own vector mark, placed on the tile as in Figma «Saldo» → Service logos 1:167 */
   file: string
@@ -89,3 +91,11 @@ export const serviceLogoOf = (name: string): string | null => {
 }
 
 export const serviceLogoIsInset = (name: string): boolean => entryOf(name)?.inset ?? false
+
+// the first eight presets, the LetterAvatar colours of the Figma frames (the two credits are yellow and blue on Overview 2:8326)
+const LETTER_COLORS = CATEGORY_COLORS.slice(0, 8)
+
+/** the same name always gets the same colour, so a service or a person is recognisable across lists */
+export function letterColorOf(name: string) {
+  return LETTER_COLORS[[...name].reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0) % LETTER_COLORS.length]
+}

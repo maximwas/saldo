@@ -5,6 +5,7 @@ import { Copy, Trash2, Undo2 } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
+import { AddedBy } from '@/components/ui/author.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Menu } from '@/components/ui/menu.component'
@@ -14,7 +15,6 @@ import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
-import { useMemberNames } from '@/lib/members/member-names.hook'
 import { formatRate, impliedRate } from '@/lib/money/fx.utils'
 import { fromMinor } from '@/lib/money/money.utils'
 import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
@@ -108,7 +108,6 @@ export function OperationEditor({
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const canWrite = useCanWrite()
-  const members = useMemberNames()
   const queryClient = useQueryClient()
   const options = useQuery(operationQueries.options(ledgerId))
   const [newId] = useState(() => crypto.randomUUID())
@@ -551,6 +550,8 @@ export function OperationEditor({
       <Bone className="h-64 rounded-md" />
     ) : (
       <>
+        {/* Figma 33:101623 / 33:101738: who added it, at the top of the details */}
+        <AddedBy userId={item.row.createdBy} />
         {/* Figma 17:89221 / 17:90017: the paid source sits above the type switch */}
         <OperationSource operationId={item.row.id} />
         {/* Figma 5:101464: the edit sheet keeps the type switch; a transfer is made anew, so only the two kinds flip */}
@@ -597,7 +598,6 @@ export function OperationEditor({
     const rate = transfer
       ? impliedRate(transfer.fromAmountMinor, transfer.fromCurrency, transfer.toAmountMinor, transfer.toCurrency)
       : null
-    const author = item.row.createdBy ? members[item.row.createdBy] : undefined
     // Figma 15:81303: the payee and the category under the amount
     const payee =
       [item.row.counterparty, categoryName(item.row.categoryId)].filter(Boolean).join(' · ') ||
@@ -666,13 +666,13 @@ export function OperationEditor({
             ],
           ] as [string, React.ReactNode][])
         : []),
-      ...(author ? ([[translate('form.details.author'), author]] as [string, React.ReactNode][]) : []),
     ]
 
     // Figma 15:81303 (read-only): the amount (display number), the payee line (label, secondary), then DetailRows
     // (padding 12/0, a hairline under each, label on the left, body-medium value on the right)
     body = (
       <>
+        <AddedBy userId={item.row.createdBy} />
         <OperationSource operationId={item.row.id} />
         <p className="font-display text-number text-text-primary">
           {amount.plus ? '+' : null}

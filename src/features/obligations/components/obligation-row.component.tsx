@@ -2,6 +2,7 @@ import { Pencil } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 import { Amount } from '@/components/ui/amount.component'
+import { AuthorAvatar } from '@/components/ui/author.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
@@ -9,7 +10,7 @@ import { useRipple } from '@/components/ui/ripple.hook'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
-import { useMemberNames } from '@/lib/members/member-names.hook'
+import { useMemberNames } from '@/lib/members/members.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import type { ObligationRow } from '../api/obligations.api'
 import { useObligationOptions } from '../hooks/obligations.hook'
@@ -102,7 +103,7 @@ export function ObligationRowItem({
           <span className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="truncate text-body font-medium text-text-primary">{obligation.title}</span>
             <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-label text-text-secondary">
+              <span className="min-w-0 max-w-full truncate text-label text-text-secondary">
                 {translate(`kind.${obligation.sourceType as 'manual'}`)}
                 {installment ? ` · ${installment}` : ''}
                 {accountName ? <span className={cn(isCredit && 'max-lg:hidden')}>{` · ${accountName}`}</span> : null}
@@ -121,7 +122,10 @@ export function ObligationRowItem({
               currency={obligation.currency}
               kind={amountKind}
             />
-            <span className="text-label text-text-secondary">{dateLabel}</span>
+            <span className="flex items-center gap-1.5">
+              <AuthorAvatar userId={obligation.createdBy} />
+              <span className="text-label text-text-secondary">{dateLabel}</span>
+            </span>
           </span>
           {ripple}
         </button>

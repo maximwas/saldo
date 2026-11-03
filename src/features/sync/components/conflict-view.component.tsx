@@ -3,14 +3,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useFormatter, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
+import { Avatar } from '@/components/ui/avatar.component'
 import { Button } from '@/components/ui/button.component'
-import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { listAccountOptions } from '@/lib/finance/ledger-options.api'
-import { useMemberNames } from '@/lib/members/member-names.hook'
+import { useMembers } from '@/lib/members/members.hook'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { type QueuedWrite, useSyncQueue } from '@/lib/query/sync-queue.hook'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
@@ -29,8 +29,9 @@ type ConflictSheetProps = {
 
 type VersionProps = {
   title: string
-  /** whose version: their initial in a LetterAvatar 24 */
+  /** whose version: their photo or initial, 24 */
   author: string | undefined
+  photo?: string | null
   /** theirs: the version on the server, outlined in warning */
   server?: boolean
   children: React.ReactNode
@@ -47,8 +48,8 @@ type SummaryLineProps = DetailRowsProps & {
 }
 
 // Figma 4:81365 / 4:81659: radius inner, subtle, or warning-soft with a warning border for theirs; the header is the
-// author's LetterAvatar 24 and label-semibold; padding 16 in the dialog, 12 in the bottom sheet
-function Version({ title, author, server = false, children }: VersionProps) {
+// author's avatar 24 and label-semibold; padding 16 in the dialog, 12 in the bottom sheet
+function Version({ title, author, photo, server = false, children }: VersionProps) {
   return (
     <section
       className={cn(
@@ -57,7 +58,7 @@ function Version({ title, author, server = false, children }: VersionProps) {
       )}
     >
       <div className="flex items-center gap-2">
-        {author ? <LetterAvatar name={author} size={24} /> : null}
+        {author ? <Avatar name={author} src={photo} size={24} /> : null}
         <h3 className="text-label font-semibold text-text-primary">{title}</h3>
       </div>
       {children}
@@ -136,18 +137,6 @@ function SummaryLine({ fields, accountName, sameAmount }: SummaryLineProps) {
   )
 }
 
-/** the signed-in person's user id, read from the stored session (no request), to name «your» version */
-function useMyId() {
-  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
-  const session = useQuery({
-    queryKey: ledgerQueryKey('sync', ledgerId, 'me'),
-    queryFn: async () => (await getBrowserSupabase().auth.getSession()).data.session?.user.id ?? null,
-    staleTime: Number.POSITIVE_INFINITY,
-  })
-
-  return session.data ?? null
-}
-
 // Figma «Saldo» → Conflict 4:81050, Dialog 4:81317 (640, the record in the title, the versions side by side as
 // detail rows, three equal buttons) / 4:81431, BottomSheet 4:81611 (the record in the intro, one line per version,
 // buttons stacked, the main one first). Nothing is overwritten until the person picks. A payment keeps its own
@@ -160,8 +149,8 @@ export function ConflictSheet({ write, open, onOpenChangeAction }: ConflictSheet
   const sync = useSyncQueue()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
-  const names = useMemberNames()
-  const myId = useMyId()
+  const members = useMembers()
+  const myId = useLedgerStore((ledger) => ledger.userId)
   const writeTitle = useWriteTitle()
   const server = useQuery({
     queryKey: ledgerQueryKey('sync', ledgerId, 'conflict', write.id),
@@ -178,8 +167,9 @@ export function ConflictSheet({ write, open, onOpenChangeAction }: ConflictSheet
   const variables = (write.variables ?? {}) as Record<string, unknown>
   const mineFields = writeFields(write.variables)
   const theirsFields = server.data ? writeFields(server.data.fields) : null
-  const author = server.data?.changedBy ? names[server.data.changedBy] : undefined
-  const myName = myId ? names[myId] : undefined
+  const changer = server.data?.changedBy ? members[server.data.changedBy] : undefined
+  const author = changer?.name
+  const myName = members[myId]?.name
   const theirsName = author ?? translate('someone')
   const mine = server.data?.version != null ? withVersion(write.variables, server.data.version) : null
 
@@ -242,6 +232,7 @@ export function ConflictSheet({ write, open, onOpenChangeAction }: ConflictSheet
             time: time(server.data?.changedAt ?? null),
           })}
           author={theirsName}
+          photo={changer?.avatarUrl}
           server
         >
           <DetailRows fields={theirsFields} accountName={accountName} />
@@ -258,7 +249,11 @@ export function ConflictSheet({ write, open, onOpenChangeAction }: ConflictSheet
           {author ? translate('leadBy', { name: author }) : translate('lead')}
         </p>
         <div className="flex gap-3">
-          <Version title={translate('mine', { time: time(write.submittedAt) })} author={myName}>
+          <Version
+            title={translate('mine', { time: time(write.submittedAt) })}
+            author={myName}
+            photo={members[myId]?.avatarUrl}
+          >
             <DetailRows fields={mineFields} accountName={accountName} />
           </Version>
           {theirs}
