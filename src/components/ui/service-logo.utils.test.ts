@@ -6,7 +6,7 @@ describe('serviceLogoOf', () => {
     expect(serviceLogoOf('Netflix')).toBe('/logos/netflix.svg')
     expect(serviceLogoOf(' google one ')).toBe('/logos/google-one.svg')
     expect(serviceLogoOf('Rozetka — пилосос')).toBe('/logos/rozetka-prom-smart.svg')
-    expect(serviceLogoOf('iCloud+')).toBe('/logos/icloud-plus.png')
+    expect(serviceLogoOf('iCloud+')).toBe('/logos/icloud-plus.svg')
   })
 
   it('gives null for a name without a logo or one that only starts with the same letters', () => {
