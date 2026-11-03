@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils/cn.utils'
 
 const ACTION_CLASS =
-  'flex cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none focus-visible:ring-2 focus-visible:ring-primary'
+  'flex cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary'
 
 type CardProps = {
   /** a string is the card-title heading; a node (a month switch) brings its own heading */

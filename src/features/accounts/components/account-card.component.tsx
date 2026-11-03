@@ -62,7 +62,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
     <>
       <Link
         href={'/operations/accounts' as Route}
-        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary"
       >
         <ChevronLeft className="size-4" aria-hidden />
         {translate('card.back')}

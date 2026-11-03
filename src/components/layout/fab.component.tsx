@@ -26,7 +26,7 @@ export function Fab() {
       type="button"
       aria-label={translate('add')}
       onClick={() => void setAdd('expense')}
-      className="fixed right-5 bottom-25 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-float outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
+      className="fixed right-5 bottom-25 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-float outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
     >
       <Plus aria-hidden size={24} />
     </button>
