@@ -9,7 +9,7 @@ import { creditProgress, payoffOf } from '@/features/credits/utils/credits.utils
 import { fromMinor } from '@/lib/money/money.utils'
 import { confirmedWriteTool, registerReadTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { confirmField, dayField, ledgerIdField, newIdField, spaceInput } from '../tool-input.schema'
+import { confirmField, dayField, ledgerIdField, newIdField, spaceInput, versionField } from '../tool-input.schema'
 import { required } from '../tool-result.utils'
 import { findAccount } from '../write-checks.server'
 
@@ -159,6 +159,7 @@ const earlyInput = z.object({
   credit_id: creditIdField,
   id: newIdField,
   pay_on: dayField.describe('The payoff day, YYYY-MM-DD; default today'),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -185,6 +186,7 @@ async function planEarlyRepayment(args: EarlyInput, context: ToolContext): Promi
       id,
     },
     createdIds: [id],
+    version: credit.version,
     write: () => replaceCreditSchedule(context.supabase, input),
   }
 }
@@ -192,6 +194,7 @@ async function planEarlyRepayment(args: EarlyInput, context: ToolContext): Promi
 const closeInput = z.object({
   ledger_id: ledgerIdField,
   credit_id: creditIdField,
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -210,6 +213,7 @@ async function planClose(args: z.infer<typeof closeInput>, context: ToolContext)
   return {
     willWrite: input,
     replayArgs: args,
+    version: credit.version,
     write: () => saveCredit(context.supabase, input),
   }
 }

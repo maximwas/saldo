@@ -9,7 +9,7 @@ import { repaymentFormSchema, toRepaymentInput } from '@/features/debts/schemas/
 import { fromMinor } from '@/lib/money/money.utils'
 import { confirmedWriteTool, registerReadTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { confirmField, dayField, ledgerIdField, newIdField, spaceInput } from '../tool-input.schema'
+import { confirmField, dayField, ledgerIdField, newIdField, spaceInput, versionField } from '../tool-input.schema'
 import { required } from '../tool-result.utils'
 import { clockOf, findAccount, orNewId } from '../write-checks.server'
 
@@ -197,15 +197,18 @@ const debtStatusInput = z.object({
   status: z
     .enum(['settled', 'written_off'])
     .describe('settled = closed as repaid; written_off = closed, it will not be repaid'),
+  version: versionField,
   confirm: confirmField,
 })
 
 async function planDebtStatus(args: z.infer<typeof debtStatusInput>, context: ToolContext): Promise<WritePlan> {
-  const input = toStatusInput(await findDebt(context, args.debt_id), args.status, context.ledger.id)
+  const debt = await findDebt(context, args.debt_id)
+  const input = toStatusInput(debt, args.status, context.ledger.id)
 
   return {
     willWrite: input,
     replayArgs: args,
+    version: debt.version,
     write: () => saveDebt(context.supabase, input),
   }
 }

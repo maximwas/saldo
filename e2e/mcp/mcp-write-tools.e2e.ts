@@ -13,6 +13,7 @@ type SubscriptionRow = {
 
 type CategoryRow = {
   id: string
+  name: string
   systemKey: string | null
 }
 
@@ -87,4 +88,49 @@ test('нові write-tools з токеном viewer відмовляють ще 
     expect(answer.isError, `confirm ${confirm}`).toBe(true)
     expect(answer.text).toMatch(/only view/)
   }
+})
+
+// an edit confirms the version its preview showed: a change in between is not overwritten
+test('update_category: confirm зі старою версією після чужої зміни нічого не пише, без версії відмовляє', async ({
+  pageAs,
+  request,
+  baseURL,
+}) => {
+  test.skip(!(await oauthServerOn()), OAUTH_OFF)
+
+  const name = `e2e-${crypto.randomUUID().slice(0, 8)}`
+  const owner = await pageAs('owner')
+  const { accessToken } = await connectMcpClient(owner, request, baseURL ?? '')
+  const created = await callTool(request, accessToken, 'create_category', {
+    kind: 'expense',
+    name,
+  })
+  const createArguments = created.data.confirmArguments as { id: string }
+
+  expect((await callTool(request, accessToken, 'create_category', createArguments)).isError).toBe(false)
+
+  const edit = (newName: string) =>
+    callTool(request, accessToken, 'update_category', {
+      category_id: createArguments.id,
+      name: newName,
+    })
+  const stale = await edit(`${name}-stale`)
+  const staleArguments = stale.data.confirmArguments as { version: number }
+  const other = await edit(`${name}-other`)
+
+  expect(typeof staleArguments.version).toBe('number')
+  expect((await callTool(request, accessToken, 'update_category', other.data.confirmArguments as object)).isError).toBe(
+    false,
+  )
+
+  const changed = await callTool(request, accessToken, 'update_category', staleArguments)
+  const { version: _version, ...unversioned } = staleArguments
+  const withoutVersion = await callTool(request, accessToken, 'update_category', unversioned)
+  const categories = (await callTool(request, accessToken, 'list_categories')).data.categories as CategoryRow[]
+
+  expect(changed.isError).toBe(true)
+  expect(changed.text).toMatch(/changed after the preview.*new preview/)
+  expect(withoutVersion.isError).toBe(true)
+  expect(withoutVersion.text).toMatch(/needs the version from its preview.*new preview/)
+  expect(categories.find((item) => item.id === createArguments.id)?.name).toBe(`${name}-other`)
 })

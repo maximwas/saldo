@@ -62,6 +62,25 @@ export function required<Item>(item: Item | null | undefined, message: string): 
   return item
 }
 
+const NEW_PREVIEW =
+  'call the tool again without confirm for a new preview, show it to the person, and confirm with its confirmArguments.'
+
+const CHANGED_SINCE_PREVIEW = `This record changed after the preview, so nothing was written: ${NEW_PREVIEW}`
+
+/** a confirmed edit is made from the version its preview showed: none sent, or not the record's version now, writes nothing */
+export function assertPreviewVersion(sent: number | null | undefined, current: number | null) {
+  if (sent === undefined) {
+    throw new ToolError(
+      'version_required',
+      `A confirmed edit needs the version from its preview, so nothing was written: ${NEW_PREVIEW}`,
+    )
+  }
+
+  if (sent !== current) {
+    throw new ToolError('PT409', CHANGED_SINCE_PREVIEW)
+  }
+}
+
 export const errorResult = (message: string): CallToolResult => ({
   isError: true,
   content: [
@@ -123,7 +142,7 @@ export function toPreview<Args extends object>(
 const DB_MESSAGES: Record<PgError['kind'], string> = {
   forbidden:
     'Not allowed: you only view this space, you are not its member, or an MCP client may not do this (it never deletes).',
-  conflict: 'Someone changed this record meanwhile: read it again and retry with its new version.',
+  conflict: CHANGED_SINCE_PREVIEW,
   expired: 'This is no longer valid.',
   notFound: 'The record is gone or was never in this space.',
   duplicate: 'This id is taken by another record: use a new id.',

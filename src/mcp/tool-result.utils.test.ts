@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import {
+  assertPreviewVersion,
   describeError,
   MAX_RESULT_CHARS,
   markUntrusted,
@@ -132,6 +133,35 @@ describe('toToolResult', () => {
   })
 })
 
+describe('assertPreviewVersion', () => {
+  it('lets a confirm through only with the version the record still has', () => {
+    expect(() => assertPreviewVersion(3, 3)).not.toThrow()
+    expect(() => assertPreviewVersion(null, null)).not.toThrow()
+  })
+
+  it('refuses a confirm without a version and asks for a new preview', () => {
+    expect(() => assertPreviewVersion(undefined, 3)).toThrow(/needs the version from its preview.*new preview/)
+  })
+
+  it('answers a record changed since the preview as a conflict, also one created since', () => {
+    for (const [sent, current] of [
+      [3, 4],
+      [null, 1],
+    ] as const) {
+      try {
+        assertPreviewVersion(sent, current)
+        expect.unreachable()
+      } catch (error) {
+        expect(error).toBeInstanceOf(ToolError)
+        expect(describeError(error)).toEqual({
+          code: 'PT409',
+          message: describeError({ code: 'PT409' }).message,
+        })
+      }
+    }
+  })
+})
+
 describe('describeError', () => {
   it('maps a version conflict and a refused write as the app does', () => {
     expect(
@@ -140,7 +170,7 @@ describe('describeError', () => {
         message: 'changed',
       }),
     ).toMatchObject({ code: 'PT409' })
-    expect(describeError({ code: 'PT409' }).message).toMatch(/changed this record/)
+    expect(describeError({ code: 'PT409' }).message).toMatch(/changed after the preview.*new preview/)
     expect(describeError({ code: '42501' }).message).toMatch(/Not allowed/)
   })
 

@@ -19,7 +19,7 @@ import {
 } from '@/features/categories/utils/categories.utils'
 import { confirmedWriteTool, registerReadTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { confirmField, ledgerIdField, newIdField, spaceInput } from '../tool-input.schema'
+import { confirmField, ledgerIdField, newIdField, spaceInput, versionField } from '../tool-input.schema'
 import { required, ToolError } from '../tool-result.utils'
 import { assertChanges } from '../write-checks.server'
 
@@ -102,6 +102,7 @@ const updateCategoryArgs = z.object({
   color: z.enum(CATEGORY_COLORS).nullable().optional(),
   icon: iconField.nullable().optional(),
   restore: z.literal(true).optional().describe('true brings an archived category back'),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -130,6 +131,7 @@ async function planUpdateCategory(args: z.infer<typeof updateCategoryArgs>, cont
   return {
     willWrite: input,
     replayArgs: args,
+    version: category.version,
     write: () => updateCategory(context.supabase, input),
   }
 }
@@ -141,6 +143,7 @@ const archiveCategoryArgs = z.object({
     .uuid()
     .optional()
     .describe('A category of the same kind that takes over its operations and plans; none = they keep this one'),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -162,6 +165,7 @@ async function planArchiveCategory(
   return {
     willWrite: input,
     replayArgs: args,
+    version: category.version,
     write: () => archiveCategory(context.supabase, input),
   }
 }

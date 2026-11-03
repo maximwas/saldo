@@ -22,4 +22,13 @@ export const newIdField = z
   .optional()
   .describe('Idempotency key. The preview returns one: send it back with confirm true; a repeat writes nothing.')
 
+/** an edit's record version: the preview fills it in, a confirm with another one than the record has now writes nothing */
+export const versionField = z
+  .int()
+  .nullable()
+  .optional()
+  .describe(
+    'The record version the preview was made from: send back the one in confirmArguments. Required with confirm true; if the record changed since, nothing is written.',
+  )
+
 export const dayField = z.iso.date().optional().describe('YYYY-MM-DD, default today in the space time zone')

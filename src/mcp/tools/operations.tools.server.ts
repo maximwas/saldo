@@ -20,7 +20,7 @@ import { fromMinor } from '@/lib/money/money.utils'
 import { toOccurredAt } from '@/lib/utils/clock.utils'
 import { confirmedWriteTool, registerReadTool, registerWriteTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { confirmField, dayField, ledgerIdField, newIdField } from '../tool-input.schema'
+import { confirmField, dayField, ledgerIdField, newIdField, versionField } from '../tool-input.schema'
 import { required, ToolError, toPreview } from '../tool-result.utils'
 import { assertChanges, assertPast, assertWriter, clockOf, findAccount } from '../write-checks.server'
 
@@ -220,6 +220,7 @@ const updateOperationArgs = z.object({
   category_id: z.uuid().nullable().optional(),
   counterparty: z.string().trim().max(200).nullable().optional(),
   note: noteField.nullable().optional(),
+  version: versionField,
   confirm: confirmField,
 })
 
@@ -268,6 +269,7 @@ async function planUpdateOperation(args: UpdateOperationArgs, context: ToolConte
   return {
     willWrite: input,
     replayArgs: args,
+    version: operation.version,
     write: () => updateOperation(context.supabase, input),
   }
 }
