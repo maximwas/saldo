@@ -13,3 +13,13 @@ export const monthField = z
   .describe('Month as YYYY-MM. Default: the current month in the space time zone.')
 
 export const spaceInput = z.object({ ledger_id: ledgerIdField })
+
+export const confirmField = z.boolean().default(false).describe('false (default) only previews; true writes')
+
+/** a client-generated id of a new record: the preview fills it in, so the confirm writes exactly once */
+export const newIdField = z
+  .uuid()
+  .optional()
+  .describe('Idempotency key. The preview returns one: send it back with confirm true; a repeat writes nothing.')
+
+export const dayField = z.iso.date().optional().describe('YYYY-MM-DD, default today in the space time zone')

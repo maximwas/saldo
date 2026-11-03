@@ -1,7 +1,9 @@
 import 'server-only'
 import type { McpServer, ToolAnnotations } from '@modelcontextprotocol/server'
 import type { z } from 'zod'
-import { type ToolBody, toolHandler } from './tool-context.server'
+import { findEarlierWrite, type ToolBody, type ToolContext, toolHandler } from './tool-context.server'
+import { toPreview } from './tool-result.utils'
+import { assertWriter } from './write-checks.server'
 
 type ToolConfig<Schema extends z.ZodObject> = {
   title: string
@@ -48,6 +50,7 @@ export function registerWriteTool<Schema extends z.ZodObject>(
   name: string,
   config: ToolConfig<Schema>,
   body: ToolBody<z.infer<Schema>>,
+  destructive = false,
 ) {
   registerTool(
     server,
@@ -55,9 +58,76 @@ export function registerWriteTool<Schema extends z.ZodObject>(
     config,
     {
       readOnlyHint: false,
-      destructiveHint: false,
+      destructiveHint: destructive,
       idempotentHint: true,
     },
     body,
   )
+}
+
+/** one write through the app's own api: the preview shows willWrite, a confirm runs write */
+export type WritePlan = {
+  willWrite: Record<string, unknown>
+  /** the arguments with every generated id filled in: sent back with confirm true they make exactly this write */
+  replayArgs: object
+  createdIds?: string[]
+  write: () => Promise<unknown>
+}
+
+type Planner<Args> = (args: Args, context: ToolContext) => WritePlan | Promise<WritePlan>
+
+const REPEAT_HINT =
+  'An identical call already wrote this, so nothing was written again. For a second, separate write, call without confirm for a new preview.'
+
+function confirmedBody<Args extends object>(name: string, plan: Planner<Args>): ToolBody<Args> {
+  return async (args, context) => {
+    assertWriter(context)
+
+    const { confirm } = args as { confirm?: boolean }
+    const earlier = confirm ? await findEarlierWrite(context, name, args) : null
+
+    if (earlier) {
+      return {
+        data: { alreadyWritten: REPEAT_HINT },
+        createdIds: earlier,
+      }
+    }
+
+    const { willWrite, replayArgs, createdIds, write } = await plan(args, context)
+
+    if (!confirm) {
+      return {
+        preview: true,
+        data: toPreview(name, willWrite, replayArgs),
+      }
+    }
+
+    const result = await write()
+
+    return {
+      data: {
+        written: willWrite,
+        result,
+      },
+      createdIds,
+    }
+  }
+}
+
+export type Registrar = (server: McpServer) => void
+
+/** a write tool for server.server.ts: a viewer is refused, no confirm = a preview, an identical confirmed call is
+ * answered from mcp_audit_log; destructive = it changes or ends an existing record, not only adds one */
+export function confirmedWriteTool<Schema extends z.ZodObject>(
+  name: string,
+  config: ToolConfig<Schema> & { destructive: boolean },
+  plan: Planner<z.infer<Schema>>,
+): Registrar {
+  const { destructive, ...toolConfig } = config
+  const described = {
+    ...toolConfig,
+    description: `${toolConfig.description} Without confirm true it only returns a preview and writes nothing.`,
+  }
+
+  return (server) => registerWriteTool(server, name, described, confirmedBody(name, plan), destructive)
 }

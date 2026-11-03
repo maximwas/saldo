@@ -96,15 +96,37 @@ type AuditEntry = {
   createdIds?: string[]
 }
 
+const inputHash = (args: unknown) =>
+  createHash('sha256')
+    .update(JSON.stringify(args ?? {}))
+    .digest('hex')
+
+/** ids of an earlier call of this tool by this person with exactly these arguments that wrote; null = none did */
+export async function findEarlierWrite({ supabase, userId }: ToolContext, tool: string, args: unknown) {
+  const { data, error } = await supabase
+    .from('mcp_audit_log')
+    .select('created_ids')
+    .eq('user_id', userId)
+    .eq('tool', tool)
+    .eq('input_hash', inputHash(args))
+    .eq('outcome', 'ok')
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return data?.created_ids ?? null
+}
+
 /** one mcp_audit_log row per call, with the caller's token; a failed write is logged, the call's answer stands */
 async function audit(supabase: SaldoClient, authInfo: AuthInfo, entry: AuditEntry) {
   const { error } = await supabase.from('mcp_audit_log').insert({
     ledger_id: entry.ledgerId,
     client_id: authInfo.clientId,
     tool: entry.tool,
-    input_hash: createHash('sha256')
-      .update(JSON.stringify(entry.args ?? {}))
-      .digest('hex'),
+    input_hash: inputHash(entry.args),
     outcome: entry.outcome,
     error_code: entry.errorCode?.slice(0, 64) ?? null,
     created_ids: entry.createdIds ?? [],

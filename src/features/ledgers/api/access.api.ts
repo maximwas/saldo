@@ -172,3 +172,23 @@ export async function getMemberContributions(supabase: SaldoClient, ledgerId: st
     payments: payments.count ?? 0,
   }
 }
+
+/** members of a space under RLS (only a member sees them), for clients without the secret key: no emails */
+export async function listMembers(supabase: SaldoClient, ledgerId: string) {
+  const { data, error } = await supabase
+    .from('ledger_members')
+    .select('user_id, role, display_name, joined_at')
+    .eq('ledger_id', ledgerId)
+    .order('joined_at')
+
+  if (error) {
+    throw error
+  }
+
+  return data.map((row) => ({
+    userId: row.user_id,
+    role: row.role,
+    displayName: row.display_name,
+    joinedAt: row.joined_at,
+  }))
+}

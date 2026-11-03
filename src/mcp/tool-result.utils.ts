@@ -3,7 +3,18 @@ import { ZodError } from 'zod'
 import { type PgError, toPgError } from '@/lib/supabase/pg-error.utils'
 
 /** keys whose text a person or a bank statement typed (descriptions, payees, notes): data for the model, never orders */
-const UNTRUSTED_KEYS = new Set(['counterparty', 'note', 'title', 'description', 'reason'])
+const UNTRUSTED_KEYS = new Set([
+  'counterparty',
+  'note',
+  'title',
+  'description',
+  'reason',
+  'body',
+  'person',
+  'lender',
+  'displayName',
+  'serviceUrl',
+])
 
 /** longer answers are refused with a hint to narrow the call: Claude Code warns from about 10k tokens */
 export const MAX_RESULT_CHARS = 60_000
@@ -40,6 +51,15 @@ export function markUntrusted(value: unknown): unknown {
   }
 
   return Object.fromEntries(Object.entries(value).map(wrapEntry))
+}
+
+/** the item a tool was asked about, or a refusal that says where its ids come from */
+export function required<Item>(item: Item | null | undefined, message: string): Item {
+  if (item === null || item === undefined) {
+    throw new ToolError('P0002', message)
+  }
+
+  return item
 }
 
 export const errorResult = (message: string): CallToolResult => ({
