@@ -11,7 +11,7 @@ import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { useClock, useToday } from '@/contexts/clock.context'
@@ -60,9 +60,7 @@ function DebtSheetFrame({ title, pending, onCloseAction, children }: DebtSheetFr
       title={title}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate('form.cancel')}
-          </Button>
+          <SheetClose>{translate('form.cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={pending}>
             {translate('form.save')}
           </Button>

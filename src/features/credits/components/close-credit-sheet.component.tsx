@@ -3,7 +3,7 @@
 import { Info } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import type { Credit } from '../api/credits.api'
@@ -49,9 +49,7 @@ export function CloseCreditSheet({ credit, onCloseAction }: CloseCreditSheetProp
       title={translate('close.title', { name: credit.name })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('close.cancel')}
-          </Button>
+          <SheetClose>{translate('close.cancel')}</SheetClose>
           <Button type="button" variant="danger" onClick={close} disabled={save.isPending}>
             {translate('close.confirm')}
           </Button>

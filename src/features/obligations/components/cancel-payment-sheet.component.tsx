@@ -3,7 +3,8 @@
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
+import { Bone, SkeletonLine } from '@/components/ui/skeleton.component'
 import { Switch } from '@/components/ui/switch.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
@@ -82,26 +83,31 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
       title={translate('cancelPayment.title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onClose}>
-            {translate('cancelPayment.keep')}
-          </Button>
+          <SheetClose>{translate('cancelPayment.keep')}</SheetClose>
           <Button variant="danger" type="button" disabled={!payment || remove.isPending} onClick={cancel}>
             {translate('cancelPayment.confirm')}
           </Button>
         </>
       }
     >
-      <p className="text-label text-text-secondary">
-        {translate(textKey, {
-          title: obligation.title,
-          number: obligation.sequenceNo ?? 0,
-          total: obligation.installmentTotal ?? obligation.sequenceNo ?? 0,
-          date: shortDate(obligation.dueOn),
-          account: accountName,
-          direction: obligation.direction,
-          amount: payment ? formatMinor(payment.amountMinor, obligation.currency, locale) : '',
-        })}
-      </p>
+      {payments.isPending ? (
+        <div aria-busy className="flex flex-col gap-2">
+          <Bone className="h-4 rounded-sm" />
+          <Bone className="h-4 w-2/3 rounded-sm" />
+        </div>
+      ) : (
+        <p className="text-label text-text-secondary">
+          {translate(textKey, {
+            title: obligation.title,
+            number: obligation.sequenceNo ?? 0,
+            total: obligation.installmentTotal ?? obligation.sequenceNo ?? 0,
+            date: shortDate(obligation.dueOn),
+            account: accountName,
+            direction: obligation.direction,
+            amount: payment ? formatMinor(payment.amountMinor, obligation.currency, locale) : '',
+          })}
+        </p>
+      )}
       {payments.data?.length === 0 && (
         <p className="text-caption text-text-tertiary">{translate('cancelPayment.empty')}</p>
       )}
@@ -110,6 +116,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
         checked={deleteOperation}
         onCheckedChange={setDeleteOperation}
       />
+      {payments.isPending && <SkeletonLine end="w-20" />}
       {payment && operation && (
         <section className="flex flex-col gap-1">
           <h3 className="text-label font-medium text-text-secondary">{translate('cancelPayment.operation')}</h3>

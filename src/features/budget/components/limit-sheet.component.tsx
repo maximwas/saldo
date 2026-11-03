@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
@@ -156,9 +156,7 @@ export function LimitSheet({ categoryId }: { categoryId: string | null }) {
       title={title}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={close}>
-            {translate(over ? 'keep' : 'cancel')}
-          </Button>
+          <SheetClose>{translate(over ? 'keep' : 'cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={save.isPending}>
             {translate(over ? 'saveOver' : 'save')}
           </Button>

@@ -10,7 +10,8 @@ import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
+import { SkeletonLine } from '@/components/ui/skeleton.component'
 import { Switch } from '@/components/ui/switch.component'
 import { notify } from '@/components/ui/toaster.component'
 import { isMoneyQuery } from '@/constants/query-roots.constants'
@@ -160,9 +161,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
       title={translate('pay.title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onClose}>
-            {translate('pay.cancel')}
-          </Button>
+          <SheetClose>{translate('pay.cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={pay.isPending}>
             {translate('pay.confirm')}
           </Button>
@@ -254,7 +253,13 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
         {(candidates.data ?? []).length === 0 && !candidates.isPending && (
           <p className="text-caption text-text-tertiary">{translate('pay.linkEmpty')}</p>
         )}
-        <ul className="flex flex-col">
+        <ul className="flex flex-col" aria-busy={candidates.isPending}>
+          {candidates.isPending &&
+            [0, 1].map((row) => (
+              <li key={row} className="py-3">
+                <SkeletonLine end="w-20" />
+              </li>
+            ))}
           {(candidates.data ?? []).map((operation) => (
             <OperationLine
               key={operation.id}

@@ -3,8 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Banner } from '@/components/ui/banner.component'
-import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import type { PushState } from '../hooks/push.hook'
 
 type PushBannerProps = {
@@ -55,11 +54,7 @@ export function PushBanner({ state, onEnableAction }: PushBannerProps) {
             open
             onOpenChange={(open) => !open && setExplaining(false)}
             title={translate('pushBanner.howTitle')}
-            footer={
-              <Button type="button" variant="secondary" onClick={() => setExplaining(false)}>
-                {translateCommon('close')}
-              </Button>
-            }
+            footer={<SheetClose>{translateCommon('close')}</SheetClose>}
           >
             <p className="text-body text-text-secondary">{translate('push.denied.text')}</p>
           </Sheet>

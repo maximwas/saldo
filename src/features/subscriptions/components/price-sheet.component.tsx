@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useToday } from '@/contexts/clock.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
@@ -76,9 +76,7 @@ export function PriceSheet({ subscriptionId, onCloseAction }: PriceSheetProps) {
       title={translate('sheetTitle', { name: subscription.name })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('cancel')}
-          </Button>
+          <SheetClose>{translate('cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={save.isPending}>
             {translate('save')}
           </Button>

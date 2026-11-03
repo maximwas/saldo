@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { Field } from '@/components/ui/field.component'
 import { Input } from '@/components/ui/input.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
@@ -71,9 +71,7 @@ function DeleteDataSheet({ onCloseAction }: DeleteDataSheetProps) {
       title={translate('deleteTitle')}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('keep')}
-          </Button>
+          <SheetClose>{translate('keep')}</SheetClose>
           <Button type="button" variant="danger" disabled={pending || typed.trim() !== name} onClick={confirm}>
             {translate('confirm')}
           </Button>

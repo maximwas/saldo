@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { Field } from '@/components/ui/field.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import type { CURRENCIES } from '@/constants/currencies.constants'
 import { useLedgerStore } from '@/contexts/ledger.context'
@@ -57,9 +57,7 @@ export function ChangeDateSheet({ obligation, onCloseAction }: ChangeDateSheetPr
       title={translate('move.title')}
       footer={
         <>
-          <Button variant="secondary" onClick={onCloseAction}>
-            {translate('form.cancel')}
-          </Button>
+          <SheetClose>{translate('form.cancel')}</SheetClose>
           <Button
             disabled={dueOn === null || dueOn === obligation.dueOn || update.isPending}
             onClick={() => dueOn && save(dueOn)}

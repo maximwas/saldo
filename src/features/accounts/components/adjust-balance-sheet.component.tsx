@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { Textarea } from '@/components/ui/textarea.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock, useToday } from '@/contexts/clock.context'
@@ -77,9 +77,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
       title={translate('title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate('cancel')}
-          </Button>
+          <SheetClose>{translate('cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={adjust.isPending}>
             {translate('submit')}
           </Button>

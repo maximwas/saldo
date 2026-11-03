@@ -9,7 +9,7 @@ import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { useToday } from '@/contexts/clock.context'
@@ -100,9 +100,7 @@ export function CreditFormSheet({ credit, onCloseAction }: CreditFormSheetProps)
       title={translate(credit ? 'form.editTitle' : 'form.createTitle')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate('form.cancel')}
-          </Button>
+          <SheetClose>{translate('form.cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={save.isPending}>
             {translate('form.save')}
           </Button>
