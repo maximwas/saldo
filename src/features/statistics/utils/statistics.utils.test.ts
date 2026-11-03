@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CashflowRow, CategoryRow, PlanDay } from '../api/statistics.api'
-import { cashflowTotals, categoryShares, forecastMonths } from './statistics.utils'
+import { cashflowTotals, categoryShares, forecastMonths, kindSummary } from './statistics.utils'
 import { forecastRange, linkPeriod, operationsHref, periodValue, resolvePeriod } from './statistics-period.utils'
 
 const category = (id: string | null, fact: number, unknown = 0) =>
@@ -117,5 +117,44 @@ describe('forecastMonths', () => {
         unknownCount: 0,
       },
     ])
+  })
+})
+
+describe('kindSummary', () => {
+  it('counts only the operations and categories of its own kind', () => {
+    const rows: CategoryRow[] = [
+      {
+        ...category('food', 500),
+        operations_count: 3,
+      },
+      category(null, 100),
+      {
+        ...category('salary', 82_500),
+        category_kind: 'income',
+        operations_count: 2,
+      },
+    ]
+
+    expect(kindSummary(rows, 'expense')).toEqual({
+      operationsCount: 4,
+      categoryIds: ['food', null],
+    })
+    expect(kindSummary(rows, 'income')).toEqual({
+      operationsCount: 2,
+      categoryIds: ['salary'],
+    })
+  })
+
+  it('one expense and one income in the month: each tile counts one', () => {
+    const rows: CategoryRow[] = [
+      category('food', 500),
+      {
+        ...category('salary', 1000),
+        category_kind: 'income',
+      },
+    ]
+
+    expect(kindSummary(rows, 'expense').operationsCount).toBe(1)
+    expect(kindSummary(rows, 'income').operationsCount).toBe(1)
   })
 })

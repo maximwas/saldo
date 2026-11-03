@@ -7,7 +7,7 @@ import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { statisticsQueries } from '../api/statistics.queries'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
-import { cashflowTotals } from '../utils/statistics.utils'
+import { cashflowTotals, kindSummary } from '../utils/statistics.utils'
 
 // Figma «Saldo» → Statistics: desktop 2:73705 = three StatCards (a 32 icon + label-medium, Amount L, caption tertiary),
 // mobile 2:78068 = one card: income and expense rows, a border-top «Result» row with Amount M, a caption note.
@@ -15,9 +15,11 @@ import { cashflowTotals } from '../utils/statistics.utils'
 export function SummaryCards() {
   const translate = useTranslations('statistics')
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
+  const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const { params } = useStatisticsFilters()
   const { data } = useQuery(statisticsQueries.cashflow(params))
   const categories = useQuery(statisticsQueries.byCategory(params))
+  const options = useQuery(statisticsQueries.categories(ledgerId))
 
   if (!data) {
     return null
@@ -25,7 +27,12 @@ export function SummaryCards() {
 
   const totals = cashflowTotals(data)
   const result = totals.resultMinor < 0 ? 'shortfall' : 'income'
-  const expenseCategories = (categories.data ?? []).filter((row) => row.category_kind === 'expense').length
+  // each tile counts its own kind: the cashflow count also holds the income (one expense + one income read as two)
+  const income = kindSummary(categories.data ?? [], 'income')
+  const expense = kindSummary(categories.data ?? [], 'expense')
+  const incomeNames = income.categoryIds
+    .map((id) => options.data?.find((category) => category.id === id)?.name ?? translate('noCategory'))
+    .join(', ')
   const tiles = [
     {
       key: 'income',
@@ -33,7 +40,13 @@ export function SummaryCards() {
       color: 'lime',
       minor: totals.incomeMinor,
       kind: 'income',
-      caption: null,
+      caption:
+        income.operationsCount > 0
+          ? translate('summary.incomeCaption', {
+              operations: income.operationsCount,
+              names: incomeNames,
+            })
+          : null,
     },
     {
       key: 'expense',
@@ -42,8 +55,8 @@ export function SummaryCards() {
       minor: totals.expenseMinor,
       kind: 'fact',
       caption: translate('summary.expenseCaption', {
-        operations: totals.operationsCount,
-        categories: expenseCategories,
+        operations: expense.operationsCount,
+        categories: expense.categoryIds.length,
       }),
     },
     {

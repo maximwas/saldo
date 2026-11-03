@@ -78,6 +78,25 @@ export function cashflowTotals(rows: CashflowRow[]): CashflowTotals {
   }
 }
 
+export type KindSummary = {
+  operationsCount: number
+  /** the categories of this kind with operations in the period; null = without a category */
+  categoryIds: (string | null)[]
+}
+
+/**
+ * what a summary tile counts: only the operations of its own kind (Figma 2:73594: income = inflows and their
+ * category names, expenses = operations and categories); a refund sits in an expense category, so it counts there
+ */
+export function kindSummary(rows: CategoryRow[], kind: 'income' | 'expense'): KindSummary {
+  const own = rows.filter((row) => row.category_kind === kind)
+
+  return {
+    operationsCount: own.reduce((sum, row) => sum + row.operations_count, 0),
+    categoryIds: own.map((row) => row.category_id),
+  }
+}
+
 export type ForecastMonth = {
   month: string
   outMinor: number
