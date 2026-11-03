@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { describeError, MAX_RESULT_CHARS, markUntrusted, ToolError, toPreview, toToolResult } from './tool-result.utils'
+import {
+  describeError,
+  MAX_RESULT_CHARS,
+  markUntrusted,
+  required,
+  ToolError,
+  toPreview,
+  toToolResult,
+} from './tool-result.utils'
 
 describe('markUntrusted', () => {
   it('wraps payees, notes and titles at any depth and leaves the rest', () => {
@@ -28,7 +36,62 @@ describe('markUntrusted', () => {
       ],
     })
   })
+
+  it('wraps the people, lenders, notification texts and member names the detail tools return', () => {
+    const detail = {
+      debt: {
+        person: 'Andrii',
+        principalMinor: 500000,
+      },
+      credit: { lender: 'Bank' },
+      notifications: [{ body: 'Pay now' }],
+      members: [
+        {
+          displayName: 'Olena',
+          role: 'editor',
+        },
+      ],
+    }
+
+    expect(markUntrusted(detail)).toEqual({
+      debt: {
+        person: { untrusted_text: 'Andrii' },
+        principalMinor: 500000,
+      },
+      credit: { lender: { untrusted_text: 'Bank' } },
+      notifications: [{ body: { untrusted_text: 'Pay now' } }],
+      members: [
+        {
+          displayName: { untrusted_text: 'Olena' },
+          role: 'editor',
+        },
+      ],
+    })
+  })
 })
+
+describe('required', () => {
+  it('passes a found item and refuses a missing one with where its ids come from', () => {
+    expect(required({ id: 'credit-1' }, 'unused')).toEqual({ id: 'credit-1' })
+    expect(() => required(undefined, 'No such credit: list_credits lists them.')).toThrow(
+      new ToolError('P0002', 'No such credit: list_credits lists them.'),
+    )
+    expect(describeError(catchError(() => required(null, 'No such debt.')))).toEqual({
+      code: 'P0002',
+      message: 'No such debt.',
+    })
+  })
+})
+
+function catchError(run: () => unknown) {
+  try {
+    run()
+  } catch (error) {
+    return error
+  }
+
+  return null
+}
 
 describe('toToolResult', () => {
   it('keeps the arguments of a preview verbatim, so they validate again', () => {

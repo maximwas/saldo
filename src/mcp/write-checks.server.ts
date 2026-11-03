@@ -20,3 +20,33 @@ export async function findAccount({ supabase, ledger }: ToolContext, accountId: 
 
   return account
 }
+
+/** the space's clock for the app's builders (toOccurredAt): its time zone and the moment of the call */
+export const clockOf = ({ ledger, now }: ToolContext) => ({
+  timeZone: ledger.timeZone,
+  now: () => now,
+})
+
+/** a fact is never in the future (the app's factFormSchema) */
+export function assertPast({ today }: ToolContext, day: string) {
+  if (day > today) {
+    throw new ToolError('invalid_input', `${day} is in the future: a fact is recorded once it happened.`)
+  }
+}
+
+/** an optional edit field: undefined keeps what the record has, null clears it */
+export function orCurrent<Value>(value: Value | undefined, current: Value): Value {
+  return value === undefined ? current : value
+}
+
+/** an edit that changes nothing is refused, so a mistaken call writes nothing */
+export function assertChanges(patch: Record<string, unknown>) {
+  if (Object.values(patch).every((value) => value === undefined)) {
+    throw new ToolError('invalid_input', 'Nothing to change: give at least one field to change.')
+  }
+}
+
+/** the first id the record or the caller already has, else a new one */
+export function orNewId(...ids: (string | null | undefined)[]) {
+  return ids.find(Boolean) ?? crypto.randomUUID()
+}

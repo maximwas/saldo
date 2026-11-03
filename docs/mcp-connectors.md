@@ -14,8 +14,20 @@
   `list_calendar` (факти й плани за період з тими самими фільтрами, що в Календарі), `get_statistics` (місяць, рік,
   3/6/12 місяців, «Хто»), `list_notifications`, `list_reminders` (правила нагадувань), `list_members` (ролі й імена
   учасників, без email).
-- **Запис** — лише коли у Vercel `MCP_WRITE_ENABLED=true`: `add_operation`, `mark_paid`, `create_planned_payment`. Без
-  `confirm: true` tool лише показує попередній перегляд; той самий `id` вдруге нічого не пише.
+- **Запис** — лише коли у Vercel `MCP_WRITE_ENABLED=true`, усе, що застосунок дає створити чи змінити:
+  - операції: `add_operation`, `update_operation`, `add_transfer`, `add_refund`; планові: `create_planned_payment`,
+    `update_planned_payment`, `cancel_planned_payment`, `mark_paid`;
+  - підписки: `create_subscription` (категорія завжди системна «Підписки»), `update_subscription`,
+    `set_subscription_price`, `set_subscription_status` (пауза, відновити, скасувати, архів);
+  - кредити: `create_credit` (рівні внески, чинний кредит, графік банку), `early_repay_credit`, `close_credit`;
+  - борги: `create_debt`, `add_debt_repayment`, `set_debt_status`;
+  - рахунки: `create_account`, `update_account`, `archive_account`, `adjust_balance`;
+  - категорії: `create_category`, `update_category`, `archive_category`, `reorder_categories`;
+  - бюджет: `set_budget_limit`, `set_income_plan`, `copy_budget_month`; курс: `save_rate`.
+
+  Без `confirm: true` tool лише показує попередній перегляд і повертає `confirmArguments` з готовими `id`; ті самі
+  аргументи вдруге нічого не пишуть (відповідь `alreadyWritten`). Viewer отримує відмову ще до прев'ю. Учасники,
+  запрошення, налаштування сповіщень, експорт і видалення — лише в застосунку.
 - **Ніколи**: видалення (тригер у БД відмовляє OAuth-токену навіть у прямому виклику Supabase), запис для viewer,
   запити назовні. Текст із даних (контрагенти, примітки, назви планів, особи боргів, кредитори, тексти сповіщень, імена учасників) приходить як `{"untrusted_text": …}`.
 - Кожен виклик пишеться в `mcp_audit_log`. Видані доступи й «Відкликати» — Налаштування → Безпека; відкликання діє

@@ -3,21 +3,26 @@ import type { McpServer } from '@modelcontextprotocol/server'
 import { addDays, format, parseISO } from 'date-fns'
 import { z } from 'zod'
 import { CURRENCIES } from '@/constants/currencies.constants'
+import { cancelPlanEntry } from '@/features/calendar/api/calendar.api'
 import {
   createObligation,
   listObligationPayments,
   listObligations,
   payObligation,
+  updateObligation,
 } from '@/features/obligations/api/obligations.api'
-import { createObligationInputSchema } from '@/features/obligations/schemas/obligation-input.schema'
+import {
+  createObligationInputSchema,
+  updateObligationInputSchema,
+} from '@/features/obligations/schemas/obligation-input.schema'
 import { payObligationInputSchema } from '@/features/obligations/schemas/pay-obligation-input.schema'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { toOccurredAt } from '@/lib/utils/clock.utils'
-import { registerReadTool, registerWriteTool } from '../register-tool.server'
+import { confirmedWriteTool, registerReadTool, registerWriteTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
-import { ledgerIdField } from '../tool-input.schema'
+import { confirmField, ledgerIdField } from '../tool-input.schema'
 import { ToolError, toPreview } from '../tool-result.utils'
-import { assertWriter, findAccount } from '../write-checks.server'
+import { assertWriter, findAccount, orCurrent } from '../write-checks.server'
 
 const upcomingInput = z.object({
   ledger_id: ledgerIdField,
@@ -54,8 +59,6 @@ export function registerObligationsTools(server: McpServer) {
     },
   )
 }
-
-const confirmField = z.boolean().default(false).describe('false (default) only previews; true writes')
 
 const markPaidInput = z.object({
   ledger_id: ledgerIdField,
@@ -281,3 +284,105 @@ export function registerObligationsWriteTools(server: McpServer) {
   registerMarkPaid(server)
   registerCreatePlanned(server)
 }
+
+const openObligationField = z.uuid().describe('An open planned payment from list_upcoming')
+
+const updatePlannedArgs = z.object({
+  ledger_id: ledgerIdField,
+  obligation_id: openObligationField,
+  title: z.string().trim().min(1).max(200).optional(),
+  direction: z.enum(['out', 'in']).optional(),
+  planned_amount_minor: z.int().positive().nullable().optional().describe('null = the amount is not known'),
+  currency: z.enum(CURRENCIES).optional(),
+  due_on: z.iso.date().optional(),
+  account_id: z.uuid().nullable().optional(),
+  category_id: z.uuid().nullable().optional(),
+  confirm: confirmField,
+})
+
+type UpdatePlannedArgs = z.infer<typeof updatePlannedArgs>
+
+async function planUpdatePlanned(args: UpdatePlannedArgs, context: ToolContext): Promise<WritePlan> {
+  const obligation = await findOpenObligation(context, args.obligation_id)
+
+  if (obligation.sourceType !== 'manual') {
+    throw new ToolError(
+      'invalid_input',
+      'A payment of a subscription, credit or debt follows its source: change the source, or drop this one date with cancel_planned_payment.',
+    )
+  }
+
+  const input = updateObligationInputSchema.parse({
+    id: obligation.id,
+    ledger_id: context.ledger.id,
+    expectedVersion: obligation.version,
+    title: args.title ?? obligation.title,
+    direction: args.direction ?? obligation.direction,
+    planned_amount_minor: orCurrent(args.planned_amount_minor, obligation.plannedMinor),
+    currency: args.currency ?? obligation.currency,
+    due_on: args.due_on ?? obligation.dueOn,
+    account_id: orCurrent(args.account_id, obligation.accountId),
+    category_id: orCurrent(args.category_id, obligation.categoryId),
+  })
+
+  return {
+    willWrite: input,
+    replayArgs: args,
+    write: () => updateObligation(context.supabase, input),
+  }
+}
+
+const cancelPlannedArgs = z.object({
+  ledger_id: ledgerIdField,
+  obligation_id: openObligationField,
+  confirm: confirmField,
+})
+
+async function planCancelPlanned(args: z.infer<typeof cancelPlannedArgs>, context: ToolContext): Promise<WritePlan> {
+  const obligation = await findOpenObligation(context, args.obligation_id)
+
+  if (obligation.paidMinor > 0) {
+    throw new ToolError('invalid_input', 'Part of it is paid already: only a plan with nothing paid is removed.')
+  }
+
+  const input = {
+    ledgerId: context.ledger.id,
+    obligationId: obligation.id,
+  }
+
+  return {
+    willWrite: {
+      ...input,
+      title: obligation.title,
+      dueOn: obligation.dueOn,
+    },
+    replayArgs: args,
+    write: () => cancelPlanEntry(context.supabase, input),
+  }
+}
+
+/** the planned payment form and «Remove the entry» of the calendar */
+export const OBLIGATIONS_WRITE_TOOLS = [
+  confirmedWriteTool(
+    'update_planned_payment',
+    {
+      title: 'Change a planned payment',
+      description:
+        'Changes the title, amount, currency, due date, account or category of an open one-off planned payment or expected income.',
+      inputSchema: updatePlannedArgs,
+      destructive: true,
+    },
+    planUpdatePlanned,
+  ),
+  confirmedWriteTool(
+    'cancel_planned_payment',
+    {
+      title: 'Remove a planned payment',
+      description:
+        'Removes one planned date with nothing paid from the calendar, upcoming payments and available money; its subscription, credit or series stays.',
+      inputSchema: cancelPlannedArgs,
+      destructive: true,
+    },
+    planCancelPlanned,
+  ),
+]
