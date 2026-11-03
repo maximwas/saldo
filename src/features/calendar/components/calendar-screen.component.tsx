@@ -18,6 +18,7 @@ import { CalendarSets } from './calendar-sets.component'
 import { CalendarSummary } from './calendar-summary.component'
 import { CalendarToolbar } from './calendar-toolbar.component'
 import { DayPanel } from './day-panel.component'
+import { EntryPopup } from './entry-popup.component'
 
 // Figma «Saldo» → Calendar · Empty by filter 2:77407 (Empty 2:77692: padding 64 / 24, EmptyState 420 wide): a 40 icon
 // circle, «Nothing matches «Taxes»», a line and «Reset filters»
@@ -78,12 +79,8 @@ function CalendarBody() {
     return <DayPanel />
   }
 
-  if (view === 'list' && entries.data.length === 0) {
-    return <EmptyPeriod />
-  }
-
-  if (view !== 'month') {
-    return <CalendarDays />
+  if (view === 'list') {
+    return entries.data.length === 0 ? <EmptyPeriod /> : <CalendarDays />
   }
 
   return (
@@ -94,9 +91,9 @@ function CalendarBody() {
   )
 }
 
-// Figma «Saldo» → Calendar 2:66941: the view-only banner, toolbar, quick sets, period totals, then the month grid with
-// the day panel (desktop side by side, 800 / 320 and a gap of 24; phones one under the other), the week / list card or
-// the day. Gaps 20 on desktop, 16 on phones. Everything the screen shows is in the URL.
+// Figma «Saldo» → Calendar 51:125110: the view-only banner, toolbar, quick sets, period totals, then the month (or the
+// week) grid with the day panel (desktop side by side, 800 / 320 and a gap of 24; phones one under the other), the list
+// card or the day. Gaps 20 on desktop, 16 on phones. Everything the screen shows is in the URL, the open entry too.
 export function CalendarScreen() {
   const translate = useTranslations('calendar')
   const canWrite = useCanWrite()
@@ -108,6 +105,7 @@ export function CalendarScreen() {
       <CalendarSets />
       <CalendarSummary />
       <CalendarBody />
+      <EntryPopup />
     </div>
   )
 }

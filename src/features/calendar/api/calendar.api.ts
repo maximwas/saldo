@@ -21,6 +21,8 @@ export type CalendarEntry = {
   currency: string
   baseAmountMinor: number | null
   accountId: string | null
+  /** its tile in the rows and the popup (the category's icon and colour) */
+  categoryId: string | null
   obligationId: string | null
   sourceType: string | null
   sourceId: string | null
@@ -60,6 +62,7 @@ const toEntry = (row: EntryRow): CalendarEntry => ({
   currency: row.currency,
   baseAmountMinor: row.base_amount_minor,
   accountId: row.account_id,
+  categoryId: row.category_id,
   obligationId: row.obligation_id,
   sourceType: row.source_type,
   sourceId: row.source_id,
