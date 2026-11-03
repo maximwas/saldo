@@ -1,9 +1,9 @@
-import { AlertTriangle } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Card } from '@/components/ui/card.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import type { Overview } from '../api/overview.api'
@@ -86,19 +86,21 @@ export function UpcomingCard({ overview }: UpcomingCardProps) {
         </ul>
       )}
       {overview.overdueCount > 0 && (
-        <Link
-          href={'/payments' as Route}
-          className="flex cursor-pointer items-start gap-3 rounded-inner bg-warning-soft px-4 py-3 text-warning-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        <Banner
+          kind="warning"
+          className="relative"
+          action={
+            // stretched over the whole banner (after:inset-0), so a tap anywhere on it opens the payments
+            <Link
+              href={'/payments' as Route}
+              className="cursor-pointer rounded-xs outline-none after:absolute after:inset-0 after:rounded-inner focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {translate('upcoming.review')}
+            </Link>
+          }
         >
-          {/* Figma Banner 2:10028: icon and action sit on the first 24px line, not centred on a wrapped text */}
-          <span className="flex shrink-0 py-0.5">
-            <AlertTriangle aria-hidden size={20} />
-          </span>
-          <span className="flex-1 text-body font-medium">
-            {translate('upcoming.overdue', { count: overview.overdueCount })}
-          </span>
-          <span className="shrink-0 py-0.5 text-label font-semibold">{translate('upcoming.review')}</span>
-        </Link>
+          {translate('upcoming.overdue', { count: overview.overdueCount })}
+        </Banner>
       )}
     </Card>
   )
