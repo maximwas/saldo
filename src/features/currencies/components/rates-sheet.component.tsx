@@ -11,9 +11,10 @@ import { Checkbox } from '@/components/ui/checkbox.component'
 import { EmptyState } from '@/components/ui/empty-state.component'
 import { Input } from '@/components/ui/input.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
-import { Sheet, SheetClose, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { formatRate } from '@/lib/money/fx.utils'
 import { currencyName, currencySymbol } from '@/lib/money/money.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { MAX_PINNED, useFormatDay } from '../hooks/currencies.hook'
 import { type BoardRate, boardDigits, rateColor, splitBoard } from '../utils/currencies.utils'
 import { RateFigures } from './rate-figures.component'
@@ -39,7 +40,7 @@ export function RatesSheet({ onOpenChange, baseCurrency, board, pinned, nbuDay, 
   const translateCurrencies = useTranslations('currencies')
   const locale = useLocale()
   const formatDay = useFormatDay()
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const [search, setSearch] = useState('')
   const nameOf = (currency: string) => currencyName(currency, locale)
   const { shown, others } = splitBoard(board, pinned, nameOf)
