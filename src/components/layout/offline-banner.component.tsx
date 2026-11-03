@@ -13,9 +13,12 @@ import { SyncIndicator } from './sync-indicator.component'
 // Figma «Saldo» → phase 8, Offline 4:80063 / 4:80342: a warning Banner above the page while the device is offline, with the
 // time of the data on screen on desktop; on mobile (no Sidebar) the Topbar SyncStatus pill sits above it, 8 apart.
 // Pending sync / Mobile 4:80844: while writes are on their way the phone lists them in a card instead.
-// Operations draw their own desktop warning (5:105115), so there this one stays on phones only.
+// Operations, Budget and Statistics draw their own desktop warning (5:105115, 41:107107, 41:110223), so there this one
+// stays on phones only.
+const OWN_WARNING_PATHS = new Set(['/operations', '/budget', '/statistics'])
+
 export function OfflineBanner() {
-  const ownWarning = usePathname() === '/operations'
+  const ownWarning = OWN_WARNING_PATHS.has(usePathname())
   const translate = useTranslations('sync.banner')
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const { online, updatedAt, summary } = useSyncQueue()
