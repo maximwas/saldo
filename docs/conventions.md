@@ -708,6 +708,19 @@ export function RateForm() {
   const today = useToday()
 ```
 
+### 4.6b Стани екрана (Максим, 03.11.2026)
+
+Один шлях на всіх екранах:
+
+1. **Помилка й оновлення** — `useScreenQueryState([query, …], translate('refreshFailed'))` із `src/lib/query`. `ErrorState`
+   лише на `failedLoad` (перше завантаження впало, показати нічого); оновлення, що впало над кешем, лишає дані й показує
+   один тост із «Спробувати ще». Порядок: спершу `failedLoad` → `ErrorState`, потім `data === undefined` → скелетон, тож
+   TypeScript звужує `data`. Голий `isError` на екрані не перевіряємо. Тексти `loadFailed` / `refreshFailed` — поруч.
+2. **Порожньо** — `EmptyState` (`src/components/ui`, Figma 2:10027): `icon`, `tone`, `title`, `hint`, `action`; `bare` —
+   коли він уже в картці. Свою розмітку порожнього стану не пишемо; `ErrorState` побудований на ньому.
+3. **Офлайн** — сторінка, що малює своє попередження на десктопі, бере `PageOfflineBanner` (`src/components/layout`) і
+   додає свій шлях в `OWN_WARNING_PATHS` шелового `OfflineBanner`, щоб на десктопі не було двох банерів.
+
 ### 4.7 Чиста функція + тест
 
 ```ts
