@@ -13,6 +13,7 @@ import { Select } from '@/components/ui/select.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { updateLedgerSettings } from '../api/access.api'
 import type { LedgerSettings } from '../api/access.server'
@@ -39,7 +40,7 @@ const canonicalZone = (zone: string) => (zone === 'Europe/Kiev' ? 'Europe/Kyiv' 
 export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
   const router = useRouter()
   const translate = useTranslations('settings.space')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const translateField = useTranslations('errors')
   const formatter = useFormatter()
   const [name, setName] = useState(settings.name)
@@ -106,9 +107,7 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
         },
       )
 
-      setError(
-        pgError.constraint === BASE_CURRENCY_LOCKED ? translate('baseCurrencyLocked') : translateError(pgError.kind),
-      )
+      setError(pgError.constraint === BASE_CURRENCY_LOCKED ? translate('baseCurrencyLocked') : dbErrorText(caught))
     } finally {
       setIsPending(false)
     }

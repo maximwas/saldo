@@ -1,14 +1,15 @@
 'use client'
 
 import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Copy, Trash2, TriangleAlert, Undo2 } from 'lucide-react'
+import { Copy, Trash2, Undo2 } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Menu } from '@/components/ui/menu.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet } from '@/components/ui/sheet.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
@@ -16,8 +17,10 @@ import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
 import { formatRate, impliedRate } from '@/lib/money/fx.utils'
 import { fromMinor } from '@/lib/money/money.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localTime } from '@/lib/utils/clock.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { useDraftsStore } from '@/store/drafts.store'
 import { operationQueries } from '../api/operations.queries'
 import {
@@ -95,7 +98,7 @@ export function OperationEditor({
   onOpenAction,
 }: OperationEditorProps) {
   const translate = useTranslations('operations')
-  const translateErrors = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const translateKinds = useTranslations('operations.kinds')
   const translateSync = useTranslations('sync')
   const locale = useLocale()
@@ -121,7 +124,7 @@ export function OperationEditor({
   })
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const [refunding, setRefunding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
@@ -262,7 +265,7 @@ export function OperationEditor({
     if (pgError.kind === 'conflict') {
       setConflict(true)
     } else {
-      setError(translateErrors(pgError.kind))
+      setError(dbErrorText(caught))
     }
   }
 
@@ -525,10 +528,7 @@ export function OperationEditor({
           {' · '}
           {transfer ? null : <Amount minor={amount.minor} currency={amount.currency} />}
         </p>
-        <p className="flex items-start gap-3 rounded-inner bg-warning-soft px-4 py-3 text-body text-warning-text">
-          <TriangleAlert aria-hidden size={20} className="mt-0.5 shrink-0" />
-          {warning}
-        </p>
+        <Banner kind="warning">{warning}</Banner>
       </>
     )
   } else if (mode === 'create') {
@@ -704,15 +704,17 @@ export function OperationEditor({
     >
       {body}
       {conflict ? (
-        <p
+        <Banner
+          kind="warning"
           role="alert"
-          className="flex flex-wrap items-center gap-3 rounded-inner bg-warning-soft px-4 py-3 text-body text-warning-text"
+          action={
+            <Button type="button" size="s" variant="secondary" onClick={refresh}>
+              {translate('refresh')}
+            </Button>
+          }
         >
-          <span className="flex-1">{translate('conflict')}</span>
-          <Button type="button" size="s" variant="secondary" onClick={refresh}>
-            {translate('refresh')}
-          </Button>
-        </p>
+          {translate('conflict')}
+        </Banner>
       ) : null}
       {error ? (
         <p role="alert" className="text-body text-negative-text">

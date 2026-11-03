@@ -9,12 +9,12 @@ import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { Tabs } from '@/components/ui/tabs.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { formatRate } from '@/lib/money/fx.utils'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useAccounts } from '../hooks/accounts.hook'
 import { type AccountView, totalInBase } from '../utils/accounts.utils'
 import { AccountFormSheet } from './account-form-sheet.component'
@@ -36,7 +36,7 @@ export function AccountsScreen() {
   const locale = useLocale()
   const moneyText = useMoneyText()
   const canWrite = useCanWrite()
-  const desktop = useIsDesktop()
+  const desktop = useIsWideLayout()
   const query = useAccounts()
   const { data } = query
   const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))

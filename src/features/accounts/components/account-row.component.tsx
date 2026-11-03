@@ -10,10 +10,10 @@ import { Badge } from '@/components/ui/badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { ActionSheet, Menu, type MenuItem } from '@/components/ui/menu.component'
 import { useRipple } from '@/components/ui/ripple.hook'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Switch } from '@/components/ui/switch.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { formatRate } from '@/lib/money/fx.utils'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useUpdateAccount } from '../hooks/accounts.hook'
 import { ACCOUNT_KIND_STYLE, type AccountView } from '../utils/accounts.utils'
 
@@ -34,7 +34,7 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
   const translateCurrency = useTranslations('currencies')
   const locale = useLocale()
   const moneyText = useMoneyText()
-  const desktop = useIsDesktop()
+  const desktop = useIsWideLayout()
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const canWrite = useCanWrite()
   const update = useUpdateAccount()

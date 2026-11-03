@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import type { ObligationRow } from '../api/obligations.api'
 import { useDeleteObligationPayment, useObligationOptions, useObligationPayments } from '../hooks/obligations.hook'
 import { OperationLine } from './operation-line.component'
@@ -25,7 +25,7 @@ type CancelPaymentSheetProps = {
 // Several partial payments: the newest goes first, the person repeats it for the next one.
 export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetProps) {
   const translate = useTranslations('obligations')
-  const translateErrors = useTranslations('errors')
+  const dbErrorText = useDbErrorText()
   const format = useFormatter()
   const moneyText = useMoneyText()
   const names = useMemberNames()
@@ -71,7 +71,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
           notify.success(translate('cancelPayment.done'))
           onClose()
         },
-        onError: (error) => notify.error(translateErrors(`db.${toPgError(error as { code?: string }).kind}`)),
+        onError: (error) => notify.error(dbErrorText(error)),
       },
     )
   }

@@ -19,6 +19,7 @@ import { useClock, useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import type { ObligationOptions, ObligationRow } from '../api/obligations.api'
 import { useCandidateOperations, useObligationOptions, usePayObligation } from '../hooks/obligations.hook'
@@ -46,7 +47,7 @@ const NO_OPTIONS: ObligationOptions = {
 // actual operation), «Link an existing operation» rows with a Link button, footer Cancel + Paid.
 export function PayObligationSheet({ obligation, onClose }: PayObligationSheetProps) {
   const translate = useTranslations('obligations')
-  const translateErrors = useTranslations('errors')
+  const dbErrorText = useDbErrorText()
   const format = useFormatter()
   const clock = useClock()
   const today = useToday()
@@ -131,7 +132,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
             return
           }
 
-          notify.error(translateErrors(`db.${kind}`))
+          notify.error(dbErrorText(error))
         },
       },
     )

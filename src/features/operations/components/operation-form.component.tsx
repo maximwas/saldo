@@ -12,13 +12,13 @@ import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { Select } from '@/components/ui/select.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Textarea } from '@/components/ui/textarea.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useFormDraft } from '@/lib/forms/form-draft.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { operationQueries } from '../api/operations.queries'
 import { factFormSchema, type OperationFormValues } from '../schemas/operation-form.schema'
 import { accountOptions } from '../utils/operation-display.utils'
@@ -90,7 +90,7 @@ export function OperationForm({
   const categoryKind = editedKind === 'income' ? 'income' : 'expense'
   const expense = editedKind === 'expense'
   // the hints show in the desktop dialog only (2:16567 vs 2:18677) and never for an income (2:17848)
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const hints = expense && desktop
 
   // the sheet's Expense / Income switch: a category of the other kind no longer fits

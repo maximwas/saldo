@@ -7,8 +7,8 @@ import { type ReactNode, useState } from 'react'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Menu, type MenuItem } from '@/components/ui/menu.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import type { CategoryView } from '../utils/categories.utils'
 
 type CategoryRowProps = {
@@ -53,7 +53,7 @@ export function CategoryRow({
   subrows,
 }: CategoryRowProps) {
   const translate = useTranslations('categories')
-  const desktop = useIsDesktop()
+  const desktop = useIsWideLayout()
   const canWrite = useCanWrite()
   const controls = useDragControls()
   const [dragging, setDragging] = useState(false)

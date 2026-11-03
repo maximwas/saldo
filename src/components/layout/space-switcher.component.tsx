@@ -6,9 +6,10 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useRipple } from '@/components/ui/ripple.hook'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet } from '@/components/ui/sheet.component'
 import { CreateSpaceDialog } from '@/features/ledgers/components/create-space-dialog.component'
 import { cn } from '@/lib/utils/cn.utils'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import type { LedgerSummary } from '@/store/ledger.store'
 
 type SpaceSwitcherProps = {
@@ -63,8 +64,8 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
   const translate = useTranslations('shell')
   const [creating, setCreating] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
-  // below md the list is a bottom sheet (Figma BottomSheet 2:10281), from md up a popover menu
-  const desktop = useIsDesktop()
+  // in the phone layout (below lg) the list is a bottom sheet (Figma BottomSheet 2:10281), from lg up a popover menu
+  const desktop = useIsWideLayout()
   const current = spaces.find((space) => space.id === currentId) ?? spaces[0]
 
   if (!current) {
@@ -143,7 +144,7 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
 
   const dialog = <CreateSpaceDialog open={creating} onOpenChange={setCreating} />
 
-  // the same trigger look on both: a Menu.Trigger on desktop, a plain button that opens the sheet below md
+  // the same trigger look on both: a Menu.Trigger on desktop, a plain button that opens the sheet below lg
   const renderRoot = (className: string, children: React.ReactNode) =>
     desktop ? (
       <Menu.Root>

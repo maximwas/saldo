@@ -4,10 +4,10 @@ import { ArrowLeftRight } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Card } from '@/components/ui/card.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { NEUTRAL_TONE } from '@/constants/category-colors.constants'
 import { useLedger } from '@/contexts/ledger.context'
 import { formatRate } from '@/lib/money/fx.utils'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useRecentTransfers } from '../hooks/accounts.hook'
 import { type AccountView, type RecentTransfer, transferRate } from '../utils/accounts.utils'
 
@@ -25,7 +25,7 @@ export function RecentTransfers({ accounts }: RecentTransfersProps) {
   const translate = useTranslations('accounts.recent')
   const locale = useLocale()
   const moneyText = useMoneyText()
-  const desktop = useIsDesktop()
+  const desktop = useIsWideLayout()
   const { timeZone } = useLedger()
   const { data } = useRecentTransfers()
 

@@ -1,10 +1,10 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { useMoneyText } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
@@ -89,13 +89,8 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
 
   return (
     <form id={formId} noValidate onSubmit={form.handleSubmit(onSubmitAction)} className="flex flex-col gap-4">
-      {/* Figma Banner 2:10028: padding 12/16, gap 12, text body-medium; the icon box (20 + 2/2) sits on the first line */}
-      <p className="flex items-start gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body font-medium text-primary-text">
-        <span className="flex shrink-0 py-0.5">
-          <Info aria-hidden size={20} />
-        </span>
-        {translate('transferNote')}
-      </p>
+      {/* Figma Banner 2:10028 */}
+      <Banner>{translate('transferNote')}</Banner>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField
           control={form.control}

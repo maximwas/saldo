@@ -11,6 +11,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Input } from '@/components/ui/input.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { SearchResult } from '../api/search.api'
 import { searchQueries } from '../api/search.queries'
 
@@ -97,6 +98,8 @@ function SearchResults({ inputRef, onPickAction }: SearchResultsProps) {
     enabled: ready,
     placeholderData: keepPreviousData,
   })
+  // a term that never loaded says so in the status line; a failed refresh keeps its results and toasts
+  const { failedLoad } = useScreenQueryState([search], translate('failed'))
   const results = ready ? (search.data ?? []) : []
   const groups = Object.entries(Object.groupBy(results, (row) => row.entity_type)).map(
     ([value, items]) =>
@@ -109,7 +112,7 @@ function SearchResults({ inputRef, onPickAction }: SearchResultsProps) {
 
   if (!ready) {
     status = 'hint'
-  } else if (search.isError) {
+  } else if (failedLoad) {
     status = 'failed'
   } else if (search.isPending) {
     status = 'searching'
