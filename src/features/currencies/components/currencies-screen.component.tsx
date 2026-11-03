@@ -3,13 +3,14 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge.component'
 import { ErrorState } from '@/components/ui/error-state.component'
+import { CURRENCIES } from '@/constants/currencies.constants'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { formatRate } from '@/lib/money/fx.utils'
 import { currencySymbol } from '@/lib/money/money.utils'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useRates } from '../hooks/currencies.hook'
-import { currentRates } from '../utils/currencies.utils'
+import { rateBoard } from '../utils/currencies.utils'
 import { RateForm } from './rate-form.component'
 
 // stored rates of either direction (UAH → EUR is 0,024096) keep six decimals here
@@ -38,6 +39,12 @@ export function CurrenciesScreen() {
   const formatDate = (day: string) =>
     new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(`${day}T12:00:00`))
   const baseSymbol = currencySymbol(data.baseCurrency, locale)
+  // the daily NBU rows of every currency would bury the account pairs: the history keeps those, the card above has all
+  const history = data.rates.filter(
+    (row) =>
+      (CURRENCIES as readonly string[]).includes(row.baseCurrency) &&
+      (CURRENCIES as readonly string[]).includes(row.quoteCurrency),
+  )
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
@@ -51,7 +58,7 @@ export function CurrenciesScreen() {
       <section className={CARD_CLASS}>
         <h2 className="text-card-title text-text-primary">{translate('current.title', { date: formatDate(today) })}</h2>
         <ul className="flex flex-col">
-          {currentRates(data.rates, data.baseCurrency, today).map((row) => (
+          {rateBoard(data.rates, data.baseCurrency, today).map((row) => (
             <li
               key={row.currency}
               className="flex items-center justify-between gap-3 border-b border-border py-3 last:border-b-0"
@@ -78,11 +85,11 @@ export function CurrenciesScreen() {
       ) : null}
       <section className={CARD_CLASS}>
         <h2 className="text-card-title text-text-primary">{translate('list.title')}</h2>
-        {data.rates.length === 0 ? (
+        {history.length === 0 ? (
           <p className="text-label text-text-secondary">{translate('list.empty')}</p>
         ) : (
           <ul className="flex flex-col">
-            {data.rates.map((row) => (
+            {history.map((row) => (
               <li
                 key={`${row.baseCurrency}-${row.quoteCurrency}-${row.rateOn}-${row.source}`}
                 className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border py-3 last:border-b-0"

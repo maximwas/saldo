@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { amountText, currencySymbol, formatMinor, fromMinor, toMinor } from './money.utils'
+import { amountText, currencyName, currencySymbol, formatMinor, fromMinor, toMinor } from './money.utils'
 
 // Intl puts no-break spaces between groups and before the sign; compare with plain spaces
 const plain = (text: string) => text.replace(/\s/g, ' ')
@@ -66,5 +66,13 @@ describe('amountText', () => {
   it('shows «? ₴» for an unknown sum and the formatted sum otherwise', () => {
     expect(amountText(null, 'UAH', 'uk', false)).toBe('? ₴')
     expect(plain(amountText(-80_000, 'EUR', 'uk', false))).toBe(plain(formatMinor(-80_000, 'EUR', 'uk')))
+  })
+})
+
+describe('currencyName', () => {
+  it('takes the name from Intl and capitalises it as a row title', () => {
+    expect(currencyName('USD', 'uk')).toBe('Долар США')
+    expect(currencyName('PLN', 'uk')).toBe('Польський злотий')
+    expect(currencyName('EUR', 'en')).toBe('Euro')
   })
 })

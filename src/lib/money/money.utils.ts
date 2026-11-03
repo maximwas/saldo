@@ -45,6 +45,20 @@ export function fromMinor(minor: bigint | number, currency: string): string {
   return new Decimal(minor.toString()).dividedBy(Decimal.pow(10, fractionDigits)).toFixed(fractionDigits)
 }
 
+const CURRENCY_NAMES = new Map<string, Intl.DisplayNames>()
+
+/** «US dollar», «Polish zloty»: Intl's name of the currency in the active locale, capitalised as a row title */
+export function currencyName(currency: string, locale: string) {
+  // one Intl object per locale: the rates sheet names ~45 currencies on every keystroke of its search
+  const names = CURRENCY_NAMES.get(locale) ?? new Intl.DisplayNames(locale, { type: 'currency' })
+
+  CURRENCY_NAMES.set(locale, names)
+
+  const name = names.of(currency) ?? currency
+
+  return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1)
+}
+
 /** «₴», «€», «$» for the unknown and hidden states of Amount */
 export const currencySymbol = (currency: string, locale: string) =>
   currencyFormat(currency, locale)

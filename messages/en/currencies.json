@@ -28,8 +28,44 @@
     "empty": "No rates yet. Without a rate, amounts in other currencies show as «?»."
   },
   "source": {
-    "manual": "Manual",
+    "manual": "manual",
     "reference": "NBU"
   },
-  "summaryBase": "{symbol} base"
+  "summaryBase": "{symbol} base",
+  "board": {
+    "card": {
+      "title": "Rates",
+      "all": "All rates",
+      "nbuOn": "NBU on {date}",
+      "change": "change for the day",
+      "empty": "No rates yet",
+      "emptyHint": "Saldo takes NBU rates every morning, they show here after the next update.",
+      "nonePinned": "No currencies chosen for the overview",
+      "nonePinnedHint": "Open «All rates» and tick up to three currencies."
+    },
+    "strip": {
+      "open": "Exchange rates, open all rates",
+      "date": "rates on {date}",
+      "failed": "Rates did not load",
+      "retry": "Retry"
+    },
+    "sheet": {
+      "title": "Exchange rates",
+      "hint": "Official NBU rates on {date}{base, select, UAH { against the hryvnia} USD { against the dollar} EUR { against the euro} other {}}. If you have your own rate that day, Saldo takes it. Tick the currencies to show on the overview.",
+      "hintNoDate": "Official NBU rates. If you have your own rate on the rate's day, Saldo takes it. Tick the currencies to show on the overview.",
+      "search": "Search currency",
+      "searchPlaceholder": "Code or name: USD, zloty…",
+      "pinned": "On the overview · {count}",
+      "others": "Other NBU rates · {count}",
+      "limit": "The overview fits 3 currencies. Untick one to add another.",
+      "notFound": "No such currency",
+      "notFoundHint": "Try a code (PLN) or a name (zloty).",
+      "settings": "Currency settings",
+      "done": "Done"
+    },
+    "meta": "{code} · NBU {date}",
+    "metaManual": "{code} · {date} · NBU {nbu}",
+    "metaManualOnly": "{code} · {date}",
+    "noRate": "No rate"
+  }
 }
