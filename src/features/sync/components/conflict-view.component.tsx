@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet } from '@/components/ui/sheet.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
@@ -16,6 +16,7 @@ import { type QueuedWrite, useSyncQueue } from '@/lib/query/sync-queue.hook'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { localTime } from '@/lib/utils/clock.utils'
 import { cn } from '@/lib/utils/cn.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { getServerVersion } from '../api/sync.api'
 import { useWriteTitle } from '../hooks/write-title.hook'
 import { type WriteFields, withVersion, writeFields } from '../utils/write-fields.utils'
@@ -155,7 +156,7 @@ function useMyId() {
 // shortcut: no «merge by hand» button (no frame for the merge), the person edits the record after «take theirs».
 export function ConflictSheet({ write, open, onOpenChangeAction }: ConflictSheetProps) {
   const translate = useTranslations('sync.conflict')
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const sync = useSyncQueue()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)

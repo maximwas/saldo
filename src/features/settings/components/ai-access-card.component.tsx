@@ -7,9 +7,10 @@ import { useState } from 'react'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
-import { Sheet, SheetClose, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import type { OAuthGrantView } from '../api/oauth-grants.server'
 
 type AiAccessCardProps = {
@@ -58,7 +59,7 @@ function GrantRow({ grant, onRevokeAction, pending }: GrantRowProps) {
 export function AiAccessCard({ grants, mcpUrl }: AiAccessCardProps) {
   const translate = useTranslations('settings.security')
   const router = useRouter()
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const [pending, setPending] = useState(false)
   // the grant stays after the sheet closes, so its name holds through the exit transition
   const [confirming, setConfirming] = useState<OAuthGrantView | null>(null)

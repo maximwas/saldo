@@ -7,10 +7,10 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Chip } from '@/components/ui/chip.component'
 import { ErrorState } from '@/components/ui/error-state.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import {
   useCategories,
   useCategoryOperationCounts,
@@ -65,7 +65,7 @@ export function CategoriesScreen() {
   const [kind, setKind] = useState<CategoryKind>('expense')
   const [form, setForm] = useState<CategoryFormTarget | null>(null)
   const [archiving, setArchiving] = useState<CategoryView | null>(null)
-  const desktop = useIsDesktop()
+  const desktop = useIsWideLayout()
   const counts = useCategoryOperationCounts().data
   const [reordering, setReordering] = useState(false)
   // the order being dragged; it belongs to one kind and one snapshot of the list, a refetch drops it

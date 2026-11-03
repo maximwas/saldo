@@ -8,7 +8,7 @@ import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { Menu } from '@/components/ui/menu.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet } from '@/components/ui/sheet.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
@@ -18,6 +18,7 @@ import { formatRate, impliedRate } from '@/lib/money/fx.utils'
 import { fromMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localTime } from '@/lib/utils/clock.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { useDraftsStore } from '@/store/drafts.store'
 import { operationQueries } from '../api/operations.queries'
 import {
@@ -121,7 +122,7 @@ export function OperationEditor({
   })
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const [refunding, setRefunding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)

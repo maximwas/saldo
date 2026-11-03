@@ -7,8 +7,8 @@ import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationSource as Source } from '../operations.types'
 import { sourceHref } from '../utils/operation-display.utils'
@@ -28,7 +28,7 @@ export function OperationSource({ operationId }: OperationSourceProps) {
   const moneyText = useMoneyText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const sources = useQuery(operationQueries.sources(ledgerId, operationId))
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
 
   const date = (value: string) =>
     formatter.dateTime(new Date(`${value}T12:00:00Z`), {

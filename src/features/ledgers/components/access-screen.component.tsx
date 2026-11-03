@@ -11,12 +11,12 @@ import { Card } from '@/components/ui/card.component'
 import { EmptyState } from '@/components/ui/empty-state.component'
 import { Select } from '@/components/ui/select.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { cancelLedgerInvite, getMemberContributions, removeMember, setMemberRole } from '../api/access.api'
 import type { Member, PendingInvite } from '../api/access.server'
 import { INVITE_ROLES } from '../schemas/access.schema'
@@ -51,7 +51,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
   const role = useLedgerStore((ledger) => ledger.role)
   const ledgerName = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const router = useRouter()
-  const isDesktop = useIsDesktop()
+  const isDesktop = useIsSheetDialog()
   const translate = useTranslations('settings.access')
   const translateError = useTranslations('errors.db')
   const formatter = useFormatter()

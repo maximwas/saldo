@@ -1,9 +1,10 @@
 import { useTranslations } from 'next-intl'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
-import { Sheet, SheetClose, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
 import { useBudgetCategories, useCurrentBudget, useDeleteLimit, useRestoreLimit } from '../hooks/budget.hook'
 import { useMonthLabel } from '../hooks/month-label.hook'
@@ -15,7 +16,7 @@ export function DeleteLimitSheet({ categoryId }: { categoryId: string }) {
   const moneyText = useMoneyText()
   const monthLabel = useMonthLabel()
   const { ledgerId, baseCurrency: currency } = useLedger()
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const close = useBudgetSheetStore((state) => state.close)
   const { month, data } = useCurrentBudget()
   const { data: categories } = useBudgetCategories()

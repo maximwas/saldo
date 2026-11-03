@@ -2,29 +2,10 @@ import { Dialog } from '@base-ui/react/dialog'
 import { Drawer } from '@base-ui/react/drawer'
 import { X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { cn } from '@/lib/utils/cn.utils'
-
-// Tailwind's md breakpoint: below it the sheet is a bottom drawer, from it a dialog anchored at the top
-const DESKTOP_QUERY = '(min-width: 48rem)'
-
-const subscribe = (notify: () => void) => {
-  const query = window.matchMedia(DESKTOP_QUERY)
-
-  query.addEventListener('change', notify)
-
-  return () => query.removeEventListener('change', notify)
-}
-
-/** true from Tailwind's md up; the server snapshot is desktop */
-export function useIsDesktop() {
-  return useSyncExternalStore(
-    subscribe,
-    () => window.matchMedia(DESKTOP_QUERY).matches,
-    () => true,
-  )
-}
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 
 type SheetProps = {
   open: boolean
@@ -67,7 +48,7 @@ export function Sheet({
 }: SheetProps) {
   const translate = useTranslations('common')
   // a sheet is opened by a click, so it never renders during hydration
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   // Screens mount a sheet already open (a row, a URL id) and unmount it on close, while Base UI plays the enter and exit
   // transitions only for an open that changes after mount. So the root opens one render after mount, and a close
   // (✕, backdrop, swipe, Escape, SheetClose) first plays the exit and only then reaches the caller.

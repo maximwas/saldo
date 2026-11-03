@@ -4,7 +4,8 @@ import { Popover } from '@base-ui/react/popover'
 import { Bell } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet } from '@/components/ui/sheet.component'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useUnreadCount } from '../hooks/notifications.hook'
 import { NotificationsPanel, useBellTitle } from './notifications-panel.component'
 
@@ -13,7 +14,7 @@ import { NotificationsPanel, useBellTitle } from './notifications-panel.componen
 export function NotificationBell() {
   const translate = useTranslations('shell')
   const unread = useUnreadCount() ?? 0
-  const desktop = useIsDesktop()
+  const desktop = useIsWideLayout()
   const sheetTitle = useBellTitle()
   const [open, setOpen] = useState(false)
 

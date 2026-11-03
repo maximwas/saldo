@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button.component'
 import { Field } from '@/components/ui/field.component'
 import { Input } from '@/components/ui/input.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet, SheetClose, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { createLedgerInvite } from '../api/access.api'
 import { createInviteInputSchema, INVITE_ROLES } from '../schemas/access.schema'
 import { createInviteToken, hashInviteToken } from '../utils/invite.utils'
@@ -49,7 +50,7 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
   const translate = useTranslations('settings.access')
   const translateError = useTranslations('errors.db')
   const translateField = useTranslations('errors')
-  const isDesktop = useIsDesktop()
+  const isDesktop = useIsSheetDialog()
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<InviteRole>('viewer')
   const [emailError, setEmailError] = useState<string | null>(null)
