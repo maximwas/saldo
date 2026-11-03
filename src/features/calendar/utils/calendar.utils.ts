@@ -20,9 +20,6 @@ const WEEK = { weekStartsOn: 1 } as const
 // local midnight in and out: a date-only value never meets a time zone
 const iso = (date: Date) => format(date, 'yyyy-MM-dd')
 
-/** noon UTC of a YYYY-MM-DD: format it with timeZone 'UTC' and no zone moves the day */
-export const dayDate = (day: string) => new Date(`${day}T12:00:00Z`)
-
 export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
 
 /** rows by their day, in the order they came (calendar_entries returns them by day) */

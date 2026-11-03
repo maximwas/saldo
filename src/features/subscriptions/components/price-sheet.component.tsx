@@ -11,8 +11,8 @@ import { MoneyInput } from '@/components/ui/money-input.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useToday } from '@/contexts/clock.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { useDateLabel } from '../hooks/date-label.hook'
 import { useSetSubscriptionPrice, useSubscription, useSubscriptionPayments } from '../hooks/subscriptions.hook'
 import {
   type PriceFormInput,
@@ -35,7 +35,7 @@ type PriceSheetProps = {
 export function PriceSheet({ subscriptionId, onCloseAction }: PriceSheetProps) {
   const translate = useTranslations('subscriptions.price')
   const today = useToday()
-  const dateLabel = useDateLabel()
+  const dayText = useDayText()
   const { data: subscription } = useSubscription(subscriptionId)
   const payments = useSubscriptionPayments(subscriptionId)
   const save = useSetSubscriptionPrice()
@@ -87,7 +87,7 @@ export function PriceSheet({ subscriptionId, onCloseAction }: PriceSheetProps) {
         <p className="text-label text-text-secondary">
           {current ? (
             <>
-              {translate('sheetCurrent', { date: dateLabel(current.effectiveOn, true) })}{' '}
+              {translate('sheetCurrent', { date: dayText(current.effectiveOn, 'shortYear') })}{' '}
               <Amount minor={current.amountMinor} currency={current.currency} className="text-label font-medium" />.{' '}
             </>
           ) : null}

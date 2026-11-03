@@ -15,6 +15,7 @@ import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { formatRate, impliedRate } from '@/lib/money/fx.utils'
 import { fromMinor } from '@/lib/money/money.utils'
 import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
@@ -104,6 +105,7 @@ export function OperationEditor({
   const locale = useLocale()
   const moneyText = useMoneyText()
   const formatter = useFormatter()
+  const dayText = useDayText()
   const clock = useClock()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
@@ -180,11 +182,7 @@ export function OperationEditor({
       // Figma Calendar · New entry from a day 2:72362: the sheet opened from a calendar day names that day
       if (day && kind !== 'transfer') {
         return translate('form.newTitleOn', {
-          date: formatter.dateTime(new Date(`${day}T12:00:00Z`), {
-            timeZone: 'UTC',
-            day: 'numeric',
-            month: 'long',
-          }),
+          date: dayText(day, 'dayMonth'),
         })
       }
 
@@ -479,21 +477,6 @@ export function OperationEditor({
       />
     ) : null
 
-  const dateLabel = (date: string) =>
-    formatter.dateTime(new Date(`${date}T12:00:00Z`), {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC',
-    })
-
-  const shortDate = (date: string) =>
-    formatter.dateTime(new Date(`${date}T12:00:00Z`), {
-      day: '2-digit',
-      month: '2-digit',
-      timeZone: 'UTC',
-    })
-
   function summary(current: OperationItem) {
     const amount = displayAmount(current)
     const name = current.row.counterparty ?? categoryName(current.row.categoryId) ?? translateKinds(current.kind)
@@ -523,7 +506,7 @@ export function OperationEditor({
     body = (
       <>
         <p className="text-body text-text-secondary">
-          {name} · {dateLabel(item.row.occurredOn)} · {accountName(item.row.accountId)}
+          {name} · {dayText(item.row.occurredOn, 'dayMonthYear')} · {accountName(item.row.accountId)}
           {' · '}
           {transfer ? null : <Amount minor={amount.minor} currency={amount.currency} />}
         </p>
@@ -661,7 +644,7 @@ export function OperationEditor({
                   })
                 }
               >
-                {translate('refund.purchase', { date: shortDate(purchase.occurredOn) })}
+                {translate('refund.purchase', { date: dayText(purchase.occurredOn, 'short') })}
               </Button>,
             ],
           ] as [string, React.ReactNode][])

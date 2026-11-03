@@ -12,10 +12,11 @@ import { EmptyState } from '@/components/ui/empty-state.component'
 import { Input } from '@/components/ui/input.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { formatRate } from '@/lib/money/fx.utils'
 import { currencyName, currencySymbol } from '@/lib/money/money.utils'
 import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
-import { MAX_PINNED, useFormatDay } from '../hooks/currencies.hook'
+import { MAX_PINNED } from '../hooks/currencies.hook'
 import { type BoardRate, boardDigits, rateColor, splitBoard } from '../utils/currencies.utils'
 import { RateFigures } from './rate-figures.component'
 
@@ -38,7 +39,7 @@ export function RatesSheet({ onOpenChange, baseCurrency, board, pinned, nbuDay, 
   const translate = useTranslations('currencies.board')
   const translateCurrencies = useTranslations('currencies')
   const locale = useLocale()
-  const formatDay = useFormatDay()
+  const dayText = useDayText()
   const desktop = useIsSheetDialog()
   const [search, setSearch] = useState('')
   const nameOf = (currency: string) => currencyName(currency, locale)
@@ -61,18 +62,18 @@ export function RatesSheet({ onOpenChange, baseCurrency, board, pinned, nbuDay, 
     if (!row.manual) {
       return translate('meta', {
         code: row.currency,
-        date: formatDay(row.rateOn),
+        date: dayText(row.rateOn, 'short'),
       })
     }
 
     return row.nbuRate === null
       ? translate('metaManualOnly', {
           code: row.currency,
-          date: formatDay(row.rateOn),
+          date: dayText(row.rateOn, 'short'),
         })
       : translate('metaManual', {
           code: row.currency,
-          date: formatDay(row.rateOn),
+          date: dayText(row.rateOn, 'short'),
           nbu: formatRate(row.nbuRate, locale, boardDigits(row.nbuRate)),
         })
   }
@@ -149,7 +150,7 @@ export function RatesSheet({ onOpenChange, baseCurrency, board, pinned, nbuDay, 
         {nbuDay === null
           ? translate('sheet.hintNoDate')
           : translate('sheet.hint', {
-              date: formatDay(nbuDay),
+              date: dayText(nbuDay, 'short'),
               base: baseCurrency,
             })}{' '}
         {translate(desktop ? 'sheet.pick' : 'sheet.pickPhone')}

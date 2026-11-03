@@ -7,9 +7,9 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { SubscriptionPayment } from '../api/subscriptions.api'
-import { useDateLabel } from '../hooks/date-label.hook'
 import { useSubscription, useSubscriptionPayments } from '../hooks/subscriptions.hook'
 import { newestFirst, recentPayments } from '../utils/subscription-payments.utils'
 
@@ -37,7 +37,7 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
   const translate = useTranslations('subscriptions.payments')
   const translateState = useTranslations('subscriptions.paymentState')
   const today = useToday()
-  const dateLabel = useDateLabel()
+  const dayText = useDayText()
   const { data: subscription } = useSubscription(subscriptionId)
   const query = useSubscriptionPayments(subscriptionId)
   const { data } = query
@@ -63,7 +63,7 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
             <ServiceLogo name={subscription?.name ?? ''} />
             <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="text-body font-medium text-text-primary">
-                {translate('payment', { date: dateLabel(payment.dueOn) })}
+                {translate('payment', { date: dayText(payment.dueOn, 'short') })}
               </span>
               <Badge tone={STATE_TONE[payment.state]}>{translateState(payment.state)}</Badge>
             </span>
@@ -73,7 +73,7 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
                 currency={payment.currency}
                 kind={payment.state === 'paid' ? 'fact' : 'plan'}
               />
-              <span className="text-caption text-text-secondary">{dateLabel(payment.dueOn, true)}</span>
+              <span className="text-caption text-text-secondary">{dayText(payment.dueOn, 'shortYear')}</span>
             </span>
           </li>
         ))}

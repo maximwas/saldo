@@ -5,10 +5,11 @@ import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryStates } from 'nuqs'
 import { Button } from '@/components/ui/button.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { useDayTitle, useShortDate } from '../hooks/entry-labels.hook'
+import { useDayTitle } from '../hooks/entry-labels.hook'
 import { DaySums } from './day-sums.component'
 import { QUIET_TAP } from './entry-popup.component'
 import { EntryRow } from './entry-row.component'
@@ -27,7 +28,7 @@ export function DayPanel({ compact = false }: DayPanelProps) {
   const translate = useTranslations('calendar')
   const canWrite = useCanWrite()
   const dayTitle = useDayTitle()
-  const short = useShortDate()
+  const dayText = useDayText()
   const { date } = useCalendarParams()
   const { entries, totals, marks } = useCalendarData()
   const [, openAdd] = useQueryStates({
@@ -87,7 +88,7 @@ export function DayPanel({ compact = false }: DayPanelProps) {
           }
         >
           <Plus aria-hidden className={cn('shrink-0', empty ? 'size-4' : 'size-5')} />
-          {translate('day.add', { date: short(date) })}
+          {translate('day.add', { date: dayText(date, 'short') })}
         </Button>
       )}
     </section>

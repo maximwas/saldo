@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useFormatter } from 'next-intl'
 import { useToday } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
 import { useLedgerWrite } from '@/lib/query/ledger-write.hook'
@@ -31,18 +30,6 @@ export function useRateHistory() {
 }
 
 export const useSaveRate = () => useLedgerWrite(currenciesWrites.saveRate)
-
-/** «03.11»: a YYYY-MM-DD day as the rates views write it */
-export function useFormatDay() {
-  const format = useFormatter()
-
-  return (day: string) =>
-    format.dateTime(new Date(`${day}T12:00:00Z`), {
-      timeZone: 'UTC',
-      day: '2-digit',
-      month: '2-digit',
-    })
-}
 
 /**
  * The member's pinned rates. A tick shows at once (the cache is set before the write); a failed write shows the

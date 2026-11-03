@@ -1,11 +1,12 @@
 'use client'
 
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { DebtRow } from '../api/debts.api'
 import { useSaveDebt } from '../hooks/debts.hook'
 import { toStatusInput } from '../schemas/debt-edit-form.schema'
@@ -22,15 +23,11 @@ type DebtStatusSheetProps = {
 export function DebtStatusSheet({ debt, status, onCloseAction }: DebtStatusSheetProps) {
   const translate = useTranslations('debts')
   const moneyText = useMoneyText()
-  const format = useFormatter()
+  const dayText = useDayText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const save = useSaveDebt()
   const writeOff = status === 'written_off'
-  const arisenDay = format.dateTime(new Date(`${debt.arisenOn}T12:00:00Z`), {
-    timeZone: 'UTC',
-    day: '2-digit',
-    month: '2-digit',
-  })
+  const arisenDay = dayText(debt.arisenOn, 'short')
 
   const confirm = () =>
     save.mutate(toStatusInput(debt, status, ledgerId), {

@@ -1,12 +1,12 @@
 'use client'
 
 import { Info } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { Overview } from '../api/overview.api'
-import { isoToDate } from '../utils/overview.utils'
 import { IncomeDateSheet } from './income-date-sheet.component'
 
 type HeroAvailableProps = {
@@ -45,20 +45,14 @@ function Row({ label, minor, currency, total = false }: RowProps) {
 // (balances − obligations until the date = Available). Reserves arrive in phase 4, so the row is not drawn yet.
 export function HeroAvailable({ overview }: HeroAvailableProps) {
   const translate = useTranslations('overview')
-  const format = useFormatter()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const { available, baseCurrency, untilOn } = overview
   const [editing, setEditing] = useState(false)
   // ledgers.next_income_on is a space setting: RLS lets only the owner change it
   const isOwner = useLedgerStore((ledger) => ledger.role) === 'owner'
   const hasDate = untilOn !== null
-  const untilLabel = hasDate
-    ? format.dateTime(isoToDate(untilOn), {
-        timeZone: 'UTC',
-        day: 'numeric',
-        month: 'long',
-      })
-    : ''
+  const untilLabel = hasDate ? dayText(untilOn, 'dayMonth') : ''
 
   return (
     <section className="flex flex-col gap-6 rounded-card bg-primary p-5 text-on-primary lg:flex-row lg:items-center lg:gap-8 lg:p-8">
@@ -113,11 +107,7 @@ export function HeroAvailable({ overview }: HeroAvailableProps) {
             <>
               <Row
                 label={translate('obligationsUntil', {
-                  date: format.dateTime(isoToDate(untilOn), {
-                    timeZone: 'UTC',
-                    day: '2-digit',
-                    month: '2-digit',
-                  }),
+                  date: dayText(untilOn, 'short'),
                 })}
                 minor={available.obligationsMinor}
                 currency={baseCurrency}

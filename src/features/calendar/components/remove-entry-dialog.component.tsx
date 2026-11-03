@@ -1,14 +1,14 @@
 'use client'
 
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { CalendarEntry } from '../api/calendar.api'
 import { useCancelPlanEntry } from '../hooks/calendar.hook'
-import { dayDate } from '../utils/calendar.utils'
 
 type RemoveEntryDialogProps = {
   entry: CalendarEntry
@@ -19,16 +19,12 @@ type RemoveEntryDialogProps = {
 // what stays, footer Cancel + Danger «Remove entry». Only a plan with no payment gets it.
 export function RemoveEntryDialog({ entry, onCloseAction }: RemoveEntryDialogProps) {
   const translate = useTranslations('calendar.remove')
-  const format = useFormatter()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const { ledgerId } = useLedger()
   const cancel = useCancelPlanEntry()
   const title = entry.title ?? ''
-  const date = format.dateTime(dayDate(entry.day), {
-    timeZone: 'UTC',
-    day: '2-digit',
-    month: '2-digit',
-  })
+  const date = dayText(entry.day, 'short')
   const amount = entry.amountMinor === null ? null : moneyText(entry.amountMinor, entry.currency)
 
   const remove = () => {

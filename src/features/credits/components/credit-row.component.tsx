@@ -2,7 +2,7 @@
 
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
@@ -10,9 +10,10 @@ import { useRipple } from '@/components/ui/ripple.hook'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { Credit, CreditInstallment } from '../api/credits.api'
 import { useCredits, usePayInstallment } from '../hooks/credits.hook'
-import { type CreditProgress, creditProgress, dayText } from '../utils/credits.utils'
+import { type CreditProgress, creditProgress } from '../utils/credits.utils'
 import { InstallmentSteps } from './installment-steps.component'
 
 type CreditRowProps = {
@@ -30,7 +31,7 @@ type StepsBlockProps = {
 /** «today», «instalment N · date» (date passed) or «next date», with the amount for desktop */
 function useNextTexts(credit: Credit, next: CreditInstallment | null) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const today = useToday()
 
@@ -39,7 +40,7 @@ function useNextTexts(credit: Credit, next: CreditInstallment | null) {
   }
 
   const amount = moneyText(next.remainingMinor, credit.currency)
-  const date = dayText(next.dueOn, locale)
+  const date = dayText(next.dueOn, 'short')
 
   if (next.state === 'unconfirmed') {
     return {
@@ -106,7 +107,7 @@ function StepsBlock({ title, credit, progress, nextText }: StepsBlockProps) {
 // the steps under the purpose).
 export function CreditRow({ credit }: CreditRowProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
   const canWrite = useCanWrite()
   const accounts = useCredits().data?.accounts ?? []
   const pay = usePayInstallment()
@@ -150,7 +151,7 @@ export function CreditRow({ credit }: CreditRowProps) {
           <Amount minor={progress.remainingMinor} currency={credit.currency} kind="plan" />
           {progress.endOn && (
             <span className="text-caption text-text-tertiary">
-              {translate('until', { date: dayText(progress.endOn, locale, true) })}
+              {translate('until', { date: dayText(progress.endOn, 'shortYear') })}
             </span>
           )}
         </div>
@@ -179,7 +180,7 @@ export function CreditRow({ credit }: CreditRowProps) {
         <Amount minor={progress.remainingMinor} currency={credit.currency} kind="plan" />
         {progress.endOn && (
           <span className="text-caption text-text-secondary">
-            {translate('endsOn', { date: dayText(progress.endOn, locale, true) })}
+            {translate('endsOn', { date: dayText(progress.endOn, 'shortYear') })}
           </span>
         )}
       </div>

@@ -1,9 +1,10 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { statisticsQueries } from '../api/statistics.queries'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
 import { cardStatus, type ForecastMonth, forecastMonths } from '../utils/statistics.utils'
@@ -12,21 +13,11 @@ import { BarsChart } from './bars-chart.component'
 import { QueryCard } from './query-card.component'
 import { StatTable } from './stat-table.component'
 
-function useMonthName() {
-  const format = useFormatter()
-
-  return (month: string) =>
-    format.dateTime(new Date(`${month}-15T12:00:00Z`), {
-      month: 'long',
-      timeZone: 'UTC',
-    })
-}
-
 function ForecastView({ months }: { months: ForecastMonth[] }) {
   const translate = useTranslations('statistics')
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
   const { view } = useStatisticsFilters()
-  const name = useMonthName()
+  const dayText = useDayText()
 
   if (view === 'chart') {
     return (
@@ -41,7 +32,7 @@ function ForecastView({ months }: { months: ForecastMonth[] }) {
           },
         ]}
         data={months.map((month) => ({
-          label: name(month.month),
+          label: dayText(month.month, 'month'),
           out: month.outMinor,
         }))}
       />
@@ -65,7 +56,7 @@ function ForecastView({ months }: { months: ForecastMonth[] }) {
       rows={months.map((month) => ({
         key: month.month,
         cells: [
-          name(month.month),
+          dayText(month.month, 'month'),
           <Amount key="o" minor={month.outMinor} currency={currency} kind="plan" />,
           <Amount key="i" minor={month.inMinor} currency={currency} kind="plan" />,
         ],

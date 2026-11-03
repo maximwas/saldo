@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { SubscriptionView } from '../api/subscriptions.api'
-import { useDateLabel } from '../hooks/date-label.hook'
 import { useSubscriptionParams } from '../hooks/subscription-params.hook'
 import { useSubscription, useSubscriptionOptions, useUpdateSubscription } from '../hooks/subscriptions.hook'
 import { toStatusChangeInput } from '../schemas/subscription-form.schema'
@@ -42,7 +42,7 @@ type CardProps = {
 function Details({ subscription }: CardProps) {
   const translate = useTranslations('subscriptions')
   const today = useToday()
-  const dateLabel = useDateLabel()
+  const dayText = useDayText()
   const options = useSubscriptionOptions()
   const price = shownPrice(subscription, today)
   const monthly = monthlyCost(subscription, today)
@@ -78,9 +78,9 @@ function Details({ subscription }: CardProps) {
             {translate(`form.rules.${subscription.shortMonthRule}`)}
           </DetailRow>
         )}
-        <DetailRow label={translate('details.firstOn')}>{dateLabel(subscription.firstOn, true)}</DetailRow>
+        <DetailRow label={translate('details.firstOn')}>{dayText(subscription.firstOn, 'shortYear')}</DetailRow>
         <DetailRow label={translate('details.nextOn')}>
-          {nextOn ? dateLabel(nextOn, true) : translate('details.none')}
+          {nextOn ? dayText(nextOn, 'shortYear') : translate('details.none')}
         </DetailRow>
         <DetailRow label={translate('details.account')}>
           {nameOf(options.data?.accounts, subscription.accountId)}
@@ -89,13 +89,17 @@ function Details({ subscription }: CardProps) {
           {nameOf(options.data?.categories, subscription.categoryId)}
         </DetailRow>
         <DetailRow label={translate('details.trial')}>
-          {subscription.trialEndsOn ? dateLabel(subscription.trialEndsOn, true) : translate('details.trialNone')}
+          {subscription.trialEndsOn ? dayText(subscription.trialEndsOn, 'shortYear') : translate('details.trialNone')}
         </DetailRow>
         {subscription.cancelledOn ? (
-          <DetailRow label={translate('details.cancelledOn')}>{dateLabel(subscription.cancelledOn, true)}</DetailRow>
+          <DetailRow label={translate('details.cancelledOn')}>
+            {dayText(subscription.cancelledOn, 'shortYear')}
+          </DetailRow>
         ) : null}
         {subscription.accessEndsOn ? (
-          <DetailRow label={translate('details.accessEndsOn')}>{dateLabel(subscription.accessEndsOn, true)}</DetailRow>
+          <DetailRow label={translate('details.accessEndsOn')}>
+            {dayText(subscription.accessEndsOn, 'shortYear')}
+          </DetailRow>
         ) : null}
         {subscription.serviceUrl ? (
           <DetailRow label={translate('details.serviceUrl')}>{subscription.serviceUrl}</DetailRow>
@@ -110,7 +114,7 @@ function Details({ subscription }: CardProps) {
 function PriceCard({ subscription }: CardProps) {
   const translate = useTranslations('subscriptions.price')
   const today = useToday()
-  const dateLabel = useDateLabel()
+  const dayText = useDayText()
   const canWrite = useCanWrite()
   const [changing, setChanging] = useState(false)
   const current = priceOn(subscription.prices, today)
@@ -139,7 +143,7 @@ function PriceCard({ subscription }: CardProps) {
                 {translate(price === current ? 'current' : 'upcoming')}
               </span>
               <span className="text-caption text-text-secondary">
-                {translate('from', { date: dateLabel(price.effectiveOn, true) })}
+                {translate('from', { date: dayText(price.effectiveOn, 'shortYear') })}
               </span>
             </span>
             <Amount minor={price.amountMinor} currency={price.currency} />

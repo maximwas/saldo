@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
-import { useDateLabel } from '../hooks/date-label.hook'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useSubscription } from '../hooks/subscriptions.hook'
 import { SubscriptionPayments } from './subscription-payments.component'
 
@@ -14,7 +14,7 @@ type SubscriptionHistoryProps = {
 // prices with their effective dates. Figma has no own frame for the tab; it reuses the card's payment rows.
 export function SubscriptionHistory({ subscriptionId }: SubscriptionHistoryProps) {
   const translate = useTranslations('subscriptions.price')
-  const dateLabel = useDateLabel()
+  const dayText = useDayText()
   const { data: subscription } = useSubscription(subscriptionId)
   const prices = [...(subscription?.prices ?? [])].reverse()
 
@@ -30,7 +30,7 @@ export function SubscriptionHistory({ subscriptionId }: SubscriptionHistoryProps
               className="flex items-center justify-between gap-3 border-border border-b py-3 last:border-b-0"
             >
               <span className="text-body text-text-primary">
-                {translate('from', { date: dateLabel(price.effectiveOn, true) })}
+                {translate('from', { date: dayText(price.effectiveOn, 'shortYear') })}
               </span>
               <Amount minor={price.amountMinor} currency={price.currency} />
             </li>

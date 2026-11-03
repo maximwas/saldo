@@ -1,6 +1,7 @@
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { ObligationRow } from '../api/obligations.api'
 import { type CurrencyTotals, summarizePayments } from '../utils/obligation-summary.utils'
 
@@ -32,7 +33,7 @@ function useOthersText(totals: CurrencyTotals) {
 // rows (gap 12). «Covered by reserve» (2:12237) waits for reserves: nothing to show before them.
 export function ObligationSummary({ open }: ObligationSummaryProps) {
   const translate = useTranslations('obligations.summary')
-  const format = useFormatter()
+  const dayText = useDayText()
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const summary = summarizePayments(open, baseCurrency)
   const plannedText = useTotalsText(summary.planned)
@@ -43,17 +44,8 @@ export function ObligationSummary({ open }: ObligationSummaryProps) {
     return null
   }
 
-  const until = new Date(`${summary.untilOn}T12:00:00Z`)
-  const short = format.dateTime(until, {
-    timeZone: 'UTC',
-    day: '2-digit',
-    month: '2-digit',
-  })
-  const long = format.dateTime(until, {
-    timeZone: 'UTC',
-    day: 'numeric',
-    month: 'long',
-  })
+  const short = dayText(summary.untilOn, 'short')
+  const long = dayText(summary.untilOn, 'dayMonth')
   const caption = [
     translate('count', { count: summary.count }),
     plannedOthers ? translate('more', { amount: plannedOthers }) : null,

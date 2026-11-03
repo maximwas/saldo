@@ -10,9 +10,9 @@ import { Bone } from '@/components/ui/skeleton.component'
 import { Tabs } from '@/components/ui/tabs.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { SubscriptionView } from '../api/subscriptions.api'
-import { useDateLabel } from '../hooks/date-label.hook'
 import { CARD_TABS, type CardTab, useSubscriptionParams } from '../hooks/subscription-params.hook'
 import { useSubscription } from '../hooks/subscriptions.hook'
 import { nextPaymentOn, shownPrice } from '../utils/subscription-series.utils'
@@ -30,7 +30,7 @@ type SubscriptionHeaderProps = {
 function SubscriptionHeader({ subscription }: SubscriptionHeaderProps) {
   const translate = useTranslations('subscriptions')
   const today = useToday()
-  const dateLabel = useDateLabel()
+  const dayText = useDayText()
   const canWrite = useCanWrite()
   const { setParams } = useSubscriptionParams()
   const price = shownPrice(subscription, today)
@@ -58,7 +58,7 @@ function SubscriptionHeader({ subscription }: SubscriptionHeaderProps) {
                 count: subscription.count,
               })}
               {' · '}
-              {nextOn ? translate('next', { date: dateLabel(nextOn) }) : translate('noNext')}
+              {nextOn ? translate('next', { date: dayText(nextOn, 'short') }) : translate('noNext')}
               <SubscriptionState subscription={subscription} />
             </span>
           </div>

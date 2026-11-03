@@ -3,9 +3,10 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { CashflowRow } from '../api/statistics.api'
 import { statisticsQueries } from '../api/statistics.queries'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
@@ -19,26 +20,16 @@ const LINK = 'rounded-xs text-primary-text outline-none focus-visible:ring-2 foc
 
 // the x label of a bucket: a day, the first day of a week, a month or a year
 function useBucketLabel() {
-  const format = useFormatter()
+  const dayText = useDayText()
   const { params } = useStatisticsFilters()
-  const options = {
-    day: {
-      day: '2-digit',
-      month: '2-digit',
-    },
-    week: {
-      day: '2-digit',
-      month: '2-digit',
-    },
-    month: { month: 'short' },
-    year: { year: 'numeric' },
+  const formats = {
+    day: 'short',
+    week: 'short',
+    month: 'monthShort',
+    year: 'year',
   } as const
 
-  return (periodStart: string) =>
-    format.dateTime(new Date(`${periodStart}T12:00:00Z`), {
-      ...options[params.bucket],
-      timeZone: 'UTC',
-    })
+  return (periodStart: string) => dayText(periodStart, formats[params.bucket])
 }
 
 function CashflowChart({ rows }: { rows: CashflowRow[] }) {

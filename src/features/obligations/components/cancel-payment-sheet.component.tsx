@@ -9,6 +9,7 @@ import { Bone, SkeletonLine } from '@/components/ui/skeleton.component'
 import { Switch } from '@/components/ui/switch.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useMemberNames } from '@/lib/members/members.hook'
 import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import type { ObligationRow } from '../api/obligations.api'
@@ -27,6 +28,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
   const translate = useTranslations('obligations')
   const dbErrorText = useDbErrorText()
   const format = useFormatter()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const names = useMemberNames()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
@@ -37,12 +39,6 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
   const payment = payments.data?.[0]
   const operation = payment?.operation ?? null
   const accountName = options.data?.accounts.find((item) => item.id === operation?.accountId)?.name ?? ''
-  const shortDate = (isoDate: string) =>
-    format.dateTime(new Date(`${isoDate}T12:00:00Z`), {
-      timeZone: 'UTC',
-      day: '2-digit',
-      month: '2-digit',
-    })
   const confirmer = obligation.confirmedBy ? names[obligation.confirmedBy] : null
   const confirmedAt = obligation.confirmedAt
     ? format.dateTime(new Date(obligation.confirmedAt), {
@@ -101,7 +97,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
             title: obligation.title,
             number: obligation.sequenceNo ?? 0,
             total: obligation.installmentTotal ?? obligation.sequenceNo ?? 0,
-            date: shortDate(obligation.dueOn),
+            date: dayText(obligation.dueOn, 'short'),
             account: accountName,
             direction: obligation.direction,
             amount: payment ? moneyText(payment.amountMinor, obligation.currency) : '',
@@ -132,7 +128,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
           <ul>
             <OperationLine
               title={obligation.title}
-              subtitle={`${shortDate(operation.occurredOn)} · ${accountName}`}
+              subtitle={`${dayText(operation.occurredOn, 'short')} · ${accountName}`}
               minor={obligation.direction === 'out' ? -operation.amountMinor : operation.amountMinor}
               currency={operation.currency}
             />

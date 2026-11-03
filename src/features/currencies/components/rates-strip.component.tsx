@@ -3,9 +3,10 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Bone } from '@/components/ui/skeleton.component'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { formatRate } from '@/lib/money/fx.utils'
 import { currencyName, currencySymbol } from '@/lib/money/money.utils'
-import { useFormatDay, useRateBoard } from '../hooks/currencies.hook'
+import { useRateBoard } from '../hooks/currencies.hook'
 import { boardDigits, splitBoard } from '../utils/currencies.utils'
 import { RatesSheet } from './rates-sheet.component'
 
@@ -17,7 +18,7 @@ const STRIP_CLASS = 'flex w-full items-center gap-3 rounded-full border border-b
 export function RatesStrip() {
   const translate = useTranslations('currencies.board')
   const locale = useLocale()
-  const formatDay = useFormatDay()
+  const dayText = useDayText()
   const { queries, data, save } = useRateBoard()
   const [open, setOpen] = useState(false)
 
@@ -69,7 +70,7 @@ export function RatesStrip() {
         <span className="flex-1 text-right text-caption text-text-tertiary">
           {data.nbuDay
             ? translate('strip.date', {
-                date: formatDay(data.nbuDay),
+                date: dayText(data.nbuDay, 'short'),
               })
             : null}
         </span>

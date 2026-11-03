@@ -1,8 +1,6 @@
-import { createFormatter, createTranslator, type DateTimeFormatOptions } from 'next-intl'
-import { describe, expect, it, vi } from 'vitest'
-import { useMonthLabel, useMonthOf } from '@/features/budget/hooks/month-label.hook'
-import { dayText } from '@/features/credits/utils/credits.utils'
-import { useDateLabel } from '@/features/subscriptions/hooks/date-label.hook'
+import { createFormatter, createTranslator } from 'next-intl'
+import { describe, expect, it } from 'vitest'
+import { type DayFormat, dayToDate, formatDay, monthOf } from '@/lib/dates/day.utils'
 import calendarEn from '../../../messages/en/calendar.json'
 import commonEn from '../../../messages/en/common.json'
 import operationsEn from '../../../messages/en/operations.json'
@@ -12,21 +10,7 @@ import operationsUk from '../../../messages/uk/operations.json'
 
 // next-intl formats in the provider's zone (src/i18n/request.ts DEFAULT_TIME_ZONE)
 const KYIV = 'Europe/Kyiv'
-const intl = vi.hoisted(() => ({ locale: 'uk' as 'uk' | 'en' }))
-
-vi.mock('next-intl', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('next-intl')>()
-
-  return {
-    ...actual,
-    useFormatter: () =>
-      actual.createFormatter({
-        locale: intl.locale,
-        timeZone: KYIV,
-      }),
-    useLocale: () => intl.locale,
-  }
-})
+const intl = { locale: 'uk' as 'uk' | 'en' }
 
 const LOCALES = ['uk', 'en'] as const
 
@@ -38,59 +22,19 @@ const DAYS = ['2026-11-03', '2026-01-01', '2025-12-31', '2028-02-29', '2026-03-2
 // month formats get the YYYY-MM of the day, the rest the day itself (as their callers pass them)
 const MONTH_FORMATS = new Set(['month', 'monthYear', 'monthOf'])
 
-// ── subject: the code that shows each format (characterization of the inline copies and the feature helpers) ──
-function render(format: string, value: string): string {
-  const formatter = createFormatter({
-    locale: intl.locale,
-    timeZone: KYIV,
-  })
-  const inline = (options: DateTimeFormatOptions) =>
-    formatter.dateTime(new Date(`${value}T12:00:00Z`), {
-      ...options,
-      timeZone: 'UTC',
-    })
-  const subjects: Record<string, () => string> = {
-    short: () => dayText(value, intl.locale),
-    shortYear: () => useDateLabel()(value, true),
-    dayMonth: () =>
-      inline({
-        day: 'numeric',
-        month: 'long',
-      }),
-    dayMonthYear: () =>
-      inline({
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }),
-    dayMonthShort: () =>
-      inline({
-        day: 'numeric',
-        month: 'short',
-      }),
-    dayMonthShortYear: () =>
-      inline({
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }),
-    medium: () => new Intl.DateTimeFormat(intl.locale, { dateStyle: 'medium' }).format(new Date(`${value}T12:00:00`)),
-    weekday: () => inline({ weekday: 'long' }),
-    weekdayShort: () => inline({ weekday: 'short' }),
-    weekdayDayMonth: () =>
-      inline({
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      }),
-    month: () => useMonthLabel()(value, false),
-    monthShort: () => inline({ month: 'short' }),
-    monthYear: () => useMonthLabel()(value),
-    monthOf: () => useMonthOf()(value),
-    year: () => inline({ year: 'numeric' }),
+// ── subject: the shared module (it replaced the inline copies and the feature helpers this file characterized) ──
+function render(format: string, value: string, timeZone = KYIV): string {
+  if (format === 'monthOf') {
+    return monthOf(intl.locale, value)
   }
 
-  return subjects[format]()
+  const formatter = createFormatter({
+    locale: intl.locale,
+    timeZone,
+  })
+
+  // the account opening and rate dates were dateStyle 'medium', which reads exactly as dayMonthShortYear
+  return formatDay(formatter, value, (format === 'medium' ? 'dayMonthShortYear' : format) as DayFormat)
 }
 // ── end of subject ──
 
@@ -269,6 +213,25 @@ describe('calendar day as text (characterization: the visible output must not ch
       expect(translate('common.datePicker.todayValue', { date: render('short', '2026-11-03') })).toBe(pickerValue)
       expect(range('2026-11-02', '2026-11-08')).toBe(week)
       expect(range('2026-12-28', '2027-01-03')).toBe(yearEdgeWeek)
+    },
+  )
+})
+
+describe('dayToDate', () => {
+  it('anchors a day, and a month at its first day, at noon UTC', () => {
+    expect(dayToDate('2026-11-14').toISOString()).toBe('2026-11-14T12:00:00.000Z')
+    expect(dayToDate('2026-11').toISOString()).toBe('2026-11-01T12:00:00.000Z')
+  })
+})
+
+describe('the day text in any zone of the space or the browser', () => {
+  it.each(['Pacific/Kiritimati', 'Pacific/Pago_Pago', 'Etc/GMT+12', 'Pacific/Auckland'])(
+    'is the same in %s',
+    (timeZone) => {
+      intl.locale = 'uk'
+
+      expect(DAYS.map((day) => render('weekdayDayMonth', day, timeZone))).toEqual(EXPECTED.weekdayDayMonth.uk)
+      expect(DAYS.map((day) => render('month', day.slice(0, 7), timeZone))).toEqual(EXPECTED.month.uk)
     },
   )
 })

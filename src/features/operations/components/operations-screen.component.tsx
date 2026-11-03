@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeftRight, Search } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { mergeQueued } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
@@ -31,7 +32,7 @@ const subscribeNever = () => () => undefined
 // Adding goes through the global «Add» (?add=), here only a row opens the sheet (edit / view) or a duplicate of it.
 export function OperationsScreen() {
   const translate = useTranslations('operations')
-  const formatter = useFormatter()
+  const dayText = useDayText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const space = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const canWrite = useCanWrite()
@@ -111,16 +112,9 @@ export function OperationsScreen() {
   // Figma 5:102493: the empty filter names what it looked for (period, type, account, category, text)
   function filteredText() {
     const loaded = options.data
-    const month = new Date(`${period}-15T12:00:00Z`)
 
     return translate('empty.filteredText', {
-      period:
-        period === ALL_TIME
-          ? translate('empty.allTime')
-          : `${formatter.dateTime(month, {
-              month: 'long',
-              timeZone: 'UTC',
-            })} ${period.slice(0, 4)}`,
+      period: period === ALL_TIME ? translate('empty.allTime') : `${dayText(period, 'month')} ${period.slice(0, 4)}`,
       type: url.type,
       account: loaded?.accounts.find((account) => account.id === url.account)?.name ?? 'none',
       category: loaded?.categories.find((category) => category.id === url.category)?.name ?? 'none',

@@ -2,9 +2,10 @@
 
 import { useTranslations } from 'next-intl'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText, useMonthOf } from '@/lib/dates/day-text.hook'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { useDayTitle, useMonthOf, useShortDate } from '../hooks/entry-labels.hook'
+import { useDayTitle } from '../hooks/entry-labels.hook'
 import { groupByDay } from '../utils/calendar.utils'
 import { DaySums } from './day-sums.component'
 import { EntryRow } from './entry-row.component'
@@ -17,13 +18,14 @@ export function CalendarDays() {
   const canWrite = useCanWrite()
   const dayTitle = useDayTitle()
   const monthOf = useMonthOf()
-  const short = useShortDate()
+  const dayText = useDayText()
   const { date } = useCalendarParams()
   const { entries, totals, marks } = useCalendarData()
   const byDay = groupByDay(entries.data ?? [])
   const totalsByDay = new Map((totals.data ?? []).map((row) => [row.day, row]))
   const days = [...new Set([...byDay.keys(), ...marks.keys()])].sort()
-  const paidOn = (day: string) => [...new Set((marks.get(day) ?? []).map((entry) => short(entry.day)))].join(', ')
+  const paidOn = (day: string) =>
+    [...new Set((marks.get(day) ?? []).map((entry) => dayText(entry.day, 'short')))].join(', ')
 
   return (
     <section className="flex flex-col gap-5 rounded-card bg-card p-6 shadow-card">

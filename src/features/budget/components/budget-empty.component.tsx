@@ -5,9 +5,9 @@ import { Card } from '@/components/ui/card.component'
 import { EmptyState } from '@/components/ui/empty-state.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText, useMonthOf } from '@/lib/dates/day-text.hook'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
 import { useCopyBudgetMonth } from '../hooks/budget.hook'
-import { useMonthLabel, useMonthOf } from '../hooks/month-label.hook'
 import { shiftMonth } from '../utils/budget.utils'
 import { MonthSwitch } from './month-switch.component'
 
@@ -16,7 +16,7 @@ import { MonthSwitch } from './month-switch.component'
 // could not be started.
 export function BudgetEmpty({ month }: { month: string }) {
   const translate = useTranslations('budget')
-  const monthLabel = useMonthLabel()
+  const dayText = useDayText()
   const monthOf = useMonthOf()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const canWrite = useCanWrite()
@@ -45,7 +45,7 @@ export function BudgetEmpty({ month }: { month: string }) {
         bare
         icon={Wallet}
         tone="blue"
-        title={translate('empty.title', { month: monthLabel(month, false) })}
+        title={translate('empty.title', { month: dayText(month, 'month') })}
         hint={translate('empty.text', { month: monthOf(previous) })}
         action={
           canWrite ? (

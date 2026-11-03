@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { enUS, uk } from 'react-day-picker/locale'
 import { useClock } from '@/contexts/clock.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { localDate } from '@/lib/utils/clock.utils'
 import { cn } from '@/lib/utils/cn.utils'
 import { Button } from './button.component'
@@ -46,19 +47,14 @@ export function DatePicker({
   'aria-invalid': invalid,
 }: DatePickerProps) {
   const locale = useLocale()
+  const dayText = useDayText()
   const translate = useTranslations('common')
   const clock = useClock()
   const [open, setOpen] = useState(false)
   const todayValue = localDate(clock.now(), clock.timeZone)
   const selected = value ? toDate(value) : undefined
   const showToday = todayLabel && value === todayValue
-  const display = selected
-    ? new Intl.DateTimeFormat(locale, {
-        day: '2-digit',
-        month: '2-digit',
-        year: showToday ? undefined : 'numeric',
-      }).format(selected)
-    : null
+  const display = value ? dayText(value, showToday ? 'short' : 'shortYear') : null
 
   const commit = (next: string | null) => {
     onValueChange(next)

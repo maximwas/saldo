@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
@@ -13,6 +13,7 @@ import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useMemberNames } from '@/lib/members/members.hook'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationType } from '../operations.types'
@@ -72,7 +73,7 @@ export function OperationFilters({
   onChangeAction,
 }: OperationFiltersProps) {
   const translate = useTranslations('operations')
-  const formatter = useFormatter()
+  const dayText = useDayText()
   const locale = useLocale()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -83,10 +84,7 @@ export function OperationFilters({
   const categories = options.data?.categories ?? []
   // Figma Chip: the standalone month name, its first letter raised, and the year without the Intl year suffix
   const monthLabel = (month: string) => {
-    const label = formatter.dateTime(new Date(`${month}-15T12:00:00Z`), {
-      month: 'long',
-      timeZone: 'UTC',
-    })
+    const label = dayText(month, 'month')
 
     return `${label.charAt(0).toLocaleUpperCase(locale)}${label.slice(1)} ${month.slice(0, 4)}`
   }

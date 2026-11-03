@@ -8,9 +8,10 @@ import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { currencyName, currencySymbol } from '@/lib/money/money.utils'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
-import { useFormatDay, useRateBoard } from '../hooks/currencies.hook'
+import { useRateBoard } from '../hooks/currencies.hook'
 import { rateColor, splitBoard } from '../utils/currencies.utils'
 import { RateFigures } from './rate-figures.component'
 import { RatesSheet } from './rates-sheet.component'
@@ -23,7 +24,7 @@ export function RatesCard() {
   const translate = useTranslations('currencies.board')
   const translateCurrencies = useTranslations('currencies')
   const locale = useLocale()
-  const formatDay = useFormatDay()
+  const dayText = useDayText()
   const { queries, data, save } = useRateBoard()
   const { failedLoad, retry } = useScreenQueryState(queries, translateCurrencies('refreshFailed'))
   const [open, setOpen] = useState(false)
@@ -96,7 +97,7 @@ export function RatesCard() {
           <span className="text-text-secondary">
             {nbuDay
               ? translate('card.nbuOn', {
-                  date: formatDay(nbuDay),
+                  date: dayText(nbuDay, 'short'),
                 })
               : null}
           </span>

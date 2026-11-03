@@ -7,10 +7,10 @@ import { MoneyInput } from '@/components/ui/money-input.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
 import { useCurrentBudget, useSetIncomePlan } from '../hooks/budget.hook'
-import { useMonthLabel } from '../hooks/month-label.hook'
 import { type IncomeFormInput, type IncomeFormValues, incomeFormSchema } from '../schemas/budget-form.schema'
 
 const FORM_ID = 'budget-income-form'
@@ -19,7 +19,7 @@ const FORM_ID = 'budget-income-form'
 // (§12). Empty = no plan.
 export function IncomePlanSheet() {
   const translate = useTranslations('budget.incomeSheet')
-  const monthLabel = useMonthLabel()
+  const dayText = useDayText()
   const { ledgerId, baseCurrency } = useLedger()
   const close = useBudgetSheetStore((state) => state.close)
   const { month, data } = useCurrentBudget()
@@ -55,7 +55,7 @@ export function IncomePlanSheet() {
           close()
         }
       }}
-      title={translate('title', { month: monthLabel(month, false) })}
+      title={translate('title', { month: dayText(month, 'month') })}
       footer={
         <>
           <SheetClose>{translate('cancel')}</SheetClose>

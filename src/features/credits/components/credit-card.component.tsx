@@ -3,7 +3,7 @@
 import { ChevronLeft } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { ReminderRuleCard } from '@/components/reminders/reminder-rule-card.component'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
@@ -15,9 +15,10 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useCredits, usePayInstallment } from '../hooks/credits.hook'
-import { activeInstallments, creditProgress, dayText, payoffOf } from '../utils/credits.utils'
+import { activeInstallments, creditProgress, payoffOf } from '../utils/credits.utils'
 import { CloseCreditSheet } from './close-credit-sheet.component'
 import { CreditDetails } from './credit-details.component'
 import { CreditFormSheet } from './credit-form-sheet.component'
@@ -54,7 +55,7 @@ function CardSkeleton() {
 // «Paid» opens the confirm sheet of Upcoming payments on the installment (?pay=<id>).
 export function CreditCard({ creditId }: CreditCardProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const canWrite = useCanWrite()
   const pay = usePayInstallment()
@@ -112,7 +113,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const unconfirmedNext = unconfirmed
     ? translate('card.unconfirmedNext', {
         number: unconfirmed.sequenceNo,
-        date: dayText(unconfirmed.dueOn, locale),
+        date: dayText(unconfirmed.dueOn, 'short'),
       })
     : null
   const archive = writable && (
@@ -157,7 +158,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
         >
           {translate('card.unconfirmed', {
             number: unconfirmed.sequenceNo,
-            date: dayText(unconfirmed.dueOn, locale),
+            date: dayText(unconfirmed.dueOn, 'short'),
           })}
         </Banner>
       )}
@@ -208,11 +209,11 @@ export function CreditCard({ creditId }: CreditCardProps) {
                   <span className="max-lg:hidden">
                     {translate('card.remainingUntil', {
                       amount: moneyText(progress.remainingMinor, credit.currency),
-                      date: dayText(progress.endOn, locale, true),
+                      date: dayText(progress.endOn, 'shortYear'),
                     })}
                   </span>
                   <span className="lg:hidden">
-                    {translate('card.until', { date: dayText(progress.endOn, locale, true) })}
+                    {translate('card.until', { date: dayText(progress.endOn, 'shortYear') })}
                   </span>
                 </span>
               )}
@@ -234,11 +235,13 @@ export function CreditCard({ creditId }: CreditCardProps) {
                     <>
                       <span className="max-lg:hidden">
                         {translate('next', {
-                          date: dayText(next.dueOn, locale),
+                          date: dayText(next.dueOn, 'short'),
                           amount: nextAmount ?? '',
                         })}
                       </span>
-                      <span className="lg:hidden">{translate('nextShort', { date: dayText(next.dueOn, locale) })}</span>
+                      <span className="lg:hidden">
+                        {translate('nextShort', { date: dayText(next.dueOn, 'short') })}
+                      </span>
                     </>
                   )}
                 </span>

@@ -1,7 +1,7 @@
 'use client'
 
 import { CreditCard as CreditCardIcon, Plus } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
@@ -13,10 +13,11 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { Credit } from '../api/credits.api'
 import { useCredits } from '../hooks/credits.hook'
-import { type CreditTotals, creditTotals, dayText, monthNotes, nextMonthOf } from '../utils/credits.utils'
+import { type CreditTotals, creditTotals, monthNotes, nextMonthOf } from '../utils/credits.utils'
 import { CreditFormSheet } from './credit-form-sheet.component'
 import { CreditRow } from './credit-row.component'
 
@@ -27,7 +28,7 @@ type TotalsStripProps = {
 
 function useNoteText(credits: readonly Credit[], totals: CreditTotals) {
   const translate = useTranslations('credits.totals')
-  const locale = useLocale()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const today = useToday()
   const notes = monthNotes(credits, today)
@@ -41,7 +42,7 @@ function useNoteText(credits: readonly Credit[], totals: CreditTotals) {
     ...notes.unconfirmed.map((note) =>
       translate('noteUnconfirmed', {
         name: note.name,
-        date: dayText(note.dueOn, locale),
+        date: dayText(note.dueOn, 'short'),
       }),
     ),
   ].filter(Boolean)
@@ -66,7 +67,7 @@ function useNoteText(credits: readonly Credit[], totals: CreditTotals) {
 // tertiary), side by side on desktop, stacked on mobile (the caption there stops before «next month»)
 function TotalsStrip({ credits, totals }: TotalsStripProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
   const today = useToday()
   const note = useNoteText(credits, totals)
 
@@ -92,7 +93,7 @@ function TotalsStrip({ credits, totals }: TotalsStripProps) {
             credits: totals.activeCount,
             installments: totals.openCount,
           })}
-          {totals.endOn && ` · ${translate('totals.until', { date: dayText(totals.endOn, locale, true) })}`}
+          {totals.endOn && ` · ${translate('totals.until', { date: dayText(totals.endOn, 'shortYear') })}`}
         </p>
       </section>
     </div>

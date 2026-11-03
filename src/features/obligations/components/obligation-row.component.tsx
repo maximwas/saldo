@@ -10,6 +10,7 @@ import { useRipple } from '@/components/ui/ripple.hook'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useMemberNames } from '@/lib/members/members.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import type { ObligationRow } from '../api/obligations.api'
@@ -52,6 +53,7 @@ export function ObligationRowItem({
   const linked = linkedId === obligation.id
   const translate = useTranslations('obligations')
   const format = useFormatter()
+  const dayText = useDayText()
   const names = useMemberNames()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const canWrite = useCanWrite()
@@ -70,14 +72,7 @@ export function ObligationRowItem({
           total: obligation.installmentTotal ?? 0,
         })
       : null
-  const dateLabel =
-    obligation.dueOn === today
-      ? translate('todayLabel')
-      : format.dateTime(new Date(`${obligation.dueOn}T12:00:00Z`), {
-          timeZone: 'UTC',
-          day: '2-digit',
-          month: '2-digit',
-        })
+  const dateLabel = obligation.dueOn === today ? translate('todayLabel') : dayText(obligation.dueOn, 'short')
   const pill = awaitingSync ? 'paid' : obligation.state
   const paidKind = open ? 'plan' : 'fact'
   const amountKind = obligation.direction === 'in' ? 'income' : paidKind

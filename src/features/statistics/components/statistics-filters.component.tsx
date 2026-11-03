@@ -1,8 +1,9 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select, type SelectOption } from '@/components/ui/select.component'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useMemberNames } from '@/lib/members/members.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
@@ -32,7 +33,7 @@ function Chip({
 
 function usePeriodLabel() {
   const translate = useTranslations('statistics')
-  const formatter = useFormatter()
+  const dayText = useDayText()
   const locale = useLocale()
 
   return (period: string): string => {
@@ -44,11 +45,7 @@ function usePeriodLabel() {
       return period
     }
 
-    const label = formatter.dateTime(new Date(`${period}-15T12:00:00Z`), {
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC',
-    })
+    const label = dayText(period, 'monthYear')
 
     return label.charAt(0).toLocaleUpperCase(locale) + label.slice(1)
   }

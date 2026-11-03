@@ -1,5 +1,5 @@
 import { CircleCheck, HandCoins, Pencil, ReceiptText } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button.component'
 import { Menu, type MenuItem } from '@/components/ui/menu.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import type { DebtRow } from '../api/debts.api'
 import { type DebtState, debtState } from '../utils/debt-groups.utils'
@@ -38,30 +39,24 @@ export function DebtRowItem({ debt, onActionAction }: DebtRowItemProps) {
   const [linkedId] = useQueryState('id', parseAsString)
   const linked = linkedId === debt.id
   const translate = useTranslations('debts')
-  const format = useFormatter()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const canWrite = useCanWrite()
   const state = debtState(debt)
   const closed = debt.status !== 'open'
   const owedToMe = debt.direction === 'owed_to_me'
-  const day = (iso: string) =>
-    format.dateTime(new Date(`${iso}T12:00:00Z`), {
-      timeZone: 'UTC',
-      day: '2-digit',
-      month: '2-digit',
-    })
   const reason = debt.reason ?? (debt.origin === 'purchase_share' ? translate('row.share') : null)
   const lead = reason
     ? translate('row.dated', {
         reason,
-        date: day(debt.arisenOn),
+        date: dayText(debt.arisenOn, 'short'),
       })
-    : day(debt.arisenOn)
+    : dayText(debt.arisenOn, 'short')
   const tail = {
-    open: debt.dueOn ? translate('row.dueShort', { date: day(debt.dueOn) }) : translate('row.noDue'),
-    returned: debt.dueOn ? translate('row.dueShort', { date: day(debt.dueOn) }) : null,
-    settled: translate('row.closedOn', { date: day(debt.closedOn) }),
-    written_off: translate('row.writtenOffOn', { date: day(debt.closedOn) }),
+    open: debt.dueOn ? translate('row.dueShort', { date: dayText(debt.dueOn, 'short') }) : translate('row.noDue'),
+    returned: debt.dueOn ? translate('row.dueShort', { date: dayText(debt.dueOn, 'short') }) : null,
+    settled: translate('row.closedOn', { date: dayText(debt.closedOn, 'short') }),
+    written_off: translate('row.writtenOffOn', { date: dayText(debt.closedOn, 'short') }),
   }
   const firstLine = [lead, closed ? tail[debt.status] : tail.open].filter(Boolean).join(' · ')
   const repaidLine =
@@ -69,7 +64,7 @@ export function DebtRowItem({ debt, onActionAction }: DebtRowItemProps) {
       ? translate('row.repaidLine', {
           repaid: moneyText(debt.repaidMinor, debt.currency),
           principal: moneyText(debt.principalMinor, debt.currency),
-          date: day(debt.lastRepaymentOn),
+          date: dayText(debt.lastRepaymentOn, 'short'),
         })
       : null
   const noRepayments = state === 'open' ? translate(owedToMe ? 'row.noneOwedToMe' : 'row.noneIOwe') : null
