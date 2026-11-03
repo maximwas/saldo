@@ -538,6 +538,9 @@ create function private.my_owned_ledger_ids() returns setof uuid ... -- role = '
 **user_settings** (PK `user_id`) — лише особисте: `locale text default 'uk-UA'` · `theme text check in
 ('light','dark','system')` · `overview_layout jsonb` (порядок і видимість блоків) · `last_ledger_id uuid null`
 (останній відкритий простір). Базова валюта, часовий пояс, наступний дохід і стандарти — у `ledgers` (§5.0).
+`avatar_path text null` (`<user_id>.webp` або `null` без фото, check `user_settings_avatar_path`) · `avatar_updated_at`
+(версія в URL фото `/api/avatars/<user_id>?v=…`): одне фото людини на всі простори; чужі рядки читає лише серверна
+дія `listMembers` (`src/lib/members/members.actions.ts`) secret-ключем для учасників простору, які RLS уже відібрав.
 
 **accounts**
 `name text not null` · `kind text check in ('bank','cash','savings')` · `currency` · `opening_balance_minor bigint not
@@ -1024,6 +1027,9 @@ Server Actions для даних не використовуються; вихі
 - Storage: приватний бакет `attachments`, читання — `bucket_id = 'attachments' and
   ((storage.foldername(name))[1])::uuid in (select private.my_ledger_ids())`, запис — `my_writable_ledger_ids()`,
   signed URL на 5 хв.
+- Storage: приватний бакет `avatars` (фото профілю 512×512, WebP або JPEG, до 1 МБ), об'єкт `<user_id>.webp`; читає людина
+  й ті, з ким вона ділить простір (`private.my_co_member_ids()`), пише, замінює й видаляє лише своє; показ — через
+  `GET /api/avatars/[userId]` сесією того, хто дивиться (RLS вирішує, чужому 404), `Cache-Control: private` з версією в URL.
 - Відкликання доступу діє з наступного запиту (членство не в JWT), але кеш IndexedDB на пристрої колишнього
   учасника лишається до його виходу чи `maxAge` — UI попереджає власника; видалити дані з чужого пристрою не можна.
 - Локальний кеш IndexedDB не шифрується: вихід очищає IndexedDB, Cache Storage і `push_subscriptions` пристрою;

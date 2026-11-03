@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { type ReactNode, useState } from 'react'
+import { Avatar } from '@/components/ui/avatar.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
@@ -132,7 +133,7 @@ export function InviteCard({ token, status: initialStatus, invite, sessionEmail 
     body = (
       <>
         <div className="flex items-center gap-2">
-          <LetterAvatar name={inviter ?? invite.ledgerName} />
+          {inviter ? <Avatar name={inviter} /> : <LetterAvatar name={invite.ledgerName} />}
           <ArrowLeftRight aria-hidden size={20} className="text-text-primary" />
           <LetterAvatar name={invite.ledgerName} />
         </div>

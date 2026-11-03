@@ -15,7 +15,6 @@
     "switch": "Змінити простір",
     "invite": "Запросити",
     "sections": "Розділи",
-    "signedInAs": "Saldo · ви увійшли як {email}",
     "tiles": {
       "accounts": "Рахунки",
       "budget": "Бюджет",
@@ -56,5 +55,10 @@
       "operation": "Операції"
     }
   },
-  "notificationsUnread": "Сповіщення, нових: {count}"
+  "notificationsUnread": "Сповіщення, нових: {count}",
+  "account": {
+    "menu": "Мій акаунт",
+    "settings": "Налаштування акаунта",
+    "signOut": "Вийти"
+  }
 }

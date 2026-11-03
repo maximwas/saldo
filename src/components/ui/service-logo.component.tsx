@@ -1,7 +1,7 @@
 import Image from 'next/image'
-import { CATEGORY_COLORS, CATEGORY_LETTER_TONES, type CategoryColor } from '@/constants/category-colors.constants'
+import { CATEGORY_LETTER_TONES, type CategoryColor } from '@/constants/category-colors.constants'
 import { cn } from '@/lib/utils/cn.utils'
-import { serviceLogoIsInset, serviceLogoOf } from './service-logo.utils'
+import { letterColorOf, serviceLogoIsInset, serviceLogoOf } from './service-logo.utils'
 
 type ServiceLogoProps = {
   name: string
@@ -25,13 +25,6 @@ const SIZES = {
   },
 } as const
 
-// the first eight presets, the LetterAvatar colours of the Figma frames (the two credits are yellow and blue on Overview 2:8326)
-const LETTER_COLORS = CATEGORY_COLORS.slice(0, 8)
-
-/** the same name always gets the same colour, so a service is recognisable across lists */
-const colorOf = (name: string) =>
-  LETTER_COLORS[[...name].reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0) % LETTER_COLORS.length]
-
 type LetterAvatarProps = {
   name: string
   size?: ServiceLogoProps['size']
@@ -54,7 +47,7 @@ export function LetterAvatar({ name, size = 40, letter, color, className }: Lett
         'flex shrink-0 items-center justify-center',
         box,
         letterClass,
-        CATEGORY_LETTER_TONES[color ?? colorOf(name.trim())],
+        CATEGORY_LETTER_TONES[color ?? letterColorOf(name.trim())],
         className,
       )}
     >

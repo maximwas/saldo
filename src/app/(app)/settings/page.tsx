@@ -7,9 +7,9 @@ import { Card } from '@/components/ui/card.component'
 import { CurrenciesSummary } from '@/features/currencies/components/currencies-summary.component'
 import { getMembers, getPendingInvites } from '@/features/ledgers/api/access.server'
 import { LeaveSpaceButton } from '@/features/ledgers/components/leave-space-button.component'
-import { memberName } from '@/features/ledgers/utils/members.utils'
 import { SettingsLink } from '@/features/settings/components/settings-link.component'
 import { getActiveLedger, verifySession } from '@/lib/auth/dal.server'
+import { memberName } from '@/lib/members/members.utils'
 import GeneralSettingsPage from './general/page'
 
 // Phones: the section list (Figma 2:35769, read only 2:47206); desktop: the General tab (11:72807), as /settings/general

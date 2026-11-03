@@ -99,5 +99,11 @@ export const getActiveLedger = cache(async (): Promise<ActiveLedger | null> => {
   const rows = memberships.data ?? []
   const membership = pickMembership(rows, [cookieStore.get(LEDGER_COOKIE)?.value, settings?.last_ledger_id])
 
-  return membership ? toActiveLedger(membership, rows) : null
+  return membership
+    ? {
+        ...toActiveLedger(membership, rows),
+        userId: session.userId,
+        email: session.email,
+      }
+    : null
 })

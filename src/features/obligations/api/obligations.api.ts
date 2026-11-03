@@ -33,6 +33,8 @@ export type ObligationRow = {
   sequenceNo: number | null
   /** credit installments only: the last number of the schedule, «installment 5 of 10» */
   installmentTotal: number | null
+  /** who added it: the author in rows of a shared space; null when the server made it (a series) */
+  createdBy: string | null
   /** who confirmed the latest payment and when; null while nothing is paid */
   confirmedBy: string | null
   confirmedAt: string | null
@@ -92,7 +94,7 @@ const OPEN_STATES = ['plan', 'partial', 'unconfirmed']
 const PAID_LIMIT = 10
 const CANDIDATE_LIMIT = 10
 const STATE_COLUMNS =
-  'obligation_id, title, source_type, direction, due_on, planned_amount_minor, paid_minor, remaining_minor, currency, account_id, category_id, state, version, source_id, sequence_no'
+  'obligation_id, title, source_type, direction, due_on, planned_amount_minor, paid_minor, remaining_minor, currency, account_id, category_id, state, version, source_id, sequence_no, created_by'
 
 type StateRow = {
   obligation_id: string
@@ -110,6 +112,7 @@ type StateRow = {
   version: number
   source_id: string | null
   sequence_no: number | null
+  created_by: string | null
 }
 
 function toObligationRow(row: StateRow): ObligationRow {
@@ -130,6 +133,7 @@ function toObligationRow(row: StateRow): ObligationRow {
     sourceId: row.source_id,
     sequenceNo: row.sequence_no,
     installmentTotal: null,
+    createdBy: row.created_by,
     confirmedBy: null,
     confirmedAt: null,
   }

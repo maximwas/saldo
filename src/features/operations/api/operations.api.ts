@@ -454,6 +454,7 @@ type PlanDbRow = {
   due_on: string
   remaining_minor: number | null
   currency: string
+  created_by: string | null
 }
 
 type PlanSources = {
@@ -483,6 +484,7 @@ function toPlannedRow(row: PlanDbRow, { counts, intervals }: PlanSources): Plann
           }
         : null,
     interval: row.source_type === 'subscription' && row.source_id ? (intervals.get(row.source_id) ?? null) : null,
+    createdBy: row.created_by,
   }
 }
 
@@ -499,7 +501,7 @@ export async function listUpcomingPlans(
     supabase
       .from('obligation_states')
       .select(
-        'obligation_id, title, source_type, source_id, sequence_no, account_id, category_id, due_on, remaining_minor, currency',
+        'obligation_id, title, source_type, source_id, sequence_no, account_id, category_id, due_on, remaining_minor, currency, created_by',
       )
       .eq('ledger_id', ledgerId)
       .eq('direction', 'out')

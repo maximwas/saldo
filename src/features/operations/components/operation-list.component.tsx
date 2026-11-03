@@ -5,6 +5,7 @@ import { Link as LinkIcon, Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
+import { AuthorAvatar } from '@/components/ui/author.component'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
@@ -379,6 +380,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   </td>
                   <td className="pr-4 pl-2">
                     <span className="flex items-center justify-end gap-2">
+                      <AuthorAvatar userId={plan.createdBy} />
                       <Badge tone="plan">{translatePlan('pill')}</Badge>
                       <Amount minor={planMinor(plan)} currency={plan.currency} kind="plan" />
                     </span>
@@ -433,7 +435,12 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   <td className="hidden truncate px-2 text-label text-text-secondary xl:table-cell">
                     {accountCell(item)}
                   </td>
-                  <td className="pr-4 pl-2 text-right text-body font-medium">{amountOf(item)}</td>
+                  <td className="pr-4 pl-2 text-right text-body font-medium">
+                    <span className="flex items-center justify-end gap-2">
+                      <AuthorAvatar userId={item.row.createdBy} />
+                      {amountOf(item)}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -462,7 +469,8 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-0.5">
                     <Amount minor={planMinor(plan)} currency={plan.currency} kind="plan" />
-                    <span className="text-label text-text-secondary">
+                    <span className="flex items-center gap-1.5 text-label text-text-secondary">
+                      <AuthorAvatar userId={plan.createdBy} />
                       {plan.dueOn === today ? translateObligation('todayLabel') : shortDate(plan.dueOn)}
                     </span>
                   </span>
@@ -498,9 +506,10 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                       </span>
                     </span>
                     <span
-                      className={`text-body font-medium ${item.kind === 'transfer' ? 'basis-full text-right' : ''}`}
+                      className={`flex shrink-0 flex-col items-end gap-0.5 text-body font-medium ${item.kind === 'transfer' ? 'basis-full' : ''}`}
                     >
                       {amountOf(item)}
+                      <AuthorAvatar userId={item.row.createdBy} />
                     </span>
                   </RowButton>
                 </li>

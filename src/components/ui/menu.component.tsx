@@ -22,6 +22,8 @@ type MenuProps = {
   className?: string
   /** px along the trigger edge; with the popup aligned to the trigger's end a negative value moves it right */
   alignOffset?: number
+  /** a trigger of its own instead of «···» (the account button): the popup opens above it, from its start */
+  trigger?: React.ReactElement
 }
 
 const ITEM_CLASS =
@@ -91,21 +93,37 @@ function SheetItem({ item, onChooseAction }: SheetItemProps) {
 // 40 high (padding 0/12, gap 12, a 20 icon, radius sm, hover subtle); a divider (padding 4/0) before the red items.
 // The «···» trigger is a 44 square (radius md) with a 20px ellipsis. MenuItem 2:10325 paints the icon text-secondary,
 // the danger one text-primary (33:101623).
-export function Menu({ label, items, className, alignOffset }: MenuProps) {
+export function Menu({ label, items, className, alignOffset, trigger }: MenuProps) {
   return (
     <MenuPrimitive.Root>
-      <MenuPrimitive.Trigger
-        aria-label={label}
-        className={cn(
-          'flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-primary outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary data-popup-open:bg-subtle',
-          className,
-        )}
-      >
-        <Ellipsis className="size-5" aria-hidden />
-      </MenuPrimitive.Trigger>
+      {trigger ? (
+        <MenuPrimitive.Trigger aria-label={label} render={trigger} />
+      ) : (
+        <MenuPrimitive.Trigger
+          aria-label={label}
+          className={cn(
+            'flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-primary outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary data-popup-open:bg-subtle',
+            className,
+          )}
+        >
+          <Ellipsis className="size-5" aria-hidden />
+        </MenuPrimitive.Trigger>
+      )}
       <MenuPrimitive.Portal>
-        <MenuPrimitive.Positioner align="end" alignOffset={alignOffset} sideOffset={4} className="z-50">
-          <MenuPrimitive.Popup className="flex w-60 origin-(--transform-origin) flex-col gap-0.5 rounded-inner border border-border bg-raised p-1.5 shadow-float outline-none transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0">
+        <MenuPrimitive.Positioner
+          side={trigger ? 'top' : 'bottom'}
+          align={trigger ? 'start' : 'end'}
+          alignOffset={alignOffset}
+          sideOffset={4}
+          className="z-50"
+        >
+          <MenuPrimitive.Popup
+            className={cn(
+              'flex origin-(--transform-origin) flex-col gap-0.5 rounded-inner border border-border bg-raised p-1.5 shadow-float outline-none transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0',
+              // the account menu (59:154242) keeps its longest label on one line
+              trigger ? 'w-max min-w-60' : 'w-60',
+            )}
+          >
             {items.map((item, index) => (
               <Fragment key={item.label}>
                 {item.danger && index > 0 && !items[index - 1]?.danger ? (

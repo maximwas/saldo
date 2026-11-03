@@ -15,7 +15,6 @@
     "switch": "Switch space",
     "invite": "Invite",
     "sections": "Sections",
-    "signedInAs": "Saldo · signed in as {email}",
     "tiles": {
       "accounts": "Accounts",
       "budget": "Budget",
@@ -56,5 +55,10 @@
       "operation": "Operations"
     }
   },
-  "notificationsUnread": "Notifications, {count} new"
+  "notificationsUnread": "Notifications, {count} new",
+  "account": {
+    "menu": "My account",
+    "settings": "Account settings",
+    "signOut": "Sign out"
+  }
 }

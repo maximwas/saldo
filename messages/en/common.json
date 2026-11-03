@@ -25,5 +25,5 @@
     "hint": "Check your connection and try again.",
     "retry": "Try again"
   },
-  "author": "Author: {name}"
+  "addedBy": "Added by {name}"
 }

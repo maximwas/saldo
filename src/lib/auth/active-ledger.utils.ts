@@ -25,8 +25,11 @@ export function pickMembership(
   return preferred ?? rows.find((row) => row.role === 'owner') ?? rows[0]
 }
 
-/** the active space and the switcher list */
-export function toActiveLedger(membership: MembershipRow, rows: readonly MembershipRow[]): ActiveLedger {
+/** the active space and the switcher list (the signed-in person is added by the caller) */
+export function toActiveLedger(
+  membership: MembershipRow,
+  rows: readonly MembershipRow[],
+): Omit<ActiveLedger, 'userId' | 'email'> {
   return {
     ledgerId: membership.ledger_id,
     role: membership.role as LedgerRole,

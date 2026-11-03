@@ -123,4 +123,6 @@ export type PlannedRow = {
     unit: string
     count: number
   } | null
+  /** who added the plan: the author in rows of a shared space */
+  createdBy: string | null
 }

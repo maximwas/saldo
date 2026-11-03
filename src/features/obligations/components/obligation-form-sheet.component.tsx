@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
+import { AddedBy } from '@/components/ui/author.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -115,6 +116,8 @@ export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheet
       }
     >
       <form id={FORM_ID} onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+        {/* Figma 33:101623 / 33:101738: who added it, at the top of the details */}
+        {obligation ? <AddedBy userId={obligation.createdBy} /> : null}
         <FormField
           control={form.control}
           name="title"
