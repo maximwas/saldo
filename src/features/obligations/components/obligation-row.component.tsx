@@ -2,7 +2,6 @@ import { Pencil } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 import { Amount } from '@/components/ui/amount.component'
-import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
@@ -132,8 +131,7 @@ export function ObligationRowItem({
         )}
       </div>
       {obligation.state === 'paid' && confirmer && obligation.confirmedAt ? (
-        <span className="flex items-center gap-1.5 pb-3 pl-14 text-caption text-text-secondary">
-          <AuthorAvatar name={confirmer} />
+        <span className="flex pb-3 pl-14 text-caption text-text-secondary">
           {translate('confirmedBy', {
             name: confirmer,
             date: format.dateTime(new Date(obligation.confirmedAt), {
