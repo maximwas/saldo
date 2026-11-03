@@ -2,7 +2,8 @@
 -- project. Fictional data of docs/design/demo-data.md only (ADR 22: the repository is public): one demo user with its
 -- space as of 30.10.2026 — accounts, rates, subscriptions, credits, debts and planned payments. Every story date is
 -- shifted by v_shift days so that 30.10.2026 is today in Kyiv and the demo never goes stale; the setting
--- saldo.demo_today = 'YYYY-MM-DD' pins today (the visual specs need 2026-10-30, the day of the Figma frames).
+-- saldo.demo_today = 'YYYY-MM-DD' pins today (the visual specs need 2026-10-30, the day of the Figma frames). The
+-- monthly household bills follow the current Kyiv month instead, like the operations of scripts/seed-visual.mjs.
 -- Sign in locally as demo@example.com / saldo-demo-local-password (a local stack only, so not a secret).
 -- Subscriptions, credits and debts go through the phase 2 RPCs as the demo user, the way the app writes them; the
 -- installments paid before tracking (paid_before_tracking_count) get no operations, the debts are old ones without a
@@ -11,8 +12,9 @@ do $$
 declare
   v_user uuid := 'de000000-0000-4000-8000-000000000001';
   v_ledger uuid;
-  v_shift int := coalesce(nullif(current_setting('saldo.demo_today', true), '')::date,
-    (now() at time zone 'Europe/Kyiv')::date) - date '2026-10-30';
+  v_today date := coalesce(nullif(current_setting('saldo.demo_today', true), '')::date,
+    (now() at time zone 'Europe/Kyiv')::date);
+  v_shift int := v_today - date '2026-10-30';
   v_card uuid := 'de000000-0000-4000-8000-0000000000a1';
   v_subscriptions uuid;
   c record;
@@ -32,6 +34,9 @@ begin
   update public.ledgers set name = 'Мій Saldo', next_income_on = date '2026-11-14' + v_shift where id = v_ledger;
   update public.ledger_members set display_name = 'Максим' where ledger_id = v_ledger and user_id = v_user;
   select id into v_subscriptions from public.categories where ledger_id = v_ledger and name = 'Підписки';
+  -- not a standard category; the mobile bill below takes it
+  insert into public.categories (id, ledger_id, kind, name, color, sort_order)
+  values ('de000000-0000-4000-8000-000000000902', v_ledger, 'expense', 'Зв''язок', 'teal', 13);
 
   insert into public.accounts (id, ledger_id, name, kind, currency, opening_balance_minor, opening_balance_on,
     include_in_available, sort_order) values
@@ -103,6 +108,27 @@ begin
     ('i_owe', 'Тарас', null, 200000, '2026-11-20')
   ) as d (direction, person, reason, amount_minor, due_on);
 
-  insert into public.obligations (ledger_id, title, occurrence_on, due_on, planned_amount_minor, currency, account_id)
-  values (v_ledger, 'Інтернет', date '2026-11-10' + v_shift, date '2026-11-10' + v_shift, 35000, 'UAH', v_card);
+  -- planned payments (source_type 'manual', one row a month): the household's bills on their day of the current Kyiv
+  -- month and the next 11. This month's rent, mobile, utilities and gym are paid by their operations in
+  -- scripts/seed-visual.mjs (this file has no operations), so they start next month here; this month's insurance is
+  -- overdue, two days before today at the latest. The internet bill keeps its story date, 10.11 + v_shift.
+  insert into public.obligations (ledger_id, title, occurrence_on, due_on, planned_amount_minor, currency, account_id,
+    category_id)
+  select v_ledger, p.title, x.due_on, x.due_on, p.amount_minor, 'UAH', v_card, cat.id
+  from (values
+    ('Оренда квартири', 'Житло', 1400000::bigint, 1, 1),
+    ('Kyivstar', 'Зв''язок', 25000, 15, 1),
+    ('Комунальні платежі', 'Житло', 230000, 19, 1),
+    ('Фітнес-клуб', 'Здоров''я', 110000, 24, 1),
+    ('Медична страховка', 'Здоров''я', 45000, 28, 0)
+  ) as p (title, category, amount_minor, day_no, first_month)
+  join public.categories cat on cat.ledger_id = v_ledger and cat.kind = 'expense' and cat.name = p.category
+  cross join lateral generate_series(p.first_month, 11) n
+  cross join lateral (select (date_trunc('month', v_today::timestamp)
+    + make_interval(months => n, days => p.day_no - 1))::date) m (on_day)
+  cross join lateral (select case when n = 0 then least(m.on_day, v_today - 2) else m.on_day end) x (due_on)
+  union all
+  select v_ledger, 'Інтернет', x.due_on, x.due_on, 35000, 'UAH', v_card, null
+  from generate_series(0, 11) n
+  cross join lateral (select (date '2026-11-10' + v_shift + make_interval(months => n))::date) x (due_on);
 end $$;

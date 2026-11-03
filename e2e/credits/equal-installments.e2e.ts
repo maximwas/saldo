@@ -57,7 +57,8 @@ test('кредит рівними внесками: графік із 12 вне�
 
   // the month's expenses grew by the paid installment only, not by the 1 200 purchase price
   await page.goto('/')
-  expect(await monthExpenseMinor(page)).toBe(expenseBefore + 10_000)
+  // the first paint can carry the figures from before the payment until the refetch brings the new ones
+  await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore + 10_000)
 })
 
 test('дострокове погашення в день оплати внеску: неоплачені внески замінено одним на весь залишок, оплачений лишається', async ({
