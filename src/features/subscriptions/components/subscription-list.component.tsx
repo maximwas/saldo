@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Button } from '@/components/ui/button.component'
 import { ErrorState } from '@/components/ui/error-state.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import { useSubscriptionParams } from '../hooks/subscription-params.hook'
@@ -93,8 +94,8 @@ export function SubscriptionList() {
       <>
         <PaymentsTabs />
         <div aria-busy className="flex flex-col gap-4 lg:gap-6">
-          <div className="h-32 rounded-card bg-subtle" />
-          <div className="h-72 rounded-card bg-subtle" />
+          <Bone className="h-32 rounded-card" />
+          <Bone className="h-72 rounded-card" />
         </div>
       </>
     )

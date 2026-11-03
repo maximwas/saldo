@@ -7,6 +7,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import type { SubscriptionView } from '../api/subscriptions.api'
@@ -100,7 +101,7 @@ export function SubscriptionCard({ subscriptionId }: SubscriptionCardProps) {
   )
 
   if (isPending) {
-    return <div aria-busy className="h-96 rounded-card bg-subtle" />
+    return <Bone className="h-96 rounded-card" />
   }
 
   if (isError) {

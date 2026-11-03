@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge.component'
 import { ErrorState } from '@/components/ui/error-state.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { currencySymbol } from '@/lib/money/money.utils'
@@ -22,7 +23,7 @@ export function CurrenciesScreen() {
   const { data, isPending, isError, refetch } = useRates()
 
   if (isPending) {
-    return <div aria-busy className="h-72 rounded-card bg-subtle" />
+    return <Bone className="h-72 rounded-card" />
   }
 
   if (isError) {

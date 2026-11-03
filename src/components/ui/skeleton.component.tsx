@@ -9,10 +9,10 @@ type SkeletonLineProps = {
   end?: string
 }
 
-// Figma «Saldo» loading frames (5:89183, 5:103704, 2:56714): placeholders in the subtle fill on white cards; each
-// screen sets the sizes and radii of its own frame
+// Figma «Saldo» loading frames (5:89183, 5:103704, 2:56714): placeholders in the subtle fill on white cards, with the
+// shimmer of globals.css (still under reduced motion); each screen sets the sizes and radii of its own frame
 export function Bone({ className }: BoneProps) {
-  return <span aria-hidden className={cn('block shrink-0 bg-subtle', className)} />
+  return <span aria-hidden className={cn('block shrink-0 bg-subtle motion-safe:animate-shimmer', className)} />
 }
 
 export function SkeletonCard({ className, ...props }: React.ComponentProps<'div'>) {

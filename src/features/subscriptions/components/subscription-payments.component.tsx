@@ -5,6 +5,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import type { SubscriptionPayment } from '../api/subscriptions.api'
 import { useDateLabel } from '../hooks/date-label.hook'
@@ -51,7 +52,7 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
         <h2 className="text-card-title text-text-primary">{translate(view === 'recent' ? 'recent' : 'all')}</h2>
         {action}
       </div>
-      {isPending ? <div aria-busy className="h-32 rounded-md bg-subtle" /> : null}
+      {isPending ? <Bone className="h-32 rounded-md" /> : null}
       {data && shown.length === 0 ? <p className="text-label text-text-secondary">{translate('empty')}</p> : null}
       <ul className="flex flex-col gap-4">
         {shown.map((payment) => (

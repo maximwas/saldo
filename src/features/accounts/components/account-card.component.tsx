@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { ErrorState } from '@/components/ui/error-state.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useAccounts } from '../hooks/accounts.hook'
 import { ACCOUNT_KIND_STYLE } from '../utils/accounts.utils'
@@ -33,7 +34,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
   const [archiving, setArchiving] = useState(false)
 
   if (isPending) {
-    return <div aria-busy className="h-72 rounded-card bg-subtle" />
+    return <Bone className="h-72 rounded-card" />
   }
 
   const account = data?.accounts.find((candidate) => candidate.id === accountId)

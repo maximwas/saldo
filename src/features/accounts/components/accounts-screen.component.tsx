@@ -9,6 +9,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { Tabs } from '@/components/ui/tabs.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
@@ -40,7 +41,7 @@ export function AccountsScreen() {
   const [adjusting, setAdjusting] = useState<AccountView | null>(null)
 
   if (isPending) {
-    return <div aria-busy className="h-72 rounded-card bg-subtle" />
+    return <Bone className="h-72 rounded-card" />
   }
 
   if (isError) {
