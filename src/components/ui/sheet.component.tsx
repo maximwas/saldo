@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useSyncExternalStore } from 'react'
 import { cn } from '@/lib/utils/cn.utils'
 
-// Tailwind's md breakpoint: below it the sheet is a bottom drawer, from it a centred dialog
+// Tailwind's md breakpoint: below it the sheet is a bottom drawer, from it a dialog anchored at the top
 const DESKTOP_QUERY = '(min-width: 48rem)'
 
 const subscribe = (notify: () => void) => {
@@ -73,8 +73,9 @@ export function Sheet({
       <Dialog.Root open={open} onOpenChange={onOpenChange}>
         <Dialog.Portal>
           <Dialog.Backdrop className={BACKDROP_CLASS} />
-          {/* centred, as tall as its content up to spacing-4 from the edges: Figma 5:101464 draws a 850 dialog in 900 */}
-          <Dialog.Viewport className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center p-4">
+          {/* anchored at the top, not centred (Maxim, 3.11): a dialog whose height changes with its content (operation kinds)
+              grows downward and its header stays still; as tall as its content up to spacing-4 from the bottom */}
+          <Dialog.Viewport className="pointer-events-none fixed inset-0 z-40 flex items-start justify-center px-4 pt-16 pb-4">
             <Dialog.Popup
               initialFocus={initialFocus}
               className={cn(
