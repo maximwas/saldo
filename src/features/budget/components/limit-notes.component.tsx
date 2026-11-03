@@ -28,7 +28,7 @@ export function LimitNotes({ fact, progress }: LimitNotesProps) {
 
   if (state === 'none' || fact.limitMinor === null) {
     return (
-      <p className="flex flex-wrap items-center gap-2 text-caption text-text-secondary">
+      <p className="flex flex-wrap items-center gap-2 text-label text-text-secondary">
         {translate('noLimit')}
         {fact.unknownCount > 0 ? (
           <Badge tone="unknown">{translate('unknown', { count: fact.unknownCount })}</Badge>
@@ -66,8 +66,10 @@ export function LimitNotes({ fact, progress }: LimitNotesProps) {
   }[state]
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-caption">
-      <span className={cn(state === 'ok' ? 'text-text-secondary' : 'text-warning-text')}>{left ?? text}</span>
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-label">
+      <span className={cn(state === 'ok' ? 'text-text-secondary' : 'font-medium text-warning-text')}>
+        {left ?? text}
+      </span>
       <span className="flex items-center gap-2 text-text-secondary">
         {fact.unknownCount > 0 ? (
           <Badge tone="unknown">{translate('unknown', { count: fact.unknownCount })}</Badge>
