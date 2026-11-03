@@ -75,8 +75,10 @@ ChatGPT підтверджує окремо. Deep research і «company knowledg
 OpenAI — їх немає, Saldo працює в звичайному чаті з developer mode.
 
 ## Perplexity
-1. Settings → Connectors (Plugins) → Add custom → **Add MCP connector** → Remote.
-2. URL сервера, транспорт Streamable HTTP, Authentication **OAuth** → Add → Connect → «Дозволити».
+1. Бічна панель **Плагіни** → «Додати власний» → Connector → **Add MCP connector** → Remote (старий шлях —
+   Customize → Connectors). На безкоштовному тарифі пункту Connector немає: власні конектори лише з Pro.
+2. Назва `Saldo`, URL сервера, транспорт Streamable HTTP, Authentication **OAuth**, позначити згоду з ризиками → Add →
+   натиснути картку конектора → увійти в Saldo → «Дозволити».
 3. У новому чаті увімкнути конектор Saldo в джерелах.
 
 Плани: Pro, Max, Enterprise (в Enterprise вмикає адмін). Callback
