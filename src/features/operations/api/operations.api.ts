@@ -17,12 +17,12 @@ import type {
 } from '../operations.types'
 import { type CreateTransferInput, createTransferInputSchema } from '../schemas/create-transfer-input.schema'
 import { type UpdateOperationInput, updateOperationInputSchema } from '../schemas/update-operation-input.schema'
-import { textFilter } from '../utils/operation-filters.utils'
 import {
   chunks,
   indexTransfers,
   kindsOfType,
   type TransferDbRow,
+  textFilter,
   toOperationRow,
   transferIdsOf,
 } from '../utils/operation-rows.utils'
