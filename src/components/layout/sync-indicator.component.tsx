@@ -3,23 +3,18 @@
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState, useSyncExternalStore } from 'react'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { SyncQueueSheet } from '@/features/sync/components/sync-queue-sheet.component'
+import { SyncQueuePopover, SyncQueueSheet } from '@/features/sync/components/sync-queue.component'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
 import type { SyncSummary } from '@/lib/query/sync-queue.utils'
-import { cn } from '@/lib/utils/cn.utils'
 import { SyncStatus } from './sync-status.component'
 
 type SyncIndicatorProps = {
-  className?: string
-}
-
-type LabelParams = {
-  summary: SyncSummary
-  time: string | null
+  /** sidebar: the desktop row that opens the queue popover; topbar: the mobile pill that opens the queue sheet */
+  platform?: 'sidebar' | 'topbar'
 }
 
 // the live SyncStatus (§22: the last update and how many changes wait); a click opens the queue
-export function SyncIndicator({ className }: SyncIndicatorProps) {
+export function SyncIndicator({ platform = 'sidebar' }: SyncIndicatorProps) {
   const translate = useTranslations('sync.status')
   const format = useFormatter()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
@@ -31,6 +26,7 @@ export function SyncIndicator({ className }: SyncIndicatorProps) {
     () => true,
     () => false,
   )
+  const sidebar = platform === 'sidebar'
   const time =
     hydrated && updatedAt
       ? format.dateTime(new Date(updatedAt), {
@@ -40,34 +36,47 @@ export function SyncIndicator({ className }: SyncIndicatorProps) {
         })
       : null
 
-  function label({ summary: { state, count }, time: syncedAt }: LabelParams) {
+  // Figma 2:11328: the Sidebar row tells the time and the count, the Topbar pill only the state
+  function label({ state, count }: SyncSummary) {
     if (state === 'synced') {
-      return syncedAt ? translate('syncedAt', { time: syncedAt }) : translate('synced')
+      return sidebar && time ? translate('syncedAt', { time }) : translate('synced')
+    }
+
+    if (state === 'pending') {
+      return translate('pending', { count })
     }
 
     if (state === 'offline') {
-      return count > 0 ? translate('offlineWaiting', { count }) : translate('offline')
+      return sidebar && count > 0 ? translate('offlineWaiting', { count }) : translate('offline')
     }
 
-    return translate(state, { count })
+    return sidebar && state === 'conflict' ? translate('conflictCount', { count }) : translate(state)
   }
 
-  const text = label({
-    summary,
-    time,
-  })
-
+  const text = label(summary)
+  const actions = {
+    error: translate('retry'),
+    conflict: translate('resolve'),
+  }
+  const action = sidebar && (summary.state === 'error' || summary.state === 'conflict') ? actions[summary.state] : null
   // the status inside is a live region, which gives the button no name from its content: the label names it
+  const name = action ? `${text}, ${action}` : text
+  const status = <SyncStatus state={summary.state} label={text} action={action} platform={platform} />
+
+  if (sidebar) {
+    return <SyncQueuePopover label={name}>{status}</SyncQueuePopover>
+  }
+
   return (
     <>
       <button
         type="button"
         aria-haspopup="dialog"
-        aria-label={text}
+        aria-label={name}
         onClick={() => setOpen(true)}
-        className="w-full cursor-pointer rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="w-fit cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        <SyncStatus state={summary.state} label={text} className={cn(className)} />
+        {status}
       </button>
       <SyncQueueSheet open={open} onOpenChangeAction={setOpen} />
     </>
