@@ -160,6 +160,53 @@ test('add_operation: без confirm нічого не пише, двічі з т
   expect(await found()).toHaveLength(1)
 })
 
+test('mark_paid: прев’ю нічого не платить, confirm закриває план, повтор нічого не додає', async ({
+  pageAs,
+  request,
+  baseURL,
+}) => {
+  test.skip(!(await oauthServerOn()), OAUTH_OFF)
+
+  const owner = await pageAs('owner')
+  const { accessToken } = await connectMcpClient(owner, request, baseURL ?? '')
+  const balances = await callTool(request, accessToken, 'get_balances')
+  const account = (
+    balances.data.accounts as {
+      id: string
+      currency: string
+      archivedAt: string | null
+    }[]
+  ).find((item) => item.archivedAt === null)
+  const planned = await callTool(request, accessToken, 'create_planned_payment', {
+    title: `e2e-${crypto.randomUUID().slice(0, 8)}`,
+    planned_amount_minor: 1500,
+    currency: account?.currency,
+    due_on: new Date().toISOString().slice(0, 10),
+    account_id: account?.id,
+  })
+  const plan = planned.data.confirmArguments as { id: string }
+  const open = async () =>
+    ((await callTool(request, accessToken, 'list_upcoming')).data.upcoming as { id: string }[]).some(
+      (item) => item.id === plan.id,
+    )
+
+  expect((await callTool(request, accessToken, 'create_planned_payment', plan)).isError).toBe(false)
+  expect(await open()).toBe(true)
+
+  const preview = await callTool(request, accessToken, 'mark_paid', { obligation_id: plan.id })
+  const confirmArguments = preview.data.confirmArguments as { payment_id: string }
+
+  expect(preview.data.preview).toBe(true)
+  expect(await open()).toBe(true)
+  expect((await callTool(request, accessToken, 'mark_paid', confirmArguments)).isError).toBe(false)
+
+  const replay = await callTool(request, accessToken, 'mark_paid', confirmArguments)
+
+  expect(replay.isError).toBe(false)
+  expect(replay.data.alreadyWritten).toBeTruthy()
+  expect(await open()).toBe(false)
+})
+
 test('write-tool з токеном viewer відмовляє', async ({ pageAs, request, baseURL }) => {
   test.skip(!(await oauthServerOn()), OAUTH_OFF)
 

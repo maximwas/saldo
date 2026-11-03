@@ -18,11 +18,11 @@ import { type CreateOperationInput, createOperationInputSchema } from '@/lib/fin
 import type { LedgerAccountOption } from '@/lib/finance/ledger-options.api'
 import { fromMinor } from '@/lib/money/money.utils'
 import { toOccurredAt } from '@/lib/utils/clock.utils'
-import { confirmedWriteTool, registerReadTool, registerWriteTool, type WritePlan } from '../register-tool.server'
+import { confirmedWriteTool, registerReadTool, type WritePlan } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
 import { confirmField, dayField, ledgerIdField, newIdField, versionField } from '../tool-input.schema'
-import { required, ToolError, toPreview } from '../tool-result.utils'
-import { assertChanges, assertPast, assertWriter, clockOf, findAccount } from '../write-checks.server'
+import { required, ToolError } from '../tool-result.utils'
+import { assertChanges, assertPast, clockOf, findAccount } from '../write-checks.server'
 
 const searchInput = z.object({
   ledger_id: ledgerIdField,
@@ -96,10 +96,7 @@ function registerGetOperation(server: McpServer) {
 
 const addInput = z.object({
   ledger_id: ledgerIdField,
-  id: z
-    .uuid()
-    .optional()
-    .describe('Idempotency key. The preview returns one: send it back with confirm true; a repeat adds nothing.'),
+  id: newIdField,
   kind: z.enum(['expense', 'income']),
   account_id: z.uuid().describe('From get_balances; the operation takes the account currency'),
   amount_minor: z.int().positive().describe('Minor units of the account currency: 12550 = 125.50'),
@@ -107,7 +104,7 @@ const addInput = z.object({
   category_id: z.uuid().optional().describe('From list_categories, of the same kind'),
   counterparty: z.string().trim().min(1).max(200).optional(),
   note: z.string().trim().min(1).max(500).optional(),
-  confirm: z.boolean().default(false).describe('false (default) only previews; true writes'),
+  confirm: confirmField,
 })
 
 type AddInput = z.infer<typeof addInput>
@@ -144,40 +141,19 @@ async function toCreateInput(args: AddInput, id: string, context: ToolContext): 
 }
 
 /** add_operation (plan 10.8): the same create_operation RPC and input schema as the form */
-function registerAddOperation(server: McpServer) {
-  registerWriteTool(
-    server,
-    'add_operation',
-    {
-      title: 'Add an operation',
-      description:
-        'Records an expense or an income that already happened. Without confirm true it only returns a preview and writes nothing; show it to the person and call again with its confirmArguments. Transfers, refunds and adjustments are made in the app.',
-      inputSchema: addInput,
+async function planAddOperation(args: AddInput, context: ToolContext): Promise<WritePlan> {
+  const id = args.id ?? crypto.randomUUID()
+  const input = await toCreateInput(args, id, context)
+
+  return {
+    willWrite: input,
+    replayArgs: {
+      ...args,
+      id,
     },
-    async (args, context) => {
-      assertWriter(context)
-
-      const id = args.id ?? crypto.randomUUID()
-      const input = await toCreateInput(args, id, context)
-
-      if (!args.confirm) {
-        return {
-          preview: true,
-          data: toPreview('add_operation', input, {
-            ...args,
-            id,
-          }),
-        }
-      }
-
-      await createOperation(context.supabase, input)
-
-      return {
-        data: { written: input },
-        createdIds: [id],
-      }
-    },
-  )
+    createdIds: [id],
+    write: () => createOperation(context.supabase, input),
+  }
 }
 
 export function registerOperationsTools(server: McpServer) {
@@ -428,7 +404,17 @@ async function planRefund(args: RefundArgs, context: ToolContext): Promise<Write
 
 /** the operation editor, the transfer form and «Refund» of an expense */
 export const OPERATIONS_WRITE_TOOLS = [
-  registerAddOperation,
+  confirmedWriteTool(
+    'add_operation',
+    {
+      title: 'Add an operation',
+      description:
+        'Records an expense or an income that already happened; a transfer is add_transfer, a refund add_refund, a balance correction adjust_balance.',
+      inputSchema: addInput,
+      destructive: false,
+    },
+    planAddOperation,
+  ),
   confirmedWriteTool(
     'update_operation',
     {
