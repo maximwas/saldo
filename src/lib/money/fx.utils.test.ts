@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { convertAt, convertMinor, type FxRate, findRate, scaleMinor, toFxRate } from './fx.utils'
+import {
+  convertAt,
+  convertMinor,
+  type FxRate,
+  findRate,
+  formatRate,
+  impliedRate,
+  scaleMinor,
+  toFxRate,
+} from './fx.utils'
 
 type RateArgs = {
   pair: string
@@ -121,5 +130,25 @@ describe('scaleMinor', () => {
 
   it('refuses to divide by 0', () => {
     expect(() => scaleMinor(100, 1, 0, 'down')).toThrow(RangeError)
+  })
+})
+
+describe('impliedRate', () => {
+  it('derives the rate from the real amounts of both accounts', () => {
+    expect(impliedRate(80_000, 'EUR', 3_320_000, 'UAH')?.toString()).toBe('41.5')
+  })
+
+  it('is null for a missing or zero amount', () => {
+    expect(impliedRate(0, 'EUR', 3_320_000, 'UAH')).toBeNull()
+    expect(impliedRate(80_000, 'EUR', 0, 'UAH')).toBeNull()
+  })
+})
+
+describe('formatRate', () => {
+  it('keeps at least two decimals and trims to four', () => {
+    expect(formatRate(impliedRate(80_000, 'EUR', 3_320_000, 'UAH') as never, 'en')).toBe('41.50')
+    expect(formatRate(impliedRate(300, 'USD', 12_480, 'UAH') as never, 'en')).toBe('41.60')
+    expect(formatRate(impliedRate(300, 'USD', 12_481, 'UAH') as never, 'en')).toBe('41.6033')
+    expect(formatRate('0.0240963855', 'en', 6)).toBe('0.024096')
   })
 })

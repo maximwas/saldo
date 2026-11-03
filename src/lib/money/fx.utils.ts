@@ -160,3 +160,27 @@ export function convertAt(
 
   return rate ? convertMinor(amountMinor, from, target, rate, rounding) : null
 }
+
+/** units of `toCurrency` per 1 unit of `fromCurrency` that two real amounts imply (800 € → 33 200 ₴ is 41.5); null for zero */
+export function impliedRate(
+  fromMinor: number,
+  fromCurrency: string,
+  toMinor: number,
+  toCurrency: string,
+): Decimal | null {
+  if (fromMinor <= 0 || toMinor <= 0) {
+    return null
+  }
+
+  const fromUnits = new Decimal(fromMinor).dividedBy(Decimal.pow(10, minorDigits(fromCurrency)))
+  const toUnits = new Decimal(toMinor).dividedBy(Decimal.pow(10, minorDigits(toCurrency)))
+
+  return toUnits.dividedBy(fromUnits)
+}
+
+/** «41,50»: at least two and at most `maxDigits` decimals, in the active locale; Intl gets a decimal string, no float */
+export const formatRate = (rate: Decimal.Value, locale: string, maxDigits = 4) =>
+  new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: maxDigits,
+  }).format(new Decimal(rate).toFixed() as Intl.StringNumericLiteral)

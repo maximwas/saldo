@@ -2,11 +2,11 @@
 
 import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { useAccountActivity, useUpdateAccount } from '../hooks/accounts.hook'
 import type { AccountView } from '../utils/accounts.utils'
 
@@ -22,6 +22,7 @@ type ArchiveAccountSheetProps = {
 export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSheetProps) {
   const translate = useTranslations('accounts')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const { timeZone } = useClock()
   const update = useUpdateAccount()
   const activity = useAccountActivity(account?.id ?? '', account !== null)
@@ -47,7 +48,7 @@ export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSh
   }
 
   const summaryOf = (target: AccountView) => {
-    const balance = formatMinor(target.balanceMinor, target.currency, locale)
+    const balance = moneyText(target.balanceMinor, target.currency)
     const data = activity.data
 
     if (data === undefined) {

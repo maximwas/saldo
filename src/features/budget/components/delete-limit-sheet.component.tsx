@@ -1,9 +1,9 @@
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { Sheet, SheetClose, useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
 import { useBudgetCategories, useCurrentBudget, useDeleteLimit, useRestoreLimit } from '../hooks/budget.hook'
 import { useMonthLabel } from '../hooks/month-label.hook'
@@ -12,7 +12,7 @@ import { useMonthLabel } from '../hooks/month-label.hook'
 // adds that later months keep their limits. Deleted 41:111016 / 2:28053: «Limit “X” deleted» with undo, which writes the limit back.
 export function DeleteLimitSheet({ categoryId }: { categoryId: string }) {
   const translate = useTranslations('budget.deleteSheet')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const monthLabel = useMonthLabel()
   const { ledgerId, baseCurrency: currency } = useLedger()
   const desktop = useIsDesktop()
@@ -78,10 +78,10 @@ export function DeleteLimitSheet({ categoryId }: { categoryId: string }) {
     >
       <p className="text-label text-text-secondary">
         {translate('text', {
-          amount: formatMinor(fact.limitMinor ?? 0, currency, locale),
+          amount: moneyText(fact.limitMinor ?? 0, currency),
           month: monthLabel(month, false),
           name,
-          spent: formatMinor(fact.factMinor, currency, locale),
+          spent: moneyText(fact.factMinor, currency),
         })}
         {desktop ? ` ${translate('textNext')}` : null}
       </p>

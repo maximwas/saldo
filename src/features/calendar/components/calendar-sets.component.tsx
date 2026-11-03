@@ -1,12 +1,12 @@
 'use client'
 
 import { X } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { Chip } from '@/components/ui/chip.component'
 import { useLedger } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
 import { useCalendarOptions, useSavedFilters } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
@@ -26,7 +26,7 @@ const asList = (value: unknown) => (Array.isArray(value) ? value : [value]).map(
 /** «Category: Products», «Search: «Megogo»» — what an active filter chip says */
 function useChipLabel() {
   const translate = useTranslations('calendar')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const { baseCurrency } = useLedger()
   const { filter } = useCalendarParams()
   const options = useCalendarOptions().data
@@ -41,7 +41,7 @@ function useChipLabel() {
     ) =>
     (id: string) =>
       list?.find((row) => row.id === id)?.name ?? '…'
-  const money = (values: string[]) => formatMinor(Number(values[0]), baseCurrency, locale)
+  const money = (values: string[]) => moneyText(Number(values[0]), baseCurrency)
   const text: Partial<Record<keyof UrlFilter, (values: string[]) => string[]>> = {
     entry: (values) => values.map((value) => translate(`entryType.${value as 'fact'}`)),
     kinds: (values) => values.map((value) => translate(`kind.${value as 'expense'}`)),

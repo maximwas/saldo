@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link as LinkIcon, Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
@@ -13,13 +13,12 @@ import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { serviceLogoOf } from '@/components/ui/service-logo.utils'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { formatRate, impliedRate } from '@/lib/money/fx.utils'
 import type { RecordState } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationItem, PlannedRow } from '../operations.types'
 import { displayAmount, showsOriginal } from '../utils/operation-display.utils'
 import { dayLabelKind, groupByDay, summarize } from '../utils/operation-items.utils'
-import { formatRate, impliedRate } from '../utils/rate.utils'
 
 type OperationListProps = {
   items: OperationItem[]
@@ -81,6 +80,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   const translateSync = useTranslations('sync.badge')
   const formatter = useFormatter()
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -145,7 +145,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
     if (showsOriginal(item)) {
       const rate = impliedRate(row.amountMinor, row.currency, row.baseAmountMinor as number, row.baseCurrency)
 
-      return `${formatMinor(row.amountMinor, row.currency, locale)} · ${translate('row.rate', { rate: rate ? formatRate(rate, locale) : '' })}`
+      return `${moneyText(row.amountMinor, row.currency)} · ${translate('row.rate', { rate: rate ? formatRate(rate, locale) : '' })}`
     }
 
     // a transfer has no base amount by design: only an expense or income without a rate is «unknown»
@@ -270,7 +270,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
 
     return refunded ? (
       <span className="shrink-0 whitespace-nowrap">
-        · {translate('refund.refunded', { amount: formatMinor(refunded, item.row.currency, locale) })}
+        · {translate('refund.refunded', { amount: moneyText(refunded, item.row.currency) })}
       </span>
     ) : null
   }

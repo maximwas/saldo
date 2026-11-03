@@ -1,8 +1,9 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -12,7 +13,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { useClock, useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import type { DebtRow } from '../api/debts.api'
 import { useAddDebtMovement, useCloseDebt } from '../hooks/debts.hook'
 import { toStatusInput } from '../schemas/debt-edit-form.schema'
@@ -32,7 +33,7 @@ type RepaymentSheetProps = {
 // line, Amount, Date, Account (hint), result line «after the repayment …», footer Cancel + Repay.
 export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetProps) {
   const translate = useTranslations('debts')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const clock = useClock()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -105,13 +106,13 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
     >
       <p className={closing ? 'text-body text-text-primary' : 'text-label text-text-secondary'}>
         {closing
-          ? translate('repay.closeText', { remaining: formatMinor(debt.remainingMinor, debt.currency, locale) })
+          ? translate('repay.closeText', { remaining: moneyText(debt.remainingMinor, debt.currency) })
           : translate('repay.summary', {
               reason: debt.reason ?? '',
               date: dayText(debt.arisenOn),
-              principal: formatMinor(debt.principalMinor, debt.currency, locale),
-              repaid: formatMinor(debt.repaidMinor, debt.currency, locale),
-              remaining: formatMinor(debt.remainingMinor, debt.currency, locale),
+              principal: moneyText(debt.principalMinor, debt.currency),
+              repaid: moneyText(debt.repaidMinor, debt.currency),
+              remaining: moneyText(debt.remainingMinor, debt.currency),
             })}
       </p>
       <FormProvider {...methods}>
@@ -166,7 +167,7 @@ type RepaymentResultProps = {
 
 function RepaymentResult({ left, currency }: RepaymentResultProps) {
   const translate = useTranslations('debts')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
 
   if (left === null) {
     return null
@@ -175,7 +176,7 @@ function RepaymentResult({ left, currency }: RepaymentResultProps) {
   if (left < 0) {
     return (
       <p className="text-label text-text-secondary">
-        {translate('repay.resultOver', { amount: formatMinor(-left, currency, locale) })}
+        {translate('repay.resultOver', { amount: moneyText(-left, currency) })}
       </p>
     )
   }
@@ -186,7 +187,7 @@ function RepaymentResult({ left, currency }: RepaymentResultProps) {
 
   return (
     <p className="text-label font-medium text-text-primary">
-      {translate('repay.result', { amount: formatMinor(left, currency, locale) })}
+      {translate('repay.result', { amount: moneyText(left, currency) })}
     </p>
   )
 }

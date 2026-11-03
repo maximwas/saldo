@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useLocale, useTranslations } from 'next-intl'
 import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -13,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationRow } from '../operations.types'
 import { factFormSchema, type OperationFormValues, validatedMinor } from '../schemas/operation-form.schema'
@@ -34,12 +35,13 @@ type RefundFormProps = {
 export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: RefundFormProps) {
   const translate = useTranslations('operations')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const options = useQuery(operationQueries.options(ledgerId))
   const accounts = (options.data?.accounts ?? []).filter((account) => account.currency === purchase.currency)
   const currency = purchase.currency as OperationFormValues['currency']
-  const limit = formatMinor(limitMinor, currency, locale)
+  const limit = moneyText(limitMinor, currency)
   const categories = options.data?.categories ?? []
   const category = categories.find((candidate) => candidate.id === purchase.categoryId)?.name
   const accountName = accounts.find((account) => account.id === purchase.accountId)?.name ?? ''
@@ -81,7 +83,7 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
   const amount = toMinor(form.watch('amount'), currency)
   const purchaseLine = [
     purchase.counterparty ?? category ?? translate('kinds.expense'),
-    formatMinor(-purchase.amountMinor, currency, locale),
+    moneyText(-purchase.amountMinor, currency),
     new Intl.DateTimeFormat(locale, {
       day: '2-digit',
       month: '2-digit',
@@ -155,7 +157,7 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
             ? translate('refund.effect', {
                 month,
                 category,
-                amount: formatMinor(amount, currency, locale),
+                amount: moneyText(amount, currency),
               })
             : translate('refund.info')}
         </Banner>

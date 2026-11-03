@@ -1,6 +1,6 @@
+import type Decimal from 'decimal.js'
 import { accountBaseMinor, accountRate } from '@/lib/finance/base-balance.utils'
-import type { FxRate } from '@/lib/money/fx.utils'
-import { minorDigits } from '@/lib/money/money.utils'
+import { type FxRate, impliedRate } from '@/lib/money/fx.utils'
 
 // no cash accounts in Saldo (Maxim, 31.10.2026); the DB check still allows «cash» for rows made before
 export const ACCOUNT_KINDS = ['bank', 'savings'] as const
@@ -202,13 +202,10 @@ export const toRecentTransfer = (row: RecentTransferRow): RecentTransfer => ({
 })
 
 /** the exchange rate a transfer implies (major units of the target per major unit of the source); null = one currency */
-export function transferRate(transfer: RecentTransfer): number | null {
+export function transferRate(transfer: RecentTransfer): Decimal | null {
   if (transfer.fromCurrency === transfer.toCurrency) {
     return null
   }
 
-  const sent = transfer.fromAmountMinor / 10 ** minorDigits(transfer.fromCurrency)
-  const received = transfer.toAmountMinor / 10 ** minorDigits(transfer.toCurrency)
-
-  return received / sent
+  return impliedRate(transfer.fromAmountMinor, transfer.fromCurrency, transfer.toAmountMinor, transfer.toCurrency)
 }

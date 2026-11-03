@@ -5,13 +5,13 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Tabs } from '@/components/ui/tabs.component'
 import { useCanWrite } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { formatRate } from '@/lib/money/fx.utils'
 import { useAccounts } from '../hooks/accounts.hook'
 import { type AccountView, totalInBase } from '../utils/accounts.utils'
 import { AccountFormSheet } from './account-form-sheet.component'
@@ -31,6 +31,7 @@ type FormTarget = { account: AccountView | null }
 export function AccountsScreen() {
   const translate = useTranslations('accounts')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const canWrite = useCanWrite()
   const desktop = useIsDesktop()
   const { data, isPending, isError, refetch } = useAccounts()
@@ -61,11 +62,8 @@ export function AccountsScreen() {
   const inBase = counted.filter((account) => account.currency === data.baseCurrency)
   const converted = counted.filter((account) => account.currency !== data.baseCurrency && account.baseMinor !== null)
   const baseMinor = inBase.reduce((sum, account) => sum + account.balanceMinor, 0)
-  const rateOf = (account: AccountView) =>
-    new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    }).format(Number(account.rate))
+  // a converted account has a base value, so it has a rate
+  const rateOf = (account: AccountView) => formatRate(account.rate ?? 0, locale)
   const totalLabel = translate('total', { currency: data.baseCurrency })
   const totalNote = [
     inBase.length > 0 ? `${list.format(inBase.map((account) => account.name))}.` : null,
@@ -80,7 +78,7 @@ export function AccountsScreen() {
               }),
             ),
           ),
-          amount: formatMinor(total.totalMinor, data.baseCurrency, locale),
+          amount: moneyText(total.totalMinor, data.baseCurrency),
         })
       : null,
     total.unknownCurrencies.length > 0 ? translate('totalUnknown', { currencies }) : null,

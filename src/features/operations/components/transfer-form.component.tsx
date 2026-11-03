@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
@@ -12,12 +13,11 @@ import { Textarea } from '@/components/ui/textarea.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { findRate } from '@/lib/money/fx.utils'
-import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
+import { findRate, formatRate, impliedRate } from '@/lib/money/fx.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
 import { type TransferFormValues, transferFormSchema } from '../schemas/transfer-form.schema'
 import { accountOptions } from '../utils/operation-display.utils'
-import { formatRate, impliedRate } from '../utils/rate.utils'
 import { CategorySelect } from './category-select.component'
 
 type TransferFormProps = {
@@ -30,6 +30,7 @@ type TransferFormProps = {
 export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
   const translate = useTranslations('operations.form')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   // the editor mounts the form after the options are loaded; the query cache hands the same data over
@@ -42,7 +43,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
   const balanceHint = (accountId: string, currency: string) =>
     balances[accountId] === undefined
       ? undefined
-      : translate('balance', { amount: formatMinor(balances[accountId], currency, locale) })
+      : translate('balance', { amount: moneyText(balances[accountId], currency) })
   const resolver = useZodResolver(transferFormSchema)
   const active = accounts.filter((account) => !account.archived)
   const [source, target] = [active[0], active[1] ?? active[0]]

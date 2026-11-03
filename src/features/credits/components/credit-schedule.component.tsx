@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
@@ -11,7 +11,7 @@ import { useCanWrite } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import type { Credit, CreditInstallment, InstallmentState } from '../api/credits.api'
 import { usePayInstallment } from '../hooks/credits.hook'
-import { activeInstallments, creditProgress, dayText, moneyText } from '../utils/credits.utils'
+import { activeInstallments, creditProgress, dayText } from '../utils/credits.utils'
 
 type CreditScheduleProps = {
   credit: Credit
@@ -141,6 +141,7 @@ const daysUntil = (iso: string, today: string) =>
 export function CreditSchedule({ credit, className }: CreditScheduleProps) {
   const translate = useTranslations('credits')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
   const canWrite = useCanWrite()
   const pay = usePayInstallment()
@@ -153,7 +154,7 @@ export function CreditSchedule({ credit, className }: CreditScheduleProps) {
   const hidden = expanded ? 0 : Math.max(total - COLLAPSED_ROWS, 0)
   const lastDue = credit.installments.at(-1)?.dueOn
   const amountOf = credit.totalPayableMinor ?? credit.purchasePriceMinor
-  const money = amountOf === null ? '' : moneyText(amountOf, credit.currency, locale).replace(/[,.]00(?!\d)/, '')
+  const money = amountOf === null ? '' : moneyText(amountOf, credit.currency).replace(/[,.]00(?!\d)/, '')
 
   return (
     <Card title={translate('schedule.title')} className={className}>

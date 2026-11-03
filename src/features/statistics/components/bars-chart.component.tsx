@@ -1,8 +1,7 @@
 'use client'
 
-import { useLocale } from 'next-intl'
 import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
-import { formatMinor } from '@/lib/money/money.utils'
+import { useMoneyText } from '@/components/ui/amount.component'
 
 type BarsChartProps = {
   /** one object per category of the x axis: `label` and a number (minor units) or null per series key; null = no bar */
@@ -21,7 +20,7 @@ type BarsChartProps = {
 // Figma «Saldo» → Statistics 2:73594 "Income vs expenses": rounded bars, no y axis, the label under each bar.
 // The colours are theme tokens (var(--color-…)), so dark mode follows without a second palette.
 export function BarsChart({ data, series, currency, summary }: BarsChartProps) {
-  const locale = useLocale()
+  const moneyText = useMoneyText()
 
   return (
     <div role="img" aria-label={summary} className="h-50 w-full text-caption lg:h-58">
@@ -40,7 +39,7 @@ export function BarsChart({ data, series, currency, summary }: BarsChartProps) {
               borderColor: 'var(--color-border)',
               color: 'var(--color-text-primary)',
             }}
-            formatter={(value) => formatMinor(Number(value), currency, locale)}
+            formatter={(value) => moneyText(Number(value), currency)}
           />
           <Legend
             position="top"

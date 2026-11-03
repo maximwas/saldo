@@ -5,11 +5,14 @@ import { Badge } from '@/components/ui/badge.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { formatRate } from '@/lib/money/fx.utils'
 import { currencySymbol } from '@/lib/money/money.utils'
 import { useRates } from '../hooks/currencies.hook'
 import { currentRates } from '../utils/currencies.utils'
 import { RateForm } from './rate-form.component'
 
+// stored rates of either direction (UAH → EUR is 0,024096) keep six decimals here
+const RATE_DIGITS = 6
 const CARD_CLASS = 'flex flex-col gap-5 rounded-card bg-card p-5 shadow-card lg:p-6'
 
 // Settings cards (Figma «Saldo» → · 11:72807: Card padding 24, gap 20, title card-title); the
@@ -29,11 +32,6 @@ export function CurrenciesScreen() {
     return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
-  const formatRate = (rate: string) =>
-    new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
-    }).format(Number(rate))
   const formatDate = (day: string) =>
     new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(`${day}T12:00:00`))
   const baseSymbol = currencySymbol(data.baseCurrency, locale)
@@ -62,7 +60,7 @@ export function CurrenciesScreen() {
                 <Badge tone="unknown">{translate('current.unknown')}</Badge>
               ) : (
                 <span className="font-display text-number-sm text-text-primary tabular-nums">
-                  {formatRate(row.rate)} {baseSymbol}
+                  {formatRate(row.rate, locale, RATE_DIGITS)} {baseSymbol}
                 </span>
               )}
             </li>
@@ -90,7 +88,7 @@ export function CurrenciesScreen() {
                   {row.baseCurrency} → {row.quoteCurrency}
                 </span>
                 <span className="flex-1 font-display text-number-sm text-text-primary tabular-nums">
-                  {formatRate(String(row.rate))}
+                  {formatRate(row.rate, locale, RATE_DIGITS)}
                 </span>
                 <span className="text-label text-text-secondary">{formatDate(row.rateOn)}</span>
                 <Badge tone={row.source === 'manual' ? 'info' : 'neutral'}>{translate(`source.${row.source}`)}</Badge>

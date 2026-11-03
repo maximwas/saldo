@@ -4,7 +4,7 @@ import { CreditCard as CreditCardIcon, Plus } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
@@ -14,7 +14,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import type { Credit } from '../api/credits.api'
 import { useCredits } from '../hooks/credits.hook'
-import { type CreditTotals, creditTotals, dayText, moneyText, monthNotes, nextMonthOf } from '../utils/credits.utils'
+import { type CreditTotals, creditTotals, dayText, monthNotes, nextMonthOf } from '../utils/credits.utils'
 import { CreditFormSheet } from './credit-form-sheet.component'
 import { CreditRow } from './credit-row.component'
 
@@ -26,12 +26,13 @@ type TotalsStripProps = {
 function useNoteText(credits: readonly Credit[], totals: CreditTotals) {
   const translate = useTranslations('credits.totals')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
   const notes = monthNotes(credits, today)
   const nextMonth = Number(nextMonthOf(today.slice(0, 7)).slice(5))
   const nextAmount = totals.byCurrency
     .filter((total) => total.nextMonthMinor !== 0)
-    .map((total) => moneyText(total.nextMonthMinor, total.currency, locale))
+    .map((total) => moneyText(total.nextMonthMinor, total.currency))
     .join(' + ')
   const head = [
     notes.dueToday.length > 0 ? translate('noteToday', { names: notes.dueToday.join(', ') }) : null,

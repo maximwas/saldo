@@ -1,11 +1,11 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import type { CalendarEntry } from '../api/calendar.api'
 import { useCancelPlanEntry } from '../hooks/calendar.hook'
 import { dayDate } from '../utils/calendar.utils'
@@ -20,7 +20,7 @@ type RemoveEntryDialogProps = {
 export function RemoveEntryDialog({ entry, onCloseAction }: RemoveEntryDialogProps) {
   const translate = useTranslations('calendar.remove')
   const format = useFormatter()
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const { ledgerId } = useLedger()
   const cancel = useCancelPlanEntry()
   const title = entry.title ?? ''
@@ -29,7 +29,7 @@ export function RemoveEntryDialog({ entry, onCloseAction }: RemoveEntryDialogPro
     day: '2-digit',
     month: '2-digit',
   })
-  const amount = entry.amountMinor === null ? null : formatMinor(entry.amountMinor, entry.currency, locale)
+  const amount = entry.amountMinor === null ? null : moneyText(entry.amountMinor, entry.currency)
 
   const remove = () => {
     if (!entry.obligationId) {

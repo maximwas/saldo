@@ -2,13 +2,12 @@
 
 import { ArrowLeftRight } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Card } from '@/components/ui/card.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { NEUTRAL_TONE } from '@/constants/category-colors.constants'
 import { useLedger } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
-import { useUiStore } from '@/store/ui.store'
+import { formatRate } from '@/lib/money/fx.utils'
 import { useRecentTransfers } from '../hooks/accounts.hook'
 import { type AccountView, type RecentTransfer, transferRate } from '../utils/accounts.utils'
 
@@ -25,9 +24,9 @@ type RecentTransfersProps = {
 export function RecentTransfers({ accounts }: RecentTransfersProps) {
   const translate = useTranslations('accounts.recent')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const desktop = useIsDesktop()
   const { timeZone } = useLedger()
-  const hideAmounts = useUiStore((state) => state.hideAmounts)
   const { data } = useRecentTransfers()
 
   if (!data || data.length === 0) {
@@ -48,22 +47,16 @@ export function RecentTransfers({ accounts }: RecentTransfersProps) {
     const fee =
       transfer.feeMinor === null
         ? translate('noFee')
-        : translate('fee', { amount: formatMinor(transfer.feeMinor, transfer.fromCurrency, locale) })
+        : translate('fee', { amount: moneyText(transfer.feeMinor, transfer.fromCurrency) })
 
     if (rate === null) {
       return fee
     }
 
-    const formatted = new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    }).format(rate)
-
-    return `${translate('rate', { rate: formatted })} · ${fee}`
+    return `${translate('rate', { rate: formatRate(rate, locale) })} · ${fee}`
   }
 
-  const received = (transfer: RecentTransfer) =>
-    hideAmounts ? '→ ••••' : `→ +${formatMinor(transfer.toAmountMinor, transfer.toCurrency, locale)}`
+  const received = (transfer: RecentTransfer) => `→ +${moneyText(transfer.toAmountMinor, transfer.toCurrency)}`
 
   const sent = (transfer: RecentTransfer) => (
     <Amount minor={-transfer.fromAmountMinor} currency={transfer.fromCurrency} kind="transfer" />

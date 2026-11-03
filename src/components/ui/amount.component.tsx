@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { useLocale } from 'next-intl'
-import { currencySymbol, formatMinor } from '@/lib/money/money.utils'
+import { amountText } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
 import { useUiStore } from '@/store/ui.store'
 
@@ -38,21 +38,6 @@ type AmountProps = VariantProps<typeof amountVariants> & {
   className?: string
 }
 
-// masked («•••• ₴»), unknown («? ₴») or the formatted sum
-function amountText(minor: AmountProps['minor'], currency: string, locale: string, masked: boolean) {
-  const symbol = currencySymbol(currency, locale)
-
-  if (masked) {
-    return `•••• ${symbol}`
-  }
-
-  if (minor === null) {
-    return `? ${symbol}`
-  }
-
-  return formatMinor(minor, currency, locale)
-}
-
 export function Amount({ minor, currency, hidden, kind, size, className }: AmountProps) {
   const locale = useLocale()
   const hideAmounts = useUiStore((state) => state.hideAmounts)
@@ -73,4 +58,12 @@ export function Amount({ minor, currency, hidden, kind, size, className }: Amoun
       {amountText(minor, currency, locale, hidden ?? hideAmounts)}
     </span>
   )
+}
+
+/** money inside text (captions, tooltips, chart labels, aria-labels, toasts, titles), hidden exactly as Amount hides it */
+export function useMoneyText() {
+  const locale = useLocale()
+  const hideAmounts = useUiStore((state) => state.hideAmounts)
+
+  return (minor: AmountProps['minor'], currency: string) => amountText(minor, currency, locale, hideAmounts)
 }

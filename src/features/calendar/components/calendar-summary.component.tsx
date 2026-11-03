@@ -1,10 +1,9 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { useFormatter, useTranslations } from 'next-intl'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useLedger } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
@@ -17,7 +16,7 @@ import { dayDate, sumTotals } from '../utils/calendar.utils'
 export function CalendarSummary() {
   const translate = useTranslations('calendar')
   const format = useFormatter()
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const { baseCurrency } = useLedger()
   const { view } = useCalendarParams()
   const { params, totals } = useCalendarData()
@@ -60,7 +59,7 @@ export function CalendarSummary() {
       ? null
       : translate(view === 'month' || view === 'list' ? 'summary.planMonth' : 'summary.planUntil', {
           date: withPlan,
-          amount: formatMinor(sum.resultMinor + sum.planMinor, baseCurrency, locale),
+          amount: moneyText(sum.resultMinor + sum.planMinor, baseCurrency),
         })
 
   return (

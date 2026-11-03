@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 import {
   type AccountRow,
@@ -193,7 +194,7 @@ describe('transferRate', () => {
         toAmountMinor: 3_320_000,
         toCurrency: 'UAH',
       }),
-    ).toBe(41.5)
+    ).toEqual(new Decimal(41.5))
   })
 
   it('has no rate inside one currency', () => {

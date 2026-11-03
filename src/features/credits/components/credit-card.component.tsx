@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { ReminderRuleCard } from '@/components/reminders/reminder-rule-card.component'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
@@ -15,7 +15,7 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useCredits, usePayInstallment } from '../hooks/credits.hook'
-import { activeInstallments, creditProgress, dayText, moneyText, payoffOf } from '../utils/credits.utils'
+import { activeInstallments, creditProgress, dayText, payoffOf } from '../utils/credits.utils'
 import { CloseCreditSheet } from './close-credit-sheet.component'
 import { CreditDetails } from './credit-details.component'
 import { CreditFormSheet } from './credit-form-sheet.component'
@@ -53,6 +53,7 @@ function CardSkeleton() {
 export function CreditCard({ creditId }: CreditCardProps) {
   const translate = useTranslations('credits')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const canWrite = useCanWrite()
   const pay = usePayInstallment()
   const { data, isPending, isError, refetch } = useCredits()
@@ -89,7 +90,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const meta = [
     credit.lender,
     translate('perInstallment', {
-      amount: moneyText(credit.regularInstallmentMinor, credit.currency, locale),
+      amount: moneyText(credit.regularInstallmentMinor, credit.currency),
       count: credit.installmentsCount,
     }),
     monthly,
@@ -101,9 +102,9 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const paidText = translate('card.paidSummary', {
     paid: progress.paidCount,
     total: progress.steps.length,
-    amount: moneyText(progress.paidMinor, credit.currency, locale),
+    amount: moneyText(progress.paidMinor, credit.currency),
   })
-  const nextAmount = next ? moneyText(next.remainingMinor, credit.currency, locale) : null
+  const nextAmount = next ? moneyText(next.remainingMinor, credit.currency) : null
   const unconfirmedNext = unconfirmed
     ? translate('card.unconfirmedNext', {
         number: unconfirmed.sequenceNo,
@@ -202,7 +203,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
                 <span className="text-label text-text-secondary">
                   <span className="max-lg:hidden">
                     {translate('card.remainingUntil', {
-                      amount: moneyText(progress.remainingMinor, credit.currency, locale),
+                      amount: moneyText(progress.remainingMinor, credit.currency),
                       date: dayText(progress.endOn, locale, true),
                     })}
                   </span>

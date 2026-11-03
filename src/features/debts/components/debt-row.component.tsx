@@ -1,13 +1,12 @@
 import { CircleCheck, HandCoins, Pencil, ReceiptText } from 'lucide-react'
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { Menu, type MenuItem } from '@/components/ui/menu.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { useCanWrite } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
 import type { DebtRow } from '../api/debts.api'
 import { type DebtState, debtState } from '../utils/debt-groups.utils'
@@ -40,7 +39,7 @@ export function DebtRowItem({ debt, onActionAction }: DebtRowItemProps) {
   const linked = linkedId === debt.id
   const translate = useTranslations('debts')
   const format = useFormatter()
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const canWrite = useCanWrite()
   const state = debtState(debt)
   const closed = debt.status !== 'open'
@@ -68,8 +67,8 @@ export function DebtRowItem({ debt, onActionAction }: DebtRowItemProps) {
   const repaidLine =
     state === 'partial' && debt.lastRepaymentOn
       ? translate('row.repaidLine', {
-          repaid: formatMinor(debt.repaidMinor, debt.currency, locale),
-          principal: formatMinor(debt.principalMinor, debt.currency, locale),
+          repaid: moneyText(debt.repaidMinor, debt.currency),
+          principal: moneyText(debt.principalMinor, debt.currency),
           date: day(debt.lastRepaymentOn),
         })
       : null
@@ -125,7 +124,7 @@ export function DebtRowItem({ debt, onActionAction }: DebtRowItemProps) {
         {secondLine && <span className="text-caption text-text-secondary max-lg:hidden">{secondLine}</span>}
         {debt.overpaidMinor > 0 && (
           <span className="text-caption text-text-secondary">
-            {translate('row.overpaid', { amount: formatMinor(debt.overpaidMinor, debt.currency, locale) })}
+            {translate('row.overpaid', { amount: moneyText(debt.overpaidMinor, debt.currency) })}
           </span>
         )}
       </div>

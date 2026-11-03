@@ -1,9 +1,8 @@
 import { Pencil } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { useTranslations } from 'next-intl'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
 import type { BudgetMonth } from '../api/budget.api'
@@ -47,14 +46,14 @@ function Tile({ label, caption, amount, wideCaption }: TileProps) {
 
 function IncomePlanNote({ planMinor }: { planMinor: number | null }) {
   const translate = useTranslations('budget.summary')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
   const canWrite = useCanWrite()
   const open = useBudgetSheetStore((state) => state.open)
   const text =
     planMinor === null
       ? translate('incomePlanNone')
-      : translate('incomePlan', { amount: formatMinor(planMinor, currency, locale) })
+      : translate('incomePlan', { amount: moneyText(planMinor, currency) })
 
   return (
     <>
@@ -99,12 +98,12 @@ type SummaryTilesProps = {
 
 export function SummaryTiles({ data, month }: SummaryTilesProps) {
   const translate = useTranslations('budget.summary')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
   const totals = budgetTotals(data.facts)
   const limits =
     totals.limitsMinor > 0
-      ? translate('limitsTotal', { amount: formatMinor(totals.limitsMinor, currency, locale) })
+      ? translate('limitsTotal', { amount: moneyText(totals.limitsMinor, currency) })
       : translate('limitsNone')
   const plannedMinor = usePlannedToMonthEnd(month)
   // Figma 2:12934 / 2:16178: the result with the plans due by the end of this month; other months keep the note
@@ -124,7 +123,7 @@ export function SummaryTiles({ data, month }: SummaryTilesProps) {
           withPlanMinor === null
             ? translate('resultNote')
             : translate('withPlan', {
-                amount: `${withPlanMinor > 0 ? '+' : ''}${formatMinor(withPlanMinor, currency, locale)}`,
+                amount: `${withPlanMinor > 0 ? '+' : ''}${moneyText(withPlanMinor, currency)}`,
               })
         }
         amount={<TileAmount minor={totals.resultMinor} kind={totals.resultMinor >= 0 ? 'income' : 'fact'} />}

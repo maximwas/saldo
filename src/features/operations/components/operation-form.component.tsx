@@ -1,9 +1,10 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -17,7 +18,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useFormDraft } from '@/lib/forms/form-draft.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
 import { factFormSchema, type OperationFormValues } from '../schemas/operation-form.schema'
 import { accountOptions } from '../utils/operation-display.utils'
@@ -55,7 +56,7 @@ export function OperationForm({
 }: OperationFormProps) {
   const translate = useTranslations('operations.form')
   const translateDraft = useTranslations('sync.draft')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   // the editor mounts the form after the options are loaded; the query cache hands the same data over
@@ -135,9 +136,7 @@ export function OperationForm({
           label={translate('account')}
           required
           hint={
-            !hints || balance === undefined
-              ? undefined
-              : translate('balance', { amount: formatMinor(balance, currency, locale) })
+            !hints || balance === undefined ? undefined : translate('balance', { amount: moneyText(balance, currency) })
           }
           render={(field) => (
             <Select

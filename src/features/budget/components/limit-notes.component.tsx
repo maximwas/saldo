@@ -1,7 +1,7 @@
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
 import type { BudgetFact, LimitProgress } from '../utils/budget.utils'
 
@@ -21,9 +21,9 @@ type LimitNotesProps = {
 // the line under the bar: the remainder (or the overspend) on the left, «of limit · N %» on the right
 export function LimitNotes({ fact, progress }: LimitNotesProps) {
   const translate = useTranslations('budget.limits')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
-  const money = (minor: number) => formatMinor(minor, currency, locale)
+  const money = (minor: number) => moneyText(minor, currency)
   const { state } = progress
 
   if (state === 'none' || fact.limitMinor === null) {

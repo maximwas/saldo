@@ -1,11 +1,10 @@
 'use client'
 
 import { Info } from 'lucide-react'
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import type { Overview } from '../api/overview.api'
 import { isoToDate } from '../utils/overview.utils'
 import { IncomeDateSheet } from './income-date-sheet.component'
@@ -47,7 +46,7 @@ function Row({ label, minor, currency, total = false }: RowProps) {
 export function HeroAvailable({ overview }: HeroAvailableProps) {
   const translate = useTranslations('overview')
   const format = useFormatter()
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const { available, baseCurrency, untilOn } = overview
   const [editing, setEditing] = useState(false)
   // ledgers.next_income_on is a space setting: RLS lets only the owner change it
@@ -91,7 +90,7 @@ export function HeroAvailable({ overview }: HeroAvailableProps) {
             <Info aria-hidden size={16} className="mt-px shrink-0" />
             <span>
               {translate('expectedIncome', {
-                amount: formatMinor(available.expectedIncomeMinor, baseCurrency, locale),
+                amount: moneyText(available.expectedIncomeMinor, baseCurrency),
               })}
             </span>
           </p>

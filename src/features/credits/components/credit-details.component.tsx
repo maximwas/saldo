@@ -1,12 +1,12 @@
 'use client'
 
 import { useLocale, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Card } from '@/components/ui/card.component'
 import { cn } from '@/lib/utils/cn.utils'
 import type { Credit } from '../api/credits.api'
 import { useCredits } from '../hooks/credits.hook'
-import { activeInstallments, creditProgress, dayText, moneyText } from '../utils/credits.utils'
+import { activeInstallments, creditProgress, dayText } from '../utils/credits.utils'
 
 type CreditDetailsProps = {
   credit: Credit
@@ -40,12 +40,13 @@ function DetailRow({ label, desktopOnly, children }: DetailRowProps) {
 export function CreditDetails({ credit, footer }: CreditDetailsProps) {
   const translate = useTranslations('credits')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const accounts = useCredits().data?.accounts ?? []
   const progress = creditProgress(credit)
   const last = activeInstallments(credit).at(-1)
   const account = accounts.find((option) => option.id === credit.accountId)?.name
   const unknown = translate('details.unknown')
-  const money = (minor: number | null) => moneyText(minor, credit.currency, locale)
+  const money = (minor: number | null) => moneyText(minor, credit.currency)
 
   return (
     <Card title={translate('details.title')}>
