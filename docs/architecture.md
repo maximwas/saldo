@@ -99,7 +99,7 @@ flowchart LR
     Google["Google Calendar API"]
     ICloud["iCloud CalDAV"]
     Push["Push-сервіси браузерів (APNs, FCM, Mozilla)"]
-    FX["Довідкові курси (джерело уточнити)"]
+    FX["Курси НБУ (bank.gov.ua, без ключа)"]
   end
 
   GHA["GitHub Actions: нічний db dump, age, артефакт 30 днів"]
@@ -560,7 +560,10 @@ parent_depth)` → `categories (ledger_id, id, kind, depth)`: підкатего
 `base_currency`, `quote_currency`, `rate numeric(20,10) check (> 0)`, `rate_on date`, `source text check in
 ('manual','reference')`, `source_name text` (напр. назва банку-джерела). Unique
 `fx_rates_unique (ledger_id, base_currency, quote_currency, rate_on, source)`. `rate` — скільки `quote_currency` за 1
-`base_currency` (EUR→UAH 41.5). Курс для дати D (правило A, Максим 30.10.2026; `findRate` і `private.convert_minor`): береться курс із найпізнішою `rate_on <= D`, за однакової дати ручний перемагає довідковий, а старіший ручний ніколи не перемагає новіший довідковий; пряма пара — раніше за обернену.
+`base_currency` (EUR→UAH 41.5). Довідкові курси — НБУ (`source = 'reference'`, `source_name = 'nbu'`): щоденний
+`api/cron/daily` пише в кожен простір пари «інша дозволена валюта → базова валюта простору» (той самий напрям, що й
+ручний курс, тому правило A порівнює їх як одну пару); для небазової гривні — крос через UAH (`findRate`), 10 знаків.
+Курс для дати D (правило A, Максим 30.10.2026; `findRate` і `private.convert_minor`): береться курс із найпізнішою `rate_on <= D`, за однакової дати ручний перемагає довідковий, а старіший ручний ніколи не перемагає новіший довідковий; пряма пара — раніше за обернену.
 
 ### 5.2 Операції й перекази
 
@@ -944,7 +947,7 @@ text)` (security definer, Vault). `revoke execute … from anon, authenticated`.
 |---|---|---|
 | `api/cron/reminders` | pg_cron + pg_net кожні 10 хв (POST), `Authorization: Bearer CRON_SECRET` | нагадування → notifications → Web Push |
 | `api/cron/calendar-sync` | pg_cron кожні 15 хв | `claim_sync_jobs`, push у Google/iCloud, опитування iCloud |
-| `api/cron/daily` | Vercel cron раз на добу, `Authorization: Bearer CRON_SECRET` | прибирання файлів `attachments` без рядка (фаза 1), матеріалізація зобов'язань до +13 міс. (той самий `recurrence.utils.ts`), довідкові курси, поновлення каналів `events.watch`, страховий sync; тримає БД активною |
+| `api/cron/daily` | Vercel cron раз на добу, `Authorization: Bearer CRON_SECRET` | прибирання файлів `attachments` без рядка (фаза 1), матеріалізація зобов'язань до +13 міс. (той самий `recurrence.utils.ts`), курси НБУ на сьогодні в усі простори (`reference-rates.server.ts`: 3 спроби по 10 с; збій нічого не пише, діє вчорашній курс), поновлення каналів `events.watch`, страховий sync; тримає БД активною |
 | `api/integrations/google/start` | учасник простору | OAuth redirect зі `state` (cookie) |
 | `api/integrations/google/callback` | Google | обмін коду, refresh token → Vault, створення каналу |
 | `api/integrations/google/webhook` | Google push | перевірка `X-Goog-Channel-Token`, задача `incremental` |
@@ -1091,7 +1094,7 @@ Server Actions для даних не використовуються; вихі
 - Базова валюта: UAH чи EUR (дохід у євро)? Валюта й стартовий баланс основної картки.
 - Дата наступного доходу (§3).
 - Короткі місяці: підписка 30-го — у лютому «останній день» чи «1 березня»?
-- Джерело довідкових курсів (НБУ чи ЄЦБ; не перевірено) і чи потрібні історичні курси для минулих дат.
+- Чи потрібні історичні курси НБУ для минулих дат (зараз — лише з дня першого запуску крону; джерело — НБУ, Максим 3.11.2026).
 - Канали нагадувань: лише push + центр сповіщень, чи також сигнал календаря (§19).
 - Часткові оплати кредитів і що робити з розбіжністю графіка банку.
 - Конфлікти календаря: для перенесеної в Google події підписки — приймати дату автоматично чи завжди питати.

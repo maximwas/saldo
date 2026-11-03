@@ -15,7 +15,7 @@
   },
   "form": {
     "title": "New rate",
-    "hint": "A manual rate applies from the given date. It does not change the base-currency amounts of old operations. A manual rate wins a reference rate of the same day; an older manual rate never beats a newer reference one.",
+    "hint": "A manual rate applies from the given date. It does not change the base-currency amounts of old operations. Saldo takes the NBU rate itself every morning. A manual rate wins the NBU rate of the same day; an older manual rate never beats a newer NBU rate.",
     "currency": "Currency",
     "rate": "Rate: 1 {currency} = … {base}",
     "rateOn": "Effective from",
@@ -28,7 +28,7 @@
   },
   "source": {
     "manual": "Manual",
-    "reference": "Reference"
+    "reference": "NBU"
   },
   "summaryBase": "{symbol} base"
 }
