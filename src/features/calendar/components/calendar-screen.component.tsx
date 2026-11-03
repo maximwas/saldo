@@ -83,6 +83,19 @@ function CalendarBody() {
     return entries.data.length === 0 ? <EmptyPeriod /> : <CalendarDays />
   }
 
+  // Figma 59:128610: the desktop week is seven tiles across the content and a click opens the day; phones keep the
+  // selected day's card under the row
+  if (view === 'week') {
+    return (
+      <div className="flex flex-col gap-4">
+        <CalendarMonth />
+        <div className="lg:hidden">
+          <DayPanel />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_20rem] lg:items-stretch lg:gap-6">
       <CalendarMonth />

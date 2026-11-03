@@ -172,18 +172,19 @@ type ToneFields = {
   sourceType: string | null
 }
 
-/** the dot colour of an entry (Figma «Calendar» 51:126598 «Colour is the kind of entry»): its source first, otherwise
- * its kind; whether it is planned or paid is an icon, never the dot */
+/** the mark colour of an entry (Figma «Calendar» 51:126598 «Colour is the kind of entry»): its source first, otherwise
+ * its kind, as a text colour so a mark paints it filled (bg-current) or outlined (border-current). A plain expense
+ * (a manual plan without a category too) takes the primary mark: grey is «paid earlier» on phones (Figma 59:129601). */
 export const LEGEND = [
-  ['expense', 'bg-neutral'],
-  ['income', 'bg-positive'],
-  ['transfer', 'bg-border-strong'],
-  ['subscription', 'bg-primary'],
-  ['credit', 'bg-cat-orange'],
-  ['debt', 'bg-cat-pink'],
-  ['big_expense', 'bg-cat-cyan'],
-  ['auto_plan', 'bg-cat-teal'],
-  ['tax', 'bg-cat-yellow'],
+  ['expense', 'text-primary'],
+  ['income', 'text-positive'],
+  ['transfer', 'text-border-strong'],
+  ['subscription', 'text-primary'],
+  ['credit', 'text-cat-orange'],
+  ['debt', 'text-cat-pink'],
+  ['big_expense', 'text-cat-cyan'],
+  ['auto_plan', 'text-cat-teal'],
+  ['tax', 'text-cat-yellow'],
 ] as const
 
 const TONE: Record<string, string> = Object.fromEntries(LEGEND)
@@ -226,6 +227,9 @@ export function cellLines<Item>(items: Item[], max = CELL_LINES) {
   }
 }
 
+/** the dates a view reads, as periodRange gives them */
+type Period = ReturnType<typeof periodRange>
+
 type StatusFields = {
   entry: 'fact' | 'plan'
   day: string
@@ -238,18 +242,25 @@ const paidElsewhere = (entry: StatusFields) =>
   entry.entry === 'fact' && entry.obligationId !== null && entry.plannedOn !== null && entry.plannedOn !== entry.day
 
 /** a plan paid on another day leaves a greyed «Paid DD.MM» mark on its own day (Figma 55:127515): the facts that paid
- * a plan of another day, by that plan's day. The money still counts on the pay day only. */
-export function paidMarks<Entry extends StatusFields>(entries: Entry[]) {
+ * a plan of another day, by that plan's day, for the plan days of the period only. The money still counts on the pay
+ * day only. */
+export function paidMarks<Entry extends StatusFields>(entries: Entry[], period: Period) {
   const byPlanDay = new Map<string, Entry[]>()
 
   for (const entry of entries.filter(paidElsewhere)) {
     const day = entry.plannedOn ?? entry.day
 
-    byPlanDay.set(day, [...(byPlanDay.get(day) ?? []), entry])
+    if (day >= period.from && day <= period.to) {
+      byPlanDay.set(day, [...(byPlanDay.get(day) ?? []), entry])
+    }
   }
 
   return byPlanDay
 }
+
+/** the days outside [from, to] that a read of the period still needs, once each and in order */
+export const outsideDays = (days: string[], period: Period) =>
+  [...new Set(days.filter((day) => day < period.from || day > period.to))].sort()
 
 export type EntryStatus = 'planned' | 'partial' | 'overdue' | 'paid' | 'paidElsewhere' | 'fact'
 

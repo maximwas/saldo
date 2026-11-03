@@ -1,9 +1,7 @@
 import { expect } from '@playwright/test'
+import { addPlannedPayment, shortDay as short } from '../fixtures/planned-payment.fixture'
 import { test } from '../fixtures/roles.fixture'
 import { kyivToday } from '../fixtures/subscriptions.fixture'
-
-/** «03.11» of a YYYY-MM-DD, as the calendar writes a day */
-const short = (day: string) => `${day.slice(8)}.${day.slice(5, 7)}`
 
 test('запис календаря відкриває попап, «Оплачено» пише факт на сьогодні й лишає позначку на дні плану', async ({
   pageAs,
@@ -15,23 +13,7 @@ test('запис календаря відкриває попап, «Оплач�
   const planDay = today.endsWith('-15') ? 16 : 15
   const plan = `${today.slice(0, 8)}${planDay}`
 
-  await page.goto('/payments')
-  await page.getByRole('button', { name: /^Додати (плановий )?платіж$/ }).click()
-
-  const form = page.getByRole('dialog')
-
-  await form.getByLabel('Назва').fill(mark)
-  await form.getByLabel('Сума').fill('350')
-  await form.getByLabel('Дата платежу').click()
-  await page
-    .getByRole('gridcell')
-    .filter({ hasText: new RegExp(`^${planDay}$`) })
-    .getByRole('button')
-    .click()
-  // the date picker is a dialog too: save once only the sheet is left
-  await expect(form).toHaveCount(1)
-  await form.getByRole('button', { name: 'Зберегти' }).click()
-  await expect(form).toBeHidden()
+  await addPlannedPayment(page, mark, '350', planDay)
 
   // the search keeps the cells to this test's own entries
   await page.goto(`/calendar?q=${mark}`)

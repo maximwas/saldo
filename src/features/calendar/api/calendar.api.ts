@@ -2,7 +2,7 @@ import { listAccountOptions, listCategoryOptions } from '@/lib/finance/ledger-op
 import type { Database, Json } from '@/types/database.types'
 import type { SaldoClient } from '@/types/supabase.types'
 import { type CalendarFilter, calendarFilterSchema } from '../schemas/calendar-filter.schema'
-import type { DayTotals } from '../utils/calendar.utils'
+import { type DayTotals, outsideDays } from '../utils/calendar.utils'
 
 /** one fact (an operation) or one plan (what remains of an obligation); a paid plan is its fact, never both (§18) */
 export type CalendarEntry = {
@@ -108,6 +108,28 @@ export async function listCalendarDayTotals(supabase: SaldoClient, params: Calen
   }
 
   return data.map(toDayTotals)
+}
+
+/** the days a plan due in [from, to] was paid on outside it: those days' facts leave «Paid DD.MM» marks in the period */
+export async function listPaidElsewhereDays(supabase: SaldoClient, { ledgerId, from, to }: CalendarParams) {
+  const { data, error } = await supabase
+    .from('obligation_payments')
+    .select('operations!inner(occurred_on), obligations!inner(due_on)')
+    .eq('ledger_id', ledgerId)
+    .gte('obligations.due_on', from)
+    .lte('obligations.due_on', to)
+
+  if (error) {
+    throw error
+  }
+
+  return outsideDays(
+    data.map((row) => row.operations.occurred_on),
+    {
+      from,
+      to,
+    },
+  )
 }
 
 /** the space's own filter sets; a malformed one turns into «everything» instead of breaking the screen */
