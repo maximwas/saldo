@@ -18,10 +18,16 @@ export class ToolError extends Error {
   }
 }
 
-const wrapEntry = ([key, item]: [string, unknown]) => [
-  key,
-  typeof item === 'string' && UNTRUSTED_KEYS.has(key) ? { untrusted_text: item } : markUntrusted(item),
-]
+/** the arguments a preview hands back to resend: the model's own input, kept verbatim so it validates again */
+const VERBATIM_KEYS = new Set(['confirmArguments'])
+
+function wrapEntry([key, item]: [string, unknown]) {
+  if (VERBATIM_KEYS.has(key)) {
+    return [key, item]
+  }
+
+  return [key, typeof item === 'string' && UNTRUSTED_KEYS.has(key) ? { untrusted_text: item } : markUntrusted(item)]
+}
 
 /** every string under an UNTRUSTED_KEYS key, at any depth, becomes { untrusted_text } (plan 10.10) */
 export function markUntrusted(value: unknown): unknown {
@@ -65,6 +71,32 @@ export function toToolResult(data: Record<string, unknown>): CallToolResult {
       },
     ],
     structuredContent: structured,
+  }
+}
+
+export type Preview<Args> = {
+  preview: true
+  written: false
+  willWrite: Record<string, unknown>
+  next: string
+  confirmArguments: Args & { confirm: true }
+}
+
+/** a write tool without confirm: what it would write and the exact arguments that write it, ids included */
+export function toPreview<Args extends object>(
+  tool: string,
+  willWrite: Record<string, unknown>,
+  args: Args,
+): Preview<Args> {
+  return {
+    preview: true,
+    written: false,
+    willWrite,
+    next: `Nothing is written yet. Show this to the person; only if they agree, call ${tool} again with confirmArguments (the same id never writes twice).`,
+    confirmArguments: {
+      ...args,
+      confirm: true,
+    },
   }
 }
 
