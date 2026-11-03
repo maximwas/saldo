@@ -9,7 +9,7 @@ import { useBudgetCategories, useCurrentBudget, useDeleteLimit, useRestoreLimit 
 import { useMonthLabel } from '../hooks/month-label.hook'
 
 // Figma frames 2:24914 (desktop dialog) / 2:25401 (mobile sheet): what goes away and what stays (the operations); the desktop
-// adds that later months keep their limits. Deleted 2:28053: «Limit “X” deleted» with undo, which writes the limit back.
+// adds that later months keep their limits. Deleted 41:111016 / 2:28053: «Limit “X” deleted» with undo, which writes the limit back.
 export function DeleteLimitSheet({ categoryId }: { categoryId: string }) {
   const translate = useTranslations('budget.deleteSheet')
   const locale = useLocale()

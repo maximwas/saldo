@@ -25,9 +25,10 @@ type LimitWrite = {
   expectedVersion: number | null
 }
 
-// Figma frame 2:27047 (desktop) / 2:27561: the limit, what is spent, the unspent remainder.
-// "valid from" of the frame is not built: a limit belongs to its month, a new month is made by copying.
-// A category over its limit opens the variant of 2:30757: a new limit, optionally moved from another category's remainder.
+// Figma frames: new limit 42:112999 (desktop) / 42:113536 (mobile), edit 42:114031 / 42:114556 (what is spent on top, no
+// category field, the carry option, then «Delete limit»). No «valid from»: a limit belongs to its month.
+// A category over its limit opens the variant of 42:115110 / 2:30316: a new limit, optionally moved from another
+// category's remainder.
 export function LimitSheet({ categoryId }: { categoryId: string | null }) {
   const translate = useTranslations('budget.limitSheet')
   const locale = useLocale()
