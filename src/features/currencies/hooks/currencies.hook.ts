@@ -23,6 +23,13 @@ export function useRates() {
   return useQuery(currenciesQueries.rates(ledgerId))
 }
 
+/** the rates of the account pairs, newest first: the history in Settings → Currencies */
+export function useRateHistory() {
+  const { ledgerId } = useLedger()
+
+  return useQuery(currenciesQueries.history(ledgerId))
+}
+
 export const useSaveRate = () => useLedgerWrite(currenciesWrites.saveRate)
 
 /** «03.11»: a YYYY-MM-DD day as the rates views write it */
