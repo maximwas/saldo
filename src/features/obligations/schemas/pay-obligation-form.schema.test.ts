@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   type PayObligationFormValues,
+  payFormDefaults,
   payObligationFormSchema,
   toPayObligationInput,
 } from './pay-obligation-form.schema'
@@ -97,5 +98,55 @@ describe('toPayObligationInput', () => {
 
     expect(input.newOperation).toBeNull()
     expect(input.existingOperationId).toBe(EXISTING)
+  })
+})
+
+describe('payFormDefaults', () => {
+  const accounts = [
+    {
+      id: 'eur',
+      currency: 'EUR',
+    },
+    {
+      id: ACCOUNT,
+      currency: 'UAH',
+    },
+  ]
+  const internet = {
+    accountId: null,
+    currency: 'UAH',
+    remainingMinor: 35_000,
+    plannedMinor: 35_000,
+    dueOn: '2026-11-10',
+  }
+
+  it('pays today what remains, from an account in the plan currency', () => {
+    expect(payFormDefaults(internet, accounts, '2026-11-03')).toMatchObject({
+      amount: '350.00',
+      currency: 'UAH',
+      accountId: ACCOUNT,
+      occurredOn: '2026-11-03',
+    })
+  })
+
+  it('dates a late payment today too, not on the missed plan day', () => {
+    expect(payFormDefaults(internet, accounts, '2026-11-20').occurredOn).toBe('2026-11-20')
+  })
+
+  it('leaves the amount empty when the account is in another currency', () => {
+    expect(
+      payFormDefaults(
+        {
+          ...internet,
+          accountId: 'eur',
+        },
+        accounts,
+        '2026-11-03',
+      ),
+    ).toMatchObject({
+      amount: '',
+      currency: 'EUR',
+      accountId: 'eur',
+    })
   })
 })

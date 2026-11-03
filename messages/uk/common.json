@@ -14,7 +14,8 @@
     "today": "Сьогодні",
     "clear": "Очистити",
     "previousMonth": "Попередній місяць",
-    "nextMonth": "Наступний місяць"
+    "nextMonth": "Наступний місяць",
+    "todayValue": "Сьогодні, {date}"
   },
   "toast": {
     "retry": "Повторити",

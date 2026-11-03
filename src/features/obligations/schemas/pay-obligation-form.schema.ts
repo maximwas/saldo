@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { CURRENCIES } from '@/constants/currencies.constants'
-import { toMinor } from '@/lib/money/money.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { type Clock, toOccurredAt } from '@/lib/utils/clock.utils'
 import type { PayObligationInput } from './pay-obligation-input.schema'
 
@@ -26,6 +26,55 @@ export const payObligationFormSchema = z
   })
 
 export type PayObligationFormValues = z.infer<typeof payObligationFormSchema>
+
+type PayDefaultsObligation = {
+  accountId: string | null
+  currency: string
+  remainingMinor: number | null
+  plannedMinor: number | null
+}
+
+type PayDefaultsAccount = {
+  id: string
+  currency: string
+}
+
+/** the plan's own account, else one in its currency, else the first */
+const payAccount = (obligation: PayDefaultsObligation, accounts: PayDefaultsAccount[]) =>
+  accounts.find((item) => item.id === obligation.accountId) ??
+  accounts.find((item) => item.currency === obligation.currency) ??
+  accounts[0]
+
+/** what remains of the plan; empty when the account is in another currency or the sum is unknown */
+function suggestedAmount(obligation: PayDefaultsObligation, account: PayDefaultsAccount | undefined) {
+  const minor = obligation.remainingMinor ?? obligation.plannedMinor
+
+  if (account?.currency !== obligation.currency || minor === null) {
+    return ''
+  }
+
+  return fromMinor(minor, obligation.currency)
+}
+
+/** what the «Paid» sheet starts with (Figma 55:127451): what remains of the plan, paid today, from the plan's account.
+ * A late payment is dated today as well: the person pays now, and the calendar writes the fact on that date. */
+export function payFormDefaults(
+  obligation: PayDefaultsObligation,
+  accounts: PayDefaultsAccount[],
+  today: string,
+): z.input<typeof payObligationFormSchema> {
+  const account = payAccount(obligation, accounts)
+
+  return {
+    amount: suggestedAmount(obligation, account),
+    currency: (account?.currency ?? obligation.currency) as PayObligationFormValues['currency'],
+    accountId: account?.id ?? null,
+    existingOperationId: null,
+    occurredOn: today,
+    settle: false,
+    note: '',
+  }
+}
 
 type PayObligationContext = {
   paymentId: string
