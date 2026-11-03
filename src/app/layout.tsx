@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import { NextIntlClientProvider } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { ThemeProvider } from 'next-themes'
+import NextTopLoader from 'nextjs-toploader'
 import { Suspense } from 'react'
 import { AppProviders } from '@/components/providers/app-providers.component'
 import { ServiceWorker } from '@/components/providers/service-worker.component'
@@ -82,6 +83,8 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className={`${fixelText.variable} ${fixelDisplay.variable}`}>
+        {/* top progress bar on link navigation (Maxim, 3.11): primary token, follows the theme */}
+        <NextTopLoader color="var(--color-primary)" showSpinner={false} />
         <ThemeProvider attribute="data-theme">
           <ServiceWorker>
             <Suspense>
