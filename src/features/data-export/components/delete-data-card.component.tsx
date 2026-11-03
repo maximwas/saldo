@@ -15,7 +15,7 @@ import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { deleteLedgerData } from '../api/data-export.api'
 
-// Owner only (the page renders it for the owner, delete_ledger_data refuses anyone else with 42501). The space, its
+// Figma «Saldo» 43:116906 / 43:117209 (confirm 43:118142 / 43:118619, deleted 43:118839): owner only (the page renders it for the owner, delete_ledger_data refuses anyone else with 42501). The space, its
 // members and invites stay; everything in it goes. The red button unlocks once the space name is typed.
 export function DeleteDataCard() {
   const translate = useTranslations('settings.data')
@@ -23,10 +23,12 @@ export function DeleteDataCard() {
 
   return (
     <Card title={translate('deleteTitle')}>
-      <p className="text-label text-text-secondary">{translate('deleteHint')}</p>
-      <Button variant="danger" className="cursor-pointer self-start" onClick={() => setOpen(true)}>
-        {translate('delete')}
-      </Button>
+      <div className="flex flex-col gap-4">
+        <p className="text-label text-text-secondary">{translate('deleteHint')}</p>
+        <Button variant="danger" className="cursor-pointer sm:self-start" onClick={() => setOpen(true)}>
+          {translate('delete')}
+        </Button>
+      </div>
       {open ? <DeleteDataSheet onCloseAction={() => setOpen(false)} /> : null}
     </Card>
   )
