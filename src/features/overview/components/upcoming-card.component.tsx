@@ -88,13 +88,16 @@ export function UpcomingCard({ overview }: UpcomingCardProps) {
       {overview.overdueCount > 0 && (
         <Link
           href={'/payments' as Route}
-          className="flex cursor-pointer items-center gap-3 rounded-inner bg-warning-soft px-4 py-3 text-warning-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="flex cursor-pointer items-start gap-3 rounded-inner bg-warning-soft px-4 py-3 text-warning-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <AlertTriangle aria-hidden size={20} className="shrink-0" />
+          {/* Figma Banner 2:10028: icon and action sit on the first 24px line, not centred on a wrapped text */}
+          <span className="flex shrink-0 py-0.5">
+            <AlertTriangle aria-hidden size={20} />
+          </span>
           <span className="flex-1 text-body font-medium">
             {translate('upcoming.overdue', { count: overview.overdueCount })}
           </span>
-          <span className="shrink-0 text-label font-semibold">{translate('upcoming.review')}</span>
+          <span className="shrink-0 py-0.5 text-label font-semibold">{translate('upcoming.review')}</span>
         </Link>
       )}
     </Card>
