@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { currencySymbol } from '@/lib/money/money.utils'
@@ -18,18 +19,14 @@ export function CurrenciesScreen() {
   const locale = useLocale()
   const canWrite = useCanWrite()
   const today = useToday()
-  const { data, isPending, isError } = useRates()
+  const { data, isPending, isError, refetch } = useRates()
 
   if (isPending) {
     return <div aria-busy className="h-72 rounded-card bg-subtle" />
   }
 
   if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
+    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
   const formatRate = (rate: string) =>

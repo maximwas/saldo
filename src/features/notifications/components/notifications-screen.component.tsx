@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useState, useSyncExternalStore } from 'react'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
@@ -141,7 +142,7 @@ export function NotificationsScreen() {
   const translatePush = useTranslations('notifications.push')
   const { online, updatedAt } = useSyncQueue()
   const push = usePush(translatePush('failed'))
-  const { data: loaded, isError } = useNotifications()
+  const { data: loaded, isError, refetch } = useNotifications()
   // the bell in the Topbar hydrates first and may have fetched the list already: the first client render must still
   // match the server's, so the list appears after hydration
   const hydrated = useSyncExternalStore(
@@ -154,6 +155,8 @@ export function NotificationsScreen() {
   const [clearing, setClearing] = useState(false)
   const unread = data?.filter((item) => !item.readAt) ?? []
   const read = data?.filter((item) => item.readAt) ?? []
+  // Figma 39:106643: nothing loaded, only the error card under the header; a failed refresh keeps the cached list
+  const failed = isError && data === undefined
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
@@ -163,23 +166,26 @@ export function NotificationsScreen() {
           {translate('offline')}
         </Banner>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-label text-text-secondary">{translate('summary', { count: unread.length })}</p>
-        <div className="flex flex-wrap gap-2">
-          {unread.length > 0 ? (
-            <Button type="button" variant="ghost" onClick={() => markRead.mutate(undefined)}>
-              <Check aria-hidden className="size-5" />
-              {translate('markAll')}
-            </Button>
-          ) : null}
-          {read.length > 0 ? (
-            <Button type="button" variant="ghost" onClick={() => setClearing(true)}>
-              {translate('clear.action')}
-            </Button>
-          ) : null}
+      {failed ? (
+        <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-label text-text-secondary">{translate('summary', { count: unread.length })}</p>
+          <div className="flex flex-wrap gap-2">
+            {unread.length > 0 ? (
+              <Button type="button" variant="ghost" onClick={() => markRead.mutate(undefined)}>
+                <Check aria-hidden className="size-5" />
+                {translate('markAll')}
+              </Button>
+            ) : null}
+            {read.length > 0 ? (
+              <Button type="button" variant="ghost" onClick={() => setClearing(true)}>
+                {translate('clear.action')}
+              </Button>
+            ) : null}
+          </div>
         </div>
-      </div>
-      {isError ? <p className="text-body text-negative-text">{translate('loadFailed')}</p> : null}
+      )}
       {data === undefined && !isError ? <NotificationsSkeleton /> : null}
       {data?.length === 0 ? <EmptyNotifications /> : null}
       <NotificationGroup title={translate('new')} items={unread} onReadAction={(id) => markRead.mutate([id])} />

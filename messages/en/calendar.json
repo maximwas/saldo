@@ -1,5 +1,5 @@
 {
-  "loadFailed": "Could not load the calendar. Reload the page.",
+  "loadFailed": "Could not load the calendar",
   "views": {
     "label": "Calendar view",
     "month": "Month",

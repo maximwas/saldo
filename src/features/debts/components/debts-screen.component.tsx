@@ -9,6 +9,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
@@ -96,7 +97,7 @@ export function DebtsScreen() {
   const queryClient = useQueryClient()
   const { online } = useSyncQueue()
   const queued = useQueuedRepayments()
-  const { data, isPending, isError } = useDebts()
+  const { data, isPending, isError, refetch } = useDebts()
   const [sheet, setSheet] = useState<Sheet>(null)
 
   if (isPending) {
@@ -109,11 +110,7 @@ export function DebtsScreen() {
   }
 
   if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
+    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
   const close = () => setSheet(null)

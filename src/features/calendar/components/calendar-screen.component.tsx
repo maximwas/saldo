@@ -4,6 +4,7 @@ import { CalendarSearch } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useCalendarData } from '../hooks/calendar.hook'
@@ -74,9 +75,13 @@ function CalendarBody() {
 
   if (entries.isError || totals.isError) {
     return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
+      <ErrorState
+        title={translate('loadFailed')}
+        onRetryAction={() => {
+          void entries.refetch()
+          void totals.refetch()
+        }}
+      />
     )
   }
 

@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Banner } from '@/components/ui/banner.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useOverview } from '../hooks/overview.hook'
@@ -14,7 +15,7 @@ import { UpcomingCard } from './upcoming-card.component'
 // Figma «Saldo» → Overview 2:8237 (desktop: hero, then "Upcoming" 2/3 + "Accounts" 1/3) and 2:8735 (mobile: one column).
 // reserves, auto and taxes cards are hidden in Figma until their phases (4, 5, 6, 9): no placeholder rows.
 export function OverviewScreen() {
-  const { data, isPending, isError } = useOverview()
+  const { data, isPending, isError, refetch } = useOverview()
   const translateCommon = useTranslations('overview')
   const canWrite = useCanWrite()
   const space = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
@@ -48,11 +49,7 @@ export function OverviewScreen() {
   }
 
   if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translateCommon('loadFailed')}
-      </p>
-    )
+    return <ErrorState title={translateCommon('loadFailed')} onRetryAction={refetch} />
   }
 
   // Figma first run 5:87358: no accounts, the Welcome card replaces everything else

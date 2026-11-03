@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
@@ -35,7 +36,7 @@ export function ObligationsScreen() {
   const translate = useTranslations('obligations')
   const canWrite = useCanWrite()
   const today = useToday()
-  const { data, isPending, isError } = useObligations()
+  const { data, isPending, isError, refetch } = useObligations()
   const options = useObligationOptions()
   const router = useRouter()
   const queuedPayments = useQueuedPayments()
@@ -78,9 +79,13 @@ export function ObligationsScreen() {
 
   if (isError || options.isError) {
     return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
+      <ErrorState
+        title={translate('loadFailed')}
+        onRetryAction={() => {
+          void refetch()
+          void options.refetch()
+        }}
+      />
     )
   }
 

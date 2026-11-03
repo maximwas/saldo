@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Banner } from '@/components/ui/banner.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useCurrentBudget } from '../hooks/budget.hook'
 import { BudgetEmpty } from './budget-empty.component'
@@ -16,7 +17,7 @@ import { MonthCard } from './month-card.component'
 export function BudgetScreen() {
   const translate = useTranslations('budget')
   const canWrite = useCanWrite()
-  const { month, data, isPending, isError } = useCurrentBudget()
+  const { month, data, isPending, isError, refetch } = useCurrentBudget()
 
   if (isPending) {
     return (
@@ -28,11 +29,7 @@ export function BudgetScreen() {
   }
 
   if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
+    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
   // no row for the month and no limit: nothing was planned (an income plan alone is a budget)
