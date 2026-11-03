@@ -78,7 +78,9 @@ test('офлайн-витрата чекає в черзі, переживає r
   await expect(row).not.toContainText('Очікує')
 })
 
-test('editor офлайн і owner онлайн оплачують один платіж: одна оплата, в editor конфлікт', async ({ pageAs }) => {
+test('editor офлайн і owner онлайн оплачують один платіж: одна оплата, в editor конфлікт; «Взяти їхню» закриває його', async ({
+  pageAs,
+}) => {
   test.setTimeout(60_000)
   const owner = await pageAs('owner')
   const editor = await pageAs('editor')
@@ -134,6 +136,14 @@ test('editor офлайн і owner онлайн оплачують один пл
     .eq('obligation_id', obligation?.id ?? '')
 
   expect(count).toBe(1)
+
+  // Figma 41:106725: after a choice the dialog closes with a success toast and the queue is empty
+  const conflict = editor.getByRole('dialog', { name: /Конфлікт змін/ })
+
+  await conflict.getByRole('button', { name: 'Взяти їхню' }).click()
+  await expect(conflict).toBeHidden()
+  await expect(editor.getByText('Залишено їхню версію')).toBeVisible()
+  await expect(status(editor, /Синхронізовано/)).toBeVisible()
 })
 
 test('вихід очищає IndexedDB і кеші пристрою', async ({ browser, baseURL, locale, timezoneId }) => {

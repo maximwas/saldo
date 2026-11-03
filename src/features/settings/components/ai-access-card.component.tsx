@@ -1,11 +1,13 @@
 'use client'
 
-import { Bot } from 'lucide-react'
+import { Plug } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { Sheet, SheetClose, useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import type { OAuthGrantView } from '../api/oauth-grants.server'
@@ -17,10 +19,11 @@ type AiAccessCardProps = {
 
 type GrantRowProps = {
   grant: OAuthGrantView
-  onRevokeAction: (clientId: string) => void
+  onRevokeAction: (grant: OAuthGrantView) => void
   pending: boolean
 }
 
+// Figma 42:115839: CategoryIcon neutral 40 with Icon/plug, name body-medium, «Access since» caption, Secondary M
 function GrantRow({ grant, onRevokeAction, pending }: GrantRowProps) {
   const translate = useTranslations('settings.security')
   const formatter = useFormatter()
@@ -28,7 +31,7 @@ function GrantRow({ grant, onRevokeAction, pending }: GrantRowProps) {
   return (
     <li className="flex items-center gap-3 border-b border-border py-3 last:border-b-0">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle text-text-secondary">
-        <Bot aria-hidden size={20} />
+        <Plug aria-hidden size={20} />
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-body font-medium text-text-primary">{grant.clientName}</span>
@@ -42,26 +45,41 @@ function GrantRow({ grant, onRevokeAction, pending }: GrantRowProps) {
           })}
         </span>
       </div>
-      <Button variant="secondary" disabled={pending} onClick={() => onRevokeAction(grant.clientId)}>
+      <Button variant="secondary" disabled={pending} onClick={() => onRevokeAction(grant)}>
         {translate('revoke')}
       </Button>
     </li>
   )
 }
 
-// No Figma frame for the card yet (a Figma gap, plan 10.4): the house Card with the row pattern of Settings → Access.
-// Revoking deletes the client's sessions in Supabase Auth; /api/mcp checks the session on every call, so it stops now.
+// Figma «Saldo» → Settings, Security 42:115839 / 43:116322 (list), 43:116163 / 43:116509 (empty); «Revoke» asks first: Dialog
+// 43:116607 (what happens and an Info banner) / BottomSheet 43:116795 (one shorter line). Revoking deletes the client's
+// sessions in Supabase Auth; /api/mcp checks the session on every call, so it stops now.
 export function AiAccessCard({ grants, mcpUrl }: AiAccessCardProps) {
   const translate = useTranslations('settings.security')
   const router = useRouter()
-  const [pendingId, setPendingId] = useState<string | null>(null)
+  const desktop = useIsDesktop()
+  const [pending, setPending] = useState(false)
+  // the grant stays after the sheet closes, so its name holds through the exit transition
+  const [confirming, setConfirming] = useState<OAuthGrantView | null>(null)
+  const [open, setOpen] = useState(false)
+  const name = confirming?.clientName ?? ''
 
-  async function revoke(clientId: string) {
-    setPendingId(clientId)
+  function ask(grant: OAuthGrantView) {
+    setConfirming(grant)
+    setOpen(true)
+  }
 
-    const { error } = await getBrowserSupabase().auth.oauth.revokeGrant({ clientId })
+  async function revoke() {
+    if (!confirming) {
+      return
+    }
 
-    setPendingId(null)
+    setPending(true)
+
+    const { error } = await getBrowserSupabase().auth.oauth.revokeGrant({ clientId: confirming.clientId })
+
+    setPending(false)
 
     if (error) {
       notify.error(translate('revokeFailed'))
@@ -69,27 +87,53 @@ export function AiAccessCard({ grants, mcpUrl }: AiAccessCardProps) {
       return
     }
 
+    setOpen(false)
     notify.success(translate('revoked'))
     router.refresh()
   }
 
   return (
     <Card title={translate('aiTitle')}>
-      <p className="text-label text-text-secondary">{translate('aiHint', { url: mcpUrl })}</p>
-      {grants.length === 0 ? (
-        <p className="text-label text-text-tertiary">{translate('empty')}</p>
-      ) : (
-        <ul className="flex flex-col">
-          {grants.map((grant) => (
-            <GrantRow
-              key={grant.clientId}
-              grant={grant}
-              onRevokeAction={revoke}
-              pending={pendingId === grant.clientId}
-            />
-          ))}
-        </ul>
-      )}
+      {/* the Card body slot: gap 16 between the hint and the list */}
+      <div className="flex flex-col gap-4">
+        <p className="text-label text-text-secondary">{translate('aiHint', { url: mcpUrl })}</p>
+        {grants.length === 0 ? (
+          <p className="text-label text-text-tertiary">{translate('empty')}</p>
+        ) : (
+          <ul className="flex flex-col">
+            {grants.map((grant) => (
+              <GrantRow
+                key={grant.clientId}
+                grant={grant}
+                onRevokeAction={ask}
+                pending={pending && confirming?.clientId === grant.clientId}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+      <Sheet
+        open={open}
+        onOpenChange={setOpen}
+        title={translate('revokeTitle', { name })}
+        footer={
+          <>
+            <SheetClose>{translate('keep')}</SheetClose>
+            <Button variant="danger" disabled={pending} onClick={() => void revoke()}>
+              {translate('revokeConfirm')}
+            </Button>
+          </>
+        }
+      >
+        {desktop ? (
+          <>
+            <p className="text-body text-text-secondary">{translate('revokeBody', { name })}</p>
+            <Banner>{translate('revokeAgain', { name })}</Banner>
+          </>
+        ) : (
+          <p className="text-body text-text-secondary">{translate('revokeBodyShort', { name })}</p>
+        )}
+      </Sheet>
     </Card>
   )
 }

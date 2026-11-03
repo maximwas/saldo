@@ -121,6 +121,8 @@
     "keepMine": "Keep mine",
     "keepAsExpense": "Keep as a separate expense",
     "takeTheirs": "Take theirs",
+    "keptMine": "Your version saved",
+    "tookTheirs": "Their version kept",
     "sameAmount": "Same amount:",
     "noNote": "no comment",
     "quoted": "“{note}”",

@@ -1,6 +1,6 @@
 'use client'
 
-import { KeyRound, ShieldAlert } from 'lucide-react'
+import { KeyRound } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Banner } from '@/components/ui/banner.component'
@@ -35,7 +35,8 @@ function Detail({ label, value }: DetailProps) {
   )
 }
 
-// No Figma frame yet (a Figma gap, docs/plan.md 10.4): the login card layout, Card tokens and house Button/Banner.
+// Figma «Saldo» → AI access consent 42:115042 / 42:115731 (normal), 42:115633 / 42:115775 (a client Saldo does not know:
+// the Warning banner and only «Deny»), 42:115687 / 42:115821 (invalid, page.tsx). On the phone «Allow» sits above «Deny».
 // Allow and Deny go to Supabase Auth from the browser with the person's own session; Auth then sends the browser to
 // the client's redirect_uri with the code (or the denial).
 export function OAuthConsentCard({ consent }: ConsentCardProps) {
@@ -81,12 +82,7 @@ export function OAuthConsentCard({ consent }: ConsentCardProps) {
       {consent.known ? (
         <p className="text-caption text-text-tertiary">{translate('note')}</p>
       ) : (
-        <Banner kind="warning">
-          <span className="flex items-start gap-2">
-            <ShieldAlert aria-hidden size={16} className="shrink-0" />
-            {translate('unknownRedirect', { host: consent.redirectHost })}
-          </span>
-        </Banner>
+        <Banner kind="warning">{translate('unknownRedirect', { host: consent.redirectHost })}</Banner>
       )}
       {failed ? <Banner kind="danger">{translate('failed')}</Banner> : null}
       <div className="flex flex-col-reverse gap-3 md:flex-row">

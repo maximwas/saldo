@@ -179,6 +179,12 @@
     "empty": "No client has access yet.",
     "grantedAt": "Access since {date}",
     "revoke": "Revoke",
+    "revokeTitle": "Revoke access for {name}?",
+    "revokeBody": "{name} can no longer read Saldo on your behalf: its sessions close at once. Everything already added through {name} stays.",
+    "revokeAgain": "You can connect {name} again at any time: start connecting in the client and give your consent.",
+    "revokeBodyShort": "{name} can no longer read Saldo on your behalf. You can connect it again at any time with a new consent.",
+    "keep": "Keep",
+    "revokeConfirm": "Revoke access",
     "revoked": "Access revoked",
     "revokeFailed": "Could not revoke the access. Try again."
   }

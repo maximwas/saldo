@@ -44,7 +44,7 @@ test('токен сесії застосунку (без client_id) MCP не п�
   expect(response.status()).toBe(401)
 })
 
-test('згода видає доступ, він є в Налаштування → Безпека, «Відкликати» прибирає його й зупиняє клієнта', async ({
+test('згода видає доступ, він є в Налаштування → Безпека, «Відкликати» з підтвердженням прибирає його й зупиняє клієнта', async ({
   pageAs,
   request,
   baseURL,
@@ -63,6 +63,13 @@ test('згода видає доступ, він є в Налаштування 
 
   await expect(row).toBeVisible()
   await row.getByRole('button', { name: 'Відкликати' }).click()
+
+  // nothing is revoked before the confirmation (Figma 43:116607)
+  const confirm = owner.getByRole('dialog', { name: `Відкликати доступ ${client.clientName}?` })
+
+  await expect(confirm).toContainText('сесії закриються одразу')
+  await confirm.getByRole('button', { name: 'Відкликати доступ' }).click()
+  await expect(confirm).toBeHidden()
   await expect(row).toBeHidden()
   await expect.poll(async () => (await mcpPost(request, client.accessToken, 'tools/list')).status()).toBe(401)
 
