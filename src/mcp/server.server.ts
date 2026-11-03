@@ -3,11 +3,13 @@ import type { McpServer } from '@modelcontextprotocol/server'
 import { env } from '@/lib/env'
 import { registerAccountsTools } from './tools/accounts.tools.server'
 import { registerBudgetTools } from './tools/budget.tools.server'
+import { registerCalendarTools } from './tools/calendar.tools.server'
 import { registerCategoriesTools } from './tools/categories.tools.server'
 import { registerCreditsTools } from './tools/credits.tools.server'
 import { registerCurrenciesTools } from './tools/currencies.tools.server'
 import { registerDebtsTools } from './tools/debts.tools.server'
 import { registerLedgersTools } from './tools/ledgers.tools.server'
+import { registerNotificationsTools } from './tools/notifications.tools.server'
 import { registerObligationsTools, registerObligationsWriteTools } from './tools/obligations.tools.server'
 import { registerOperationsTools, registerOperationsWriteTools } from './tools/operations.tools.server'
 import { registerOverviewTools } from './tools/overview.tools.server'
@@ -37,6 +39,8 @@ export function registerSaldoTools(server: McpServer) {
   registerCategoriesTools(server)
   registerCurrenciesTools(server)
   registerSearchTools(server)
+  registerCalendarTools(server)
+  registerNotificationsTools(server)
 
   // off unless MCP_WRITE_ENABLED=true: a client without the flag sees read tools only
   if (env.MCP_WRITE_ENABLED === 'true') {

@@ -533,3 +533,19 @@ export async function listUpcomingPlans(
 
   return (due.data ?? []).map((row) => toPlannedRow(row, sources))
 }
+
+/** one operation of the space (an MCP detail); null = no such operation in this space */
+export async function getOperation(client: SaldoClient, ledgerId: string, id: string): Promise<OperationRow | null> {
+  const { data, error } = await client
+    .from('operations')
+    .select(OPERATION_COLUMNS)
+    .eq('ledger_id', ledgerId)
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return data ? toOperationRow(data) : null
+}

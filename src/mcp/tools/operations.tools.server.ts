@@ -1,13 +1,19 @@
 import 'server-only'
 import type { McpServer } from '@modelcontextprotocol/server'
 import { z } from 'zod'
-import { createOperation, listOperations } from '@/features/operations/api/operations.api'
+import {
+  createOperation,
+  getOperation,
+  listOperationSources,
+  listOperations,
+  listRefundLinks,
+} from '@/features/operations/api/operations.api'
 import { type CreateOperationInput, createOperationInputSchema } from '@/lib/finance/create-operation-input.schema'
 import { toOccurredAt } from '@/lib/utils/clock.utils'
 import { registerReadTool, registerWriteTool } from '../register-tool.server'
 import type { ToolContext } from '../tool-context.server'
 import { ledgerIdField } from '../tool-input.schema'
-import { ToolError, toPreview } from '../tool-result.utils'
+import { required, ToolError, toPreview } from '../tool-result.utils'
 import { assertWriter, findAccount } from '../write-checks.server'
 
 const searchInput = z.object({
@@ -22,6 +28,18 @@ const searchInput = z.object({
 })
 
 type SearchInput = z.infer<typeof searchInput>
+
+async function findOperation({ supabase, ledger }: ToolContext, id: string) {
+  return required(
+    await getOperation(supabase, ledger.id, id),
+    'No such operation in this space: search_operations finds them.',
+  )
+}
+
+const operationInput = z.object({
+  ledger_id: ledgerIdField,
+  operation_id: z.uuid().describe('From search_operations'),
+})
 
 function filtersOf({ from, to, type, account_id, category_id, text }: SearchInput) {
   if (Boolean(from) !== Boolean(to)) {
@@ -39,26 +57,29 @@ function filtersOf({ from, to, type, account_id, category_id, text }: SearchInpu
   }
 }
 
-export function registerOperationsTools(server: McpServer) {
+function registerGetOperation(server: McpServer) {
   registerReadTool(
     server,
-    'search_operations',
+    'get_operation',
     {
-      title: 'Search operations',
+      title: 'One operation',
       description:
-        'Recorded operations (facts) of the space, newest first, filtered like the Operations screen. A transfer is two rows (transfer_out, transfer_in) and is neither an expense nor an income; a refund is not an income. Amounts are in minor units of the operation currency; baseAmountMinor null = no rate, never 0.',
-      inputSchema: searchInput,
+        'One recorded operation with the planned payments it paid (paidPlans), how much of it was refunded (refundedMinor) and, for a refund, the purchase it returns (refundOf). Amounts in minor units of the operation currency.',
+      inputSchema: operationInput,
     },
-    async (args, { supabase, ledger }) => {
-      const { rows } = await listOperations(supabase, {
-        ledgerId: ledger.id,
-        filters: filtersOf(args),
-      })
+    async ({ operation_id }, context) => {
+      const operation = await findOperation(context, operation_id)
+      const [paidPlans, refunds] = await Promise.all([
+        listOperationSources(context.supabase, operation.id),
+        listRefundLinks(context.supabase, context.ledger.id),
+      ])
 
       return {
         data: {
-          operations: rows.slice(0, args.limit),
-          more: rows.length > args.limit,
+          operation,
+          paidPlans,
+          refundedMinor: refunds.refundedById[operation.id] ?? 0,
+          refundOf: operation.refundOfId ? (refunds.purchases[operation.refundOfId] ?? null) : null,
         },
       }
     },
@@ -149,4 +170,32 @@ export function registerOperationsWriteTools(server: McpServer) {
       }
     },
   )
+}
+
+export function registerOperationsTools(server: McpServer) {
+  registerReadTool(
+    server,
+    'search_operations',
+    {
+      title: 'Search operations',
+      description:
+        'Recorded operations (facts) of the space, newest first, filtered like the Operations screen. A transfer is two rows (transfer_out, transfer_in) and is neither an expense nor an income; a refund is not an income. Amounts are in minor units of the operation currency; baseAmountMinor null = no rate, never 0.',
+      inputSchema: searchInput,
+    },
+    async (args, { supabase, ledger }) => {
+      const { rows } = await listOperations(supabase, {
+        ledgerId: ledger.id,
+        filters: filtersOf(args),
+      })
+
+      return {
+        data: {
+          operations: rows.slice(0, args.limit),
+          more: rows.length > args.limit,
+        },
+      }
+    },
+  )
+
+  registerGetOperation(server)
 }
