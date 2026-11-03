@@ -14,7 +14,7 @@ function minorOf(text: string): number {
 }
 
 async function tile(page: Page, label: string) {
-  const value = page.locator('dl').getByText(label, { exact: true }).locator('xpath=following-sibling::dd')
+  const value = page.locator('dl:visible').getByText(label, { exact: true }).locator('xpath=following-sibling::dd')
 
   await expect(value).toBeVisible()
 
