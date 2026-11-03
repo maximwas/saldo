@@ -2,7 +2,7 @@
 
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 
 type ConfirmSheetProps = {
   open: boolean
@@ -39,9 +39,7 @@ export function ConfirmSheet({
       title={title}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-            {keepLabel}
-          </Button>
+          <SheetClose>{keepLabel}</SheetClose>
           <Button type="button" variant="danger" disabled={pending} onClick={onConfirm}>
             {confirmLabel}
           </Button>

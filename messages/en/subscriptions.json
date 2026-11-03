@@ -65,8 +65,6 @@
     "account": "Account",
     "accountHint": "Payments are planned from it",
     "accountPlaceholder": "Choose an account",
-    "category": "Category",
-    "noCategory": "No category",
     "count": "Every",
     "unit": "Period",
     "units": {

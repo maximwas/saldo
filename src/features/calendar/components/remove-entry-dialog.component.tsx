@@ -2,7 +2,7 @@
 
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
@@ -61,9 +61,7 @@ export function RemoveEntryDialog({ entry, onCloseAction }: RemoveEntryDialogPro
       })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('keep')}
-          </Button>
+          <SheetClose>{translate('keep')}</SheetClose>
           <Button type="button" variant="danger" disabled={cancel.isPending} onClick={remove}>
             {translate('confirm')}
           </Button>

@@ -3,7 +3,7 @@
 import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { formatMinor } from '@/lib/money/money.utils'
@@ -81,9 +81,7 @@ export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSh
       title={translate('archive.title', { name: account?.name ?? '' })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('form.cancel')}
-          </Button>
+          <SheetClose>{translate('form.cancel')}</SheetClose>
           <Button type="button" onClick={archive} disabled={update.isPending}>
             {translate('archive.confirm')}
           </Button>

@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Field } from '@/components/ui/field.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import {
@@ -64,9 +64,7 @@ export function DefaultsSheet({ onCloseAction }: DefaultsSheetProps) {
       title={translate('title')}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('cancel')}
-          </Button>
+          <SheetClose>{translate('cancel')}</SheetClose>
           <Button type="button" onClick={submit} disabled={save.isPending || !defaults.data}>
             {translate('save')}
           </Button>

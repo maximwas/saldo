@@ -65,8 +65,6 @@
     "account": "Рахунок",
     "accountHint": "З нього плануються оплати",
     "accountPlaceholder": "Оберіть рахунок",
-    "category": "Категорія",
-    "noCategory": "Без категорії",
     "count": "Кожні",
     "unit": "Період",
     "units": {

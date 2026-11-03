@@ -10,6 +10,7 @@ const category = (patch: Partial<CategoryView> & Pick<CategoryView, 'id'>): Cate
   sortOrder: 1,
   archivedAt: null,
   version: 1,
+  systemKey: null,
   ...patch,
 })
 
@@ -135,6 +136,7 @@ describe('toCategory', () => {
         sort_order: 3,
         archived_at: null,
         version: 2,
+        system_key: null,
       }),
     ).toEqual({
       id: 'c1',
@@ -146,6 +148,7 @@ describe('toCategory', () => {
       sortOrder: 3,
       archivedAt: null,
       version: 2,
+      systemKey: null,
     })
   })
 })

@@ -8,7 +8,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useToday } from '@/contexts/clock.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
@@ -70,9 +70,7 @@ export function EarlyRepaymentSheet({ credit, payoff, onCloseAction }: EarlyRepa
       title={translate('payoff.title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate('payoff.cancel')}
-          </Button>
+          <SheetClose>{translate('payoff.cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={replace.isPending}>
             {translate('payoff.confirm')}
           </Button>

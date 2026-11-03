@@ -31,7 +31,6 @@ export type SetSubscriptionPriceInput = z.infer<typeof setSubscriptionPriceInput
 
 const subscriptionFieldsSchema = z.object({
   name: z.string().trim().min(1).max(80),
-  category_id: z.uuid().nullable(),
   account_id: z.uuid().nullable(),
   interval_unit: z.enum(RECURRENCE_UNITS),
   interval_count: z.int().positive(),

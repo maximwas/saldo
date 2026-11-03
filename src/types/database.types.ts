@@ -354,6 +354,7 @@ export type Database = {
           parent_depth: number | null
           parent_id: string | null
           sort_order: number
+          system_key: string | null
           updated_at: string
           version: number
         }
@@ -372,6 +373,7 @@ export type Database = {
           parent_depth?: never
           parent_id?: string | null
           sort_order?: number
+          system_key?: string | null
           updated_at?: string
           version?: number
         }
@@ -389,6 +391,7 @@ export type Database = {
           parent_depth?: never
           parent_id?: string | null
           sort_order?: number
+          system_key?: string | null
           updated_at?: string
           version?: number
         }

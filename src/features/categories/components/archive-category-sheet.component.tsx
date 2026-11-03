@@ -8,6 +8,7 @@ import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Field } from '@/components/ui/field.component'
 import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import {
   useArchiveCategory,
@@ -100,9 +101,13 @@ export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategor
     >
       {category ? (
         <>
-          <p className="text-body text-text-secondary">
-            {translate('archive.summary', { count: operations.data ?? 0 })}
-          </p>
+          {operations.isPending ? (
+            <Bone className="h-5 w-3/4 rounded-sm" />
+          ) : (
+            <p className="text-body text-text-secondary">
+              {translate('archive.summary', { count: operations.data ?? 0 })}
+            </p>
+          )}
           {operations.data ? (
             <Field label={translate('archive.moveTo')}>
               <Select

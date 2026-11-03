@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button.component'
 import { Chip } from '@/components/ui/chip.component'
 import { Field } from '@/components/ui/field.component'
 import { Input } from '@/components/ui/input.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import type { ReminderRule, ReminderRulePatch } from '@/lib/reminders/reminder-rules.api'
 
 const PRESET_OFFSETS = [7, 3, 1, 0]
@@ -44,9 +44,7 @@ export function ReminderRuleDialog({ rule, next, onSaveAction, onCloseAction }: 
       title={translate('dialog.title')}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('dialog.cancel')}
-          </Button>
+          <SheetClose>{translate('dialog.cancel')}</SheetClose>
           <Button
             type="button"
             disabled={!valid}

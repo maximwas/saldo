@@ -142,10 +142,12 @@ select throws_ok(
 select throws_ok(
   $$ delete from public.subscriptions where id = 'c3000000-0000-4000-8000-000000000301' $$,
   '42501', null, 'a subscription is archived, never deleted');
-select throws_ok(
-  $$ insert into public.subscriptions (ledger_id, name, currency, first_on, category_id)
-     values (pg_temp.space('shared'), 'x', 'UAH', '2026-01-01', pg_temp.cat('shared', 'Зарплата', 'income')) $$,
-  '23503', null, 'a subscription takes an expense category only');
+-- system_subscriptions_category: whatever category is sent, a subscription keeps the system one of its space
+with u as (
+  update public.subscriptions set category_id = pg_temp.cat('shared', 'Житло', 'expense')
+  where id = 'c3000000-0000-4000-8000-000000000301' returning category_id
+)
+select is(category_id, pg_temp.cat('shared', 'Підписки', 'expense'), 'a subscription keeps the system category') from u;
 
 -- credits: 3 of 12 paid before tracking, 9 installments from 5 November, no operation at all
 select lives_ok(
