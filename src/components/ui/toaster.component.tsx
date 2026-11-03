@@ -41,8 +41,11 @@ function ToastCard({ id, kind, text, onAction }: ToastCardProps) {
   const actionLabel = kind === 'error' ? translate('toast.retry') : translate('toast.undo')
 
   return (
-    <div className="flex w-full items-center gap-3 rounded-inner bg-raised py-3 pr-3 pl-4 shadow-float sm:w-100">
-      <Icon className={cn('size-5 shrink-0', tone)} aria-hidden />
+    // the 20 icon, the action and the 28 ✕ sit on the first 24px line, however many lines the text takes
+    <div className="flex w-full items-start gap-3 rounded-inner bg-raised py-3 pr-3 pl-4 shadow-float sm:w-100">
+      <span className="flex shrink-0 py-0.5">
+        <Icon className={cn('size-5', tone)} aria-hidden />
+      </span>
       <p className="flex-1 text-body font-medium text-text-primary">{text}</p>
       {onAction ? (
         <button
@@ -51,7 +54,7 @@ function ToastCard({ id, kind, text, onAction }: ToastCardProps) {
             onAction()
             toast.dismiss(id)
           }}
-          className="cursor-pointer rounded-sm px-1 text-label font-semibold text-primary-text outline-none transition-colors hover:bg-primary-soft focus-visible:ring-2 focus-visible:ring-primary"
+          className="cursor-pointer rounded-sm px-1 py-0.5 text-label font-semibold text-primary-text outline-none transition-colors hover:bg-primary-soft focus-visible:ring-2 focus-visible:ring-primary"
         >
           {actionLabel}
         </button>
@@ -60,7 +63,7 @@ function ToastCard({ id, kind, text, onAction }: ToastCardProps) {
         type="button"
         aria-label={translate('close')}
         onClick={() => toast.dismiss(id)}
-        className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-text-secondary outline-none hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
+        className="-my-0.5 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-text-secondary outline-none hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
       >
         <X className="size-4" aria-hidden />
       </button>
