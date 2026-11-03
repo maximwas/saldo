@@ -30,11 +30,9 @@ test('«Оплачено» створює одну операцію, видал�
   await form.getByRole('button', { name: 'Зберегти' }).click()
   await expect(form).toBeHidden()
 
-  await page.goto('/')
-  await expect(upcoming).toHaveCount(1)
-
-  await page.goto('/payments')
-  await page.getByRole('listitem').filter({ hasText: mark }).getByRole('button', { name: 'Оплачено' }).click()
+  // the payments list holds every open plan; the Overview card shows only the first few by date, and other specs'
+  // plans due today can push this one out of it
+  await upcoming.getByRole('button', { name: 'Оплачено' }).click()
 
   const pay = page.getByRole('dialog')
 
@@ -43,7 +41,6 @@ test('«Оплачено» створює одну операцію, видал�
   await expect(page.getByRole('listitem').filter({ hasText: mark })).toContainText('Оплачено')
 
   await page.goto('/')
-  await expect(upcoming).toHaveCount(0)
   // the payment's operation has no payee to find it by: the month's expenses grew by it once (polled: the overview
   // shows the cached month first and refetches it)
   await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore + 35_000)
@@ -55,9 +52,9 @@ test('«Оплачено» створює одну операцію, видал�
 
   await cancel.getByRole('button', { name: 'Скасувати оплату' }).click()
   await expect(cancel).toBeHidden()
+  await expect(upcoming.getByRole('button', { name: 'Оплачено' })).toBeVisible()
 
   await page.goto('/')
-  await expect(upcoming).toHaveCount(1)
   await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore)
 
   // a plan whose date has passed without a payment waits in the overdue group (§7)
