@@ -80,9 +80,9 @@ test('«Оплачено» створює одну операцію, видал�
   // conventions §4.6c: an icon sits on the first text line, never on the centre of a text that runs 2+ lines (the
   // overdue banner wraps on a phone; the upcoming row always has a title and a status line)
   await page.setViewportSize({
- width: 390,
-height: 844 
-})
+    width: 390,
+    height: 844,
+  })
   await page.goto('/')
 
   const notice = page.getByText(/з минулою датою/)
