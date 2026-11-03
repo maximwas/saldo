@@ -1,50 +1,47 @@
 'use client'
 
-import { TriangleAlert } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { Banner } from '@/components/ui/banner.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { SyncQueueCard } from '@/features/sync/components/sync-queue.component'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
+import { localTime } from '@/lib/utils/clock.utils'
+import { cn } from '@/lib/utils/cn.utils'
 import { SyncIndicator } from './sync-indicator.component'
 
-// Figma «Saldo» → App states, Offline 4:80063 / 4:80342: a warning above the page while the device is offline, with
-// the time of the data on screen; on mobile (no Sidebar) the SyncStatus of the queue sits here whenever it is not empty.
+// Figma «Saldo» → phase 8, Offline 4:80063 / 4:80342: a warning Banner above the page while the device is offline, with the
+// time of the data on screen on desktop; on mobile (no Sidebar) the Topbar SyncStatus pill sits above it, 8 apart.
+// Pending sync / Mobile 4:80844: while writes are on their way the phone lists them in a card instead.
 // Operations draw their own desktop warning (5:105115), so there this one stays on phones only.
 export function OfflineBanner() {
   const ownWarning = usePathname() === '/operations'
   const translate = useTranslations('sync.banner')
-  const format = useFormatter()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const { online, updatedAt, summary } = useSyncQueue()
-  const asOf = updatedAt
-    ? translate('asOf', {
-        time: format.dateTime(new Date(updatedAt), {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone,
-        }),
-      })
-    : ''
+
+  if (summary.state === 'pending') {
+    return <SyncQueueCard className="mb-4 lg:hidden" />
+  }
+
+  if (summary.state === 'synced') {
+    return null
+  }
 
   return (
-    <>
+    <div className={cn('mb-4 flex flex-col gap-2 lg:mb-6', (online || ownWarning) && 'lg:hidden')}>
+      <div className="lg:hidden">
+        <SyncIndicator platform="topbar" />
+      </div>
       {online ? null : (
-        <p
-          role="alert"
-          className={`mb-4 flex items-start gap-2 rounded-md bg-warning-soft px-4 py-3 text-label text-warning-text lg:mb-6 ${ownWarning ? 'lg:hidden' : ''}`}
-        >
-          <TriangleAlert aria-hidden size={16} className="mt-0.5 shrink-0" />
+        <Banner kind="warning" role="alert">
           <span className="lg:hidden">{translate('offlineShort')}</span>
           <span className="hidden lg:inline">
-            {translate('offline')} {asOf}
+            {translate('offline')}{' '}
+            {updatedAt ? translate('asOf', { time: localTime(new Date(updatedAt), timeZone) }) : null}
           </span>
-        </p>
+        </Banner>
       )}
-      {summary.state === 'synced' ? null : (
-        <div className="mb-4 w-fit lg:hidden">
-          <SyncIndicator className="h-8 rounded-full" />
-        </div>
-      )}
-    </>
+    </div>
   )
 }

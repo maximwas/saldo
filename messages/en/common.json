@@ -20,5 +20,9 @@
     "retry": "Retry",
     "undo": "Undo"
   },
+  "errorState": {
+    "hint": "Check your connection and try again.",
+    "retry": "Try again"
+  },
   "author": "Author: {name}"
 }

@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl'
 import { useFormContext } from 'react-hook-form'
-import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
@@ -17,7 +16,6 @@ import { RECURRENCE_UNITS, SHORT_MONTH_RULES } from '../schemas/subscription-inp
 import type { SubscriptionStatus } from '../utils/subscription-series.utils'
 import { CUSTOM_SERVICE, ServiceSelect } from './service-select.component'
 
-const NO_CATEGORY = 'none'
 // cancellation states are set from the card (cancel sheet), the form offers them only to keep the current value
 const FORM_STATUSES: SubscriptionStatus[] = ['active', 'trial', 'paused']
 
@@ -27,7 +25,8 @@ type SubscriptionFieldsProps = {
 }
 
 // Figma «Saldo» → New subscription 36:104935 and Settings 29:94905: service picker, the name of a custom one, account,
-// category, currency, short-month rule; edit sets them in two columns. Reminder and Calendar selects of those frames
+// currency, short-month rule; edit sets them in two columns. No category: the DB gives every subscription the system
+// «Subscriptions» one (system_subscriptions_category.sql). Reminder and Calendar selects of those frames
 // wait for their columns (phase 3). The amount, recurrence, first date, state, link and note are not drawn there, but a
 // subscription cannot be saved without them, so they follow the drawn fields.
 export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
@@ -86,30 +85,6 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
                 value: account.id,
                 label: account.name,
               }))}
-            />
-          )}
-        />
-        <FormField
-          control={control}
-          name="categoryId"
-          label={translate('category')}
-          render={(field) => (
-            <Select
-              name={field.name}
-              value={field.value ?? NO_CATEGORY}
-              onValueChange={(value) => field.onChange(value === NO_CATEGORY ? null : value)}
-              onBlur={field.onBlur}
-              options={[
-                {
-                  value: NO_CATEGORY,
-                  label: translate('noCategory'),
-                },
-                ...(options.data?.categories ?? []).map((category) => ({
-                  value: category.id,
-                  label: category.name,
-                  leading: <CategoryBadge icon={category.icon} color={category.color} size={32} />,
-                })),
-              ]}
             />
           )}
         />

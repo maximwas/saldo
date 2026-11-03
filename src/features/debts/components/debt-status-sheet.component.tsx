@@ -2,7 +2,7 @@
 
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
@@ -47,9 +47,7 @@ export function DebtStatusSheet({ debt, status, onCloseAction }: DebtStatusSheet
       title={translate(writeOff ? 'status.writeOffTitle' : 'status.closeTitle')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate(writeOff ? 'status.writeOffCancel' : 'status.cancel')}
-          </Button>
+          <SheetClose>{translate(writeOff ? 'status.writeOffCancel' : 'status.cancel')}</SheetClose>
           <Button type="button" variant={writeOff ? 'danger' : 'primary'} onClick={confirm} disabled={save.isPending}>
             {translate(writeOff ? 'status.writeOffConfirm' : 'status.closeConfirm')}
           </Button>

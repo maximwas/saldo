@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import type { SubscriptionPayment } from '../api/subscriptions.api'
@@ -36,8 +37,13 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
   const today = useToday()
   const dateLabel = useDateLabel()
   const { data: subscription } = useSubscription(subscriptionId)
-  const { data, isPending, isError } = useSubscriptionPayments(subscriptionId)
+  const { data, isPending, isError, refetch } = useSubscriptionPayments(subscriptionId)
   const shown = view === 'recent' ? recentPayments(data ?? [], today) : newestFirst(data ?? [])
+
+  // the error card takes the section's place: a card inside the card would double the frame
+  if (isError) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+  }
 
   return (
     <section className="flex flex-col gap-4 rounded-card bg-card p-5 shadow-card lg:p-6">
@@ -46,11 +52,6 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
         {action}
       </div>
       {isPending ? <div aria-busy className="h-32 rounded-md bg-subtle" /> : null}
-      {isError ? (
-        <p role="alert" className="text-body text-negative-text">
-          {translate('loadFailed')}
-        </p>
-      ) : null}
       {data && shown.length === 0 ? <p className="text-label text-text-secondary">{translate('empty')}</p> : null}
       <ul className="flex flex-col gap-4">
         {shown.map((payment) => (

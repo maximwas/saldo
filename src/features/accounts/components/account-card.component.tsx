@@ -9,6 +9,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useAccounts } from '../hooks/accounts.hook'
 import { ACCOUNT_KIND_STYLE } from '../utils/accounts.utils'
@@ -27,7 +28,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
   const translateCurrency = useTranslations('currencies')
   const locale = useLocale()
   const canWrite = useCanWrite()
-  const { data, isPending, isError } = useAccounts()
+  const { data, isPending, isError, refetch } = useAccounts()
   const [editing, setEditing] = useState(false)
   const [archiving, setArchiving] = useState(false)
 
@@ -37,10 +38,14 @@ export function AccountCard({ accountId }: AccountCardProps) {
 
   const account = data?.accounts.find((candidate) => candidate.id === accountId)
 
-  if (isError || !account) {
+  if (isError) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+  }
+
+  if (!account) {
     return (
       <p role="alert" className="text-body text-negative-text">
-        {translate(isError ? 'loadFailed' : 'card.notFound')}
+        {translate('card.notFound')}
       </p>
     )
   }

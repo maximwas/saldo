@@ -1,7 +1,6 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { useId } from 'react'
 import { cn } from '@/lib/utils/cn.utils'
 
 type SegmentedOption<Value extends string> = {
@@ -19,14 +18,16 @@ type SegmentedControlProps<Value extends string> = {
   onValueChange: (value: Value) => void
   /** disables the options and marks the group busy while a change is saved */
   pending?: boolean
-  /** below lg the control fills its row and the options share it (Figma mobile list rows); natural width from lg.
-   *  «track»: below lg only the track fills the row, the options keep their width (the operation sheet, 2:18677) */
-  stretch?: boolean | 'track'
+  /** below lg the control fills its row and the options share it (Figma mobile list rows); natural width from lg */
+  stretch?: boolean
 }
 
 // Figma «Saldo» → SegmentedControl 2:7681: track subtle, padding 4, gap 4, radius md; the selected option is a card
 // with shadow-card and label-semibold, the rest label-medium in text-secondary; options are 36 high, padding 8/16.
-// The card is one shared-layout pill (layoutId per instance), so it slides between options instead of jumping.
+// The card is one pill in the selected option's grid cell under the labels: a motion layout animation slides it to the
+// next cell relative to the fieldset (layout + layoutRoot: the fieldset snaps to its new place, its children animate
+// against it), so a fieldset that moves with a resizing sheet doesn't drag the pill from its old screen position, as
+// the layoutId pill remounted in the next option did (Maxim 3.11).
 export function SegmentedControl<Value extends string>({
   label,
   options,
@@ -35,15 +36,28 @@ export function SegmentedControl<Value extends string>({
   pending = false,
   stretch = false,
 }: SegmentedControlProps<Value>) {
-  const pillId = useId()
+  const selectedColumn = options.findIndex((option) => option.value === value) + 1
 
   return (
-    <fieldset
+    <motion.fieldset
+      layout
+      layoutRoot
       aria-label={label}
       aria-busy={pending}
-      className={cn('flex items-center gap-1 rounded-md bg-subtle p-1', stretch ? 'w-full lg:w-fit' : 'w-fit')}
+      className={cn(
+        'grid grid-flow-col items-center gap-1 rounded-md bg-subtle p-1',
+        stretch ? 'w-full auto-cols-fr lg:w-fit lg:auto-cols-auto' : 'w-fit',
+      )}
     >
-      {options.map((option) => {
+      {selectedColumn > 0 ? (
+        <motion.span
+          layout
+          aria-hidden
+          className="row-start-1 self-stretch rounded-logo-md bg-card shadow-card"
+          style={{ gridColumnStart: selectedColumn }}
+        />
+      ) : null}
+      {options.map((option, index) => {
         const selected = option.value === value
 
         return (
@@ -54,23 +68,17 @@ export function SegmentedControl<Value extends string>({
             aria-pressed={selected}
             disabled={pending}
             onClick={() => onValueChange(option.value)}
+            style={{ gridColumnStart: index + 1 }}
             className={cn(
-              'relative flex items-center justify-center rounded-logo-md py-2 text-label outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
-              stretch === true ? 'min-w-0 flex-1 px-2 lg:flex-none lg:px-4' : 'px-4',
+              'relative row-start-1 flex items-center justify-center rounded-logo-md py-2 text-label outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
+              stretch ? 'min-w-0 px-2 lg:px-4' : 'px-4',
               selected ? 'font-semibold text-text-primary' : 'font-medium text-text-secondary',
             )}
           >
-            {selected ? (
-              <motion.span
-                layoutId={pillId}
-                aria-hidden
-                className="absolute inset-0 rounded-logo-md bg-card shadow-card"
-              />
-            ) : null}
-            <span className="relative">{option.label}</span>
+            {option.label}
           </button>
         )
       })}
-    </fieldset>
+    </motion.fieldset>
   )
 }

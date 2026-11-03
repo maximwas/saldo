@@ -1,9 +1,8 @@
 import { expect } from '@playwright/test'
 import { pickCategory } from '../fixtures/category.fixture'
-import { DEMO } from '../fixtures/demo-data.fixture'
 import { test } from '../fixtures/roles.fixture'
 
-test('editor вносить витрату — owner бачить її з ініціалом автора', async ({ pageAs }) => {
+test('editor вносить витрату — owner бачить її у своєму списку', async ({ pageAs }) => {
   const mark = `e2e-${crypto.randomUUID().slice(0, 8)}`
   const editor = await pageAs('editor')
 
@@ -23,8 +22,8 @@ test('editor вносить витрату — owner бачить її з іні
 
   const row = owner.getByRole('row', { name: new RegExp(mark) })
 
+  // no author initial on operation rows since Maxim's 3.11 remark (4ea0a32): the row itself is the proof
   await expect(row).toHaveCount(1)
-  await expect(row.getByRole('img', { name: `Автор: ${DEMO.editorName}` })).toHaveText(DEMO.editorName.charAt(0))
 })
 
 test('viewer не бачить «Додати», а ?add=expense нічого не відкриває й не зберігає @mobile', async ({ pageAs }) => {

@@ -1,5 +1,5 @@
 type LogoEntry = {
-  /** file in public/logos, exported from Figma «Saldo» → Service logos 1:167 */
+  /** file in public/logos: the brand's own vector mark, placed on the tile as in Figma «Saldo» → Service logos 1:167 */
   file: string
   /** the Figma Logo component draws this image inset by 18.75% (spacing-1_5 on a 32 tile) instead of full-bleed */
   inset?: boolean
@@ -8,6 +8,9 @@ type LogoEntry = {
   popular?: boolean
 }
 
+// Marks (trademarks of their owners, shown only to name the service): svgl.app (Netflix, Spotify, YouTube, Google G,
+// Google Play, Gemini), Wikimedia Commons (Google One, iCloud, Kyivstar star, Megogo icon), rozetka.com.ua's own logo
+// (the mascot). Vectors only: the 1:167 export wrapped 256 px bitmaps in SVG and blurred at 40 px (Maxim, 3.11)
 /** service name (lower case) → its logo. Order = the order of the picker in Figma «Saldo» (29:93202) */
 const SERVICE_LOGOS: Record<string, LogoEntry> = {
   netflix: {
@@ -16,7 +19,7 @@ const SERVICE_LOGOS: Record<string, LogoEntry> = {
     popular: true,
   },
   'youtube premium': {
-    file: 'youtube-premium.png',
+    file: 'youtube-premium.svg',
     label: 'YouTube Premium',
     popular: true,
   },
@@ -31,27 +34,27 @@ const SERVICE_LOGOS: Record<string, LogoEntry> = {
     popular: true,
   },
   megogo: {
-    file: 'megogo.png',
+    file: 'megogo.svg',
     label: 'Megogo',
     popular: true,
   },
   'icloud+': {
-    file: 'icloud-plus.png',
+    file: 'icloud-plus.svg',
     label: 'iCloud+',
     popular: true,
   },
   'google ai pro': {
-    file: 'google-ai-pro.png',
+    file: 'google-ai-pro.svg',
     inset: true,
     label: 'Google AI Pro',
   },
   'google workspace': {
-    file: 'google-workspace.png',
+    file: 'google-workspace.svg',
     inset: true,
     label: 'Google Workspace',
   },
   'google play pass': {
-    file: 'google-play-pass.png',
+    file: 'google-play-pass.svg',
     inset: true,
     label: 'Google Play Pass',
   },

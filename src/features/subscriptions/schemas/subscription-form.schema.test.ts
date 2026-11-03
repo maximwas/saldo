@@ -27,7 +27,6 @@ const values: SubscriptionFormValues = {
   amountMinor: 34_900,
   currency: 'UAH',
   accountId: ACCOUNT_ID,
-  categoryId: null,
   unit: 'month',
   count: '1',
   firstOn: '2026-01-05',

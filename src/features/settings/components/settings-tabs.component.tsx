@@ -24,14 +24,18 @@ const TABS = [
     href: '/settings/currencies',
   },
   {
+    key: 'security',
+    href: '/settings/security',
+  },
+  {
     key: 'data',
     href: '/settings/data',
   },
 ] as const
 
 // Figma «Saldo» → Settings, Tabs 2:30898: gap 24, 1px border-bottom; Tab = label body-medium (text-primary when
-// active, else text-secondary), padding 10/4/0, 2px primary indicator under the active one. Figma order; Security has
-// no feature yet, so its tab is left out. Phones have no tabs: the section list 2:35769 at /settings leads to each page.
+// active, else text-secondary), padding 10/4/0, 2px primary indicator under the active one. Figma order (Security
+// holds the AI access of phase 10 only). Phones have no tabs: the section list 2:35769 at /settings leads to each page.
 export function SettingsTabs() {
   const pathname = usePathname()
   const translate = useTranslations('settings')

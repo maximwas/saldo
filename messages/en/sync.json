@@ -2,11 +2,14 @@
   "status": {
     "synced": "Synced",
     "syncedAt": "Synced · {time}",
-    "pending": "Pending ({count})",
+    "pending": "{count, plural, one {# change waiting} other {# changes waiting}}",
     "offline": "Offline",
-    "offlineWaiting": "Offline · pending ({count})",
-    "error": "Error ({count})",
-    "conflict": "Conflict ({count})"
+    "offlineWaiting": "Offline · {count, plural, one {# change} other {# changes}}",
+    "error": "Error",
+    "conflict": "Conflict",
+    "conflictCount": "Conflict · {count}",
+    "retry": "Retry",
+    "resolve": "Resolve"
   },
   "banner": {
     "offline": "No network. Keep going: new records are saved on this device and sent as soon as you are back online.",
@@ -14,6 +17,8 @@
     "offlineShort": "No network. New records are saved on this device."
   },
   "savedOffline": "Saved on this device. It will be sent once you are online.",
+  "savedOfflineOperation": "{kind, select, expense {Expense} income {Income} other {Operation}} {amount} saved on this device. We will send it later.",
+  "savedOfflineOperationShort": "{kind, select, expense {Expense} income {Income} other {Operation}} {amount} saved on this device",
   "queue": {
     "title": "Sync queue",
     "waiting": "{count, plural, one {# change is} other {# changes are}} waiting to be sent",
@@ -30,6 +35,13 @@
       "synced": "synced",
       "error": "error",
       "conflict": "conflict"
+    },
+    "count": "{count, plural, one {# change} other {# changes}}",
+    "waitingTitle": "{count, plural, one {is} other {are}} waiting to be sent",
+    "today": "today",
+    "newOperation": {
+      "expense": "New expense",
+      "income": "New income"
     },
     "writes": {
       "other": "Change",
@@ -95,16 +107,23 @@
   },
   "conflict": {
     "title": "Conflicting changes",
+    "titleOf": "Conflicting changes: {what}",
     "lead": "The record changed while your change was waiting to be sent. Nothing was overwritten: choose what to keep.",
+    "leadBy": "{name} changed this record while your change was waiting to be sent. Nothing was overwritten: choose what to keep.",
+    "intro": "{what}. {name} changed the record while your change was waiting.",
+    "introAnon": "{what}. The record changed while your change was waiting.",
     "mine": "Your version · {time}",
-    "theirs": "Server version · {time}",
-    "paidBy": "Confirmed by {name} · {time}",
-    "someone": "another member",
-    "loading": "Loading the server version…",
+    "mineShort": "Yours · {time}",
+    "theirsBy": "Version: {name} · {time}",
+    "theirsShort": "{name} · {time}",
+    "someone": "Another member",
     "gone": "This record is no longer on the server.",
     "keepMine": "Keep mine",
     "keepAsExpense": "Keep as a separate expense",
     "takeTheirs": "Take theirs",
+    "sameAmount": "Same amount:",
+    "noNote": "no comment",
+    "quoted": "“{note}”",
     "fields": {
       "amount": "Amount",
       "date": "Date",

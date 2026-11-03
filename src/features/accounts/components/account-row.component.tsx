@@ -128,7 +128,7 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
 
   if (desktop) {
     return (
-      <li className="relative flex items-center gap-4 overflow-hidden border-b border-border py-4 transition-colors hover:bg-subtle">
+      <li className="relative -mx-3 flex items-center gap-4 overflow-hidden rounded-md border-b border-border px-3 py-4 transition-colors hover:bg-subtle">
         <CategoryIcon icon={account.icon ?? style.icon} color={account.color ?? style.color} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <Link

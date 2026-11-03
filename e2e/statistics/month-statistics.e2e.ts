@@ -1,22 +1,22 @@
 import { expect, type Page } from '@playwright/test'
 import { pickCategory } from '../fixtures/category.fixture'
 import { DEMO } from '../fixtures/demo-data.fixture'
+import { minorOf } from '../fixtures/overview.fixture'
 import { test } from '../fixtures/roles.fixture'
 
 const EXPENSE_MINOR = 12_550
 const INCOME_MINOR = 30_000
 
-// «30 484,38 ₴» or «−800,00 ₴» (the minus and the grouping spaces vary) → minor units
-function minorOf(text: string): number {
-  const digits = text.replace(/[^\d,]/g, '').replace(',', '')
-
-  return (/[−-]/.test(text) ? -1 : 1) * Number(digits)
-}
-
 async function tile(page: Page, label: string) {
   const value = page.locator('dl:visible').getByText(label, { exact: true }).locator('xpath=following-sibling::dd')
+  // a month without operations shows the empty state instead of the tiles: its figures are zero
+  const empty = page.getByRole('heading', { name: /даних немає/ })
 
-  await expect(value).toBeVisible()
+  await expect(value.or(empty)).toBeVisible()
+
+  if (await empty.isVisible()) {
+    return 0
+  }
 
   // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText, rendered text is what the user sees
   return minorOf(await value.innerText())
@@ -86,12 +86,13 @@ test('перекази й позика не потрапляють у доход
   await debt.getByRole('button', { name: 'Зберегти' }).click()
   await expect(debt).toBeHidden()
 
-  await page.goto('/statistics?view=table')
-  const income = await tile(page, 'Доходи')
-  const expense = await tile(page, 'Витрати')
+  const income = incomeBefore + INCOME_MINOR
+  const expense = expenseBefore + EXPENSE_MINOR
 
-  expect(income).toBe(incomeBefore + INCOME_MINOR)
-  expect(expense).toBe(expenseBefore + EXPENSE_MINOR)
+  await page.goto('/statistics?view=table')
+  // the device cache paints the figures of the first visit (an empty month) until the refetch brings the new ones
+  await expect.poll(() => tile(page, 'Доходи')).toBe(income)
+  await expect.poll(() => tile(page, 'Витрати')).toBe(expense)
 
   // the tables carry the same totals as the tiles: the categories table and the income / expenses table
   expect(await tableTotal(page, 'Витрати за категоріями', 2)).toBe(expense)

@@ -8,6 +8,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
@@ -128,7 +129,7 @@ export function CreditsScreen() {
   const translate = useTranslations('credits')
   const canWrite = useCanWrite()
   const today = useToday()
-  const { data, isPending, isError } = useCredits()
+  const { data, isPending, isError, refetch } = useCredits()
   const [creating, setCreating] = useState(false)
 
   if (isPending) {
@@ -141,11 +142,7 @@ export function CreditsScreen() {
   }
 
   if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
+    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
   const estimated = data.credits.some((credit) => credit.status === 'active' && credit.scheduleAccuracy === 'estimated')

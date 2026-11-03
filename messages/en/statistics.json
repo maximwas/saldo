@@ -7,6 +7,7 @@
     "income": "Income",
     "expense": "Expenses",
     "result": "Result",
+    "incomeCaption": "{operations, plural, one {# inflow} other {# inflows}} · {names}",
     "expenseCaption": "{operations, plural, one {# operation} other {# operations}} · {categories, plural, one {# category} other {# categories}}",
     "excluded": "Transfers, reserves, loans and adjustments are not included; a refund reduces expenses.",
     "unknown": "Not counted, no known rate: {count}."

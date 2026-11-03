@@ -1,5 +1,5 @@
 {
-  "loadFailed": "Could not load categories. Refresh the page.",
+  "loadFailed": "Could not load categories",
   "kindLabel": "Category kind",
   "tabs": {
     "expense": "Expenses · {count}",

@@ -3,7 +3,9 @@
 import { Check, Plus, Repeat, Settings2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Button } from '@/components/ui/button.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import { useSubscriptionParams } from '../hooks/subscription-params.hook'
@@ -81,25 +83,29 @@ export function SubscriptionList() {
   const translate = useTranslations('subscriptions')
   const canWrite = useCanWrite()
   const isOwner = useLedgerStore((ledger) => ledger.role === 'owner')
-  const { data, isPending, isError } = useSubscriptions()
+  const { data, isPending, isError, refetch } = useSubscriptions()
   const { state } = useSubscriptionParams()
   const [creating, setCreating] = useState(false)
   const [editingDefaults, setEditingDefaults] = useState(false)
 
   if (isPending) {
     return (
-      <div aria-busy className="flex flex-col gap-4 lg:gap-6">
-        <div className="h-32 rounded-card bg-subtle" />
-        <div className="h-72 rounded-card bg-subtle" />
-      </div>
+      <>
+        <PaymentsTabs />
+        <div aria-busy className="flex flex-col gap-4 lg:gap-6">
+          <div className="h-32 rounded-card bg-subtle" />
+          <div className="h-72 rounded-card bg-subtle" />
+        </div>
+      </>
     )
   }
 
   if (isError) {
     return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
+      <>
+        <PaymentsTabs />
+        <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+      </>
     )
   }
 
@@ -107,6 +113,7 @@ export function SubscriptionList() {
 
   return (
     <>
+      <PaymentsTabs />
       {data.length === 0 ? (
         <EmptyState onAddAction={() => setCreating(true)} />
       ) : (

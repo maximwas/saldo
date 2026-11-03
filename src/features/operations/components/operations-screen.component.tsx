@@ -7,6 +7,7 @@ import { parseAsString, useQueryState } from 'nuqs'
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
@@ -132,6 +133,8 @@ export function OperationsScreen() {
     })
 
   let content: React.ReactNode
+  // Figma 39:106643: a failed list shows only the error card under the header, without filters
+  const failed = list.isError || options.isError
 
   if (!hydrated || list.isPending || options.isPending) {
     content = (
@@ -153,11 +156,15 @@ export function OperationsScreen() {
         </SkeletonCard>
       </div>
     )
-  } else if (list.isError || options.isError) {
+  } else if (failed) {
     content = (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
+      <ErrorState
+        title={translate('loadFailed')}
+        onRetryAction={() => {
+          void list.refetch()
+          void options.refetch()
+        }}
+      />
     )
   } else if (items.length === 0 && !active) {
     content = (
@@ -224,15 +231,17 @@ export function OperationsScreen() {
           })}
         </Banner>
       )}
-      <OperationFilters
-        period={period}
-        accountId={url.account}
-        categoryId={url.category}
-        createdBy={url.who}
-        type={url.type}
-        text={filters.text}
-        onChangeAction={(change) => void setUrl(change)}
-      />
+      {failed ? null : (
+        <OperationFilters
+          period={period}
+          accountId={url.account}
+          categoryId={url.category}
+          createdBy={url.who}
+          type={url.type}
+          text={filters.text}
+          onChangeAction={(change) => void setUrl(change)}
+        />
+      )}
       {content}
       {editor ? (
         <OperationEditor

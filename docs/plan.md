@@ -87,6 +87,7 @@ PWA-маніфест, нічний бекап.
 - [x] 1.5 Фіча `accounts`: список, створення (початковий залишок + дата), архів, картка рахунку.
 - [x] 1.6 Фіча `categories`: дерево доходів/витрат, підкатегорії, колір (`--color-c-*`), порядок, архів із перенесенням.
 - [x] 1.7 Фіча `currencies`: базова валюта, ручний курс із датою; знімок курсу в операції; `null` при невідомому.
+  - [x] курси НБУ автоматично (Максим, 3.11.2026): `api/cron/daily` щоранку пише курси НБУ як довідкові в кожен простір; ручний курс того ж дня перемагає.
 - [x] 1.8 Фіча `operations`: форма (MoneyInput, рахунок, категорія, дата, контрагент, коментар), список (таблиця desktop / картки по днях mobile), фільтри в URL, дублювати, видалити, перехід до джерела.
 - [ ] 1.9 Переказ між рахунками з різними валютами й окремою комісією.
 - [ ] 1.10 Вкладення чека: стиснення, приватний бакет `attachments`, політика Storage, signed URL. Видалення операції чи простору має видаляти й об'єкти Storage (рядки `attachments` ідуть каскадом, файли — ні).
@@ -217,7 +218,8 @@ PWA-маніфест, нічний бекап.
 
 ## Фаза 5. Податки
 
-> **Відкладено Максимом, 30.10.2026.** Не робиться, доки він не поверне фазу в план.
+Повернуто в план Максимом 03.11.2026: сервер над тим, що вже є (фази 1–3, бюджет, статистика). Як підключити
+кожен клієнт — `docs/mcp-connectors.md`.
 
 **Передумова:** відповіді на питання §27 (нижче). Без них — лише профіль із ручними сумами.
 
@@ -253,7 +255,8 @@ PWA-маніфест, нічний бекап.
 
 ## Фаза 6. Автомобіль
 
-> **Відкладено Максимом, 30.10.2026.** Не робиться, доки він не поверне фазу в план.
+Повернуто в план Максимом 03.11.2026: сервер над тим, що вже є (фази 1–3, бюджет, статистика). Як підключити
+кожен клієнт — `docs/mcp-connectors.md`.
 
 **Мета:** авто, заправки, сервіси, план робіт — кожна подія = одна операція.
 
@@ -318,7 +321,8 @@ PWA-маніфест, нічний бекап.
 
 ## Фаза 9. Календарні інтеграції Google та iCloud
 
-> **Відкладено Максимом, 30.10.2026.** Не робиться, доки він не поверне фазу в план.
+Повернуто в план Максимом 03.11.2026: сервер над тим, що вже є (фази 1–3, бюджет, статистика). Як підключити
+кожен клієнт — `docs/mcp-connectors.md`.
 
 **Мета:** двостороння серверна синхронізація прив'язаних подій і міграція наявних серій §25.
 
@@ -350,29 +354,30 @@ PWA-маніфест, нічний бекап.
 
 ## Фаза 10. MCP
 
-> **Відкладено Максимом, 30.10.2026.** Не робиться, доки він не поверне фазу в план.
+Повернуто в план Максимом 03.11.2026: сервер над тим, що вже є (фази 1–3, бюджет, статистика). Як підключити
+кожен клієнт — `docs/mcp-connectors.md`.
 
-**Мета:** Claude Code і Perplexity читають дані Saldo через один remote MCP-сервер з OAuth від імені власника під
+**Мета:** Claude, ChatGPT, Perplexity, Gemini та інші MCP-клієнти читають дані Saldo через один remote MCP-сервер з OAuth від імені власника під
 RLS; запис — лише з підтвердженням (`docs/architecture.md` §12, `docs/research/mcp.md`).
 
-- [ ] 10.1 Supabase: увімкнути OAuth 2.1 Server і Dynamic Client Registration, шлях авторизації → `https://saldo.maksymvasianin.com/oauth/consent`; записати, чи є CIMD (`/.well-known/oauth-authorization-server/auth/v1`).
-- [ ] 10.2 `mcp-handler@2.3.0`, `@modelcontextprotocol/server@2.4.0`; `src/app/api/mcp/route.ts` (`withMcpAuth`, `required: true`), `src/lib/supabase/token-client.server.ts`, `verifySupabaseToken` (`getClaims`, є `client_id`).
-- [ ] 10.3 `/.well-known/oauth-protected-resource` (`protectedResourceHandler`) і `/.well-known/oauth-authorization-server` (копія метаданих Supabase з кешем) + `OPTIONS` для CORS.
-- [ ] 10.4 Сторінка `(auth)/oauth/consent`: клієнт, scope, «Дозволити» / «Відмовити»; список виданих доступів і відкликання в Налаштування → Безпека.
-- [ ] 10.5 Міграція `mcp_audit_log` (RLS) + restrictive-політики для OAuth-клієнтів (`auth.jwt() ->> 'client_id' is not null` → без `delete`).
-- [ ] 10.6 Read-tools у `src/mcp/tools/*.tools.server.ts`: баланси, «Доступно до дати», найближчі, пошук операцій, підписки, кредити, бюджет місяця, календар, пошук; resources `saldo://accounts`, `saldo://categories`, `saldo://settings`.
-- [ ] 10.7 Перевірка клієнтів живцем: MCP Inspector (`npx @modelcontextprotocol/inspector`), Claude Code (`claude mcp add --transport http saldo https://saldo.maksymvasianin.com/api/mcp`, `/mcp`), Perplexity (Plugins → Add MCP connector → Remote, OAuth).
-- [ ] 10.8 Write-tools за `MCP_WRITE_ENABLED`: `add_operation`, `mark_paid`, `create_planned_payment` — ті самі input-схеми й `*.api.ts`, що й UI; без `confirm: true` лише попередній перегляд.
-- [ ] 10.9 `import_statement_preview` поверх модуля імпорту виписок (після того, як модуль з'явиться в плані).
-- [ ] 10.10 Вільний текст із даних — у полях `untrusted_text`; ліміт рядків і розміру відповіді.
-- [ ] 10.11 Учасники: tool `list_ledgers`, необов'язковий `ledger_id` у tools (за замовчуванням `last_ledger_id`), `mcp_audit_log` з `user_id` і `ledger_id`; перевірка: токен viewer не пише.
-- [ ] 10.12 E2E (Playwright `request`, без браузера, крім згоди): `/api/mcp` без токена → 401 з `resource_metadata`; сторінка `/oauth/consent` — «Дозволити» видає доступ, він є в Налаштування → Безпека, «Відкликати» прибирає; `tools/call` «Доступно до дати» з токеном owner дає те саме число, що Огляд; write-tool із токеном viewer відмовляє. Claude Code і Perplexity — вручну (10.7).
+- [ ] 10.1 Supabase: увімкнути OAuth 2.1 Server і Dynamic Client Registration, шлях авторизації → `https://saldo.maksymvasianin.com/oauth/consent`; записати, чи є CIMD (`/.well-known/oauth-authorization-server/auth/v1`). Локально — `supabase/config.toml` (діє після перезапуску стеку); прод — кроки в `docs/mcp-connectors.md`. CIMD Supabase не публікує (supabase/auth#2850).
+- [x] 10.2 `mcp-handler@2.3.0`, `@modelcontextprotocol/server@2.4.0`; `src/app/api/mcp/route.ts` (`withMcpAuth`, `required: true`), `src/lib/supabase/token-client.server.ts`, `verifySupabaseToken` (`getClaims`, є `client_id`).
+- [x] 10.3 `/.well-known/oauth-protected-resource` (`protectedResourceHandler`, `resource` = URL `/api/mcp`, також за `/.well-known/oauth-protected-resource/api/mcp`) і `/.well-known/oauth-authorization-server` (копія метаданих Supabase з кешем) + `OPTIONS` для CORS.
+- [x] 10.4 Сторінка `(auth)/oauth/consent`: клієнт, scope, «Дозволити» / «Відмовити»; список виданих доступів і відкликання в Налаштування → Безпека. «Дозволити» — лише для callback відомих клієнтів (DCR у Supabase не має allow-list). Фрейму у Figma для картки згоди й «AI-доступ» немає.
+- [x] 10.5 Міграція `mcp_audit_log` (RLS) + заборона `delete` для OAuth-клієнтів (`auth.jwt() ->> 'client_id' is not null`): тригер `<table>_oauth_no_delete` на кожній таблиці з RLS, бо restrictive-політика не діє в `security definer` RPC видалення.
+- [x] 10.6 Read-tools у `src/mcp/tools/*.tools.server.ts`: баланси, «Доступно до дати», найближчі, пошук операцій, підписки, кредити, борги, бюджет місяця, статистика місяця, категорії, валюти, пошук. Календар і resources `saldo://…` не зроблено: ті самі дані дають `list_upcoming`, `search_operations`, `get_balances`, `list_categories` (resources більшість клієнтів не читає).
+- [ ] 10.7 Перевірка клієнтів живцем (потрібен прод з 10.1; локально перевірено лише MCP Inspector CLI з токеном): MCP Inspector (`npx @modelcontextprotocol/inspector`), Claude Code (`claude mcp add --transport http saldo https://saldo.maksymvasianin.com/api/mcp`, `/mcp`), Perplexity (Plugins → Add MCP connector → Remote, OAuth).
+- [x] 10.8 Write-tools за `MCP_WRITE_ENABLED`: `add_operation`, `mark_paid`, `create_planned_payment` — ті самі input-схеми й `*.api.ts`, що й UI; без `confirm: true` лише попередній перегляд.
+- [ ] 10.9 `import_statement_preview` поверх модуля імпорту виписок (після того, як модуль з'явиться в плані). Модуля ще немає — пропущено 03.11.2026.
+- [x] 10.10 Вільний текст із даних — у полях `untrusted_text`; ліміт рядків і розміру відповіді.
+- [x] 10.11 Учасники: tool `list_ledgers`, необов'язковий `ledger_id` у tools (за замовчуванням `last_ledger_id`), `mcp_audit_log` з `user_id` і `ledger_id`; перевірка: токен viewer не пише.
+- [ ] 10.12 E2E (Playwright `request`, без браузера, крім згоди; `e2e/mcp/mcp-server.e2e.ts`, OAuth-частина пропускається, доки локальний OAuth-сервер не запущено): `/api/mcp` без токена → 401 з `resource_metadata`; сторінка `/oauth/consent` — «Дозволити» видає доступ, він є в Налаштування → Безпека, «Відкликати» прибирає; `tools/call` «Доступно до дати» з токеном owner дає те саме число, що Огляд; write-tool із токеном viewer відмовляє. Claude Code і Perplexity — вручну (10.7).
 
 Тести: `verifySupabaseToken` (без `client_id`, прострочений, чужий `sub`), побудова попереднього перегляду write-tool,
 обгортка `untrusted_text`, мапінг `PT409` і помилок обмежень у результат tool.
 
 Готово, коли:
-- [ ] без токена `/api/mcp` повертає 401 з `resource_metadata`; Claude Code і Perplexity проходять OAuth і бачать tools;
+- [ ] без токена `/api/mcp` повертає 401 з `resource_metadata` (так, e2e); Claude Code і Perplexity проходять OAuth і бачать tools (потрібен прод);
 - [ ] «Доступно до дати» через MCP дорівнює числу на Огляді, складові ті самі;
 - [ ] `add_operation` двічі з тим самим `id` дає один запис; без `confirm` нічого не записано;
 - [ ] MCP-клієнт не може видалити операцію (restrictive-політика), а UI може;

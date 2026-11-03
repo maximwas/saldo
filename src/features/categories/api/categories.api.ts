@@ -13,7 +13,7 @@ import { type CategoryView, type SortChange, toCategory } from '../utils/categor
 export async function getCategories(supabase: SaldoClient, ledgerId: string): Promise<CategoryView[]> {
   const { data, error } = await supabase
     .from('categories')
-    .select('id, kind, parent_id, name, color, icon, sort_order, archived_at, version')
+    .select('id, kind, parent_id, name, color, icon, sort_order, archived_at, version, system_key')
     .eq('ledger_id', ledgerId)
     .order('sort_order')
 

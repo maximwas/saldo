@@ -43,6 +43,11 @@ export function PageTransition({ className, children }: PageTransitionProps) {
             y: [MOTION.pageOffsetY, 0],
           },
     )
+
+    // StrictMode and <Activity> disconnect effects, and useAnimate stops the running fade then; the re-run starts it again
+    return () => {
+      animatedPathname.current = null
+    }
   }, [pathname, animate, scope, reduceMotion])
 
   return (

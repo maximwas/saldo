@@ -1,5 +1,6 @@
 // Fills demo@example.com (made by supabase/seed.sql) with the rest of docs/design/demo-data.md for the visual tests:
-// October operations, the EUR → card transfer, the October budget and the two categories seed.sql lacks.
+// the story's October operations, the EUR → card transfer and budget in the current Kyiv month, and the two
+// categories seed.sql lacks. DEMO_TODAY=YYYY-MM-DD pins today (2026-10-30 for the visual specs, as in seed.sql).
 // Local stack only; run after `supabase db reset`. Writes go through the app's RPCs as the demo user (RLS applies).
 import { execSync } from 'node:child_process'
 import { createClient } from '@supabase/supabase-js'
@@ -135,9 +136,19 @@ const TRANSFER = {
   eurMinor: 80_000,
   uahMinor: 3_320_000,
 }
-const day = (dayNo) => `2026-10-${String(dayNo).padStart(2, '0')}`
+const today = process.env.DEMO_TODAY ?? new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(new Date())
 
-// balances of 30.10 stay those of demo-data.md: the opening balance on 01.10 is what October's movements leave out
+if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) {
+  throw new Error(`seed-visual: DEMO_TODAY must be YYYY-MM-DD, got ${today}`)
+}
+
+const monthStart = `${today.slice(0, 7)}-01`
+// October's days 1..29 squeezed into 1..today, so every month screen is full and no operation is in the future;
+// from the 30th on they are the story's own days
+const squeezed = (dayNo) => Math.min(dayNo, Math.ceil((dayNo * Number(today.slice(8))) / 30))
+const day = (dayNo) => `${today.slice(0, 8)}${String(squeezed(dayNo)).padStart(2, '0')}`
+
+// balances stay those of demo-data.md: the opening balance on the 1st is what the month's movements leave out
 const expensesMinor = EXPENSES.reduce((sum, [, , , minor]) => sum + minor, 0)
 const incomesMinor = INCOMES.reduce((sum, [, , minor]) => sum + minor, 0)
 
@@ -146,7 +157,7 @@ must(
     .from('accounts')
     .update({
       opening_balance_minor: 4_621_580 - incomesMinor - TRANSFER.uahMinor + expensesMinor,
-      opening_balance_on: '2026-10-01',
+      opening_balance_on: monthStart,
     })
     .eq('id', CARD),
   'card opening',
@@ -156,7 +167,7 @@ must(
     .from('accounts')
     .update({
       opening_balance_minor: 120_000 + TRANSFER.eurMinor,
-      opening_balance_on: '2026-10-01',
+      opening_balance_on: monthStart,
     })
     .eq('id', EUR),
   'EUR opening',
@@ -228,7 +239,7 @@ const month = must(
     .upsert(
       {
         ledger_id: ledgerId,
-        month: '2026-10-01',
+        month: monthStart,
       },
       { onConflict: 'ledger_id,month' },
     )

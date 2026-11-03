@@ -368,12 +368,13 @@ enabled = false
 
 # OAuth server configuration
 [auth.oauth_server]
-# Enable OAuth server functionality
-enabled = false
+# Saldo (phase 10): the MCP server's authorization server; the consent page is site_url + authorization_url_path.
+# Applies after `supabase stop && supabase start`.
+enabled = true
 # Path for OAuth consent flow UI
 authorization_url_path = "/oauth/consent"
-# Allow dynamic client registration
-allow_dynamic_registration = false
+# Saldo: MCP clients (Claude, ChatGPT, Gemini CLI, Inspector) register themselves; consent is still the owner's
+allow_dynamic_registration = true
 
 [edge_runtime]
 enabled = false

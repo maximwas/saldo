@@ -5,7 +5,6 @@ import { Link as LinkIcon, Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 import { Amount } from '@/components/ui/amount.component'
-import { AuthorAvatar } from '@/components/ui/author-avatar.component'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
@@ -14,7 +13,6 @@ import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { serviceLogoOf } from '@/components/ui/service-logo.utils'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { useMemberNames } from '@/lib/members/member-names.hook'
 import { formatMinor } from '@/lib/money/money.utils'
 import type { RecordState } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
@@ -91,7 +89,6 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   const refunds = useQuery(operationQueries.refunds(ledgerId))
   const accounts = options.data?.accounts ?? []
   const categories = options.data?.categories ?? []
-  const names = useMemberNames()
   const groups = groupByDay(items)
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? ''
   const category = (id: string | null) => categories.find((candidate) => candidate.id === id)
@@ -300,8 +297,6 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
     category(plan.categoryId)?.name ??
     (plan.sourceType === 'credit' ? translatePlan('creditCategory') : translate('row.noCategory'))
 
-  const author = (item: OperationItem) => (item.row.createdBy ? names[item.row.createdBy] : null)
-
   const dayTotal = (group: (typeof groups)[number]) => {
     const totals = summarize(group.items)
     const counted = group.items.some(
@@ -424,7 +419,6 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                           {titleOf(item)}
                         </RowButton>
                         <span className="flex items-center gap-2 text-label text-text-secondary">
-                          <AuthorAvatar name={author(item)} />
                           <span className="truncate">{subtitleOf(item)}</span>
                           {paperclip(item)}
                           {refundNote(item)}
@@ -497,7 +491,6 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="truncate text-body font-medium text-text-primary">{titleOf(item)}</span>
                       <span className="flex items-center gap-2 text-label text-text-secondary">
-                        <AuthorAvatar name={author(item)} />
                         <span className="truncate">{mobileSubtitle(item)}</span>
                         {paperclip(item)}
                         {refundNote(item)}

@@ -1,5 +1,5 @@
 {
-  "loadFailed": "Could not load the budget. Refresh the page.",
+  "loadFailed": "Could not load the budget",
   "month": {
     "previous": "Previous month",
     "next": "Next month"
@@ -13,7 +13,8 @@
     "editIncomePlan": "Change income plan",
     "limitsTotal": "Limits {amount}",
     "limitsNone": "No limits",
-    "resultNote": "Transfers between accounts excluded"
+    "resultNote": "Transfers between accounts excluded",
+    "withPlan": "with the plan to the end of the month: {amount}"
   },
   "copy": {
     "toNext": "Copy to {month}",
@@ -23,8 +24,6 @@
   },
   "limits": {
     "title": "Limits by category",
-    "add": "Add a limit",
-    "legend": "Over the limit: the money is on your accounts, this is not a shortfall, the category just passed its limit.",
     "empty": "No limits for this month.",
     "noCategory": "No category",
     "noLimit": "No limit",
@@ -36,12 +35,18 @@
     "ofLimit": "of {limit} · {pct}%",
     "ofLimitCarried": "of {limit} + carried {carried} · {pct}%",
     "carriedUnknown": "of {limit} + carried unknown · {pct}%",
-    "operations": "Operations of “{name}” this month",
-    "edit": "Change the limit of “{name}”"
+    "edit": "Change the limit of “{name}”",
+    "titleShort": "Limits",
+    "change": "Change limits",
+    "changeShort": "Change",
+    "legendFact": "Spent",
+    "legendPlan": "Planned",
+    "legendOver": "Over the limit (the money is there, this is not a shortfall)",
+    "legendOverShort": "Over the limit, not a shortfall"
   },
   "empty": {
     "title": "No budget for {month} yet",
-    "text": "Copy limits and the income plan from the previous month or start from scratch. A plan does not change the balance.",
+    "text": "Copy limits and the income plan from {month} or start from scratch. A plan does not change the balance.",
     "start": "Add a limit"
   },
   "limitSheet": {
@@ -49,24 +54,36 @@
     "title": "Limit “{name}” · {month}",
     "category": "Category",
     "categoryPlaceholder": "Choose a category",
-    "amount": "Monthly limit",
+    "amount": "Monthly limit, {currency}",
     "carry": "Unspent remainder",
     "carryReset": "Reset at the end of the month",
     "carryCarry": "Carry over to the next month",
-    "carryHintReset": "Does not move to the next month.",
+    "carryHintReset": "Does not move to {month}",
     "carryHintCarry": "When you copy the month, the remainder is added to the next limit.",
     "spent": "Spent {amount}",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete limit",
-    "saved": "Limit saved"
+    "saved": "Limit saved",
+    "saveFailed": "Could not save the limit of “{name}”",
+    "overTitle": "“{name}”: over the limit by {amount}",
+    "overText": "Spent {spent} of {limit} ({pct}%). This is not a shortfall: the money is on your accounts, the category just passed its limit.",
+    "overAmount": "New limit",
+    "moveFrom": "Or move from a category",
+    "moveNone": "Do not move",
+    "moveOption": "{name} · {amount} free",
+    "moveHint": "The limit of “{name}” goes down by {amount}",
+    "keep": "Keep",
+    "saveOver": "Save limit"
   },
   "deleteSheet": {
     "title": "Delete the limit of “{name}”?",
-    "text": "The limit of {amount} for {month} will be deleted. The category's operations stay in the month's expenses, just without a limit.",
+    "text": "The limit of {amount} for {month} will be deleted. Operations in “{name}” worth {spent} stay in the month's expenses, just without a limit.",
     "confirm": "Delete",
     "cancel": "Cancel",
-    "deleted": "Limit deleted"
+    "deleted": "Limit of “{name}” deleted",
+    "textNext": "Following months do not change.",
+    "confirmDesktop": "Delete limit"
   },
   "incomeSheet": {
     "title": "Income plan · {month}",
@@ -75,5 +92,6 @@
     "save": "Save",
     "cancel": "Cancel",
     "saved": "Income plan saved"
-  }
+  },
+  "viewOnly": "View only: the space owner changes limits and the plan."
 }

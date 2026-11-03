@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Chip } from '@/components/ui/chip.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
@@ -55,7 +56,7 @@ const HOW = [
 export function CategoriesScreen() {
   const translate = useTranslations('categories')
   const canWrite = useCanWrite()
-  const { data, isPending, isError } = useCategories()
+  const { data, isPending, isError, refetch } = useCategories()
   const reorder = useReorderCategories()
   const update = useUpdateCategory()
   const [kind, setKind] = useState<CategoryKind>('expense')
@@ -92,11 +93,7 @@ export function CategoriesScreen() {
   }
 
   if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
+    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
   const tree = buildCategoryTree(data)

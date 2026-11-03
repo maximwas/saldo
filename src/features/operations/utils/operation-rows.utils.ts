@@ -91,3 +91,14 @@ export function chunks<Item>(items: Item[], size: number) {
     items.slice(index * size, (index + 1) * size),
   )
 }
+
+/**
+ * PostgREST `or` filter for the «Text» chip: the payee or the note contains the text. LIKE wildcards in the text are
+ * literal (backslash-escaped), and the value is double-quoted so commas and brackets do not split the filter.
+ */
+export function textFilter(text: string): string {
+  const like = `%${text.replace(/[\\%_]/g, (char) => `\\${char}`)}%`
+  const quoted = `"${like.replace(/[\\"]/g, (char) => `\\${char}`)}"`
+
+  return `counterparty.ilike.${quoted},note.ilike.${quoted}`
+}

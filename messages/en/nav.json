@@ -28,5 +28,6 @@
   "settings": "Settings",
   "space": "Space",
   "notifications": "Notifications",
-  "debtsShort": "Debts"
+  "debtsShort": "Debts",
+  "goalsShort": "Goals"
 }
