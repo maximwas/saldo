@@ -1119,13 +1119,15 @@ Server Actions для даних не використовуються; вихі
 | Файл | Що робить |
 |---|---|
 | `src/app/api/mcp/route.ts` | `withMcpAuth(createMcpHandler(registerSaldoTools), verifySupabaseToken, { required: true })`, експорт `GET`/`POST`; `runtime = 'nodejs'` |
-| `src/app/.well-known/oauth-protected-resource/route.ts` | `protectedResourceHandler({ authServerUrls: [SUPABASE_AUTH_ISSUER] })` (RFC 9728) |
-| `src/app/.well-known/oauth-authorization-server/route.ts` | копія метаданих Supabase Auth з кешем — для клієнтів, що шукають їх на домені MCP (Perplexity) |
+| `src/app/.well-known/oauth-protected-resource/[[...resource]]/route.ts` | `protectedResourceHandler` (RFC 9728): `resource` = URL `/api/mcp`, за коренем і за `/api/mcp` (path insertion) |
+| `src/app/.well-known/oauth-authorization-server/[[...resource]]/route.ts` | метадані Supabase Auth без змін, кеш CDN — для клієнтів, що шукають їх на домені MCP (Perplexity) |
 | `src/app/(auth)/oauth/consent/page.tsx` | згода учасника (того, хто входить) для Supabase OAuth Server: клієнт, scope, «Дозволити» / «Відмовити» |
-| `src/mcp/server.server.ts` | `registerSaldoTools(server)`: збирає tools; лише тут MCP імпортує фічі |
+| `src/mcp/server.server.ts` | `registerSaldoTools(server)`: збирає tools; write-tools — лише при `MCP_WRITE_ENABLED=true` |
+| `src/mcp/tool-context.server.ts` | простір виклику (`ledger_id` або останній відкритий), клієнт із токеном, рядок `mcp_audit_log` на кожен виклик |
 | `src/mcp/tools/<feature>.tools.server.ts` | tools однієї фічі: `inputSchema` = zod-схема вводу фічі, тіло = функція `features/<f>/api/*.api.ts` |
 | `src/lib/supabase/token-client.server.ts` | `createTokenSupabase(accessToken)` — supabase-js з `Authorization: Bearer <JWT учасника>` |
-| міграція `mcp_audit_log` | журнал викликів: `user_id` (хто), `ledger_id`, tool, `client_id`; RLS `mcp_audit_log_self` + читання owner простору |
+| міграція `mcp_audit_log` | журнал викликів: `user_id` (хто), `ledger_id`, tool, `client_id`, хеш вводу, результат; RLS `mcp_audit_log_self` + `mcp_audit_log_owner_read`; тригер `<table>_oauth_no_delete` на кожній таблиці з RLS |
+| `src/app/(app)/settings/security/page.tsx` | видані доступи (`auth.oauth.listGrants`) і «Відкликати» (`revokeGrant`) |
 
 **Потік запиту.**
 
@@ -1149,8 +1151,11 @@ sequenceDiagram
 
 **Автентифікація.** Токен — Supabase JWT, тому RLS (членство в просторі через `auth.uid()`) і RPC (перевірка ролі через `auth.uid()`) працюють
 без змін; service-role у MCP не використовується. `verifySupabaseToken` перевіряє підпис через `getClaims`, а
-також що `client_id` є (токен саме OAuth-клієнта, а не сесії браузера). Обмеження клієнтів у БД — restrictive
--політики на `auth.jwt() ->> 'client_id'` (наприклад, без `delete`). План Б, якщо OAuth у клієнта не
+також що `client_id` є (токен саме OAuth-клієнта, а не сесії браузера), а `getUser` — що сесія ще жива: «Відкликати»
+у Налаштуваннях видаляє сесії клієнта, і він зупиняється з наступного виклику, а не через годину. Обмеження клієнтів
+у БД — тригер `before delete` на `auth.jwt() ->> 'client_id'` на кожній таблиці з RLS: restrictive-політика не діє
+в `security definer` RPC видалення (`delete_operation`, `delete_category`, …). Supabase DCR не має allow-list
+redirect URI, тому сторінка згоди дає «Дозволити» лише callback відомих клієнтів (`docs/mcp-connectors.md`). План Б, якщо OAuth у клієнта не
 запрацює, — персональний токен із хешем у таблиці (`docs/research/mcp.md`).
 
 **Учасники й простори.** Токен MCP належить людині, а не простору: кожен учасник підключає MCP своїм входом і

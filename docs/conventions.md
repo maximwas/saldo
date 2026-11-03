@@ -24,6 +24,8 @@
   запрошення) або писати таблиці, що клієнтам лише для читання (`operations`, `transfers`, `obligation_payments`,
   architecture §5.10). Такий RPC до будь-якого читання знаходить простір цілі й кличе `private.assert_writable(ledger_id)`
   (чи явно перевіряє `auth.uid()`), має `set search_path = ''`, повні імена й `revoke execute … from public, anon`.
+- **Нова таблиця з RLS** отримує тригер `create trigger <table>_oauth_no_delete before delete on public.<table> for each
+  row execute function private.forbid_oauth_delete()`: MCP-клієнт нічого не видаляє (фаза 10, pgTAP `mcp-audit-log`).
 - **Тести RLS на двох людях**: кожна міграція з новою таблицею має pgTAP у `supabase/tests/<table>.test.sql`:
   owner і editor пишуть, viewer читає й отримує `42501` на запис, чужий бачить 0 рядків і не вставляє рядок у чужий
   `ledger_id`; складений FK не дає послатися на рядок іншого простору. pgTAP запускає `pnpm test:db` той, хто зараз
