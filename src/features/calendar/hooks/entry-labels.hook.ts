@@ -1,9 +1,9 @@
-import { type DateTimeFormatOptions, useFormatter, useTranslations } from 'next-intl'
+import { type DateTimeFormatOptions, useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { useToday } from '@/contexts/clock.context'
 import type { CalendarEntry } from '../api/calendar.api'
 import { capitalize, dayDate, type EntryStatus, entryStatus } from '../utils/calendar.utils'
-import { useCalendarOptions } from './calendar.hook'
+import { useCalendarOptions, useInstallmentOf } from './calendar.hook'
 
 /** «03.11» of a YYYY-MM-DD */
 export function useShortDate() {
@@ -56,6 +56,38 @@ export function useEntryType() {
       : translate(`kind.${entry.kind as 'expense'}`)
 }
 
+/** «November» as it reads after a day number (the genitive in Ukrainian): «All entries of November» */
+export function useMonthOf() {
+  const locale = useLocale()
+
+  return (day: string) =>
+    new Intl.DateTimeFormat(locale, {
+      timeZone: 'UTC',
+      day: 'numeric',
+      month: 'long',
+    })
+      .formatToParts(dayDate(day))
+      .find((part) => part.type === 'month')?.value ?? ''
+}
+
+/** the type with a credit's installment, «Credit · payment 3 of 12», else the type alone */
+export function useEntrySource() {
+  const translate = useTranslations('calendar')
+  const type = useEntryType()
+  const installmentOf = useInstallmentOf()
+
+  return (entry: CalendarEntry) => {
+    const installment = entry.sourceType === 'credit' ? installmentOf(entry.obligationId) : null
+
+    return installment
+      ? translate('installment', {
+          type: type(entry),
+          ...installment,
+        })
+      : type(entry)
+  }
+}
+
 /** the state words: «not paid yet», «paid today, the plan was for 05.11»; a plain operation names its account */
 function useStatusWords() {
   const translate = useTranslations('calendar')
@@ -88,10 +120,10 @@ function useStatusWords() {
   return (entry: CalendarEntry, mark = false) => words[mark ? 'paid' : entryStatus(entry)](entry)
 }
 
-/** a row's second line: «Credit · paid today, the plan was for 05.11», «Planned payment · not paid yet» */
+/** a row's second line: «Credit · payment 4 of 12 · paid 03.11», «Planned payment · not paid yet» */
 export function useEntryLine() {
   const translate = useTranslations('calendar')
-  const type = useEntryType()
+  const type = useEntrySource()
   const words = useStatusWords()
 
   return (entry: CalendarEntry, mark = false) => {

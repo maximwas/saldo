@@ -128,7 +128,7 @@
     "unpay": "Cancel the payment",
     "operation": "Open the operation"
   },
-  "listTitle": "{period} · newest first",
+  "listTitle": "All entries of {month}",
   "empty": {
     "title": "Nothing matches the filter",
     "text": "Nothing was found in this period. Change or reset the filters.",
@@ -156,7 +156,13 @@
     "planned": "planned, not paid yet",
     "paid": "paid, the sum is on the payment day",
     "totals": "At the bottom of a cell: «Spent» has already happened, «Planned» is still to pay",
-    "colours": "Colour is the kind of entry:"
+    "colours": "Colour is the kind of entry:",
+    "totalsDay": "At the bottom of a day: «Spent» already happened, «Planned» is still to pay",
+    "marks": {
+      "paid": "paid",
+      "planned": "planned, not paid yet",
+      "paidEarlier": "paid earlier, on another day"
+    }
   },
   "status": {
     "planned": "not paid yet",
@@ -172,5 +178,6 @@
     "paid": "Paid {date}",
     "paidElsewhere": "Paid {date} · the plan was for {planned}",
     "fact": "{type} · {date}"
-  }
+  },
+  "installment": "{type} · payment {number} of {total}"
 }

@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils/cn.utils'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
 import { useDayTitle, useShortDate } from '../hooks/entry-labels.hook'
-import { paidMarks } from '../utils/calendar.utils'
 import { DaySums } from './day-sums.component'
+import { QUIET_TAP } from './entry-popup.component'
 import { EntryRow } from './entry-row.component'
 
 type DayPanelProps = {
@@ -20,26 +20,26 @@ type DayPanelProps = {
 
 // Figma «Saldo» → Day card 57:128482 (the day view) and the month's side card 51:125189: «Today, Tuesday 3 November»,
 // the day's labelled sums, then «Already happened», «Planned» and «Paid on another day» without sums, a row per entry
-// that opens its popup, «Tap an entry…» and «Add an entry on 03.11». The add button opens the global operation sheet
-// (?add=) on this date (?on=). An empty day says so and offers a quiet add.
+// that opens its popup, «Tap an entry…» and «Add an entry on 03.11» (Secondary M; across the side card on desktop). The
+// add button opens the global operation sheet (?add=) on this date (?on=). An empty day (57:128593, 59:129824) says so
+// and offers a quiet Ghost S add.
 export function DayPanel({ compact = false }: DayPanelProps) {
   const translate = useTranslations('calendar')
   const canWrite = useCanWrite()
   const dayTitle = useDayTitle()
   const short = useShortDate()
   const { date } = useCalendarParams()
-  const { entries, totals } = useCalendarData()
+  const { entries, totals, marks } = useCalendarData()
   const [, openAdd] = useQueryStates({
     add: parseAsString,
     on: parseAsString,
   })
-  const all = entries.data ?? []
-  const dayEntries = all.filter((entry) => entry.day === date)
+  const dayEntries = (entries.data ?? []).filter((entry) => entry.day === date)
   const plans = dayEntries.filter((entry) => entry.entry === 'plan')
   const groups = [
     ['done', dayEntries.filter((entry) => entry.entry === 'fact')],
     ['planned', plans],
-    ['paidElsewhere', paidMarks(all).get(date) ?? []],
+    ['paidElsewhere', marks.get(date) ?? []],
   ] as const
   const empty = groups.every(([, rows]) => rows.length === 0)
   const title = dayTitle(date)
@@ -77,7 +77,8 @@ export function DayPanel({ compact = false }: DayPanelProps) {
       {canWrite && (
         <Button
           variant={empty ? 'ghost' : 'secondary'}
-          className={cn('whitespace-normal', compact ? 'self-stretch' : 'self-start')}
+          size={empty ? 's' : 'm'}
+          className={cn('self-start whitespace-normal', empty ? QUIET_TAP : compact && 'lg:self-stretch')}
           onClick={() =>
             void openAdd({
               add: 'expense',
@@ -85,7 +86,7 @@ export function DayPanel({ compact = false }: DayPanelProps) {
             })
           }
         >
-          <Plus aria-hidden className="size-5 shrink-0" />
+          <Plus aria-hidden className={cn('shrink-0', empty ? 'size-4' : 'size-5')} />
           {translate('day.add', { date: short(date) })}
         </Button>
       )}

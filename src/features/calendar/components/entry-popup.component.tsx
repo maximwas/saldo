@@ -15,7 +15,7 @@ import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import type { CalendarEntry } from '../api/calendar.api'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { useEntryType, usePopupStatus } from '../hooks/entry-labels.hook'
+import { useEntrySource, useEntryType, usePopupStatus } from '../hooks/entry-labels.hook'
 import { entryStatus, signedMinor, sourceHref } from '../utils/calendar.utils'
 import { amountKind, EntryTile, STATUS_ICON } from './entry-row.component'
 import { entryPopup } from './entry-trigger.component'
@@ -24,8 +24,9 @@ import { RemoveEntryDialog } from './remove-entry-dialog.component'
 const OPEN_STATES = ['plan', 'partial', 'unconfirmed']
 const SOURCE_LINKS = ['subscription', 'credit', 'debt']
 const SERIES_SOURCES = ['credit', 'debt']
-// phones: a quiet button keeps its look but gets the 44 tap height (Figma 55:127552)
-const QUIET_TAP = 'max-md:h-11'
+
+/** phones: a 36 quiet button keeps its look, an invisible 4 above and below makes its tap area 44 (Figma 55:127552) */
+export const QUIET_TAP = 'relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1'
 
 /** the obligation sheets of «Upcoming» live in the page: the calendar only puts the obligation id into the URL */
 const useObligationSheets = () =>
@@ -111,7 +112,7 @@ function EntryActions({ entry, onCloseAction, onRemoveAction }: DetailsProps) {
 function EntryDetails(props: DetailsProps) {
   const { entry } = props
   const translate = useTranslations('calendar')
-  const type = useEntryType()
+  const source = useEntrySource()
   const status = usePopupStatus()
   const StatusIcon = STATUS_ICON[entryStatus(entry)]
   const href = sourceHref(entry.sourceType, entry.sourceId)
@@ -137,7 +138,7 @@ function EntryDetails(props: DetailsProps) {
         <div className="flex items-center gap-3 rounded-md bg-subtle py-3 pr-3 pl-4">
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="text-caption text-text-tertiary">{translate('popup.source')}</span>
-            <span className="text-label font-medium text-text-primary">{type(entry)}</span>
+            <span className="text-label font-medium text-text-primary">{source(entry)}</span>
           </div>
           <Button
             variant="ghost"
@@ -165,10 +166,10 @@ export function EntryPopup() {
   const desktop = useIsSheetDialog()
   const type = useEntryType()
   const { item, setUrl } = useCalendarParams()
-  const { entries } = useCalendarData()
+  const { entries, known } = useCalendarData()
   const [removing, setRemoving] = useState<CalendarEntry | null>(null)
   const loaded = entries.data !== undefined
-  const find = (id: string | null | undefined) => entries.data?.find((entry) => entry.id === id)
+  const find = (id: string | null | undefined) => known.find((entry) => entry.id === id)
   const close = () => void setUrl({ item: null })
 
   // a link with ?item= opens the popup at the first place the entry shows, once the entries are on screen

@@ -3,7 +3,10 @@ import {
   cellLines,
   dayTotalLines,
   entryStatus,
+  entryTone,
+  LEGEND,
   monthGrid,
+  outsideDays,
   paidMarks,
   periodRange,
   sourceHref,
@@ -108,6 +111,8 @@ describe('calendar period', () => {
   })
 })
 
+const november = periodRange('month', '2026-11-03')
+
 const fact = {
   id: 'f1',
   entry: 'fact' as const,
@@ -142,19 +147,69 @@ describe('calendar cells and marks', () => {
       obligationId: 'o2',
       plannedOn: '2026-11-03',
     }
-    const marks = paidMarks([
-      fact,
-      early,
-      onTime,
+    const marks = paidMarks(
+      [
+        fact,
+        early,
+        onTime,
+        {
+          ...early,
+          id: 'plan',
+          entry: 'plan' as const,
+        },
+      ],
       {
-        ...early,
-        id: 'plan',
-        entry: 'plan' as const,
+        from: '2026-11-01',
+        to: '2026-11-30',
       },
-    ])
+    )
 
     expect([...marks.keys()]).toEqual(['2026-11-10'])
     expect(marks.get('2026-11-10')?.map((entry) => entry.id)).toEqual(['early'])
+  })
+
+  it('marks only the plan days of the period, a payment made in another period included', () => {
+    const lastMonth = {
+      ...fact,
+      id: 'last-month',
+      day: '2026-10-28',
+      obligationId: 'o3',
+      plannedOn: '2026-11-05',
+    }
+    const nextMonthPlan = {
+      ...fact,
+      id: 'next-month-plan',
+      obligationId: 'o4',
+      plannedOn: '2026-12-02',
+    }
+    const marks = paidMarks([lastMonth, nextMonthPlan], november)
+
+    expect([...marks.keys()]).toEqual(['2026-11-05'])
+    expect(marks.get('2026-11-05')?.map((entry) => entry.day)).toEqual(['2026-10-28'])
+  })
+
+  it('reads the pay days outside the period once each, in order', () => {
+    expect(outsideDays(['2026-11-03', '2026-10-28', '2026-12-01', '2026-10-28'], november)).toEqual([
+      '2026-10-28',
+      '2026-12-01',
+    ])
+    expect(outsideDays(['2026-11-05'], periodRange('day', '2026-11-05'))).toEqual([])
+  })
+
+  it('gives an entry without a source the primary mark, never the grey of «paid earlier»', () => {
+    const manual = {
+      kind: 'expense',
+      sourceType: 'manual',
+    }
+
+    expect(entryTone(manual)).toBe('text-primary')
+    expect(
+      entryTone({
+        kind: 'expense',
+        sourceType: null,
+      }),
+    ).toBe('text-primary')
+    expect(LEGEND.map(([, tone]) => tone)).not.toContain('text-neutral')
   })
 
   it('says whether an entry waits, was paid on its day or on another one, or is a plain operation', () => {

@@ -34,7 +34,8 @@ export function amountKind(entry: CalendarEntry) {
   return entry.direction === 'in' ? 'income' : 'fact'
 }
 
-/** a subscription's logo, else its category tile (Figma CategoryIcon 40); no category shows the neutral tag */
+/** a subscription's logo, else its category tile (Figma CategoryIcon 40); no category shows the tag on the primary
+ * (blue) tile, since grey means «paid earlier» in the calendar */
 export function EntryTile({ entry }: { entry: CalendarEntry }) {
   const type = useEntryType()
   const category = useCalendarOptions().data?.categories.find((item) => item.id === entry.categoryId)
@@ -43,7 +44,7 @@ export function EntryTile({ entry }: { entry: CalendarEntry }) {
     return <ServiceLogo name={entry.title ?? type(entry)} />
   }
 
-  return <CategoryIcon icon={category?.icon ?? null} color={category?.color ?? null} />
+  return <CategoryIcon icon={category?.icon ?? null} color={category?.color ?? 'blue'} />
 }
 
 type EntryRowProps = {
