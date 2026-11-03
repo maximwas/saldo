@@ -15,8 +15,14 @@ function minorOf(text: string): number {
 
 async function tile(page: Page, label: string) {
   const value = page.locator('dl:visible').getByText(label, { exact: true }).locator('xpath=following-sibling::dd')
+  // a month without operations shows the empty state instead of the tiles: its figures are zero
+  const empty = page.getByRole('heading', { name: /даних немає/ })
 
-  await expect(value).toBeVisible()
+  await expect(value.or(empty)).toBeVisible()
+
+  if (await empty.isVisible()) {
+    return 0
+  }
 
   // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText, rendered text is what the user sees
   return minorOf(await value.innerText())

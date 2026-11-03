@@ -3,6 +3,7 @@
 import { Check, Plus, Repeat, Settings2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Button } from '@/components/ui/button.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
@@ -88,18 +89,24 @@ export function SubscriptionList() {
 
   if (isPending) {
     return (
-      <div aria-busy className="flex flex-col gap-4 lg:gap-6">
-        <div className="h-32 rounded-card bg-subtle" />
-        <div className="h-72 rounded-card bg-subtle" />
-      </div>
+      <>
+        <PaymentsTabs />
+        <div aria-busy className="flex flex-col gap-4 lg:gap-6">
+          <div className="h-32 rounded-card bg-subtle" />
+          <div className="h-72 rounded-card bg-subtle" />
+        </div>
+      </>
     )
   }
 
   if (isError) {
     return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
+      <>
+        <PaymentsTabs />
+        <p role="alert" className="text-body text-negative-text">
+          {translate('loadFailed')}
+        </p>
+      </>
     )
   }
 
@@ -107,6 +114,7 @@ export function SubscriptionList() {
 
   return (
     <>
+      <PaymentsTabs />
       {data.length === 0 ? (
         <EmptyState onAddAction={() => setCreating(true)} />
       ) : (

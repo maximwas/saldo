@@ -6,7 +6,7 @@ import { getActiveLedger } from '@/lib/auth/dal.server'
 // Settings → Data (plan 7.4, 7.7): any member exports; only the owner sees "Delete all data"
 export default function DataSettingsPage() {
   return (
-    <div className="flex max-w-180 flex-col gap-4 lg:gap-6">
+    <div className="flex flex-col gap-4 lg:gap-6">
       <DataExportCard />
       <Suspense>
         <OwnerDelete />
