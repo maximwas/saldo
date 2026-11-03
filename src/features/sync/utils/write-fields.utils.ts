@@ -7,6 +7,8 @@ const ALIASES = {
   note: ['note'],
   label: ['counterparty', 'title', 'name'],
   direction: ['direction'],
+  categoryId: ['category_id', 'categoryId'],
+  kind: ['kind'],
 } as const
 
 export type WriteFields = {
@@ -17,12 +19,14 @@ export type WriteFields = {
   note: string | null
   label: string | null
   direction: string | null
+  categoryId: string | null
+  kind: string | null
 }
 
 const asRecord = (value: unknown) =>
   typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
 
-/** the fields a person recognises in any queued write or server row: amount, date, account, comment, payee */
+/** the fields a person recognises in any queued write or server row: amount, date, account, comment, payee, category */
 export function writeFields(source: unknown): WriteFields {
   const input = asRecord(source)
   // a payment carries its operation, an edit its patch: their fields describe the write best

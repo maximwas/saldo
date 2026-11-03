@@ -13,10 +13,11 @@ import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
-import { formatMinor, fromMinor } from '@/lib/money/money.utils'
+import { currencySymbol, formatMinor, fromMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localTime } from '@/lib/utils/clock.utils'
 import { useDraftsStore } from '@/store/drafts.store'
+import { useUiStore } from '@/store/ui.store'
 import {
   useCreateOperation,
   useCreateTransfer,
@@ -120,6 +121,7 @@ export function OperationEditor({
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const desktop = useIsDesktop()
+  const hideAmounts = useUiStore((state) => state.hideAmounts)
   const [refunding, setRefunding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
@@ -221,12 +223,29 @@ export function OperationEditor({
   }
 
   // offline the write waits in the device's queue: the toast says it is kept here, not that it is saved
-  function done(message: string) {
+  function done(message: string, offlineMessage = translateSync('savedOffline')) {
     if (onlineManager.isOnline()) {
       notify.success(message)
     } else {
-      notify.info(translateSync('savedOffline'))
+      notify.info(offlineMessage)
     }
+  }
+
+  // Figma 4:80334 / 4:80531: the kind and the sum kept on the device; the phone drops the second sentence
+  function savedOffline({
+    kind: savedKind,
+    direction,
+    amount_minor,
+    currency,
+  }: ReturnType<typeof toCreateOperationInput>) {
+    const amount = hideAmounts
+      ? `•••• ${currencySymbol(currency, locale)}`
+      : formatMinor(direction === 'out' ? -amount_minor : amount_minor, currency, locale)
+
+    return translateSync(desktop ? 'savedOfflineOperation' : 'savedOfflineOperationShort', {
+      kind: savedKind,
+      amount,
+    })
   }
 
   function changeKind(next: AddKind) {
@@ -297,20 +316,20 @@ export function OperationEditor({
         return
       }
 
-      await createOperation.mutateAsync(
-        toCreateOperationInput(values, clock, {
-          id: newId,
-          ledgerId,
-          duplicatedFromId: target.mode === 'create' ? target.duplicatedFromId : undefined,
-        }),
-      )
+      const input = toCreateOperationInput(values, clock, {
+        id: newId,
+        ledgerId,
+        duplicatedFromId: target.mode === 'create' ? target.duplicatedFromId : undefined,
+      })
+
+      await createOperation.mutateAsync(input)
 
       if (draftKey) {
         useDraftsStore.getState().clear(draftKey)
       }
 
       await uploadPending(newId)
-      done(translate('toast.created'))
+      done(translate('toast.created'), savedOffline(input))
     })
 
   const saveRefund = (values: OperationFormValues) =>

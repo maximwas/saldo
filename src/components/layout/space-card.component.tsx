@@ -35,7 +35,7 @@ export function SpaceCard() {
           {/* shortcut: Figma adds "only you"; the member count is not loaded yet, so the role only */}
           <p className="text-caption text-text-tertiary">{translate(`roles.${current.role}`)}</p>
           <span className="w-fit">
-            <SyncIndicator className="h-7 rounded-full bg-subtle" />
+            <SyncIndicator platform="topbar" />
           </span>
         </div>
       </div>

@@ -61,13 +61,13 @@ test('офлайн-витрата чекає в черзі, переживає r
   await pickCategory(page, sheet)
   await sheet.getByRole('button', { name: 'Зберегти' }).click()
   await expect(sheet).toBeHidden()
-  await expect(status(page, /очікує \(1\)/i)).toBeVisible()
+  await expect(status(page, /Офлайн · 1 зміна/)).toBeVisible()
   await expect(row).toContainText('Очікує')
 
   // offline reload: the worker serves the shell, IndexedDB the cached list and the queue
   await page.reload()
   await expect(page.getByRole('alert').filter({ hasText: 'Немає мережі' })).toBeVisible()
-  await expect(status(page, /очікує \(1\)/i)).toBeVisible()
+  await expect(status(page, /Офлайн · 1 зміна/)).toBeVisible()
   await expect(row).toHaveCount(1)
 
   await page.context().setOffline(false)
@@ -107,7 +107,7 @@ test('editor офлайн і owner онлайн оплачують один пл
   await goOffline(editor)
   await editorPay.getByRole('button', { name: 'Оплачено' }).click()
   await expect(editorPay).toBeHidden()
-  await expect(status(editor, /очікує \(1\)/i)).toBeVisible()
+  await expect(status(editor, /Офлайн · 1 зміна/)).toBeVisible()
 
   await owner.getByRole('listitem').filter({ hasText: mark }).getByRole('button', { name: 'Оплачено' }).click()
 
@@ -119,9 +119,9 @@ test('editor офлайн і owner онлайн оплачують один пл
 
   // back online the editor's payment carries a stale version: PT409, kept for the person to decide
   await editor.context().setOffline(false)
-  await status(editor, /Конфлікт \(1\)/).click({ timeout: 30_000 })
+  await status(editor, /Конфлікт · 1/).click({ timeout: 30_000 })
   await editor.getByRole('button', { name: "Розв'язати" }).click()
-  await expect(editor.getByRole('dialog')).toContainText(`Підтвердив(ла) ${DEMO.ownerName}`)
+  await expect(editor.getByRole('dialog', { name: /Конфлікт змін/ })).toContainText(`${DEMO.ownerName} змінив(ла)`)
 
   const database = admin()
   const { data: obligation } = await database.from('obligations').select('id').eq('title', mark).single()
