@@ -3,8 +3,8 @@ import { useMemo } from 'react'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import type { CreateOperationInput } from '@/lib/finance/create-operation-input.schema'
 import { type RecordState, recordState } from '@/lib/query/sync-queue.utils'
-import { operationsWrites } from '../api/operations.mutations'
 import type { OperationRow } from '../operations.types'
+import { operationsWrites } from './operations.hook'
 
 type QueuedOperation = {
   input: CreateOperationInput

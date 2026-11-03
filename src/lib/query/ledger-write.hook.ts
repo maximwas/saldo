@@ -4,7 +4,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import type { LedgerWrite } from './ledger-writes.mutations'
 
-type WriteCallbacks = {
+export type WriteCallbacks = {
   onSuccess?: (data: unknown) => void
   onError?: (error: unknown) => void
   onSettled?: () => void

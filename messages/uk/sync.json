@@ -102,6 +102,13 @@
       },
       "reminder-rules": {
         "saveReminderRule": "Нагадування"
+      },
+      "notifications": {
+        "markNotificationsRead": "Прочитані сповіщення",
+        "clearReadNotifications": "Очищення сповіщень"
+      },
+      "ledgers": {
+        "setMyNotifyChannels": "Нагадування простору"
       }
     }
   },

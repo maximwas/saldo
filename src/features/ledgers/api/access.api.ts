@@ -123,10 +123,15 @@ export async function getMyNotifyChannels(supabase: SaldoClient, ledgerId: strin
   return data?.notify_channels ?? []
 }
 
-export async function setMyNotifyChannels(supabase: SaldoClient, ledgerId: string, channels: string[]) {
+type MyNotifyChannelsInput = {
+  ledgerId: string
+  channels: string[]
+}
+
+export async function setMyNotifyChannels(supabase: SaldoClient, input: MyNotifyChannelsInput) {
   const { error } = await supabase.rpc('set_my_notify_channels', {
-    p_ledger_id: ledgerId,
-    p_channels: channels,
+    p_ledger_id: input.ledgerId,
+    p_channels: input.channels,
   })
 
   if (error) {

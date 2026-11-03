@@ -151,7 +151,7 @@ src/features/subscriptions/
   subscriptions.constants.ts
   api/subscriptions.api.ts               supabase-js: select, upsert, rpc
   api/subscriptions.queries.ts           ключі + queryOptions
-  api/subscriptions.mutations.ts         registerSubscriptionMutations + useXxx хуки
+  hooks/subscriptions.hook.ts            subscriptionsWrites (defineWrites) + useXxx хуки читання й запису
   components/subscription-list.component.tsx
   components/subscription-form.component.tsx
   hooks/subscription-filters.hook.ts     useSubscriptionFilters (nuqs)
@@ -165,12 +165,12 @@ src/features/subscriptions/
 | Суфікс | Призначення | Приклад |
 |---|---|---|
 | `.component.tsx` | React-компонент | `src/features/operations/components/operation-row.component.tsx` |
-| `.hook.ts` | хук; файл `x-y.hook.ts` експортує `useXY`, без префікса `use-` в імені файлу; `<f>.hook.ts` фічі збирає її читання й записи | `src/features/subscriptions/hooks/subscription-filters.hook.ts` → `useSubscriptionFilters`, `src/lib/query/ledger-write.hook.ts` → `useLedgerWrite` |
+| `.hook.ts` | хук; файл `x-y.hook.ts` експортує `useXY`, без префікса `use-` в імені файлу; `<f>.hook.ts` фічі збирає її читання й записи: `<f>Writes = defineWrites(…)` + `useLedgerWrite`-хуки. Записи живуть тут, а не в `api/`, бо так уже роблять усі фічі, а `api/` лишається без React (його імпортує `src/mcp`) | `src/features/subscriptions/hooks/subscription-filters.hook.ts` → `useSubscriptionFilters`, `src/lib/query/ledger-write.hook.ts` → `useLedgerWrite` |
 | `.context.tsx` | контекст + провайдер + хук, лише DI | `src/contexts/clock.context.tsx` |
 | `.store.ts` | zustand-store UI-стану | `src/store/ui.store.ts` |
 | `.api.ts` | виклики supabase-js (select, upsert, rpc) | `src/features/obligations/api/obligations.api.ts` |
 | `.queries.ts` | фабрика ключів + `queryOptions` | `src/features/operations/api/operations.queries.ts` |
-| `.mutations.ts` | `defineWrites` / `registerWrites` (`setMutationDefaults`) + `useLedgerWrite`-хуки; композиція всіх фіч — `src/components/providers/app-writes.mutations.ts` | `src/features/operations/api/operations.mutations.ts` |
+| `.mutations.ts` | інфраструктура черги записів: `defineWrites` / `registerWrites` (`setMutationDefaults`) і композиція всіх `<f>Writes` | `src/lib/query/ledger-writes.mutations.ts`, `src/components/providers/app-writes.mutations.ts` |
 | `.schema.ts` | zod-схема | `src/features/operations/schemas/operation-form.schema.ts` |
 | `.types.ts` | типи фічі або спільні | `src/features/taxes/taxes.types.ts`, `src/types/money.types.ts` |
 | `.constants.ts` | константи | `src/constants/navigation.constants.ts` |
@@ -202,7 +202,7 @@ src/features/subscriptions/
 
 Правила під MCP — з першого рядка коду (`docs/architecture.md` §12):
 - `*.api.ts` не імпортує React, TanStack, `next/*` і не створює клієнт сам: перший параметр — `supabase: SaldoClient`
-  (`SupabaseClient<Database>` з `src/types/supabase.types.ts`). Браузерний клієнт передає `*.mutations.ts`/`*.queries.ts`.
+  (`SupabaseClient<Database>` з `src/types/supabase.types.ts`). Браузерний клієнт підставляють `registerWrites` і `*.queries.ts`.
 - Ввід кожної дії запису — окрема zod-схема `<action>-input.schema.ts` у грошах мінорних одиниць (`amountMinor: z.int()`,
   `currency`, `id: z.uuid()`), без `transform`; `*.api.ts` робить `parse` перед `rpc()`. Форма має свою схему
   (рядок суми тощо) і чисту функцію `to<Action>Input(values, clock)` → input-схема. MCP бере input-схему як `inputSchema`.
@@ -434,48 +434,35 @@ export const isMoneyQuery = (query: { queryKey: readonly unknown[] }) =>
   (MONEY_QUERY_ROOTS as readonly unknown[]).includes(query.queryKey[0])
 ```
 
-### 4.2 Мутація з `setMutationDefaults` і UUID клієнта
+### 4.2 Запис: `defineWrites` + `useLedgerWrite` і UUID клієнта
+
+Кожен запис у БД з UI — лише так, без сирого `useMutation`: тоді він стає в чергу пристрою, переживає reload і
+показується в черзі синхронізації (фаза 8).
 
 ```ts
-// src/features/operations/api/operations.mutations.ts
-import type { PostgrestError } from '@supabase/supabase-js'
-import { type QueryClient, useMutation } from '@tanstack/react-query'
-import { isMoneyQuery } from '@/constants/query-roots.constants'
-import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import type { Operation, OperationInsert } from '../operations.types'
-import { createOperation } from './operations.api'
-import { operationKeys } from './operations.queries'
+// src/features/operations/hooks/operations.hook.ts
+import { useLedgerWrite } from '@/lib/query/ledger-write.hook'
+import { defineWrites } from '@/lib/query/ledger-writes.mutations'
+import { createOperation, updateOperation } from '../api/operations.api'
 
-export const createOperationKey = ['operations', 'create'] as const
+// записи фічі в черзі пристрою; app-writes.mutations.ts реєструє їх ДО гідрації persist (registerWrites: mutationFn,
+// scope 'writes', offlineFirst, повтор лише мережевих помилок, інвалідація грошових запитів)
+export const operationsWrites = defineWrites('operations', {
+  createOperation,
+  updateOperation,
+})
 
-// викликається в app-providers ДО гідрації persist, щоб відновлена черга знала mutationFn
-export function registerOperationMutations(queryClient: QueryClient) {
-  queryClient.setMutationDefaults(createOperationKey, {
-    mutationFn: (input: OperationInsert) => createOperation(getBrowserSupabase(), input),
-    scope: { id: 'writes' },
-    networkMode: 'offlineFirst',
-    retry: 3,
-    onMutate: async (input: OperationInsert) => {
-      await queryClient.cancelQueries({ queryKey: operationKeys.lists() })
-      queryClient.setQueriesData<Operation[]>({ queryKey: operationKeys.lists() }, (rows = []) => [
-        {
-          ...input,
-          syncState: 'pending',
-        } as Operation,
-        ...rows,
-      ])
-    },
-    onSettled: () => queryClient.invalidateQueries({ predicate: isMoneyQuery }),
-  })
-}
-
-export function useCreateOperation() {
-  return useMutation<Operation, PostgrestError, OperationInsert>({ mutationKey: createOperationKey })
-}
+// редактор сам показує помилку (блок конфлікту, рядок помилки), тож без тосту
+export const useCreateOperation = () => useLedgerWrite(operationsWrites.createOperation, { quiet: true })
 
 // виклик: id створюється ДО mutate, тож повтор після reload несе той самий ключ ідемпотентності
 // createOperation.mutate({ ...toOperationInsert(values), id: crypto.randomUUID() })
 ```
+
+Ввід запису зберігається як JSON: лише рядки, числа, масиви (дата — ISO-рядок, не `Date`). Запис, що не змінює гроші
+(нагадування, сповіщення), сам оновлює свої запити в `onSettled` виклику: `registerWrites` інвалідує лише грошові.
+Застарілий `version` в оновленні таблиці — `throw versionConflict()` (`src/lib/supabase/version-conflict.utils.ts`), як PT409
+з RPC.
 
 ```ts
 // src/features/operations/api/operations.api.ts
@@ -498,7 +485,7 @@ export async function createOperation(supabase: SaldoClient, input: OperationIns
 
 ```ts
 // src/features/obligations/api/obligations.api.ts
-// supabase — браузерний клієнт із mutations.ts або клієнт із JWT власника з src/mcp (фаза 10)
+// supabase — браузерний клієнт із registerWrites або клієнт із JWT власника з src/mcp (фаза 10)
 export async function payObligation(supabase: SaldoClient, raw: PayObligationInput) {
   const input = payObligationInputSchema.parse(raw) // schemas/pay-obligation-input.schema.ts
   const { data, error } = await supabase.rpc('pay_obligation', {

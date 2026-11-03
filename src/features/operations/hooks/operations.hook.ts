@@ -3,7 +3,6 @@ import { dropReceipt, keepReceipt, readReceipt } from '@/lib/offline/device-stor
 import { useLedgerWrite } from '@/lib/query/ledger-write.hook'
 import { defineWrites } from '@/lib/query/ledger-writes.mutations'
 import type { SaldoClient } from '@/types/supabase.types'
-import { compressReceipt } from '../utils/receipt-compress.utils'
 import {
   createOperation,
   createTransfer,
@@ -11,7 +10,8 @@ import {
   deleteReceipt,
   updateOperation,
   uploadReceipt,
-} from './operations.api'
+} from '../api/operations.api'
+import { compressReceipt } from '../utils/receipt-compress.utils'
 
 type KeptReceipt = {
   ledgerId: string

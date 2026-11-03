@@ -19,14 +19,14 @@ import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localTime } from '@/lib/utils/clock.utils'
 import { useDraftsStore } from '@/store/drafts.store'
 import { useUiStore } from '@/store/ui.store'
+import { operationQueries } from '../api/operations.queries'
 import {
   useCreateOperation,
   useCreateTransfer,
   useDeleteOperation,
   useUpdateOperation,
   useUploadReceipt,
-} from '../api/operations.mutations'
-import { operationQueries } from '../api/operations.queries'
+} from '../hooks/operations.hook'
 import { ADD_KINDS, type AddKind, type OperationItem } from '../operations.types'
 import {
   type OperationFormValues,
