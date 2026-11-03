@@ -4,6 +4,8 @@ import { Menu } from '@base-ui/react/menu'
 import { Check, ChevronDown, Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { useRipple } from '@/components/ui/ripple.hook'
+import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
 import { CreateSpaceDialog } from '@/features/ledgers/components/create-space-dialog.component'
 import { cn } from '@/lib/utils/cn.utils'
@@ -18,23 +20,40 @@ type SpaceSwitcherProps = {
   onSelectAction?: (spaceId: string) => void
 }
 
-type SpaceAvatarProps = {
-  name: string
-  size: 'md' | 'sm'
+type SpaceRowProps = {
+  /** desktop: an item of the popover menu; phones: a button of the bottom sheet */
+  menu: boolean
+  onSelect: () => void
+  className: string
+  children: React.ReactNode
 }
 
-// Figma «Saldo» → LetterAvatar Color=blue, Size 32 / 24
-function SpaceAvatar({ name, size }: SpaceAvatarProps) {
-  return (
-    <span
-      aria-hidden
+// a clickable row: hover subtle and a ripple from the press point, like every list row
+function SpaceRow({ menu, onSelect, className, children }: SpaceRowProps) {
+  const { pressProps, ripple } = useRipple()
+  const rowClass = cn(
+    'relative flex items-center gap-3 overflow-hidden rounded-sm px-3 outline-none transition-colors',
+    className,
+  )
+
+  return menu ? (
+    <Menu.Item onClick={onSelect} className={cn(rowClass, 'data-highlighted:bg-subtle')} {...pressProps}>
+      {children}
+      {ripple}
+    </Menu.Item>
+  ) : (
+    <button
+      type="button"
+      onClick={onSelect}
       className={cn(
-        'flex shrink-0 items-center justify-center bg-cat-blue-soft text-cat-blue-text',
-        size === 'md' ? 'size-8 rounded-logo-md text-label font-semibold' : 'size-6 rounded-sm text-micro',
+        rowClass,
+        'w-full cursor-pointer text-left hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary',
       )}
+      {...pressProps}
     >
-      {name.charAt(0).toUpperCase()}
-    </span>
+      {children}
+      {ripple}
+    </button>
   )
 }
 
@@ -61,12 +80,8 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
               {translate('space.list')}
             </Menu.GroupLabel>
             {spaces.map((space) => (
-              <Menu.Item
-                key={space.id}
-                onClick={() => onSelectAction?.(space.id)}
-                className="flex h-14 w-72 items-center gap-3 rounded-sm px-3 outline-none data-highlighted:bg-subtle"
-              >
-                <SpaceAvatar name={space.name} size="md" />
+              <SpaceRow key={space.id} menu onSelect={() => onSelectAction?.(space.id)} className="h-14 w-72">
+                <LetterAvatar name={space.name} size={32} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-body font-medium text-text-primary">{space.name}</span>
                   <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
@@ -74,17 +89,14 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
                 {space.id === current.id && (
                   <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
                 )}
-              </Menu.Item>
+              </SpaceRow>
             ))}
           </Menu.Group>
           <Menu.Separator className="my-1 h-px bg-border" />
-          <Menu.Item
-            onClick={() => setCreating(true)}
-            className="flex h-10 items-center gap-3 rounded-sm px-3 text-body text-text-primary outline-none data-highlighted:bg-subtle"
-          >
+          <SpaceRow menu onSelect={() => setCreating(true)} className="h-10 text-body text-text-primary">
             <Plus aria-hidden size={20} />
             {translate('space.create.action')}
-          </Menu.Item>
+          </SpaceRow>
         </Menu.Popup>
       </Menu.Positioner>
     </Menu.Portal>
@@ -94,16 +106,16 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
     <Sheet open={sheetOpen} onOpenChange={setSheetOpen} title={translate('space.list')}>
       <div className="flex flex-col gap-0.5">
         {spaces.map((space) => (
-          <button
+          <SpaceRow
             key={space.id}
-            type="button"
-            onClick={() => {
+            menu={false}
+            onSelect={() => {
               setSheetOpen(false)
               onSelectAction?.(space.id)
             }}
-            className="flex h-14 w-full cursor-pointer items-center gap-3 rounded-sm px-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-subtle"
+            className="h-14"
           >
-            <SpaceAvatar name={space.name} size="md" />
+            <LetterAvatar name={space.name} size={32} />
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-body font-medium text-text-primary">{space.name}</span>
               <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
@@ -111,20 +123,20 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
             {space.id === current.id && (
               <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
             )}
-          </button>
+          </SpaceRow>
         ))}
         <div className="my-1 h-px bg-border" />
-        <button
-          type="button"
-          onClick={() => {
+        <SpaceRow
+          menu={false}
+          onSelect={() => {
             setSheetOpen(false)
             setCreating(true)
           }}
-          className="flex h-11 w-full cursor-pointer items-center gap-3 rounded-sm px-3 text-left text-body text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-subtle"
+          className="h-11 text-body text-text-primary"
         >
           <Plus aria-hidden size={20} />
           {translate('space.create.action')}
-        </button>
+        </SpaceRow>
       </div>
     </Sheet>
   )
@@ -166,7 +178,7 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
 
   const body = (
     <>
-      <SpaceAvatar name={current.name} size={sidebar ? 'md' : 'sm'} />
+      <LetterAvatar name={current.name} size={sidebar ? 32 : 24} />
       {sidebar ? (
         <span className="flex min-w-0 flex-1 flex-col text-left">
           <span className="truncate text-label font-semibold text-text-primary">{current.name}</span>
