@@ -30,7 +30,7 @@ const answer = [
 ]
 
 describe('parseNbuRates', () => {
-  it('reads the allowed currencies as rates to UAH on the NBU date', () => {
+  it('reads every NBU currency as a rate to UAH on the NBU date, not only the ones a space may hold', () => {
     expect(parseNbuRates(answer)).toEqual([
       {
         baseCurrency: 'USD',
@@ -46,7 +46,32 @@ describe('parseNbuRates', () => {
         rateOn: '2031-03-07',
         source: 'reference',
       },
+      {
+        baseCurrency: 'PLN',
+        quoteCurrency: 'UAH',
+        rate: '10.1',
+        rateOn: '2031-03-07',
+        source: 'reference',
+      },
     ])
+  })
+
+  it('skips a broken row of a currency no account holds, so USD and EUR still arrive', () => {
+    expect(
+      parseNbuRates([
+        ...answer,
+        {
+          cc: 'XAU',
+          rate: 0,
+          exchangedate: '07.03.2031',
+        },
+        {
+          cc: 'zl',
+          rate: 10.1,
+          exchangedate: '07.03.2031',
+        },
+      ]).map((row) => row.baseCurrency),
+    ).toEqual(['USD', 'EUR', 'PLN'])
   })
 
   it('gives nothing for an empty answer (a date NBU has not set yet)', () => {
@@ -106,6 +131,15 @@ describe('toReferenceRows', () => {
         source: 'reference',
         source_name: 'nbu',
       },
+      {
+        ledger_id: 'space-uah',
+        base_currency: 'PLN',
+        quote_currency: 'UAH',
+        rate: 10.1,
+        rate_on: '2031-03-07',
+        source: 'reference',
+        source_name: 'nbu',
+      },
     ])
   })
 
@@ -117,10 +151,11 @@ describe('toReferenceRows', () => {
       },
     ])
 
-    // 1 / 44.25 and 40.5 / 44.25
+    // 1 / 44.25, 40.5 / 44.25 and 10.1 / 44.25
     expect(rows.map(({ base_currency, quote_currency, rate }) => [base_currency, quote_currency, rate])).toEqual([
       ['UAH', 'EUR', 0.0225988701],
       ['USD', 'EUR', 0.9152542373],
+      ['PLN', 'EUR', 0.2282485876],
     ])
   })
 

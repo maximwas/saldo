@@ -23,7 +23,7 @@ type LedgerBase = {
 
 // a row of https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json: 1 unit of `cc` costs `rate` UAH
 const nbuRowSchema = z.object({
-  cc: z.enum(CURRENCIES),
+  cc: z.string().regex(/^[A-Z]{3}$/),
   rate: z.number().positive(),
   exchangedate: z.string().regex(/^\d{2}\.\d{2}\.\d{4}$/),
 })
@@ -36,30 +36,39 @@ const nbuAnswerSchema = z.array(
     .loose(),
 )
 
-/** NBU answer → «1 unit of the currency costs `rate` UAH» for the currencies a space may hold; a broken row of one of
- * them throws, so a bad answer is never written; other currencies are not read */
+/** NBU answer → «1 unit of the currency costs `rate` UAH» for every currency NBU publishes (Maxim, 3.11). A broken row of
+ * a currency a space may hold throws, so a bad answer is never written; a broken row of another currency is skipped */
 export function parseNbuRates(json: unknown): FxRate[] {
-  return nbuAnswerSchema
-    .parse(json)
-    .filter((row) => (CURRENCIES as readonly string[]).includes(row.cc))
-    .map((row) => {
-      const { cc, rate, exchangedate } = nbuRowSchema.parse(row)
-      const [day, month, year] = exchangedate.split('.')
+  return nbuAnswerSchema.parse(json).flatMap((row): FxRate[] => {
+    const parsed = nbuRowSchema.safeParse(row)
 
-      return {
+    if (!parsed.success) {
+      if ((CURRENCIES as readonly string[]).includes(row.cc)) {
+        throw parsed.error
+      }
+
+      return []
+    }
+
+    const { cc, rate, exchangedate } = parsed.data
+    const [day, month, year] = exchangedate.split('.')
+
+    return [
+      {
         baseCurrency: cc,
         quoteCurrency: 'UAH',
         // a JSON number of at most 4 decimals: String keeps every digit
         rate: String(rate),
         rateOn: `${year}-${month}-${day}`,
         source: 'reference',
-      }
-    })
+      },
+    ]
+  })
 }
 
-/** for every space: each other allowed currency → the space's base currency, on the NBU date. The direction of a manual
- * rate (toSaveRateInput), so rule A compares both as one pair; a non-UAH base is crossed through UAH by findRate and
- * rounded to the 10 decimals of numeric(20,10) */
+/** for every space: UAH and every NBU currency except the base → the space's base currency, on the NBU date. The
+ * direction of a manual rate (toSaveRateInput), so rule A compares both as one pair; a non-UAH base is crossed through
+ * UAH by findRate and rounded to the 10 decimals of numeric(20,10) */
 export function toReferenceRows(nbuRates: FxRate[], ledgers: readonly LedgerBase[]): ReferenceRateRow[] {
   const rateOn = nbuRates
     .map((row) => row.rateOn)
@@ -70,23 +79,27 @@ export function toReferenceRows(nbuRates: FxRate[], ledgers: readonly LedgerBase
     return []
   }
 
-  return ledgers.flatMap((ledger) =>
-    CURRENCIES.filter((currency) => currency !== ledger.base_currency).flatMap((currency) => {
-      const rate = findRate(nbuRates, currency, ledger.base_currency, rateOn)
+  const currencies = ['UAH', ...nbuRates.map((row) => row.baseCurrency)]
 
-      return rate === null
-        ? []
-        : [
-            {
-              ledger_id: ledger.id,
-              base_currency: currency,
-              quote_currency: ledger.base_currency,
-              rate: rate.toDecimalPlaces(10).toNumber(),
-              rate_on: rateOn,
-              source: 'reference' as const,
-              source_name: NBU_SOURCE_NAME,
-            },
-          ]
-    }),
+  return ledgers.flatMap((ledger) =>
+    currencies
+      .filter((currency) => currency !== ledger.base_currency)
+      .flatMap((currency) => {
+        const rate = findRate(nbuRates, currency, ledger.base_currency, rateOn)
+
+        return rate === null
+          ? []
+          : [
+              {
+                ledger_id: ledger.id,
+                base_currency: currency,
+                quote_currency: ledger.base_currency,
+                rate: rate.toDecimalPlaces(10).toNumber(),
+                rate_on: rateOn,
+                source: 'reference' as const,
+                source_name: NBU_SOURCE_NAME,
+              },
+            ]
+      }),
   )
 }
