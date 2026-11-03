@@ -178,7 +178,8 @@ type ToneFields = {
 export const LEGEND = [
   ['expense', 'text-primary'],
   ['income', 'text-positive'],
-  ['transfer', 'text-border-strong'],
+  // not grey: grey marks a plan paid on another day
+  ['transfer', 'text-cat-indigo'],
   ['subscription', 'text-primary'],
   ['credit', 'text-cat-orange'],
   ['debt', 'text-cat-pink'],
