@@ -1,3 +1,4 @@
+import { versionConflict } from '@/lib/supabase/version-conflict.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import {
   type CreateInviteInput,
@@ -102,10 +103,7 @@ export async function updateLedgerSettings(supabase: SaldoClient, input: UpdateL
 
   // a stale version (or a non-owner, whom RLS hides the row from) matches nothing: same answer as the RPCs' PT409
   if (data.length === 0) {
-    throw {
-      code: 'PT409',
-      message: 'ledger changed elsewhere',
-    }
+    throw versionConflict()
   }
 }
 
