@@ -117,7 +117,13 @@ export function Menu({ label, items, className, alignOffset, trigger }: MenuProp
           sideOffset={4}
           className="z-50"
         >
-          <MenuPrimitive.Popup className="flex w-60 origin-(--transform-origin) flex-col gap-0.5 rounded-inner border border-border bg-raised p-1.5 shadow-float outline-none transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0">
+          <MenuPrimitive.Popup
+            className={cn(
+              'flex origin-(--transform-origin) flex-col gap-0.5 rounded-inner border border-border bg-raised p-1.5 shadow-float outline-none transition-opacity data-ending-style:opacity-0 data-starting-style:opacity-0',
+              // the account menu (59:154242) keeps its longest label on one line
+              trigger ? 'w-max min-w-60' : 'w-60',
+            )}
+          >
             {items.map((item, index) => (
               <Fragment key={item.label}>
                 {item.danger && index > 0 && !items[index - 1]?.danger ? (
