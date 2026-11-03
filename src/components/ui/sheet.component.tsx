@@ -157,7 +157,15 @@ export function Sheet({
   )
 }
 
+type SheetCloseProps = {
+  children: React.ReactNode
+  /** e.g. max-md:flex-none: the button hugs its label instead of sharing the footer equally */
+  className?: string
+}
+
 /** the secondary footer button that closes the sheet through its exit transition (Drawer.Close is Dialog.Close) */
-export function SheetClose({ children }: { children: React.ReactNode }) {
-  return <Dialog.Close render={<Button variant="secondary" type="button" />}>{children}</Dialog.Close>
+export function SheetClose({ children, className }: SheetCloseProps) {
+  return (
+    <Dialog.Close render={<Button variant="secondary" type="button" className={className} />}>{children}</Dialog.Close>
+  )
 }

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button.component'
 import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { Tabs } from '@/components/ui/tabs.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { formatRate } from '@/lib/money/fx.utils'
@@ -49,7 +50,7 @@ export function AccountsScreen() {
   }
 
   if (data === undefined) {
-    return <div aria-busy className="h-72 rounded-card bg-subtle" />
+    return <Bone className="h-72 rounded-card" />
   }
 
   const active = data.accounts.filter((account) => account.archivedAt === null)

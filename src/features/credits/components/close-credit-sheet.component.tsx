@@ -1,7 +1,7 @@
 'use client'
 
-import { Info } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
@@ -57,10 +57,7 @@ export function CloseCreditSheet({ credit, onCloseAction }: CloseCreditSheetProp
       }
     >
       <p className="text-label text-text-secondary">{translate('close.text', { count: openCount })}</p>
-      <p className="flex gap-3 rounded-inner bg-primary-soft p-4 text-label font-medium text-primary-text">
-        <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
-        {translate('close.info')}
-      </p>
+      <Banner>{translate('close.info')}</Banner>
     </Sheet>
   )
 }

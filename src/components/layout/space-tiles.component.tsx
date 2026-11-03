@@ -17,7 +17,7 @@ export function SpaceTiles() {
           <Link
             key={key}
             href={href as Route}
-            className="flex h-15 min-w-0 cursor-pointer items-center gap-3 rounded-inner bg-card px-3 text-label font-medium text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary active:bg-primary-soft active:font-semibold active:text-primary-text"
+            className="flex h-15 min-w-0 cursor-pointer items-center gap-3 rounded-inner bg-card px-3 text-label font-medium text-text-primary outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary active:bg-primary-soft active:font-semibold active:text-primary-text"
           >
             <span aria-hidden className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', tone)}>
               <Icon size={16} />

@@ -51,19 +51,19 @@ async function SettingsSections() {
   const ownerName = owner ? memberName(owner) : '—'
   const rows: {
     href: Route
-    icon: typeof Settings
+    icon: React.ReactNode
     title: string
     subtitle: React.ReactNode
   }[] = [
     {
       href: '/settings/general',
-      icon: Settings,
+      icon: <Settings className="size-5" />,
       title: translateTabs('general'),
       subtitle: translate('general'),
     },
     {
       href: '/settings/access',
-      icon: Users,
+      icon: <Users className="size-5" />,
       title: translateTabs('access'),
       subtitle: isOwner
         ? translate('accessOwner', {
@@ -77,25 +77,25 @@ async function SettingsSections() {
     },
     {
       href: '/settings/notifications',
-      icon: Bell,
+      icon: <Bell className="size-5" />,
       title: translateTabs('notifications'),
       subtitle: translate('notifications'),
     },
     {
       href: '/settings/currencies',
-      icon: Banknote,
+      icon: <Banknote className="size-5" />,
       title: translateTabs('currencies'),
       subtitle: <CurrenciesSummary />,
     },
     {
       href: '/settings/security',
-      icon: ShieldCheck,
+      icon: <ShieldCheck className="size-5" />,
       title: translateTabs('security'),
       subtitle: translate('security'),
     },
     {
       href: '/settings/data',
-      icon: Database,
+      icon: <Database className="size-5" />,
       title: translateTabs('data'),
       subtitle: translate('data'),
     },

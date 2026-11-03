@@ -16,6 +16,36 @@
   --brand-arc-bottom-to: var(--color-cat-purple);
 }
 
+/* the skeleton shimmer (Maxim, 3.11.2026): a raised band sweeps over the subtle fill of every Bone, one pass per
+   loop; the gradient lives in the keyframes, so animate-shimmer alone draws it */
+@theme {
+  --animate-shimmer: shimmer 1.5s linear infinite;
+
+  @keyframes shimmer {
+    from {
+      background-image: linear-gradient(
+        90deg,
+        var(--color-subtle) 25%,
+        var(--color-raised) 50%,
+        var(--color-subtle) 75%
+      );
+      background-size: 200% 100%;
+      background-position: 100% 0;
+    }
+
+    to {
+      background-image: linear-gradient(
+        90deg,
+        var(--color-subtle) 25%,
+        var(--color-raised) 50%,
+        var(--color-subtle) 75%
+      );
+      background-size: 200% 100%;
+      background-position: -100% 0;
+    }
+  }
+}
+
 /* a scroll container without a visible scrollbar: wheel, touch and keyboard still scroll (Maxim, 31.10.2026: sheets,
    dialogs, menus and pickers show no scrollbars) */
 @utility scrollbar-none {

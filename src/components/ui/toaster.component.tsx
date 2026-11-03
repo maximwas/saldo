@@ -51,7 +51,7 @@ function ToastCard({ id, kind, text, onAction }: ToastCardProps) {
             onAction()
             toast.dismiss(id)
           }}
-          className="cursor-pointer rounded-sm px-1 text-label font-semibold text-primary-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="cursor-pointer rounded-sm px-1 text-label font-semibold text-primary-text outline-none transition-colors hover:bg-primary-soft focus-visible:ring-2 focus-visible:ring-primary"
         >
           {actionLabel}
         </button>

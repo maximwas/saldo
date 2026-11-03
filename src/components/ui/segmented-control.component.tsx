@@ -23,7 +23,8 @@ type SegmentedControlProps<Value extends string> = {
 }
 
 // Figma «Saldo» → SegmentedControl 2:7681: track subtle, padding 4, gap 4, radius md; the selected option is a card
-// with shadow-card and label-semibold, the rest label-medium in text-secondary; options are 36 high, padding 8/16.
+// with shadow-card and label-semibold, the rest label-medium in text-secondary (hover: text-primary on the border
+// fill, a step above the track); options are 36 high, padding 8/16.
 // The card is one pill in the selected option's grid cell under the labels: a motion layout animation slides it to the
 // next cell relative to the fieldset (layout + layoutRoot: the fieldset snaps to its new place, its children animate
 // against it), so a fieldset that moves with a resizing sheet doesn't drag the pill from its old screen position, as
@@ -70,9 +71,11 @@ export function SegmentedControl<Value extends string>({
             onClick={() => onValueChange(option.value)}
             style={{ gridColumnStart: index + 1 }}
             className={cn(
-              'relative row-start-1 flex items-center justify-center rounded-logo-md py-2 text-label outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
+              'relative row-start-1 flex cursor-pointer items-center justify-center rounded-logo-md py-2 text-label outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
               stretch ? 'min-w-0 px-2 lg:px-4' : 'px-4',
-              selected ? 'font-semibold text-text-primary' : 'font-medium text-text-secondary',
+              selected
+                ? 'font-semibold text-text-primary'
+                : 'font-medium text-text-secondary enabled:hover:bg-border enabled:hover:text-text-primary',
             )}
           >
             {option.label}

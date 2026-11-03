@@ -1,8 +1,8 @@
 'use client'
 
-import { Info } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Field } from '@/components/ui/field.component'
@@ -121,12 +121,7 @@ export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategor
               />
             </Field>
           ) : null}
-          <p className="flex gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body-medium text-primary-text">
-            <span className="py-0.5">
-              <Info className="size-5 shrink-0" aria-hidden />
-            </span>
-            <span className="flex-1">{translate('archive.info')}</span>
-          </p>
+          <Banner>{translate('archive.info')}</Banner>
         </>
       ) : null}
     </Sheet>

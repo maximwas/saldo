@@ -10,13 +10,13 @@ import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { EmptyState } from '@/components/ui/empty-state.component'
 import { Select } from '@/components/ui/select.component'
+import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
-import { cn } from '@/lib/utils/cn.utils'
 import { cancelLedgerInvite, getMemberContributions, removeMember, setMemberRole } from '../api/access.api'
 import type { Member, PendingInvite } from '../api/access.server'
 import { INVITE_ROLES } from '../schemas/access.schema'
@@ -41,33 +41,6 @@ type Dialog =
       invite: PendingInvite
     }
   | null
-
-// Figma LetterAvatar Size=40 colours: tones differ per person, text/body-semibold on a soft fill
-const AVATAR_TONES = [
-  'bg-cat-blue-soft text-cat-blue-text',
-  'bg-cat-pink-soft text-cat-pink-text',
-  'bg-cat-orange-soft text-cat-orange-text',
-  'bg-cat-green-soft text-cat-green-text',
-]
-
-type AvatarProps = {
-  name: string
-  index: number
-}
-
-function Avatar({ name, index }: AvatarProps) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'flex size-10 shrink-0 items-center justify-center rounded-md text-body font-semibold',
-        AVATAR_TONES[index % AVATAR_TONES.length],
-      )}
-    >
-      {name.charAt(0).toUpperCase()}
-    </span>
-  )
-}
 
 // Figma «Saldo» → Settings, Access tab 2:30818: Card Members (body gap 16: intro with 8 below + Invite, rows padding 16
 // with a divider: avatar, name + email, role 200, action 180) and Card Pending invites; to the right Card Roles (400,
@@ -214,7 +187,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
                   {isOwner ? inviteButton : <LeaveSpaceButton currentUserId={currentUserId} ownerName={ownerName} />}
                 </div>
                 <ul className="flex flex-col gap-4">
-                  {members.map((member, index) => {
+                  {members.map((member) => {
                     const name = memberName(member)
                     const isMemberOwner = member.role === 'owner'
 
@@ -223,7 +196,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
                         key={member.userId}
                         className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border py-4 last:border-b-0"
                       >
-                        <Avatar name={name} index={index} />
+                        <LetterAvatar name={name} />
                         <div className="flex min-w-0 flex-1 basis-40 flex-col">
                           <span className="truncate text-body font-semibold text-text-primary">
                             {member.userId === currentUserId ? translate('you', { name }) : name}
@@ -280,9 +253,9 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
             {isOwner && invites.length > 0 ? (
               <Card title={translate('pendingTitle')}>
                 <ul className="flex flex-col gap-4">
-                  {invites.map((invite, index) => (
+                  {invites.map((invite) => (
                     <li key={invite.id} className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                      <Avatar name={invite.email} index={index + 2} />
+                      <LetterAvatar name={invite.email} />
                       <div className="flex min-w-0 flex-1 basis-40 flex-col">
                         <span className="truncate text-body font-semibold text-text-primary">{invite.email}</span>
                         <span className="text-caption text-text-tertiary">

@@ -6,6 +6,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { Tabs } from '@/components/ui/tabs.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
@@ -112,7 +113,7 @@ export function SubscriptionCard({ subscriptionId }: SubscriptionCardProps) {
   }
 
   if (subscription === undefined) {
-    return <div aria-busy className="h-96 rounded-card bg-subtle" />
+    return <Bone className="h-96 rounded-card" />
   }
 
   if (!subscription) {

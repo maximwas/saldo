@@ -58,7 +58,7 @@ export function Topbar() {
             <Link
               href="/settings"
               aria-label={translateSettings('back')}
-              className="relative flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-card text-text-primary outline-none after:absolute after:-inset-0.5 focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
+              className="relative flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-card text-text-primary outline-none transition-colors after:absolute after:-inset-0.5 hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
             >
               <ChevronLeft aria-hidden size={20} />
             </Link>

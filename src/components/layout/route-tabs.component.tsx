@@ -12,6 +12,8 @@ type RouteTabsProps = {
     label: React.ReactNode
     /** the tab is active on this path only, not on the paths below it */
     exact?: boolean
+    /** other paths that show the same page, matched exactly */
+    aliases?: readonly string[]
   }[]
   /** gap between the tabs: 24 on desktop, 16 or 20 on mobile depending on the page */
   className: string
@@ -28,7 +30,8 @@ export function RouteTabs({ label, tabs, className }: RouteTabsProps) {
       className={cn('scrollbar-none flex min-w-0 items-end overflow-x-auto border-b border-border', className)}
     >
       {tabs.map((tab) => {
-        const active = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href)
+        const active =
+          tab.aliases?.includes(pathname) || (tab.exact ? pathname === tab.href : pathname.startsWith(tab.href))
 
         return (
           <Link

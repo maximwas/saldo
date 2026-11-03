@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useCredits, usePayInstallment } from '../hooks/credits.hook'
@@ -39,10 +40,10 @@ const STATUS_TONE = {
 function CardSkeleton() {
   return (
     <div aria-busy className="flex flex-col gap-4 lg:gap-6">
-      <div className="h-48 rounded-card bg-subtle" />
+      <Bone className="h-48 rounded-card" />
       <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
-        <div className="h-96 rounded-card bg-subtle lg:col-span-2" />
-        <div className="h-96 rounded-card bg-subtle" />
+        <Bone className="h-96 rounded-card lg:col-span-2" />
+        <Bone className="h-96 rounded-card" />
       </div>
     </div>
   )
@@ -136,7 +137,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
     <>
       <Link
         href={'/payments/credits' as Route}
-        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary"
       >
         <ChevronLeft className="size-4" aria-hidden />
         {translate('card.back')}

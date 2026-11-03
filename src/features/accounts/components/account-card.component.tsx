@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { ErrorState } from '@/components/ui/error-state.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useAccounts } from '../hooks/accounts.hook'
@@ -40,7 +41,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
   }
 
   if (data === undefined) {
-    return <div aria-busy className="h-72 rounded-card bg-subtle" />
+    return <Bone className="h-72 rounded-card" />
   }
 
   const account = data.accounts.find((candidate) => candidate.id === accountId)
@@ -64,7 +65,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
     <>
       <Link
         href={'/operations/accounts' as Route}
-        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary"
       >
         <ChevronLeft className="size-4" aria-hidden />
         {translate('card.back')}

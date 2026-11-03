@@ -74,7 +74,7 @@ export function SyncIndicator({ platform = 'sidebar' }: SyncIndicatorProps) {
         aria-haspopup="dialog"
         aria-label={name}
         onClick={() => setOpen(true)}
-        className="w-fit cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="w-fit cursor-pointer rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-primary"
       >
         {status}
       </button>
