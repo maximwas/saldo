@@ -929,6 +929,58 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_audit_log: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_ids: string[]
+          error_code: string | null
+          id: string
+          input_hash: string
+          ledger_id: string | null
+          outcome: string
+          tool: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          client_id?: string
+          created_at?: string
+          created_ids?: string[]
+          error_code?: string | null
+          id?: string
+          input_hash: string
+          ledger_id?: string | null
+          outcome: string
+          tool: string
+          user_id?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_ids?: string[]
+          error_code?: string | null
+          id?: string
+          input_hash?: string
+          ledger_id?: string | null
+          outcome?: string
+          tool?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'mcp_audit_log_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
+              'id',
+            ]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
