@@ -1,19 +1,19 @@
 'use client'
 
 import { CalendarClock, CircleCheck } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useRipple } from '@/components/ui/ripple.hook'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import type { CalendarEntry } from '../api/calendar.api'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { useEntryType, useShortDate } from '../hooks/entry-labels.hook'
+import { useEntryType } from '../hooks/entry-labels.hook'
 import {
   capitalize,
   cellLines,
   type DayTotals,
-  dayDate,
   dayTotalLines,
   entryTone,
   groupByDay,
@@ -89,8 +89,7 @@ type DayCellProps = {
 // an entry inside it opens its popup. A busy day grows its week row past 192 rather than cut its sums.
 function DayCell({ day, muted, inPeriod, entries, marks, totals }: DayCellProps) {
   const translate = useTranslations('calendar')
-  const format = useFormatter()
-  const short = useShortDate()
+  const dayText = useDayText()
   const wide = useIsWideLayout()
   const { pressProps, ripple } = useRipple()
   const { view, date, today, setUrl } = useCalendarParams()
@@ -106,12 +105,9 @@ function DayCell({ day, muted, inPeriod, entries, marks, totals }: DayCellProps)
       mark: true,
     })),
   ])
-  const paidDays = [...new Set(marks.map((entry) => short(entry.day)))]
+  const paidDays = [...new Set(marks.map((entry) => dayText(entry.day, 'short')))]
   const hasSums = dayTotalLines(totals).length > 0 || paidDays.length > 0
-  const weekday = format.dateTime(dayDate(day), {
-    timeZone: 'UTC',
-    weekday: 'short',
-  })
+  const weekday = dayText(day, 'weekdayShort')
 
   return (
     <div
@@ -130,11 +126,7 @@ function DayCell({ day, muted, inPeriod, entries, marks, totals }: DayCellProps)
         type="button"
         aria-pressed={selected}
         aria-label={translate('day.open', {
-          date: format.dateTime(dayDate(day), {
-            timeZone: 'UTC',
-            day: 'numeric',
-            month: 'long',
-          }),
+          date: dayText(day, 'dayMonth'),
         })}
         onClick={() =>
           void setUrl({
@@ -200,16 +192,9 @@ function DayCell({ day, muted, inPeriod, entries, marks, totals }: DayCellProps)
   )
 }
 function useWeekdayNames(days: string[]) {
-  const format = useFormatter()
+  const dayText = useDayText()
 
-  return days.slice(0, 7).map((day) =>
-    capitalize(
-      format.dateTime(dayDate(day), {
-        timeZone: 'UTC',
-        weekday: 'short',
-      }),
-    ),
-  )
+  return days.slice(0, 7).map((day) => capitalize(dayText(day, 'weekdayShort')))
 }
 
 const PHONE_LEGEND = [

@@ -135,6 +135,7 @@ saldo/
       offline/device-storage.ts
       money/money.utils.ts  fx.utils.ts
       recurrence/recurrence.utils.ts
+      dates/day.utils.ts  day-text.hook.ts
       finance/available-money.utils.ts  reserve-allocation.utils.ts
       utils/cn.utils.ts
     hooks/                               media-query.hook.ts, online-status.hook.ts
@@ -340,7 +341,11 @@ return {
   `generateMetadata`, Server Actions). Функція перекладу зветься `translate` (`translateNav`, `translateError` для
   другого namespace). Константи й утиліти тримають ключі (`NavLink.key`, `PgError.kind` → `errors.db.<kind>`), а не
   тексти. Назва бренду — теж ключ (`common.brand`).
-- Дати — `useFormatter().dateTime(…, { timeZone })` з поясом простору; суми — `Amount` з `minor` і `currency`, сума в
+- Календарний день (`YYYY-MM-DD`, місяць `YYYY-MM`) → текст лише через `useDayText()` / `useMonthOf()`
+  (`src/lib/dates/day-text.hook.ts`) або `formatDay` / `dayToDate` (`src/lib/dates/day.utils.ts`): один якір — полудень
+  UTC, формат у UTC, тож день не зсувається в жодному поясі. Новий формат — ключ у `DAY_FORMATS`, а не свої опції в
+  компоненті; шаблон `${day}T12:00:00Z` у `src` відхиляє ESLint.
+- Моменти (`occurred_at`, `confirmed_at`) — `useFormatter().dateTime(…, { timeZone })` з поясом простору; суми — `Amount` з `minor` і `currency`, сума в
   тексті (підпис, tooltip, aria-label, toast) — `useMoneyText()` з того ж модуля: обидва ховають суми за «Приховати
   суми». `formatMinor` (`src/lib/money/money.utils.ts`, рядок десяткового числа в `Intl.NumberFormat`, без float) — лише
   для CSV, MCP і сервера. Курс — `formatRate` у `src/lib/money/fx.utils.ts`. Сирого

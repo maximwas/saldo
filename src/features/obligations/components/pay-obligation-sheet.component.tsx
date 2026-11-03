@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { Route } from 'next'
 import { usePathname, useRouter } from 'next/navigation'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
@@ -19,6 +19,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { isMoneyQuery } from '@/constants/query-roots.constants'
 import { useClock, useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
@@ -54,7 +55,7 @@ const NO_OPTIONS: ObligationOptions = {
 export function PayObligationSheet({ obligation, onClose }: PayObligationSheetProps) {
   const translate = useTranslations('obligations')
   const dbErrorText = useDbErrorText()
-  const format = useFormatter()
+  const dayText = useDayText()
   const clock = useClock()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -80,12 +81,6 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
   const remaining = obligation.remainingMinor
   const sameCurrency = currency === obligation.currency
   const partial = remaining !== null && sameCurrency && (toMinor(amountText, currency) ?? remaining) < remaining
-  const shortDate = (isoDate: string) =>
-    format.dateTime(new Date(`${isoDate}T12:00:00Z`), {
-      timeZone: 'UTC',
-      day: '2-digit',
-      month: '2-digit',
-    })
 
   // on the calendar «Show» keeps its view and filters; from anywhere else it opens the calendar on that day
   const showDay = (day: string) => {
@@ -113,7 +108,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           if (linked) {
             notify.success(translate('pay.linked'))
           } else {
-            notify.success(translate('pay.done', { date: shortDate(values.occurredOn) }), {
+            notify.success(translate('pay.done', { date: dayText(values.occurredOn, 'short') }), {
               label: translate('pay.show'),
               onAction: () => showDay(values.occurredOn),
             })
@@ -171,7 +166,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
       }
     >
       <p className="text-label text-text-secondary">
-        {translate('pay.summary', { date: shortDate(obligation.dueOn) })}
+        {translate('pay.summary', { date: dayText(obligation.dueOn, 'short') })}
       </p>
       <form
         id={FORM_ID}
@@ -265,7 +260,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
               <OperationLine
                 key={operation.id}
                 title={operation.counterparty ?? operation.note ?? accountName.get(operation.accountId) ?? ''}
-                subtitle={`${shortDate(operation.occurredOn)} · ${accountName.get(operation.accountId) ?? ''}`}
+                subtitle={`${dayText(operation.occurredOn, 'short')} · ${accountName.get(operation.accountId) ?? ''}`}
                 minor={obligation.direction === 'out' ? -operation.amountMinor : operation.amountMinor}
                 currency={operation.currency}
                 action={

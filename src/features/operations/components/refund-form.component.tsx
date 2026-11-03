@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useMoneyText } from '@/components/ui/amount.component'
@@ -13,6 +13,7 @@ import { Select } from '@/components/ui/select.component'
 import { Textarea } from '@/components/ui/textarea.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText, useMonthOf } from '@/lib/dates/day-text.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
@@ -34,7 +35,8 @@ type RefundFormProps = {
 // purchase's.
 export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: RefundFormProps) {
   const translate = useTranslations('operations')
-  const locale = useLocale()
+  const dayText = useDayText()
+  const monthOf = useMonthOf()
   const moneyText = useMoneyText()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -71,25 +73,13 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
     onSubmitAction(values)
   })
 
-  const purchaseDate = new Date(`${purchase.occurredOn}T12:00:00Z`)
   // the month in the genitive the day-month format uses
-  const month = new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'UTC',
-  })
-    .formatToParts(new Date(`${form.watch('occurredOn')}T12:00:00Z`))
-    .find((part) => part.type === 'month')?.value
+  const month = monthOf(form.watch('occurredOn'))
   const amount = toMinor(form.watch('amount'), currency)
   const purchaseLine = [
     purchase.counterparty ?? category ?? translate('kinds.expense'),
     moneyText(-purchase.amountMinor, currency),
-    new Intl.DateTimeFormat(locale, {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      timeZone: 'UTC',
-    }).format(purchaseDate),
+    dayText(purchase.occurredOn, 'shortYear'),
     accountName,
   ].join(' · ')
 

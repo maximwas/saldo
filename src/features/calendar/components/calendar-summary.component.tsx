@@ -1,13 +1,14 @@
 'use client'
 
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useLedger } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { dayDate, sumTotals } from '../utils/calendar.utils'
+import { sumTotals } from '../utils/calendar.utils'
 
 // Figma «Saldo» → Calendar 2:66942 totals (SummaryStrip 2:10082): a card, padding 20, three tiles on subtle (padding
 // 12 / 16, radius md, label over the amount; the Result tile adds «with the plan to the end of the month»); on phones
@@ -15,7 +16,7 @@ import { dayDate, sumTotals } from '../utils/calendar.utils'
 // are the period's day totals for the active filter.
 export function CalendarSummary() {
   const translate = useTranslations('calendar')
-  const format = useFormatter()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const { baseCurrency } = useLedger()
   const { view } = useCalendarParams()
@@ -49,11 +50,7 @@ export function CalendarSummary() {
       kind: sum.resultMinor < 0 ? ('shortfall' as const) : ('income' as const),
     },
   ]
-  const withPlan = format.dateTime(dayDate(params.to), {
-    timeZone: 'UTC',
-    day: '2-digit',
-    month: '2-digit',
-  })
+  const withPlan = dayText(params.to, 'short')
   const planCaption =
     sum.planMinor === 0
       ? null

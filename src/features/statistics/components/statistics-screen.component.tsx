@@ -2,12 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { ChartColumn } from 'lucide-react'
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Button } from '@/components/ui/button.component'
 import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { statisticsQueries } from '../api/statistics.queries'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
@@ -46,15 +47,8 @@ function StatisticsSkeleton() {
 function EmptyPeriod() {
   const translate = useTranslations('statistics')
   const locale = useLocale()
-  const format = useFormatter()
+  const dayText = useDayText()
   const { today, period, setUrl } = useStatisticsFilters()
-  const monthName = (value: string) =>
-    format
-      .dateTime(new Date(`${value}-15T12:00:00Z`), {
-        month: 'long',
-        timeZone: 'UTC',
-      })
-      .toLocaleLowerCase(locale)
   const current = today.slice(0, 7)
 
   return (
@@ -63,7 +57,7 @@ function EmptyPeriod() {
       tone="blue"
       title={
         period.length === 7
-          ? translate('emptyPeriod.title', { month: monthName(period) })
+          ? translate('emptyPeriod.title', { month: dayText(period, 'month').toLocaleLowerCase(locale) })
           : translate('emptyPeriod.titleOther')
       }
       hint={translate('emptyPeriod.text')}
@@ -78,7 +72,7 @@ function EmptyPeriod() {
               })
             }
           >
-            {translate('emptyPeriod.show', { month: monthName(current) })}
+            {translate('emptyPeriod.show', { month: dayText(current, 'month').toLocaleLowerCase(locale) })}
           </Button>
         )
       }

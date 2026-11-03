@@ -14,6 +14,7 @@ import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { serviceLogoOf } from '@/components/ui/service-logo.utils'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { formatRate, impliedRate } from '@/lib/money/fx.utils'
 import type { RecordState } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
@@ -80,6 +81,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   const translateObligation = useTranslations('obligations')
   const translateSync = useTranslations('sync.badge')
   const formatter = useFormatter()
+  const dayText = useDayText()
   const locale = useLocale()
   const moneyText = useMoneyText()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
@@ -94,28 +96,11 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? ''
   const category = (id: string | null) => categories.find((candidate) => candidate.id === id)
 
-  const dateOf = (date: string) => new Date(`${date}T12:00:00Z`)
-  const shortDate = (date: string) =>
-    formatter.dateTime(dateOf(date), {
-      day: '2-digit',
-      month: '2-digit',
-      timeZone: 'UTC',
-    })
-  const longDate = (date: string) =>
-    formatter.dateTime(dateOf(date), {
-      weekday: date === today ? undefined : 'long',
-      day: 'numeric',
-      month: 'long',
-      timeZone: 'UTC',
-    })
+  const longDate = (date: string) => dayText(date, date === today ? 'dayMonth' : 'weekdayDayMonth')
 
   function dayTitle(date: string) {
     const kind = dayLabelKind(date, today)
-    const label = formatter.dateTime(dateOf(date), {
-      day: 'numeric',
-      month: 'long',
-      timeZone: 'UTC',
-    })
+    const label = dayText(date, 'dayMonth')
 
     if (kind === 'today') {
       return translate('day.today', { date: label })
@@ -162,7 +147,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
     const purchase = row.refundOfId ? refunds.data?.purchases[row.refundOfId] : undefined
 
     if (purchase) {
-      return translate('refund.subtitle', { date: shortDate(purchase.occurredOn) })
+      return translate('refund.subtitle', { date: dayText(purchase.occurredOn, 'short') })
     }
 
     if (item.kind === 'transfer') {
@@ -262,7 +247,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
       return (
         <span className="flex shrink-0 items-center gap-1 rounded-full bg-subtle px-2 py-0.5 text-micro whitespace-nowrap text-text-secondary">
           <LinkIcon aria-hidden size={12} />
-          {translate('refund.purchase', { date: shortDate(purchase.occurredOn) })}
+          {translate('refund.purchase', { date: dayText(purchase.occurredOn, 'short') })}
         </span>
       )
     }
@@ -362,7 +347,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
               </tr>
               {planned.map((plan) => (
                 <tr key={plan.id} className="h-16 border-b border-border">
-                  <td className="pr-2 pl-4 text-label text-text-secondary">{shortDate(plan.dueOn)}</td>
+                  <td className="pr-2 pl-4 text-label text-text-secondary">{dayText(plan.dueOn, 'short')}</td>
                   <td className="px-2">
                     <span className="flex min-w-0 items-start gap-3">
                       <ServiceLogo name={plan.title} size={32} />
@@ -409,7 +394,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   key={item.row.id}
                   className="relative h-16 border-b border-border transition-colors hover:bg-subtle"
                 >
-                  <td className="pr-2 pl-4 text-label text-text-secondary">{shortDate(item.row.occurredOn)}</td>
+                  <td className="pr-2 pl-4 text-label text-text-secondary">{dayText(item.row.occurredOn, 'short')}</td>
                   <td className="px-2">
                     <span className="flex min-w-0 items-start gap-3">
                       {leadingOf(item, 32)}
@@ -471,7 +456,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                     <Amount minor={planMinor(plan)} currency={plan.currency} kind="plan" />
                     <span className="flex items-center gap-1.5 text-label text-text-secondary">
                       <AuthorAvatar userId={plan.createdBy} />
-                      {plan.dueOn === today ? translateObligation('todayLabel') : shortDate(plan.dueOn)}
+                      {plan.dueOn === today ? translateObligation('todayLabel') : dayText(plan.dueOn, 'short')}
                     </span>
                   </span>
                 </li>

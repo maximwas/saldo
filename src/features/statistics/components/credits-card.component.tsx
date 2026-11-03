@@ -3,9 +3,10 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { CreditRow } from '../api/statistics.api'
 import { statisticsQueries } from '../api/statistics.queries'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
@@ -13,25 +14,17 @@ import { cardStatus } from '../utils/statistics.utils'
 import { QueryCard } from './query-card.component'
 import { StatTable } from './stat-table.component'
 
-function useDayText() {
-  const format = useFormatter()
+function useDayCell() {
+  const dayText = useDayText()
   const dash = <span className="text-text-tertiary">—</span>
 
-  return (day: string | null) =>
-    day
-      ? format.dateTime(new Date(`${day}T12:00:00Z`), {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          timeZone: 'UTC',
-        })
-      : dash
+  return (day: string | null) => (day ? dayText(day, 'shortYear') : dash)
 }
 
 function CreditsTable({ rows }: { rows: CreditRow[] }) {
   const translate = useTranslations('statistics')
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
-  const dayText = useDayText()
+  const dayCell = useDayCell()
   // a total that includes an unknown amount is unknown itself
   const remaining = rows.some((row) => row.remaining_base_minor === null)
     ? null
@@ -80,8 +73,8 @@ function CreditsTable({ rows }: { rows: CreditRow[] }) {
           </Link>,
           `${row.paid_count} / ${row.installments_count}`,
           <Amount key="r" minor={row.remaining_base_minor} currency={currency} />,
-          dayText(row.next_due_on),
-          dayText(row.payoff_on),
+          dayCell(row.next_due_on),
+          dayCell(row.payoff_on),
           <Amount key="p" minor={row.period_paid_minor} currency={currency} />,
         ],
       }))}

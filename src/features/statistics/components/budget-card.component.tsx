@@ -1,9 +1,10 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { BudgetRow } from '../api/statistics.api'
 import { statisticsQueries } from '../api/statistics.queries'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
@@ -12,23 +13,13 @@ import { BarsChart } from './bars-chart.component'
 import { QueryCard } from './query-card.component'
 import { StatTable } from './stat-table.component'
 
-function useMonthLabel() {
-  const format = useFormatter()
-
-  return (month: string) =>
-    format.dateTime(new Date(`${month}T12:00:00Z`), {
-      month: 'short',
-      timeZone: 'UTC',
-    })
-}
-
 /** what a month may spend: the limits plus what was carried in; null = no limits, never 0 */
 const available = (row: BudgetRow) => (row.limit_minor === null ? null : row.limit_minor + row.carried_in_minor)
 
 function BudgetChart({ rows }: { rows: BudgetRow[] }) {
   const translate = useTranslations('statistics')
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
-  const label = useMonthLabel()
+  const dayText = useDayText()
 
   return (
     <BarsChart
@@ -47,7 +38,7 @@ function BudgetChart({ rows }: { rows: BudgetRow[] }) {
         },
       ]}
       data={rows.map((row) => ({
-        label: label(row.month),
+        label: dayText(row.month, 'monthShort'),
         plan: available(row),
         fact: row.limit_minor === null ? null : row.limited_fact_minor,
       }))}
@@ -58,7 +49,7 @@ function BudgetChart({ rows }: { rows: BudgetRow[] }) {
 function BudgetTable({ rows }: { rows: BudgetRow[] }) {
   const translate = useTranslations('statistics')
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
-  const label = useMonthLabel()
+  const dayText = useDayText()
   const dash = <span className="text-text-tertiary">—</span>
 
   return (
@@ -95,7 +86,7 @@ function BudgetTable({ rows }: { rows: BudgetRow[] }) {
         key: row.month,
         cells: [
           <span key="m">
-            {label(row.month)}
+            {dayText(row.month, 'monthShort')}
             {row.unknown_count > 0 && (
               <span className="ml-2 text-caption text-warning-text">
                 {translate('unknownBadge', { count: row.unknown_count })}

@@ -1,6 +1,7 @@
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { Totals } from '../utils/operation-items.utils'
 
 type OperationSummaryProps = {
@@ -20,13 +21,8 @@ const SUM_CLASS = 'lg:font-display lg:text-number-sm lg:font-semibold'
 export function OperationSummary({ totals, period, withPlanMinor }: OperationSummaryProps) {
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const translate = useTranslations('operations.totals')
-  const formatter = useFormatter()
-  const month = /^\d{4}-\d{2}$/.test(period)
-    ? formatter.dateTime(new Date(`${period}-15T12:00:00Z`), {
-        month: 'long',
-        timeZone: 'UTC',
-      })
-    : null
+  const dayText = useDayText()
+  const month = /^\d{4}-\d{2}$/.test(period) ? dayText(period, 'month') : null
   const label = (key: 'income' | 'expenses' | 'result') =>
     month && key !== 'result' ? (
       <>

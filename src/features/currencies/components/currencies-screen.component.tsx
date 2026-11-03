@@ -6,6 +6,7 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { formatRate } from '@/lib/money/fx.utils'
 import { currencySymbol } from '@/lib/money/money.utils'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
@@ -22,6 +23,7 @@ const CARD_CLASS = 'flex flex-col gap-5 rounded-card bg-card p-5 shadow-card lg:
 export function CurrenciesScreen() {
   const translate = useTranslations('currencies')
   const locale = useLocale()
+  const dayText = useDayText()
   const canWrite = useCanWrite()
   const today = useToday()
   const query = useRates()
@@ -38,8 +40,6 @@ export function CurrenciesScreen() {
     return <Bone className="h-72 rounded-card" />
   }
 
-  const formatDate = (day: string) =>
-    new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(`${day}T12:00:00`))
   const baseSymbol = currencySymbol(data.baseCurrency, locale)
 
   return (
@@ -52,7 +52,9 @@ export function CurrenciesScreen() {
         <p className="text-label text-text-secondary">{translate('base.hint')}</p>
       </section>
       <section className={CARD_CLASS}>
-        <h2 className="text-card-title text-text-primary">{translate('current.title', { date: formatDate(today) })}</h2>
+        <h2 className="text-card-title text-text-primary">
+          {translate('current.title', { date: dayText(today, 'dayMonthShortYear') })}
+        </h2>
         <ul className="flex flex-col">
           {rateBoard(data.rates, data.baseCurrency, today).map((row) => (
             <li
@@ -96,7 +98,7 @@ export function CurrenciesScreen() {
                 <span className="flex-1 font-display text-number-sm text-text-primary tabular-nums">
                   {formatRate(row.rate, locale, RATE_DIGITS)}
                 </span>
-                <span className="text-label text-text-secondary">{formatDate(row.rateOn)}</span>
+                <span className="text-label text-text-secondary">{dayText(row.rateOn, 'dayMonthShortYear')}</span>
                 <Badge tone={row.source === 'manual' ? 'info' : 'neutral'}>{translate(`source.${row.source}`)}</Badge>
               </li>
             ))}

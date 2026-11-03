@@ -1,49 +1,24 @@
-import { type DateTimeFormatOptions, useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { useToday } from '@/contexts/clock.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { CalendarEntry } from '../api/calendar.api'
-import { capitalize, dayDate, type EntryStatus, entryStatus } from '../utils/calendar.utils'
+import { capitalize, type EntryStatus, entryStatus } from '../utils/calendar.utils'
 import { useCalendarOptions, useInstallmentOf } from './calendar.hook'
-
-/** «03.11» of a YYYY-MM-DD */
-export function useShortDate() {
-  const format = useFormatter()
-
-  return (day: string) =>
-    format.dateTime(dayDate(day), {
-      timeZone: 'UTC',
-      day: '2-digit',
-      month: '2-digit',
-    })
-}
 
 /** the title of a day: «Today, Tuesday 3 November» or «Wednesday, 4 November» */
 export function useDayTitle() {
   const translate = useTranslations('calendar')
-  const format = useFormatter()
+  const dayText = useDayText()
   const today = useToday()
-  const part = (day: string, options: DateTimeFormatOptions) =>
-    format.dateTime(dayDate(day), {
-      timeZone: 'UTC',
-      ...options,
-    })
 
   return (day: string) =>
     day === today
       ? translate('day.today', {
-          weekday: part(day, { weekday: 'long' }),
-          date: part(day, {
-            day: 'numeric',
-            month: 'long',
-          }),
+          weekday: dayText(day, 'weekday'),
+          date: dayText(day, 'dayMonth'),
         })
-      : capitalize(
-          part(day, {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          }),
-        )
+      : capitalize(dayText(day, 'weekdayDayMonth'))
 }
 
 /** what an entry is: its source («Credit», «Planned payment») or else its kind («Expense», «Transfer») */
@@ -54,20 +29,6 @@ export function useEntryType() {
     entry.sourceType
       ? translate(`source.${entry.sourceType as 'manual'}`)
       : translate(`kind.${entry.kind as 'expense'}`)
-}
-
-/** «November» as it reads after a day number (the genitive in Ukrainian): «All entries of November» */
-export function useMonthOf() {
-  const locale = useLocale()
-
-  return (day: string) =>
-    new Intl.DateTimeFormat(locale, {
-      timeZone: 'UTC',
-      day: 'numeric',
-      month: 'long',
-    })
-      .formatToParts(dayDate(day))
-      .find((part) => part.type === 'month')?.value ?? ''
 }
 
 /** the type with a credit's installment, «Credit · payment 3 of 12», else the type alone */
@@ -93,11 +54,11 @@ function useStatusWords() {
   const translate = useTranslations('calendar')
   const moneyText = useMoneyText()
   const today = useToday()
-  const short = useShortDate()
+  const dayText = useDayText()
   const accounts = useCalendarOptions().data?.accounts
   const paidOn = (entry: CalendarEntry) => ({
     today: entry.day === today ? 'yes' : 'no',
-    date: short(entry.day),
+    date: dayText(entry.day, 'short'),
   })
   const words: Record<EntryStatus, (entry: CalendarEntry) => string> = {
     planned: () => translate('status.planned'),
@@ -111,7 +72,7 @@ function useStatusWords() {
     paidElsewhere: (entry) =>
       translate('status.paidElsewhere', {
         ...paidOn(entry),
-        planned: short(entry.plannedOn ?? entry.day),
+        planned: dayText(entry.plannedOn ?? entry.day, 'short'),
       }),
     fact: (entry) => accounts?.find((account) => account.id === entry.accountId)?.name ?? '',
   }
@@ -143,11 +104,11 @@ export function usePopupStatus() {
   const translate = useTranslations('calendar')
   const type = useEntryType()
   const words = useStatusWords()
-  const short = useShortDate()
+  const dayText = useDayText()
 
   return (entry: CalendarEntry) => {
     const status = entryStatus(entry)
-    const date = short(entry.day)
+    const date = dayText(entry.day, 'short')
 
     if (status === 'paid') {
       return translate('popup.paid', { date })
@@ -156,7 +117,7 @@ export function usePopupStatus() {
     if (status === 'paidElsewhere') {
       return translate('popup.paidElsewhere', {
         date,
-        planned: short(entry.plannedOn ?? entry.day),
+        planned: dayText(entry.plannedOn ?? entry.day, 'short'),
       })
     }
 

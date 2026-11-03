@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Avatar } from '@/components/ui/avatar.component'
 import { Button } from '@/components/ui/button.component'
@@ -9,6 +9,7 @@ import { Sheet } from '@/components/ui/sheet.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { listAccountOptions } from '@/lib/finance/ledger-options.api'
 import { useMembers } from '@/lib/members/members.hook'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
@@ -69,7 +70,7 @@ function Version({ title, author, photo, server = false, children }: VersionProp
 // Figma Parts / DetailRow 2:21449 in the dialog: label left, value body-medium right, 12/0 padding, a border under each
 function DetailRows({ fields, accountName }: DetailRowsProps) {
   const translate = useTranslations('sync.conflict.fields')
-  const format = useFormatter()
+  const dayText = useDayText()
   const rows = [
     {
       label: translate('amount'),
@@ -77,14 +78,7 @@ function DetailRows({ fields, accountName }: DetailRowsProps) {
     },
     {
       label: translate('date'),
-      value: fields.date
-        ? format.dateTime(new Date(`${fields.date}T12:00:00Z`), {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            timeZone: 'UTC',
-          })
-        : '—',
+      value: fields.date ? dayText(fields.date, 'shortYear') : '—',
     },
     {
       label: translate('account'),
@@ -111,15 +105,9 @@ function DetailRows({ fields, accountName }: DetailRowsProps) {
 // Figma 4:81668 in the bottom sheet: one label line of date, account and comment
 function SummaryLine({ fields, accountName, sameAmount }: SummaryLineProps) {
   const translate = useTranslations('sync.conflict')
-  const format = useFormatter()
+  const dayText = useDayText()
   const parts = [
-    fields.date
-      ? format.dateTime(new Date(`${fields.date}T12:00:00Z`), {
-          day: '2-digit',
-          month: '2-digit',
-          timeZone: 'UTC',
-        })
-      : null,
+    fields.date ? dayText(fields.date, 'short') : null,
     accountName(fields.accountId),
     fields.note ? translate('quoted', { note: fields.note }) : translate('noNote'),
   ]

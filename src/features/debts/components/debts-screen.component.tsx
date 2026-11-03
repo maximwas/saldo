@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { HandCoins, Plus } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { resumeWrites } from '@/lib/query/ledger-writes.mutations'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
@@ -231,7 +232,7 @@ type DebtTotalProps = {
 // the first partly repaid debt (owed to me) or the nearest due date (I owe), on mobile only the count
 function DebtTotal({ debts, direction, label }: DebtTotalProps) {
   const translate = useTranslations('debts')
-  const format = useFormatter()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const totals = owedTotals(debts, direction)
   const count = openCount(debts, direction)
@@ -239,11 +240,7 @@ function DebtTotal({ debts, direction, label }: DebtTotalProps) {
   const due = nearestDue(debts, direction)
   const dueText = due
     ? translate('summary.nearestDue', {
-        date: format.dateTime(new Date(`${due}T12:00:00Z`), {
-          timeZone: 'UTC',
-          day: '2-digit',
-          month: '2-digit',
-        }),
+        date: dayText(due, 'short'),
       })
     : null
   const leadText = lead

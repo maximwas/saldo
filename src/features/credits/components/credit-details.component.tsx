@@ -1,12 +1,13 @@
 'use client'
 
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Card } from '@/components/ui/card.component'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import type { Credit } from '../api/credits.api'
 import { useCredits } from '../hooks/credits.hook'
-import { activeInstallments, creditProgress, dayText } from '../utils/credits.utils'
+import { activeInstallments, creditProgress } from '../utils/credits.utils'
 
 type CreditDetailsProps = {
   credit: Credit
@@ -39,7 +40,7 @@ function DetailRow({ label, desktopOnly, children }: DetailRowProps) {
 // Figma «Saldo» → Credit card 2:49412, Details: the §9 fields; an unknown one reads «unknown», never 0
 export function CreditDetails({ credit, footer }: CreditDetailsProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
   const moneyText = useMoneyText()
   const accounts = useCredits().data?.accounts ?? []
   const progress = creditProgress(credit)
@@ -63,7 +64,7 @@ export function CreditDetails({ credit, footer }: CreditDetailsProps) {
         </DetailRow>
         <DetailRow label={translate('details.fees')}>{credit.feesNote ?? unknown}</DetailRow>
         <DetailRow desktopOnly label={translate('details.openedOn')}>
-          {credit.openedOn ? dayText(credit.openedOn, locale, true) : unknown}
+          {credit.openedOn ? dayText(credit.openedOn, 'shortYear') : unknown}
         </DetailRow>
         <DetailRow desktopOnly label={translate('details.regular')}>
           {translate('perInstallment', {
@@ -75,7 +76,7 @@ export function CreditDetails({ credit, footer }: CreditDetailsProps) {
           <DetailRow desktopOnly label={translate('details.last')}>
             {translate('details.amountOn', {
               amount: money(last.plannedMinor),
-              date: dayText(last.dueOn, locale, true),
+              date: dayText(last.dueOn, 'shortYear'),
             })}
           </DetailRow>
         )}

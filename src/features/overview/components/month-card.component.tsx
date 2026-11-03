@@ -1,10 +1,10 @@
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Card } from '@/components/ui/card.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { CATEGORY_SWATCHES, type CategoryColor } from '@/constants/category-colors.constants'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { Overview } from '../api/overview.api'
-import { isoToDate } from '../utils/overview.utils'
 
 type MonthCardProps = {
   overview: Overview
@@ -16,12 +16,9 @@ type MonthCardProps = {
 // body-medium, share label, sum body-semibold, a ProgressBar 8 in the category colour under them (gap 8; rows gap 16)
 export function MonthCard({ overview }: MonthCardProps) {
   const translate = useTranslations('overview')
-  const format = useFormatter()
+  const dayText = useDayText()
   const { month, baseCurrency } = overview
-  const monthName = format.dateTime(isoToDate(overview.today), {
-    timeZone: 'UTC',
-    month: 'long',
-  })
+  const monthName = dayText(overview.today, 'month')
   const tiles: {
     key: 'income' | 'expense' | 'result'
     minor: number

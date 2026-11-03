@@ -3,7 +3,7 @@
 import { ChevronLeft } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
@@ -12,6 +12,7 @@ import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useAccounts } from '../hooks/accounts.hook'
 import { ACCOUNT_KIND_STYLE } from '../utils/accounts.utils'
@@ -28,7 +29,7 @@ type AccountCardProps = {
 export function AccountCard({ accountId }: AccountCardProps) {
   const translate = useTranslations('accounts')
   const translateCurrency = useTranslations('currencies')
-  const locale = useLocale()
+  const dayText = useDayText()
   const canWrite = useCanWrite()
   const query = useAccounts()
   const { data } = query
@@ -56,9 +57,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
 
   const style = ACCOUNT_KIND_STYLE[account.kind]
   const archived = account.archivedAt !== null
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
-    new Date(`${account.openingBalanceOn}T12:00:00`),
-  )
+  const date = dayText(account.openingBalanceOn, 'dayMonthShortYear')
   const yesNo = (flag: boolean) => translate(flag ? 'card.yes' : 'card.no')
 
   return (

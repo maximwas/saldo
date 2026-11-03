@@ -23,6 +23,19 @@ const englishComments = {
   },
 }
 
+// Biome hugs a sole parameter and collapses its inline object type, so multi-member parameter types get a name
+const NAMED_PARAMETER_TYPE = {
+  selector: ':function > :matches(Identifier, ObjectPattern) > TSTypeAnnotation > TSTypeLiteral[members.length>1]',
+  message: 'Name the parameter type (type FooProps = { ... }): Biome collapses inline object types in parameters.',
+}
+
+// `${day}T12:00:00Z` and friends in app code: a calendar day becomes a Date and text in src/lib/dates only (seed
+// scripts and e2e build real moments)
+const ONE_DAY_ANCHOR = {
+  selector: 'TemplateElement[value.raw=/T\\d\\d:\\d\\d/]',
+  message: 'Do not build a time onto a calendar day: use dayToDate / useDayText from src/lib/dates (one anchor rule).',
+}
+
 // a thin layer for the style rules Biome 2.6 lacks (docs/conventions.md §3a); Biome stays the linter and formatter
 export default tseslint.config(
   { ignores: ['.next/**', 'node_modules/**', 'src/types/database.types.ts', 'e2e/.auth/**'] },
@@ -93,17 +106,12 @@ export default tseslint.config(
         },
       ],
       '@stylistic/object-property-newline': 'error',
-      // Biome hugs a sole parameter and collapses its inline object type, so multi-member parameter types get a name
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector:
-            ':function > :matches(Identifier, ObjectPattern) > TSTypeAnnotation > TSTypeLiteral[members.length>1]',
-          message:
-            'Name the parameter type (type FooProps = { ... }): Biome collapses inline object types in parameters.',
-        },
-      ],
+      'no-restricted-syntax': ['error', NAMED_PARAMETER_TYPE],
     },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    rules: { 'no-restricted-syntax': ['error', NAMED_PARAMETER_TYPE, ONE_DAY_ANCHOR] },
   },
   // typed rules: every .ts/.tsx is in tsconfig.json; .mjs/.cjs stay untyped
   {

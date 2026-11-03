@@ -1,14 +1,5 @@
 import type { Credit, CreditInstallment } from '../api/credits.api'
 
-/** YYYY-MM-DD → 05.11 (or 05.11.2026); noon UTC, so no time zone moves the day */
-export const dayText = (iso: string, locale: string, withYear = false) =>
-  new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    ...(withYear && { year: 'numeric' }),
-    timeZone: 'UTC',
-  }).format(new Date(`${iso}T12:00:00Z`))
-
 /** a segment of InstallmentSteps (Figma 2:10383): paid green, the next one blue, date passed amber, the rest grey */
 export type StepState = 'paid' | 'current' | 'unconfirmed' | 'plan'
 

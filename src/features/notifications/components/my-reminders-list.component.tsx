@@ -1,11 +1,12 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Card } from '@/components/ui/card.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useClock } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { listMyReminders, type MyReminder } from '@/lib/reminders/reminder-rules.api'
 import { nextReminder } from '@/lib/reminders/reminder-schedule.utils'
@@ -17,7 +18,7 @@ import { localDate, localTime } from '@/lib/utils/clock.utils'
 // (body-medium) over «Subscription · 3 and 1 days before at 09:00» (label), the date of the next reminder at the end.
 export function MyRemindersList() {
   const translate = useTranslations('notifications.settings.mine')
-  const formatter = useFormatter()
+  const dayText = useDayText()
   const { now, timeZone } = useClock()
   const { summary } = useReminderText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -57,12 +58,7 @@ export function MyRemindersList() {
                 </p>
               </div>
               <time className="text-label text-text-secondary" dateTime={next?.date}>
-                {next
-                  ? formatter.dateTime(new Date(`${next.date}T12:00:00`), {
-                      day: '2-digit',
-                      month: '2-digit',
-                    })
-                  : null}
+                {next ? dayText(next.date, 'short') : null}
               </time>
             </li>
           ))}

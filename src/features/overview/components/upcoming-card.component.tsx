@@ -1,13 +1,13 @@
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Card } from '@/components/ui/card.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { Overview } from '../api/overview.api'
-import { isoToDate } from '../utils/overview.utils'
 
 type UpcomingCardProps = {
   overview: Overview
@@ -25,7 +25,7 @@ const STATE_TONE = {
 // counts payments past their date.
 export function UpcomingCard({ overview }: UpcomingCardProps) {
   const translate = useTranslations('overview')
-  const format = useFormatter()
+  const dayText = useDayText()
   const accountName = (id: string | null) => overview.accounts.find((account) => account.id === id)?.name
 
   function subtitle(obligation: Overview['upcoming'][number]) {
@@ -74,11 +74,7 @@ export function UpcomingCard({ overview }: UpcomingCardProps) {
                 <span className="text-label text-text-secondary">
                   {obligation.dueOn === overview.today
                     ? translate('upcoming.today')
-                    : format.dateTime(isoToDate(obligation.dueOn), {
-                        timeZone: 'UTC',
-                        day: '2-digit',
-                        month: '2-digit',
-                      })}
+                    : dayText(obligation.dueOn, 'short')}
                 </span>
               </div>
             </li>

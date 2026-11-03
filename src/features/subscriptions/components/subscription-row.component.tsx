@@ -8,8 +8,8 @@ import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { SubscriptionView } from '../api/subscriptions.api'
-import { useDateLabel } from '../hooks/date-label.hook'
 import { useSubscriptionParams } from '../hooks/subscription-params.hook'
 import { useSubscriptionOptions, useUpdateSubscription } from '../hooks/subscriptions.hook'
 import { toVerdictInput } from '../schemas/subscription-form.schema'
@@ -74,7 +74,7 @@ type SubscriptionRowProps = {
 export function SubscriptionRow({ subscription }: SubscriptionRowProps) {
   const translate = useTranslations('subscriptions')
   const today = useToday()
-  const dateLabel = useDateLabel()
+  const dayText = useDayText()
   const { pressProps, ripple } = useRipple()
   const { openCard } = useSubscriptionParams()
   const options = useSubscriptionOptions()
@@ -107,7 +107,7 @@ export function SubscriptionRow({ subscription }: SubscriptionRowProps) {
         <span className="flex shrink-0 flex-col items-end gap-1">
           <Amount minor={price.amountMinor} currency={price.currency} />
           <span className="text-caption text-text-secondary">
-            {nextOn ? translate('next', { date: dateLabel(nextOn) }) : translate('noNext')}
+            {nextOn ? translate('next', { date: dayText(nextOn, 'short') }) : translate('noNext')}
           </span>
         </span>
         {ripple}

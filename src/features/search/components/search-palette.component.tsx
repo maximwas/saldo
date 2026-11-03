@@ -5,12 +5,13 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Search } from 'lucide-react'
 import type { Route } from 'next'
 import { useRouter } from 'next/navigation'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useDeferredValue, useEffect, useRef, useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { Input } from '@/components/ui/input.component'
 import { Sheet } from '@/components/ui/sheet.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { SearchResult } from '../api/search.api'
 import { searchQueries } from '../api/search.queries'
@@ -170,19 +171,12 @@ type ResultItemProps = {
 
 function ResultItem({ row, onPickAction }: ResultItemProps) {
   const translateOperations = useTranslations('operations')
-  const format = useFormatter()
+  const dayText = useDayText()
   const kind = row.entity_type === 'operation' ? KIND_KEY[row.title as keyof typeof KIND_KEY] : undefined
   const title = kind ? translateOperations(`kinds.${kind}`) : row.title
   const details = [
     TEXT_SUBTITLES.has(row.entity_type) ? row.subtitle : null,
-    row.day
-      ? format.dateTime(new Date(`${row.day}T12:00:00Z`), {
-          timeZone: 'UTC',
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        })
-      : null,
+    row.day ? dayText(row.day, 'dayMonthShortYear') : null,
   ].filter(Boolean)
 
   return (

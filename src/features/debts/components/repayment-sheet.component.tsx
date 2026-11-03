@@ -1,6 +1,6 @@
 'use client'
 
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { useMoneyText } from '@/components/ui/amount.component'
@@ -12,6 +12,7 @@ import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock, useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import type { DebtRow } from '../api/debts.api'
@@ -56,13 +57,7 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
   const amount = toMinor(methods.watch('amount'), debt.currency)
   const left = amount === null ? null : debt.remainingMinor - amount
   const pending = repay.isPending || close.isPending
-  const format = useFormatter()
-  const dayText = (iso: string) =>
-    format.dateTime(new Date(`${iso}T12:00:00Z`), {
-      timeZone: 'UTC',
-      day: '2-digit',
-      month: '2-digit',
-    })
+  const dayText = useDayText()
 
   const submit = (values: RepaymentFormValues) => {
     const repayment = toRepaymentInput(values, clock, {
@@ -109,7 +104,7 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
           ? translate('repay.closeText', { remaining: moneyText(debt.remainingMinor, debt.currency) })
           : translate('repay.summary', {
               reason: debt.reason ?? '',
-              date: dayText(debt.arisenOn),
+              date: dayText(debt.arisenOn, 'short'),
               principal: moneyText(debt.principalMinor, debt.currency),
               repaid: moneyText(debt.repaidMinor, debt.currency),
               remaining: moneyText(debt.remainingMinor, debt.currency),

@@ -7,10 +7,10 @@ import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
 import { useBudgetCategories, useCurrentBudget, useSaveLimit } from '../hooks/budget.hook'
-import { useMonthLabel } from '../hooks/month-label.hook'
 import { type LimitFormInput, type LimitFormValues, limitFormSchema } from '../schemas/budget-form.schema'
 import { type BudgetFact, limitProgress, shiftMonth } from '../utils/budget.utils'
 import { LimitSheetFields } from './limit-sheet-fields.component'
@@ -32,7 +32,7 @@ type LimitWrite = {
 export function LimitSheet({ categoryId }: { categoryId: string | null }) {
   const translate = useTranslations('budget.limitSheet')
   const moneyText = useMoneyText()
-  const monthLabel = useMonthLabel()
+  const dayText = useDayText()
   const { ledgerId, baseCurrency } = useLedger()
   const close = useBudgetSheetStore((state) => state.close)
   const open = useBudgetSheetStore((state) => state.open)
@@ -58,7 +58,7 @@ export function LimitSheet({ categoryId }: { categoryId: string | null }) {
   })
   const limited = new Set(data?.facts.filter((fact) => fact.limitId).map((fact) => fact.categoryId))
   const name = categories.find((category) => category.id === categoryId)?.name
-  const monthName = monthLabel(month, false)
+  const monthName = dayText(month, 'month')
   const money = (minor: number) => moneyText(minor, baseCurrency)
   const nameOf = (id: string | null) => categories.find((category) => category.id === id)?.name ?? ''
   const progress = existing ? limitProgress(existing) : null
@@ -180,7 +180,7 @@ export function LimitSheet({ categoryId }: { categoryId: string | null }) {
           control={form.control}
           choices={categoryId ? null : categories.filter((category) => !limited.has(category.id))}
           carryMode={form.watch('carryMode')}
-          nextMonth={monthLabel(shiftMonth(month, 1), false)}
+          nextMonth={dayText(shiftMonth(month, 1), 'month')}
           move={
             over
               ? {
