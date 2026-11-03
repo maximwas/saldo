@@ -1,6 +1,13 @@
-import { expect } from '@playwright/test'
+import { expect, type Locator } from '@playwright/test'
 import { ensureIncomeDate, monthExpenseMinor } from '../fixtures/overview.fixture'
 import { test } from '../fixtures/roles.fixture'
+
+// how far the icon's top is from the text's top; NaN (a failed check) when either is not on screen
+async function topGap(icon: Locator, text: Locator) {
+  const [iconBox, textBox] = await Promise.all([icon.boundingBox(), text.boundingBox()])
+
+  return Math.abs((iconBox?.y ?? Number.NaN) - (textBox?.y ?? Number.NaN))
+}
 
 test('«Оплачено» створює одну операцію, видалення оплати повертає план у «Найближчі»', async ({ pageAs }) => {
   const page = await pageAs('owner')
@@ -69,4 +76,23 @@ test('«Оплачено» створює одну операцію, видал�
   await expect(
     page.locator('section').filter({ has: page.getByRole('heading', { name: 'Дата минула, оплату не підтверджено' }) }),
   ).toContainText(`${mark}-late`)
+
+  // conventions §4.6c: an icon sits on the first text line, never on the centre of a text that runs 2+ lines (the
+  // overdue banner wraps on a phone; the upcoming row always has a title and a status line)
+  await page.setViewportSize({
+ width: 390,
+height: 844 
+})
+  await page.goto('/')
+
+  const notice = page.getByText(/з минулою датою/)
+  const row = page.getByRole('listitem').filter({ has: page.getByText(mark, { exact: true }) })
+  const title = row.getByText(mark, { exact: true })
+
+  await expect(notice).toBeVisible()
+  await expect(title).toBeVisible()
+  // more than one 24px line, or the check below proves nothing
+  expect((await notice.boundingBox())?.height ?? 0).toBeGreaterThan(30)
+  expect(await topGap(notice.locator('xpath=..').locator('svg').first(), notice)).toBeLessThanOrEqual(4)
+  expect(await topGap(row.locator(':scope > *').first(), title)).toBeLessThanOrEqual(2)
 })
