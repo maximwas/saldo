@@ -59,7 +59,8 @@ export function LetterAvatar({ name, size = 40, className }: LetterAvatarProps) 
   )
 }
 
-// Figma «Saldo» → ServiceLogo 2:7882 (40/32/24, radius md/logo-md/sm, card fill, the logo from Service logos 1:167, no
+// Figma «Saldo» → ServiceLogo 2:7882 (40/32/24, radius md/logo-md/sm, white fill in both themes
+// (cat-on, Maxim 3.11: transparent logos like Spotify vanished on the dark card), the logo from Service logos 1:167, no
 // border ring: Maxim, 3.11); a name without a logo gets LetterAvatar 2:7963: its first letter in cat-<colour>-text on the soft fill
 export function ServiceLogo({ name, size = 40, className }: ServiceLogoProps) {
   const logo = serviceLogoOf(name)
@@ -67,7 +68,7 @@ export function ServiceLogo({ name, size = 40, className }: ServiceLogoProps) {
 
   if (logo) {
     return (
-      <span aria-hidden className={cn('relative shrink-0 overflow-hidden bg-card', box, className)}>
+      <span aria-hidden className={cn('relative shrink-0 overflow-hidden bg-cat-on', box, className)}>
         <Image src={logo} alt="" fill unoptimized className={serviceLogoIsInset(name) ? 'p-1.5' : undefined} />
       </span>
     )
