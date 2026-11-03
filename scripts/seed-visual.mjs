@@ -1,6 +1,6 @@
 // Fills demo@example.com (made by supabase/seed.sql) with the rest of docs/design/demo-data.md for the visual tests:
-// the story's October operations, the EUR → card transfer and budget in the current Kyiv month, and the two
-// categories seed.sql lacks. DEMO_TODAY=YYYY-MM-DD pins today (2026-10-30 for the visual specs, as in seed.sql).
+// the story's October operations, this month's paid household bills, the EUR → card transfer and budget in the
+// current Kyiv month, and the category seed.sql lacks. DEMO_TODAY=YYYY-MM-DD pins today (2026-10-30 for the visual specs, as in seed.sql).
 // Local stack only; run after `supabase db reset`. Writes go through the app's RPCs as the demo user (RLS applies).
 import { execSync } from 'node:child_process'
 import { createClient } from '@supabase/supabase-js'
@@ -61,12 +61,6 @@ const NEW_CATEGORIES = [
     name: 'Розваги',
     color: 'plum',
     sort_order: 12,
-  },
-  {
-    id: id(902),
-    name: "Зв'язок",
-    color: 'teal',
-    sort_order: 13,
   },
 ]
 
@@ -201,6 +195,61 @@ for (const row of operations) {
   must(await client.rpc('create_operation', { p_operation: row }), `operation ${row.counterparty}`)
 }
 
+// this month's bills (seed.sql has them from next month on), paid by their operations above the way the app's
+// «Paid» links an existing operation: [title = the operation's counterparty, planned amount]
+const PAID_BILLS = [
+  ['Оренда квартири', 1_400_000],
+  ['Kyivstar', 25_000],
+  ['Комунальні платежі', 230_000],
+  ['Фітнес-клуб', 110_000],
+]
+
+for (const [index, [title, plannedMinor]] of PAID_BILLS.entries()) {
+  const paidBy = operations.find((row) => row.counterparty === title)
+  const obligationId = id(300 + index)
+
+  must(
+    await client.from('obligations').upsert(
+      {
+        id: obligationId,
+        ledger_id: ledgerId,
+        source_type: 'manual',
+        direction: 'out',
+        title,
+        occurrence_on: paidBy.occurred_on,
+        due_on: paidBy.occurred_on,
+        planned_amount_minor: plannedMinor,
+        currency: 'UAH',
+        account_id: CARD,
+        category_id: paidBy.category_id,
+      },
+      {
+        onConflict: 'id',
+        ignoreDuplicates: true,
+      },
+    ),
+    `bill ${title}`,
+  )
+
+  const { version } = must(
+    await client.from('obligations').select('version').eq('id', obligationId).single(),
+    `bill ${title} version`,
+  )
+
+  // pay_obligation writes nothing for a payment id it already has
+  must(
+    await client.rpc('pay_obligation', {
+      p_payment_id: id(400 + index),
+      p_obligation_id: obligationId,
+      p_expected_version: version,
+      p_amount_minor: paidBy.amount_minor,
+      p_existing_operation_id: paidBy.id,
+      p_settle: false,
+    }),
+    `pay ${title}`,
+  )
+}
+
 must(
   await client.rpc('create_transfer', {
     p_transfer: {
@@ -263,5 +312,7 @@ must(
 
 const balances = must(await client.from('account_balances').select('account_id, balance_minor'), 'balances')
 
-console.log(`seed-visual: ${operations.length} operations, 1 transfer, ${Object.keys(LIMITS).length} limits`)
+console.log(
+  `seed-visual: ${operations.length} operations, ${PAID_BILLS.length} paid bills, 1 transfer, ${Object.keys(LIMITS).length} limits`,
+)
 console.log(balances.map((row) => `${row.account_id.slice(-2)}=${row.balance_minor}`).join(' '))
