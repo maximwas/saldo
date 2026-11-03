@@ -179,5 +179,5 @@
     "paidElsewhere": "Paid {date} · the plan was for {planned}",
     "fact": "{type} · {date}"
   },
-  "installment": "{type} · payment {number} of {total}"
+  "installment": "{type} · installment {number} of {total}"
 }

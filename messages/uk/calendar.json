@@ -179,5 +179,5 @@
     "paidElsewhere": "Оплачено {date} · план був на {planned}",
     "fact": "{type} · {date}"
   },
-  "installment": "{type} · платіж {number} з {total}"
+  "installment": "{type} · внесок {number} з {total}"
 }
