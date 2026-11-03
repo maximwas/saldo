@@ -1,14 +1,15 @@
 'use client'
 
-import { Tabs } from '@base-ui/react/tabs'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { Tabs } from '@/components/ui/tabs.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { SubscriptionView } from '../api/subscriptions.api'
 import { useDateLabel } from '../hooks/date-label.hook'
 import { CARD_TABS, type CardTab, useSubscriptionParams } from '../hooks/subscription-params.hook'
@@ -87,7 +88,9 @@ type SubscriptionCardProps = {
 export function SubscriptionCard({ subscriptionId }: SubscriptionCardProps) {
   const translate = useTranslations('subscriptions.card')
   const canWrite = useCanWrite()
-  const { data: subscription, isPending, isError, refetch } = useSubscription(subscriptionId)
+  const query = useSubscription(subscriptionId)
+  const subscription = query.data
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
   const { tab, setParams, closeCard } = useSubscriptionParams()
   const tabs = CARD_TABS.filter((value) => canWrite || value !== 'settings')
   const current = tabs.includes(tab) ? tab : 'overview'
@@ -99,17 +102,17 @@ export function SubscriptionCard({ subscriptionId }: SubscriptionCardProps) {
     </Button>
   )
 
-  if (isPending) {
-    return <div aria-busy className="h-96 rounded-card bg-subtle" />
-  }
-
-  if (isError) {
+  if (failedLoad) {
     return (
       <>
         {back}
-        <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
       </>
     )
+  }
+
+  if (subscription === undefined) {
+    return <div aria-busy className="h-96 rounded-card bg-subtle" />
   }
 
   if (!subscription) {
@@ -127,33 +130,20 @@ export function SubscriptionCard({ subscriptionId }: SubscriptionCardProps) {
     <>
       {back}
       <SubscriptionHeader subscription={subscription} />
-      <Tabs.Root
+      <Tabs
+        label={translate('tabs.label')}
         value={current}
         onValueChange={(value: CardTab) => setParams({ tab: value })}
-        className="flex flex-col gap-4 lg:gap-6"
-      >
-        <Tabs.List aria-label={translate('tabs.label')} className="flex items-end gap-6 border-border border-b">
-          {tabs.map((value) => (
-            <Tabs.Tab
-              key={value}
-              value={value}
-              className="group flex cursor-pointer flex-col items-center gap-2.5 rounded-xs px-1 pt-2.5 text-body font-medium text-text-secondary outline-none hover:text-text-primary focus-visible:ring-2 focus-visible:ring-primary data-active:text-text-primary"
-            >
-              {translate(`tabs.${value}`)}
-              <span className="h-0.5 self-stretch rounded-full group-data-active:bg-primary" />
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-        {tabs.map((value) => {
+        options={tabs.map((value) => {
           const Panel = PANELS[value]
 
-          return (
-            <Tabs.Panel key={value} value={value} className="flex flex-col gap-4 outline-none lg:gap-6">
-              <Panel subscriptionId={subscription.id} />
-            </Tabs.Panel>
-          )
+          return {
+            value,
+            label: translate(`tabs.${value}`),
+            panel: <Panel subscriptionId={subscription.id} />,
+          }
         })}
-      </Tabs.Root>
+      />
     </>
   )
 }

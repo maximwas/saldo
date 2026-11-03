@@ -5,6 +5,7 @@ import { Banner } from '@/components/ui/banner.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useOverview } from '../hooks/overview.hook'
 import { AccountsCard } from './accounts-card.component'
 import { HeroAvailable } from './hero-available.component'
@@ -15,12 +16,18 @@ import { UpcomingCard } from './upcoming-card.component'
 // Figma «Saldo» → Overview 2:8237 (desktop: hero, then "Upcoming" 2/3 + "Accounts" 1/3) and 2:8735 (mobile: one column).
 // reserves, auto and taxes cards are hidden in Figma until their phases (4, 5, 6, 9): no placeholder rows.
 export function OverviewScreen() {
-  const { data, isPending, isError, refetch } = useOverview()
   const translateCommon = useTranslations('overview')
+  const query = useOverview()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translateCommon('refreshFailed'))
   const canWrite = useCanWrite()
   const space = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
 
-  if (isPending) {
+  if (failedLoad) {
+    return <ErrorState title={translateCommon('loadFailed')} onRetryAction={retry} />
+  }
+
+  if (data === undefined) {
     return (
       // Figma overview loading frame 5:89183: the hero card (padding 32, gap 16, bars 180×16, 320×48, 420×14) and a row
       // of a flex card and a 400 one (padding 24, gap 20, a title bar and three lines)
@@ -46,10 +53,6 @@ export function OverviewScreen() {
         </div>
       </div>
     )
-  }
-
-  if (isError) {
-    return <ErrorState title={translateCommon('loadFailed')} onRetryAction={refetch} />
   }
 
   // Figma first run 5:87358: no accounts, the Welcome card replaces everything else

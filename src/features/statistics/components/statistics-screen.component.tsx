@@ -3,13 +3,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { ChartColumn } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
-import { useEffect } from 'react'
-import { Banner } from '@/components/ui/banner.component'
+import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
-import { notify } from '@/components/ui/toaster.component'
-import { CATEGORY_TONES } from '@/constants/category-colors.constants'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { statisticsQueries } from '../api/statistics.queries'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
 import { cashflowTotals } from '../utils/statistics.utils'
@@ -24,29 +23,6 @@ import { SummaryCards } from './summary-cards.component'
 
 // Figma «Saldo» → Statistics: 2:73594 / 2:77703 (desktop chart and table), 2:78033 / 4:79439 (mobile); states in
 // section 2:73593: 41:109346 empty, 41:109639 loading, 41:109930 first load failed, 41:110223 offline with cache. Auto, reserves, goals and taxes blocks wait for their phases.
-function OfflineBanner() {
-  const translate = useTranslations('statistics')
-  const format = useFormatter()
-  const { params } = useStatisticsFilters()
-  const query = useQuery(statisticsQueries.cashflow(params))
-
-  // paused with data = offline: the figures are the last loaded ones
-  if (!query.data || query.fetchStatus !== 'paused') {
-    return null
-  }
-
-  return (
-    <Banner kind="warning" role="status">
-      {translate('state.stale', {
-        time: format.dateTime(query.dataUpdatedAt, {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      })}
-    </Banner>
-  )
-}
-
 // Figma 4:79708: a summary card (two lines and a block) and a card with a bar, a 180 circle and two lines, all subtle
 function StatisticsSkeleton() {
   return (
@@ -82,30 +58,31 @@ function EmptyPeriod() {
   const current = today.slice(0, 7)
 
   return (
-    <section className="flex flex-col items-center gap-3 rounded-card bg-card px-5 py-8 text-center shadow-card">
-      <span aria-hidden className={`flex size-10 items-center justify-center rounded-full ${CATEGORY_TONES.blue}`}>
-        <ChartColumn className="size-5" />
-      </span>
-      <h2 className="text-body font-semibold text-text-primary">
-        {period.length === 7
+    <EmptyState
+      icon={ChartColumn}
+      tone="blue"
+      title={
+        period.length === 7
           ? translate('emptyPeriod.title', { month: monthName(period) })
-          : translate('emptyPeriod.titleOther')}
-      </h2>
-      <p className="text-label text-text-secondary">{translate('emptyPeriod.text')}</p>
-      {period !== current && (
-        <Button
-          variant="secondary"
-          onClick={() =>
-            setUrl({
-              period: null,
-              bucket: null,
-            })
-          }
-        >
-          {translate('emptyPeriod.show', { month: monthName(current) })}
-        </Button>
-      )}
-    </section>
+          : translate('emptyPeriod.titleOther')
+      }
+      hint={translate('emptyPeriod.text')}
+      action={
+        period !== current && (
+          <Button
+            variant="secondary"
+            onClick={() =>
+              setUrl({
+                period: null,
+                bucket: null,
+              })
+            }
+          >
+            {translate('emptyPeriod.show', { month: monthName(current) })}
+          </Button>
+        )
+      }
+    />
   )
 }
 
@@ -113,27 +90,17 @@ export function StatisticsScreen() {
   const translate = useTranslations('statistics')
   const { params } = useStatisticsFilters()
   const query = useQuery(statisticsQueries.cashflow(params))
-  const failedRefresh = query.isError && query.data !== undefined
-
-  // one toast per failed refresh, not per render
-  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the failure time on purpose
-  useEffect(() => {
-    if (failedRefresh) {
-      notify.error(translate('state.refreshFailed'), { onRetry: () => void query.refetch() })
-    }
-  }, [failedRefresh, query.errorUpdatedAt])
-
-  const failedLoad = query.isError && query.data === undefined
-  const pending = query.data === undefined && !query.isError && query.fetchStatus !== 'paused'
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const pending = query.data === undefined && !failedLoad && query.fetchStatus !== 'paused'
   const empty = query.data !== undefined && cashflowTotals(query.data).operationsCount === 0
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      <OfflineBanner />
+      <PageOfflineBanner text={(time) => translate('state.stale', { time })} />
       <StatisticsFilters />
       {pending && <StatisticsSkeleton />}
       {empty && <EmptyPeriod />}
-      {failedLoad && <ErrorState title={translate('loadFailed')} onRetryAction={() => void query.refetch()} />}
+      {failedLoad && <ErrorState title={translate('loadFailed')} onRetryAction={retry} />}
       {!pending && !empty && !failedLoad && (
         <>
           <SummaryCards />

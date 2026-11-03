@@ -6,6 +6,7 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { currencySymbol } from '@/lib/money/money.utils'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useRates } from '../hooks/currencies.hook'
 import { currentRates } from '../utils/currencies.utils'
 import { RateForm } from './rate-form.component'
@@ -19,14 +20,16 @@ export function CurrenciesScreen() {
   const locale = useLocale()
   const canWrite = useCanWrite()
   const today = useToday()
-  const { data, isPending, isError, refetch } = useRates()
+  const query = useRates()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
 
-  if (isPending) {
-    return <div aria-busy className="h-72 rounded-card bg-subtle" />
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (isError) {
-    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+  if (data === undefined) {
+    return <div aria-busy className="h-72 rounded-card bg-subtle" />
   }
 
   const formatRate = (rate: string) =>

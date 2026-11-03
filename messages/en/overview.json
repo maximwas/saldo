@@ -1,6 +1,7 @@
 {
   "availableUntil": "Available until {date}",
   "loadFailed": "Could not load the overview",
+  "refreshFailed": "Could not refresh the overview",
   "availableNoDate": "Available",
   "noIncomeDate": "The next income date is not set, so «Available» is not computed until it is.",
   "howWeCount": "How it is calculated",

@@ -1,5 +1,6 @@
 {
   "loadFailed": "Could not load subscriptions",
+  "refreshFailed": "Could not refresh subscriptions",
   "add": "Add subscription",
   "count": "{count, plural, one {# subscription} other {# subscriptions}}",
   "filteredEmpty": "No subscriptions in this state",
@@ -97,6 +98,7 @@
     "back": "All subscriptions",
     "edit": "Edit",
     "loadFailed": "Could not load the subscription",
+    "refreshFailed": "Could not refresh the subscription",
     "notFound": "Subscription not found: it may have been removed",
     "tabs": {
       "label": "Subscription sections",
@@ -190,6 +192,7 @@
     "all": "All payments",
     "toHistory": "Full history",
     "loadFailed": "Could not load payments",
+    "refreshFailed": "Could not refresh payments",
     "empty": "No payments yet",
     "payment": "Payment {date}"
   },

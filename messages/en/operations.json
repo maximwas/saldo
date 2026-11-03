@@ -79,6 +79,7 @@
     "allTime": "all time"
   },
   "loadFailed": "Could not load operations",
+  "refreshFailed": "Could not refresh operations",
   "truncated": "Showing the latest {count} operations. Narrow the period or the filter.",
   "form": {
     "newTitle": "New operation",

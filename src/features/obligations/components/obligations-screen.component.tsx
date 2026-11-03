@@ -9,10 +9,12 @@ import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
 import type { ObligationRow } from '../api/obligations.api'
 import { useObligationOptions, useObligations } from '../hooks/obligations.hook'
@@ -36,8 +38,10 @@ export function ObligationsScreen() {
   const translate = useTranslations('obligations')
   const canWrite = useCanWrite()
   const today = useToday()
-  const { data, isPending, isError, refetch } = useObligations()
+  const query = useObligations()
+  const { data } = query
   const options = useObligationOptions()
+  const { failedLoad, retry } = useScreenQueryState([query, options], translate('refreshFailed'))
   const router = useRouter()
   const queuedPayments = useQueuedPayments()
   const { online } = useSyncQueue()
@@ -45,7 +49,16 @@ export function ObligationsScreen() {
   const [form, setForm] = useState<FormState>(null)
   const [cancelId, setCancelId] = useState<string | null>(null)
 
-  if (isPending || options.isPending) {
+  if (failedLoad) {
+    return (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <PaymentsTabs />
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+      </div>
+    )
+  }
+
+  if (data === undefined || options.data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <PaymentsTabs />
@@ -74,18 +87,6 @@ export function ObligationsScreen() {
           </SkeletonCard>
         </div>
       </div>
-    )
-  }
-
-  if (isError || options.isError) {
-    return (
-      <ErrorState
-        title={translate('loadFailed')}
-        onRetryAction={() => {
-          void refetch()
-          void options.refetch()
-        }}
-      />
     )
   }
 
@@ -126,27 +127,25 @@ export function ObligationsScreen() {
       )}
       <ObligationSummary open={data.open} />
       {data.open.length === 0 && (
-        <section className="flex flex-col items-center rounded-card bg-card px-5 py-10 shadow-card">
-          <div className="flex w-full max-w-88 flex-col items-center gap-3 p-2 text-center">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-cat-green-soft text-cat-green-text"
-            >
-              <CircleCheck className="size-5" />
-            </span>
-            <h2 className="w-full text-body font-semibold text-text-primary">{translate('empty.title')}</h2>
-            <p className="w-full text-label text-text-secondary">
+        <EmptyState
+          icon={CircleCheck}
+          tone="green"
+          title={translate('empty.title')}
+          hint={
+            <>
               <span className="lg:hidden">{translate('empty.textShort')}</span>
               <span className="max-lg:hidden">{translate('empty.text')}</span>
-            </p>
-            {canWrite && (
+            </>
+          }
+          action={
+            canWrite && (
               <Button variant="secondary" onClick={addPayment}>
                 <span className="lg:hidden">{translate('empty.addShort')}</span>
                 <span className="max-lg:hidden">{translate('empty.add')}</span>
               </Button>
-            )}
-          </div>
-        </section>
+            )
+          }
+        />
       )}
       {BUCKETS.filter((bucket) => groups[bucket].length > 0).map((bucket) => (
         <section key={bucket} className={CARD}>

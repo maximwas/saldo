@@ -5,6 +5,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { parseAsString, useQueryStates } from 'nuqs'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { useCanWrite, useLedger } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import { useCalendarData } from '../hooks/calendar.hook'
@@ -85,16 +86,14 @@ export function DayPanel({ compact = false }: DayPanelProps) {
           )}
         </dl>
         {empty && (
-          <div className="flex flex-col items-center gap-3 p-2 text-center lg:hidden">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-cat-blue-soft text-cat-blue-text"
-            >
-              <Calendar size={20} />
-            </span>
-            <p className="self-stretch text-body font-semibold text-text-primary">{translate('day.emptyTitle')}</p>
-            <p className="self-stretch text-label text-text-secondary">{translate('day.emptyText')}</p>
-          </div>
+          <EmptyState
+            bare
+            icon={Calendar}
+            tone="blue"
+            title={translate('day.emptyTitle')}
+            hint={translate('day.emptyText')}
+            className="lg:hidden"
+          />
         )}
         {!empty && compact && (
           <ul className="flex flex-col gap-2 border-b border-border pb-4">

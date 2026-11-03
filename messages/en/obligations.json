@@ -2,6 +2,7 @@
   "title": "Upcoming payments",
   "add": "Add payment",
   "loadFailed": "Could not load payments",
+  "refreshFailed": "Could not refresh payments",
   "groups": {
     "overdue": "Date passed, payment not confirmed",
     "today": "Today",

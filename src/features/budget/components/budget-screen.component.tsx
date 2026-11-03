@@ -1,11 +1,11 @@
 'use client'
 
-import { useFormatter, useTranslations } from 'next-intl'
-import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
+import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Banner } from '@/components/ui/banner.component'
 import { ErrorState } from '@/components/ui/error-state.component'
-import { notify } from '@/components/ui/toaster.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useCurrentBudget } from '../hooks/budget.hook'
 import { BudgetEmpty } from './budget-empty.component'
 import { BudgetSheets } from './budget-sheets.component'
@@ -20,34 +20,25 @@ import { MonthCard } from './month-card.component'
 // error toast; phones keep the shell's offline banner, 2:29418).
 export function BudgetScreen() {
   const translate = useTranslations('budget')
-  const format = useFormatter()
   const canWrite = useCanWrite()
-  const { month, data, isPending, isError, refetch, fetchStatus, dataUpdatedAt, errorUpdatedAt } = useCurrentBudget()
-  const failedRefresh = isError && data !== undefined
+  const budget = useCurrentBudget()
+  const { month, data } = budget
+  const { failedLoad, retry } = useScreenQueryState([budget], translate('refreshFailed'))
 
-  // one toast per failed refresh, not per render
-  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the failure time on purpose
-  useEffect(() => {
-    if (failedRefresh) {
-      notify.error(translate('refreshFailed'), { onRetry: () => void refetch() })
-    }
-  }, [failedRefresh, errorUpdatedAt])
-
-  if (isPending) {
+  if (failedLoad) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <BudgetTabs />
-        <BudgetSkeleton />
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
       </div>
     )
   }
 
-  // the first load failed: nothing cached to show
   if (data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <BudgetTabs />
-        <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+        <BudgetSkeleton />
       </div>
     )
   }
@@ -59,17 +50,7 @@ export function BudgetScreen() {
     <>
       <div className="flex flex-col gap-4 lg:gap-6">
         {canWrite ? null : <Banner>{translate('viewOnly')}</Banner>}
-        {/* paused with data = offline: the figures are the last loaded ones */}
-        {fetchStatus === 'paused' ? (
-          <Banner kind="warning" role="status" className="max-lg:hidden">
-            {translate('stale', {
-              time: format.dateTime(dataUpdatedAt, {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-            })}
-          </Banner>
-        ) : null}
+        <PageOfflineBanner text={(time) => translate('stale', { time })} />
         <BudgetTabs />
         {planned ? (
           <>

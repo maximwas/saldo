@@ -4,13 +4,14 @@ import { Bell, Check } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState, useSyncExternalStore } from 'react'
-import { Banner } from '@/components/ui/banner.component'
+import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
-import { useSyncQueue } from '@/lib/query/sync-queue.hook'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { AppNotification } from '../api/notifications.api'
 import { useClearRead, useMarkRead, useNotifications } from '../hooks/notifications.hook'
 import { usePush } from '../hooks/push.hook'
@@ -74,19 +75,18 @@ function EmptyNotifications() {
   const translate = useTranslations('notifications.emptyState')
 
   return (
-    <div className="flex flex-col items-center gap-3 p-2 text-center">
-      <span
-        aria-hidden
-        className="flex size-10 items-center justify-center rounded-full bg-cat-blue-soft text-cat-blue-text"
-      >
-        <Bell size={20} />
-      </span>
-      <p className="self-stretch text-body font-semibold text-text-primary">{translate('title')}</p>
-      <p className="self-stretch text-label text-text-secondary">{translate('text')}</p>
-      <Button variant="secondary" render={<Link href="/settings/notifications" />}>
-        {translate('action')}
-      </Button>
-    </div>
+    <EmptyState
+      bare
+      icon={Bell}
+      tone="blue"
+      title={translate('title')}
+      hint={translate('text')}
+      action={
+        <Button variant="secondary" render={<Link href="/settings/notifications" />}>
+          {translate('action')}
+        </Button>
+      }
+    />
   )
 }
 
@@ -138,9 +138,10 @@ function ClearSheet({ count, onCloseAction }: ClearSheetProps) {
 export function NotificationsScreen() {
   const translate = useTranslations('notifications')
   const translatePush = useTranslations('notifications.push')
-  const { online, updatedAt } = useSyncQueue()
   const push = usePush(translatePush('failed'))
-  const { data: loaded, isError, refetch } = useNotifications()
+  const notifications = useNotifications()
+  const { failedLoad, retry } = useScreenQueryState([notifications], translate('refreshFailed'))
+  const loaded = notifications.data
   // the bell in the Topbar hydrates first and may have fetched the list already: the first client render must still
   // match the server's, so the list appears after hydration
   const hydrated = useSyncExternalStore(
@@ -153,19 +154,14 @@ export function NotificationsScreen() {
   const [clearing, setClearing] = useState(false)
   const unread = data?.filter((item) => !item.readAt) ?? []
   const read = data?.filter((item) => item.readAt) ?? []
-  // Figma 39:106643: nothing loaded, only the error card under the header; a failed refresh keeps the cached list
-  const failed = isError && data === undefined
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       <PushBanner state={push.state} onEnableAction={() => void push.enable()} />
-      {online || updatedAt === null ? null : (
-        <Banner kind="warning" role="alert" className="hidden lg:flex">
-          {translate('offline')}
-        </Banner>
-      )}
-      {failed ? (
-        <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+      <PageOfflineBanner text={() => translate('offline')} />
+      {/* Figma 39:106643: nothing loaded, only the error card under the header */}
+      {failedLoad ? (
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-label text-text-secondary">{translate('summary', { count: unread.length })}</p>
@@ -184,7 +180,7 @@ export function NotificationsScreen() {
           </div>
         </div>
       )}
-      {data === undefined && !isError ? <NotificationsSkeleton /> : null}
+      {data === undefined && !failedLoad ? <NotificationsSkeleton /> : null}
       {data?.length === 0 ? <EmptyNotifications /> : null}
       <NotificationGroup title={translate('new')} items={unread} onReadAction={(id) => markRead.mutate([id])} />
       <NotificationGroup title={translate('read')} items={read} onReadAction={(id) => markRead.mutate([id])} />

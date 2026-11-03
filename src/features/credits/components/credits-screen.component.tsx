@@ -8,10 +8,12 @@ import { Amount } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { Credit } from '../api/credits.api'
 import { useCredits } from '../hooks/credits.hook'
 import { type CreditTotals, creditTotals, dayText, moneyText, monthNotes, nextMonthOf } from '../utils/credits.utils'
@@ -129,20 +131,27 @@ export function CreditsScreen() {
   const translate = useTranslations('credits')
   const canWrite = useCanWrite()
   const today = useToday()
-  const { data, isPending, isError, refetch } = useCredits()
+  const query = useCredits()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
   const [creating, setCreating] = useState(false)
 
-  if (isPending) {
+  if (failedLoad) {
+    return (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <PaymentsTabs />
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+      </div>
+    )
+  }
+
+  if (data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <PaymentsTabs />
         <CreditsSkeleton />
       </div>
     )
-  }
-
-  if (isError) {
-    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
   const estimated = data.credits.some((credit) => credit.status === 'active' && credit.scheduleAccuracy === 'estimated')
@@ -152,19 +161,13 @@ export function CreditsScreen() {
       <PaymentsTabs />
       {!canWrite && data.credits.length > 0 && <Banner>{translate('viewOnly')}</Banner>}
       {data.credits.length === 0 ? (
-        <section className="flex flex-col items-center rounded-card bg-card px-5 py-18 shadow-card">
-          <div className="flex w-full max-w-100 flex-col items-center gap-3 p-2 text-center">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary-text"
-            >
-              <CreditCardIcon className="size-5" />
-            </span>
-            <h2 className="w-full text-body font-semibold text-text-primary">{translate('empty')}</h2>
-            <p className="w-full text-label text-text-secondary">{translate('emptyHint')}</p>
-            {canWrite && <Button onClick={() => setCreating(true)}>{translate('add')}</Button>}
-          </div>
-        </section>
+        <EmptyState
+          icon={CreditCardIcon}
+          tone="blue"
+          title={translate('empty')}
+          hint={translate('emptyHint')}
+          action={canWrite && <Button onClick={() => setCreating(true)}>{translate('add')}</Button>}
+        />
       ) : (
         <>
           {canWrite && (

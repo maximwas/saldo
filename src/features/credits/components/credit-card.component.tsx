@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/card.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useCredits, usePayInstallment } from '../hooks/credits.hook'
 import { activeInstallments, creditProgress, dayText, moneyText, payoffOf } from '../utils/credits.utils'
 import { CloseCreditSheet } from './close-credit-sheet.component'
@@ -55,18 +56,20 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const locale = useLocale()
   const canWrite = useCanWrite()
   const pay = usePayInstallment()
-  const { data, isPending, isError, refetch } = useCredits()
+  const query = useCredits()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
   const [dialog, setDialog] = useState<Dialog>(null)
 
-  if (isPending) {
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+  }
+
+  if (data === undefined) {
     return <CardSkeleton />
   }
 
-  const credit = data?.credits.find((candidate) => candidate.id === creditId)
-
-  if (isError) {
-    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
-  }
+  const credit = data.credits.find((candidate) => candidate.id === creditId)
 
   if (!credit) {
     return (
