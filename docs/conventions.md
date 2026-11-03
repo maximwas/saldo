@@ -1161,8 +1161,11 @@ worker). У WebKit `setOffline` ламає навігацію під service wor
 `matchFrame(page, { frameId, width, height })` ставить viewport розміром фрейму й порівнює його з PNG фрейму,
 експортованим Pixelwright `screenshot` (scale 1) у `e2e/visual/figma/<frameId з «-» замість «:»>.png`; без PNG тест
 падає, сайт ніколи не стає еталоном. Годинник — 31.10.2026, як у фреймах. Запуск (лише локальний стек):
-1. `pnpm exec supabase start`; 2. `pnpm exec supabase db reset` (seed.sql: demo@example.com);
-3. `node scripts/seed-visual.mjs` (операції, переказ і бюджет жовтня з `docs/design/demo-data.md`); 4. `pnpm test:visual`.
+1. `pnpm exec supabase start`; 2. `pnpm exec supabase db reset` (seed.sql: demo@example.com, дати від сьогодні);
+3. демо на день фреймів: `docker exec -i supabase_db_saldo psql -U postgres -1 -v ON_ERROR_STOP=1 -c "delete from
+auth.users where email = 'demo@example.com'" -c "set saldo.demo_today = '2026-10-30'" -f - < supabase/seed.sql`;
+4. `DEMO_TODAY=2026-10-30 node scripts/seed-visual.mjs` (операції, переказ і бюджет жовтня з `docs/design/demo-data.md`;
+без `DEMO_TODAY` — у поточному місяці); 5. `pnpm test:visual`.
 Тест упав — дивіться лише `test-results/**/*-diff.png`, не обидва скріншоти.
 
 **Сценарії.** По 2–6 на фазу, лише головні потоки (`docs/plan.md`, пункти «E2E» кожної фази). Новий баг, який

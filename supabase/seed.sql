@@ -1,6 +1,8 @@
 -- Local dev seed, run by `supabase db reset` after the migrations (config.toml [db.seed]); never pushed to a remote
 -- project. Fictional data of docs/design/demo-data.md only (ADR 22: the repository is public): one demo user with its
--- space as of 30.10.2026 — accounts, rates, subscriptions, credits, debts and planned payments.
+-- space as of 30.10.2026 — accounts, rates, subscriptions, credits, debts and planned payments. Every story date is
+-- shifted by v_shift days so that 30.10.2026 is today in Kyiv and the demo never goes stale; the setting
+-- saldo.demo_today = 'YYYY-MM-DD' pins today (the visual specs need 2026-10-30, the day of the Figma frames).
 -- Sign in locally as demo@example.com / saldo-demo-local-password (a local stack only, so not a secret).
 -- Subscriptions, credits and debts go through the phase 2 RPCs as the demo user, the way the app writes them; the
 -- installments paid before tracking (paid_before_tracking_count) get no operations, the debts are old ones without a
@@ -9,6 +11,8 @@ do $$
 declare
   v_user uuid := 'de000000-0000-4000-8000-000000000001';
   v_ledger uuid;
+  v_shift int := coalesce(nullif(current_setting('saldo.demo_today', true), '')::date,
+    (now() at time zone 'Europe/Kyiv')::date) - date '2026-10-30';
   v_card uuid := 'de000000-0000-4000-8000-0000000000a1';
   v_subscriptions uuid;
   c record;
@@ -25,19 +29,19 @@ begin
   -- the RPCs check the caller like a request from the app would
   perform set_config('request.jwt.claims', json_build_object('sub', v_user, 'role', 'authenticated')::text, true);
   select last_ledger_id into v_ledger from public.user_settings where user_id = v_user;
-  update public.ledgers set name = 'Мій Saldo', next_income_on = '2026-11-14' where id = v_ledger;
+  update public.ledgers set name = 'Мій Saldo', next_income_on = date '2026-11-14' + v_shift where id = v_ledger;
   update public.ledger_members set display_name = 'Максим' where ledger_id = v_ledger and user_id = v_user;
   select id into v_subscriptions from public.categories where ledger_id = v_ledger and name = 'Підписки';
 
   insert into public.accounts (id, ledger_id, name, kind, currency, opening_balance_minor, opening_balance_on,
     include_in_available, sort_order) values
-    (v_card, v_ledger, 'Основна картка', 'bank', 'UAH', 4621580, '2026-10-30', true, 1),
-    ('de000000-0000-4000-8000-0000000000a3', v_ledger, 'Валютний EUR', 'savings', 'EUR', 120000, '2026-10-30', false, 3);
+    (v_card, v_ledger, 'Основна картка', 'bank', 'UAH', 4621580, date '2026-10-30' + v_shift, true, 1),
+    ('de000000-0000-4000-8000-0000000000a3', v_ledger, 'Валютний EUR', 'savings', 'EUR', 120000, date '2026-10-30' + v_shift, false, 3);
   insert into public.fx_rates (ledger_id, base_currency, quote_currency, rate, rate_on) values
-    (v_ledger, 'EUR', 'UAH', 41.5, '2026-10-01'),
-    (v_ledger, 'USD', 'UAH', 41.6, '2026-10-01');
+    (v_ledger, 'EUR', 'UAH', 41.5, date '2026-10-01' + v_shift),
+    (v_ledger, 'USD', 'UAH', 41.6, date '2026-10-01' + v_shift);
 
-  -- subscriptions, a year of dates from November
+  -- subscriptions, a year of dates from the story's November
   for c in select * from (values
     ('de000000-0000-4000-8000-0000000000b1'::uuid, 'Netflix', 'UAH', 34900::bigint, '2026-01-05'::date, '2026-11-05'::date),
     ('de000000-0000-4000-8000-0000000000b2'::uuid, 'Spotify', 'UAH', 19900::bigint, '2026-01-12'::date, '2026-11-12'::date),
@@ -45,11 +49,11 @@ begin
   ) as x (id, name, currency, amount_minor, first_on, next_on)
   loop
     insert into public.subscriptions (id, ledger_id, name, category_id, account_id, currency, first_on)
-    values (c.id, v_ledger, c.name, v_subscriptions, v_card, c.currency, c.first_on);
+    values (c.id, v_ledger, c.name, v_subscriptions, v_card, c.currency, c.first_on + v_shift);
     perform public.set_subscription_price(jsonb_build_object('id', gen_random_uuid(), 'subscription_id', c.id,
-      'effective_on', c.first_on, 'amount_minor', c.amount_minor));
+      'effective_on', c.first_on + v_shift, 'amount_minor', c.amount_minor));
     perform public.upsert_series_obligations('subscription', c.id,
-      (select jsonb_agg(jsonb_build_object('due_on', (c.next_on + make_interval(months => n))::date))
+      (select jsonb_agg(jsonb_build_object('due_on', (c.next_on + v_shift + make_interval(months => n))::date))
        from generate_series(0, 11) n));
   end loop;
 
@@ -69,7 +73,7 @@ begin
         'last_installment_minor', c.last_minor, 'account_id', v_card, 'schedule_accuracy', 'estimated',
         'paid_before_tracking_count', c.paid, 'paid_before_tracking_minor', c.paid * c.regular_minor),
       (select jsonb_agg(jsonb_build_object('sequence_no', n,
-         'due_on', (c.next_on + make_interval(months => n - c.paid - 1))::date,
+         'due_on', (c.next_on + v_shift + make_interval(months => n - c.paid - 1))::date,
          'amount_minor', case when n = c.installments and c.last_minor is not null then c.last_minor else c.regular_minor end))
        from generate_series(c.paid + 1, c.installments) n));
   end loop;
@@ -77,7 +81,7 @@ begin
   -- personal debts, all old ones without a movement now
   perform public.save_debt(jsonb_build_object('id', gen_random_uuid(), 'ledger_id', v_ledger, 'direction', d.direction,
     'person', d.person, 'reason', d.reason, 'principal_minor', d.amount_minor, 'currency', 'UAH',
-    'arisen_on', '2026-10-01', 'due_on', d.due_on, 'origin', 'existing_no_movement'))
+    'arisen_on', date '2026-10-01' + v_shift, 'due_on', d.due_on + v_shift, 'origin', 'existing_no_movement'))
   from (values
     ('owed_to_me', 'Андрій', 'Позика', 350000::bigint, '2026-11-15'::date),
     ('owed_to_me', 'Ірина', 'Частка вечері', 120000, null),
@@ -85,5 +89,5 @@ begin
   ) as d (direction, person, reason, amount_minor, due_on);
 
   insert into public.obligations (ledger_id, title, occurrence_on, due_on, planned_amount_minor, currency, account_id)
-  values (v_ledger, 'Інтернет', '2026-11-10', '2026-11-10', 35000, 'UAH', v_card);
+  values (v_ledger, 'Інтернет', date '2026-11-10' + v_shift, date '2026-11-10' + v_shift, 35000, 'UAH', v_card);
 end $$;
