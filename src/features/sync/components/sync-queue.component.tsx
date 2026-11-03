@@ -123,7 +123,7 @@ function QueueRow({ write, onResolveAction, onRetryAction, onDiscardAction }: Qu
         </div>
         <WriteAmount write={write} />
       </div>
-      {write.state === 'pending' ? null : (
+      {write.state === 'error' || write.state === 'conflict' ? (
         <div className="flex gap-2">
           {write.state === 'conflict' ? (
             <Button size="s" onClick={onResolveAction}>
@@ -138,7 +138,7 @@ function QueueRow({ write, onResolveAction, onRetryAction, onDiscardAction }: Qu
             {translate('discard')}
           </Button>
         </div>
-      )}
+      ) : null}
     </li>
   )
 }
@@ -148,7 +148,7 @@ function QueueList({ onResolveAction }: QueueListProps) {
 
   return (
     <ul className="flex flex-col">
-      {sync.queue.map((write) => (
+      {sync.rows.map((write) => (
         <QueueRow
           key={write.id}
           write={write}
@@ -219,7 +219,11 @@ export function SyncQueuePopover({ label, children }: SyncQueuePopoverProps) {
               )}
               <QueueList onResolveAction={resolve} />
               <p className="text-caption text-text-secondary">{note}</p>
-              <Button variant="secondary" disabled={!sync.online || count === 0} onClick={() => void sync.syncNow()}>
+              <Button
+                variant="secondary"
+                disabled={!sync.online || count === 0 || sync.sending}
+                onClick={() => void sync.syncNow()}
+              >
                 <RefreshCw aria-hidden className="size-5" />
                 {translate('syncNow')}
               </Button>
@@ -242,8 +246,9 @@ export function SyncQueuePopover({ label, children }: SyncQueuePopoverProps) {
   )
 }
 
-// The phone's queue from its SyncStatus pill (offline, error, conflict); no frame draws it, so it keeps the queue's
-// rows in a sheet. A conflict replaces it with its bottom sheet (4:81611).
+// Figma 41:108796: the phone's queue from its SyncStatus pill (offline, error, conflict), a BottomSheet titled «sync
+// queue» with the count, the rows, the note and «sync now» in its body. A conflict replaces it with its bottom
+// sheet (4:81611).
 export function SyncQueueSheet({ open, onOpenChangeAction }: SyncQueueSheetProps) {
   const translate = useTranslations('sync.queue')
   const sync = useSyncQueue()
@@ -255,21 +260,7 @@ export function SyncQueueSheet({ open, onOpenChangeAction }: SyncQueueSheetProps
   }
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={onOpenChangeAction}
-      title={translate('title')}
-      footer={
-        <Button
-          variant="secondary"
-          disabled={!sync.online || sync.queue.length === 0}
-          onClick={() => void sync.syncNow()}
-        >
-          <RefreshCw aria-hidden className="size-5" />
-          {translate('syncNow')}
-        </Button>
-      }
-    >
+    <Sheet open={open} onOpenChange={onOpenChangeAction} title={translate('title')}>
       {sync.queue.length > 0 ? (
         <>
           <p className="text-label font-semibold text-text-primary">
@@ -281,6 +272,14 @@ export function SyncQueueSheet({ open, onOpenChangeAction }: SyncQueueSheetProps
         <p className="text-body text-text-secondary">{translate('empty')}</p>
       )}
       <p className="text-caption text-text-secondary">{note}</p>
+      <Button
+        variant="secondary"
+        disabled={!sync.online || sync.queue.length === 0 || sync.sending}
+        onClick={() => void sync.syncNow()}
+      >
+        <RefreshCw aria-hidden className="size-5" />
+        {translate('syncNow')}
+      </Button>
     </Sheet>
   )
 }
@@ -307,7 +306,7 @@ export function SyncQueueCard({ className }: SyncQueueCardProps) {
           )
         })}
       </ul>
-      <Button variant="secondary" disabled={!sync.online} onClick={() => void sync.syncNow()}>
+      <Button variant="secondary" disabled={!sync.online || sync.sending} onClick={() => void sync.syncNow()}>
         {translate('queue.syncNow')}
       </Button>
     </section>

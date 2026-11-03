@@ -121,6 +121,8 @@
     "keepMine": "Залишити мою",
     "keepAsExpense": "Лишити як окрему витрату",
     "takeTheirs": "Взяти їхню",
+    "keptMine": "Збережено вашу версію",
+    "tookTheirs": "Залишено їхню версію",
     "sameAmount": "Сума однакова:",
     "noNote": "без коментаря",
     "quoted": "«{note}»",

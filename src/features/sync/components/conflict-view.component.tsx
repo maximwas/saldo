@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
 import { Bone } from '@/components/ui/skeleton.component'
+import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { listAccountOptions } from '@/lib/finance/ledger-options.api'
 import { useMemberNames } from '@/lib/members/member-names.hook'
@@ -150,6 +151,7 @@ function useMyId() {
 // detail rows, three equal buttons) / 4:81431, BottomSheet 4:81611 (the record in the intro, one line per version,
 // buttons stacked, the main one first). Nothing is overwritten until the person picks. A payment keeps its own
 // operation as a separate expense instead of paying twice (architecture §11 risk 9).
+// After a choice the sheet closes and a success toast says what stayed (41:106725 / 41:109094).
 // shortcut: no «merge by hand» button (no frame for the merge), the person edits the record after «take theirs».
 export function ConflictSheet({ write, open, onOpenChangeAction }: ConflictSheetProps) {
   const translate = useTranslations('sync.conflict')
@@ -179,6 +181,14 @@ export function ConflictSheet({ write, open, onOpenChangeAction }: ConflictSheet
   const myName = myId ? names[myId] : undefined
   const theirsName = author ?? translate('someone')
   const mine = server.data?.version != null ? withVersion(write.variables, server.data.version) : null
+
+  // the write leaves the queue, so the sheet closes at once instead of through its exit transition
+  function choose(apply: () => void, toast: string) {
+    apply()
+    onOpenChangeAction(false)
+    notify.success(toast)
+  }
+
   const sameAmount =
     theirsFields !== null &&
     mineFields.amountMinor === theirsFields.amountMinor &&
@@ -187,24 +197,31 @@ export function ConflictSheet({ write, open, onOpenChangeAction }: ConflictSheet
     write.key[1] === 'payObligation' && variables.newOperation ? (
       <Button
         onClick={() =>
-          sync.replace(write.id, ['operations', 'createOperation'], {
-            // create_operation's input names every link; a payment's operation has neither
-            refund_of_id: null,
-            duplicated_from_id: null,
-            ...(variables.newOperation as object),
-          })
+          choose(
+            () =>
+              sync.replace(write.id, ['operations', 'createOperation'], {
+                // create_operation's input names every link; a payment's operation has neither
+                refund_of_id: null,
+                duplicated_from_id: null,
+                ...(variables.newOperation as object),
+              }),
+            translate('keptMine'),
+          )
         }
       >
         {translate('keepAsExpense')}
       </Button>
     ) : null
   const keepMine = mine ? (
-    <Button variant="secondary" onClick={() => sync.replace(write.id, write.key, mine)}>
+    <Button
+      variant="secondary"
+      onClick={() => choose(() => sync.replace(write.id, write.key, mine), translate('keptMine'))}
+    >
       {translate('keepMine')}
     </Button>
   ) : null
   const takeTheirs = (
-    <Button variant="secondary" onClick={() => sync.discard(write.id)}>
+    <Button variant="secondary" onClick={() => choose(() => sync.discard(write.id), translate('tookTheirs'))}>
       {translate('takeTheirs')}
     </Button>
   )
