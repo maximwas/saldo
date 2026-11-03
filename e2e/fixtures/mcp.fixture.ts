@@ -20,7 +20,8 @@ const base64url = (buffer: Buffer) => buffer.toString('base64url')
 
 /** the local OAuth 2.1 server runs only after `supabase stop && supabase start` with supabase/config.toml */
 export async function oauthServerOn() {
-  const response = await fetch(`${SUPABASE_URL}/.well-known/oauth-authorization-server/auth/v1`)
+  // GoTrue's own metadata path: the local stack serves it, the root /.well-known/…/auth/v1 form is hosted-only
+  const response = await fetch(`${AUTH_ISSUER}/.well-known/oauth-authorization-server`)
 
   return response.ok
 }
