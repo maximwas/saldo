@@ -2,7 +2,8 @@ import { Dialog } from '@base-ui/react/dialog'
 import { Drawer } from '@base-ui/react/drawer'
 import { X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
+import { Button } from '@/components/ui/button.component'
 import { cn } from '@/lib/utils/cn.utils'
 
 // Tailwind's md breakpoint: below it the sheet is a bottom drawer, from it a dialog anchored at the top
@@ -67,10 +68,28 @@ export function Sheet({
   const translate = useTranslations('common')
   // a sheet is opened by a click, so it never renders during hydration
   const desktop = useIsDesktop()
+  // Screens mount a sheet already open (a row, a URL id) and unmount it on close, while Base UI plays the enter and exit
+  // transitions only for an open that changes after mount. So the root opens one render after mount, and a close
+  // (✕, backdrop, swipe, Escape, SheetClose) first plays the exit and only then reaches the caller.
+  const [ready, setReady] = useState(false)
+  const [closing, setClosing] = useState(false)
+  const shown = open && ready && !closing
+  const root = {
+    open: shown,
+    onOpenChange: (next: boolean) => (next ? onOpenChange(true) : setClosing(true)),
+    onOpenChangeComplete: (next: boolean) => {
+      if (!next && closing) {
+        setClosing(false)
+        onOpenChange(false)
+      }
+    },
+  }
+
+  useEffect(() => setReady(true), [])
 
   if (desktop) {
     return (
-      <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Root {...root}>
         <Dialog.Portal>
           <Dialog.Backdrop className={BACKDROP_CLASS} />
           {/* anchored at the top, not centred (Maxim, 3.11): a dialog whose height changes with its content (operation kinds)
@@ -100,7 +119,7 @@ export function Sheet({
   }
 
   return (
-    <Drawer.Root open={open} onOpenChange={onOpenChange} swipeDirection="down">
+    <Drawer.Root {...root} swipeDirection="down">
       {/* measures the on-screen keyboard into --drawer-keyboard-inset and scrolls the body to the focused field */}
       <Drawer.VirtualKeyboardProvider>
         <Drawer.Portal>
@@ -136,4 +155,9 @@ export function Sheet({
       </Drawer.VirtualKeyboardProvider>
     </Drawer.Root>
   )
+}
+
+/** the secondary footer button that closes the sheet through its exit transition (Drawer.Close is Dialog.Close) */
+export function SheetClose({ children }: { children: React.ReactNode }) {
+  return <Dialog.Close render={<Button variant="secondary" type="button" />}>{children}</Dialog.Close>
 }

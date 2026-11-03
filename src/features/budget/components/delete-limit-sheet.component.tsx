@@ -1,6 +1,6 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose, useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
@@ -69,9 +69,7 @@ export function DeleteLimitSheet({ categoryId }: { categoryId: string }) {
       title={translate('title', { name })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={close}>
-            {translate('cancel')}
-          </Button>
+          <SheetClose>{translate('cancel')}</SheetClose>
           <Button type="button" variant="danger" disabled={remove.isPending} onClick={run}>
             {translate(desktop ? 'confirmDesktop' : 'confirm')}
           </Button>

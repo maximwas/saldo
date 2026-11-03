@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
@@ -57,9 +57,7 @@ export function IncomePlanSheet() {
       title={translate('title', { month: monthLabel(month, false) })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={close}>
-            {translate('cancel')}
-          </Button>
+          <SheetClose>{translate('cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={save.isPending}>
             {translate('save')}
           </Button>

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button.component'
 import { Menu } from '@/components/ui/menu.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
@@ -198,7 +199,7 @@ export function OperationEditor({
 
   function renderCreateForm() {
     if (options.isPending) {
-      return <div aria-busy className="h-64 rounded-md bg-subtle" />
+      return <Bone className="h-64 rounded-md" />
     }
 
     if (kind === 'transfer') {
@@ -550,7 +551,7 @@ export function OperationEditor({
     )
   } else if (mode === 'edit' && item) {
     body = options.isPending ? (
-      <div aria-busy className="h-64 rounded-md bg-subtle" />
+      <Bone className="h-64 rounded-md" />
     ) : (
       <>
         {/* Figma 17:89221 / 17:90017: the paid source sits above the type switch */}

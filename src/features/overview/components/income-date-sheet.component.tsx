@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { Field } from '@/components/ui/field.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
@@ -33,9 +33,7 @@ export function IncomeDateSheet({ untilOn, ledgerVersion, onClose }: IncomeDateS
       title={translate('incomeDate.title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onClose}>
-            {translate('incomeDate.cancel')}
-          </Button>
+          <SheetClose>{translate('incomeDate.cancel')}</SheetClose>
           <Button
             disabled={save.isPending}
             onClick={() =>

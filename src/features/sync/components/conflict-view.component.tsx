@@ -6,6 +6,7 @@ import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { listAccountOptions } from '@/lib/finance/ledger-options.api'
 import { useMemberNames } from '@/lib/members/member-names.hook'
@@ -207,7 +208,8 @@ export function ConflictSheet({ write, open, onOpenChangeAction }: ConflictSheet
       {translate('takeTheirs')}
     </Button>
   )
-  let theirs: React.ReactNode = <p className="text-label text-text-secondary">{translate('loading')}</p>
+  // beside «mine» on desktop the row stretches it to the same height
+  let theirs: React.ReactNode = <Bone className={cn('rounded-md', desktop ? 'flex-1' : 'h-16')} />
 
   if (server.isSuccess && !theirsFields) {
     theirs = <p className="text-label text-text-secondary">{translate('gone')}</p>

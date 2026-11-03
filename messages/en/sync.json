@@ -117,7 +117,6 @@
     "theirsBy": "Version: {name} · {time}",
     "theirsShort": "{name} · {time}",
     "someone": "Another member",
-    "loading": "Loading the server version…",
     "gone": "This record is no longer on the server.",
     "keepMine": "Keep mine",
     "keepAsExpense": "Keep as a separate expense",

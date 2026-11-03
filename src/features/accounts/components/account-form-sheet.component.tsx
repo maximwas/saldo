@@ -9,7 +9,7 @@ import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { useToday } from '@/contexts/clock.context'
@@ -81,9 +81,7 @@ export function AccountFormSheet({ open, onOpenChange, account }: AccountFormShe
       title={translate(account ? 'form.editTitle' : 'form.createTitle')}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-            {translate('form.cancel')}
-          </Button>
+          <SheetClose>{translate('form.cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={pending}>
             {translate('form.save')}
           </Button>

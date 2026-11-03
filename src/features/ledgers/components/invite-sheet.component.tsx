@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button.component'
 import { Field } from '@/components/ui/field.component'
 import { Input } from '@/components/ui/input.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose, useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
@@ -154,9 +154,7 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
         title={translate('inviteSheet.doneTitle', { email: created.email })}
         footer={
           <>
-            <Button type="button" variant="secondary" onClick={() => changeOpen(false)}>
-              {translate('inviteSheet.done')}
-            </Button>
+            <SheetClose>{translate('inviteSheet.done')}</SheetClose>
             <Button type="button" onClick={() => copy(created.link)}>
               {translate('inviteSheet.copy')}
             </Button>
@@ -178,9 +176,7 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
       title={isDesktop ? translate('inviteSheet.title', { space: ledgerName }) : translate('inviteSheet.titleMobile')}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={() => changeOpen(false)}>
-            {translate('inviteSheet.cancel')}
-          </Button>
+          <SheetClose>{translate('inviteSheet.cancel')}</SheetClose>
           <Button type="submit" form="invite-form" disabled={isPending}>
             {translate(isDesktop ? 'inviteSheet.submit' : 'inviteSheet.submitMobile')}
           </Button>

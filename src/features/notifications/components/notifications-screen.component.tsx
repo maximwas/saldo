@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useState, useSyncExternalStore } from 'react'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
@@ -106,9 +106,7 @@ function ClearSheet({ count, onCloseAction }: ClearSheetProps) {
       title={translate('title', { count })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('keep')}
-          </Button>
+          <SheetClose>{translate('keep')}</SheetClose>
           <Button
             type="button"
             variant="danger"

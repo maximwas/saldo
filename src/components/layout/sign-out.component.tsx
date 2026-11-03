@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { removePushDevice } from '@/features/notifications/api/notifications.api'
 import { clearDeviceData } from '@/lib/offline/device-storage'
@@ -67,9 +67,7 @@ export function SignOut() {
         title={translate('confirmTitle')}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setConfirming(false)}>
-              {translate('cancel')}
-            </Button>
+            <SheetClose>{translate('cancel')}</SheetClose>
             <Button variant="danger" disabled={pending} onClick={() => void signOut()}>
               {translate('confirm')}
             </Button>
