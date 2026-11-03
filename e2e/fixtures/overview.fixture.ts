@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 
-// "−1 234,56 ₴" -> -123456; the grouping space may be a no-break one
-function minorOf(text: string): number {
+// the first amount in the text: "−1 234,56 ₴" -> -123456, a caption after it is ignored; the grouping space may be a no-break one
+export function minorOf(text: string): number {
   const match = text.match(/(−|-)?\s*(\d[\d\s  ]*)(?:,(\d{2}))?/)
 
   if (!match) {
