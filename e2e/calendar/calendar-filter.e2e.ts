@@ -17,7 +17,7 @@ test('фільтр календаря в URL переживає перезава
     exact: true,
   })
 
-  await expect(day).toContainText('План')
+  await expect(day).toContainText('Заплановано')
   await expect(day).toContainText('−75,00')
 
   await expenses.click()

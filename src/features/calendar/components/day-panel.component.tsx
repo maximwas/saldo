@@ -1,152 +1,94 @@
 'use client'
 
-import { Calendar, Plus } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { Plus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryStates } from 'nuqs'
-import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
-import { EmptyState } from '@/components/ui/empty-state.component'
-import { useCanWrite, useLedger } from '@/contexts/ledger.context'
+import { useCanWrite } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { capitalize, dayDate } from '../utils/calendar.utils'
-import { CalendarEntryItem, EntryLine, PressButton } from './calendar-entry.component'
+import { useDayTitle, useShortDate } from '../hooks/entry-labels.hook'
+import { paidMarks } from '../utils/calendar.utils'
+import { DaySums } from './day-sums.component'
+import { EntryRow } from './entry-row.component'
 
 type DayPanelProps = {
-  /** the month's side card: short rows that open the day view; the day view itself lists every entry with its actions */
+  /** the month's side card: the add button spans the card */
   compact?: boolean
 }
 
-// Figma «Saldo» → Calendar 2:66942 / 2:75069 right card (320, padding 24, gap 20) and 2:69624 / 2:78218 card under the
-// grid: the day (with the number of entries), fact and plan sums, the entries (a row each: marker, name, amount; an
-// open one in the day view with Paid / Change the date / Remove), «Tap an entry…» and «Add an entry on 31.10». The
-// add button opens the global operation sheet (?add=) on this date (?on=). An empty day: sums on desktop, an empty state on phones.
+// Figma «Saldo» → Day card 57:128482 (the day view) and the month's side card 51:125189: «Today, Tuesday 3 November»,
+// the day's labelled sums, then «Already happened», «Planned» and «Paid on another day» without sums, a row per entry
+// that opens its popup, «Tap an entry…» and «Add an entry on 03.11». The add button opens the global operation sheet
+// (?add=) on this date (?on=). An empty day says so and offers a quiet add.
 export function DayPanel({ compact = false }: DayPanelProps) {
   const translate = useTranslations('calendar')
-  const format = useFormatter()
-  const { baseCurrency } = useLedger()
   const canWrite = useCanWrite()
-  const { date, setUrl } = useCalendarParams()
+  const dayTitle = useDayTitle()
+  const short = useShortDate()
+  const { date } = useCalendarParams()
   const { entries, totals } = useCalendarData()
   const [, openAdd] = useQueryStates({
     add: parseAsString,
     on: parseAsString,
   })
-  const dayEntries = (entries.data ?? []).filter((entry) => entry.day === date)
-  const day = totals.data?.find((row) => row.day === date)
-  const hasPlan = dayEntries.some((entry) => entry.entry === 'plan')
-  const hasFact = dayEntries.some((entry) => entry.entry === 'fact')
-  const empty = dayEntries.length === 0
-  const heading = capitalize(
-    format.dateTime(dayDate(date), {
-      timeZone: 'UTC',
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    }),
-  )
-  const title = empty
-    ? heading
-    : translate('day.title', {
-        date: heading,
-        count: translate('summary.count', { count: dayEntries.length }),
-      })
+  const all = entries.data ?? []
+  const dayEntries = all.filter((entry) => entry.day === date)
+  const plans = dayEntries.filter((entry) => entry.entry === 'plan')
+  const groups = [
+    ['done', dayEntries.filter((entry) => entry.entry === 'fact')],
+    ['planned', plans],
+    ['paidElsewhere', paidMarks(all).get(date) ?? []],
+  ] as const
+  const empty = groups.every(([, rows]) => rows.length === 0)
+  const title = dayTitle(date)
 
   return (
-    <section aria-label={heading} className="flex flex-col gap-5 rounded-card bg-card p-6 shadow-card">
+    <section aria-label={title} className="flex flex-col gap-5 rounded-card bg-card p-6 shadow-card">
       <h2 className="text-card-title text-text-primary">{title}</h2>
-      <div className="flex flex-col gap-4">
-        <dl className={cn('gap-3 border-b border-border pb-4', empty ? 'hidden lg:flex' : 'flex')}>
-          <div className="flex flex-1 flex-col gap-0.5">
-            <dt className="text-caption text-text-tertiary">{translate('day.fact')}</dt>
-            <dd className="text-label font-medium text-text-primary">
-              {hasFact && day ? (
-                <Amount
-                  minor={day.factIncomeMinor - day.factExpenseMinor}
-                  currency={baseCurrency}
-                  className="text-label"
-                />
-              ) : (
-                <span className="text-text-secondary">{translate('day.noEntries')}</span>
-              )}
-            </dd>
-          </div>
-          {(hasPlan || empty) && (
-            <div className="flex flex-1 flex-col items-end gap-0.5">
-              <dt className="text-caption text-text-tertiary">{translate('day.plan')}</dt>
-              <dd>
-                {hasPlan && day ? (
-                  <Amount minor={day.planInMinor - day.planOutMinor} currency={baseCurrency} kind="plan" />
-                ) : (
-                  <span className="text-body font-medium text-text-secondary">—</span>
-                )}
-              </dd>
-            </div>
-          )}
-        </dl>
-        {empty && (
-          <EmptyState
-            bare
-            icon={Calendar}
-            tone="blue"
-            title={translate('day.emptyTitle')}
-            hint={translate('day.emptyText')}
-            className="lg:hidden"
+      {empty ? (
+        <p className="text-label text-text-secondary">{translate('day.empty')}</p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <DaySums
+            totals={totals.data?.find((row) => row.day === date)}
+            layout="panel"
+            className="border-b border-border pb-4"
           />
-        )}
-        {!empty && compact && (
-          <ul className="flex flex-col gap-2 border-b border-border pb-4">
-            {dayEntries.map((entry) => (
-              <li key={entry.id}>
-                <PressButton
-                  onPressAction={() =>
-                    void setUrl({
-                      view: 'day',
-                      item: entry.id,
-                    })
-                  }
-                  className="block w-full rounded-xs"
-                >
-                  <EntryLine entry={entry} name={entry.title ?? ''} withAmount />
-                </PressButton>
-              </li>
-            ))}
-          </ul>
-        )}
-        {!empty && !compact && (
-          <ul className="flex flex-col gap-4">
-            {dayEntries.map((entry) => (
-              <CalendarEntryItem key={entry.id} entry={entry} />
-            ))}
-          </ul>
-        )}
-        {!empty && compact && <p className="text-caption text-text-tertiary">{translate('day.openHint')}</p>}
-        {!empty && !compact && hasPlan && (
-          <p className="border-t border-border pt-4 text-caption text-text-secondary">{translate('day.hint')}</p>
-        )}
-        {canWrite && (
-          <Button
-            variant="secondary"
-            className="whitespace-normal"
-            onClick={() =>
-              void openAdd({
-                add: 'expense',
-                on: date,
-              })
-            }
-          >
-            <Plus aria-hidden size={20} className="shrink-0" />
-            {translate('day.add', {
-              date: format.dateTime(dayDate(date), {
-                timeZone: 'UTC',
-                day: '2-digit',
-                month: '2-digit',
-              }),
-            })}
-          </Button>
-        )}
-      </div>
+          <div className="flex flex-col divide-y divide-border">
+            {groups.map(
+              ([key, rows]) =>
+                rows.length > 0 && (
+                  <section key={key} className="flex flex-col gap-1 py-4 first:pt-0 last:pb-0">
+                    <h3 className="text-label font-medium text-text-secondary">{translate(`day.groups.${key}`)}</h3>
+                    <ul className="flex flex-col">
+                      {rows.map((entry) => (
+                        <EntryRow key={entry.id} entry={entry} mark={key === 'paidElsewhere'} />
+                      ))}
+                    </ul>
+                  </section>
+                ),
+            )}
+          </div>
+          {canWrite && plans.length > 0 && <p className="text-caption text-text-tertiary">{translate('day.hint')}</p>}
+        </div>
+      )}
+      {canWrite && (
+        <Button
+          variant={empty ? 'ghost' : 'secondary'}
+          className={cn('whitespace-normal', compact ? 'self-stretch' : 'self-start')}
+          onClick={() =>
+            void openAdd({
+              add: 'expense',
+              on: date,
+            })
+          }
+        >
+          <Plus aria-hidden className="size-5 shrink-0" />
+          {translate('day.add', { date: short(date) })}
+        </Button>
+      )}
     </section>
   )
 }

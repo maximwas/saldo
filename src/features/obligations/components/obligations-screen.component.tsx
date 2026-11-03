@@ -4,7 +4,7 @@ import { CircleCheck, Plus } from 'lucide-react'
 import type { Route } from 'next'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { parseAsString, useQueryState } from 'nuqs'
+import { parseAsString, useQueryStates } from 'nuqs'
 import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Banner } from '@/components/ui/banner.component'
@@ -20,7 +20,6 @@ import type { ObligationRow } from '../api/obligations.api'
 import { useObligationOptions, useObligations } from '../hooks/obligations.hook'
 import { useQueuedPayments } from '../hooks/queued-payments.hook'
 import { BUCKETS, groupByBucket } from '../utils/obligation-groups.utils'
-import { CancelPaymentSheet } from './cancel-payment-sheet.component'
 import { ObligationFormSheet } from './obligation-form-sheet.component'
 import { ObligationRowItem } from './obligation-row.component'
 import { ObligationSheetsHost } from './obligation-sheets-host.component'
@@ -45,9 +44,11 @@ export function ObligationsScreen() {
   const router = useRouter()
   const queuedPayments = useQueuedPayments()
   const { online } = useSyncQueue()
-  const [, setPayId] = useQueryState('pay', parseAsString)
+  const [, setSheet] = useQueryStates({
+    pay: parseAsString,
+    unpay: parseAsString,
+  })
   const [form, setForm] = useState<FormState>(null)
-  const [cancelId, setCancelId] = useState<string | null>(null)
 
   if (failedLoad) {
     return (
@@ -91,8 +92,6 @@ export function ObligationsScreen() {
   }
 
   const groups = groupByBucket(data.open, today)
-  const everything = [...data.open, ...data.paid]
-  const cancelling = everything.find((row) => row.id === cancelId)
   const waiting = data.open.filter((row) => queuedPayments.has(row.id))
   const addPayment = () => setForm({ obligation: null })
 
@@ -101,9 +100,11 @@ export function ObligationsScreen() {
       key={row.id}
       obligation={row}
       awaitingSync={queuedPayments.has(row.id)}
-      onPay={() => (row.sourceType === 'debt' ? router.push('/payments/debts' as Route) : void setPayId(row.id))}
+      onPay={() =>
+        row.sourceType === 'debt' ? router.push('/payments/debts' as Route) : void setSheet({ pay: row.id })
+      }
       onEdit={() => setForm({ obligation: row })}
-      onCancelPayment={() => setCancelId(row.id)}
+      onCancelPayment={() => void setSheet({ unpay: row.id })}
     />
   )
 
@@ -168,7 +169,6 @@ export function ObligationsScreen() {
       )}
       <ObligationSheetsHost />
       {form && <ObligationFormSheet obligation={form.obligation} onClose={() => setForm(null)} />}
-      {cancelling && <CancelPaymentSheet obligation={cancelling} onClose={() => setCancelId(null)} />}
     </div>
   )
 }

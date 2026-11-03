@@ -14,7 +14,8 @@
     "today": "Today",
     "clear": "Clear",
     "previousMonth": "Previous month",
-    "nextMonth": "Next month"
+    "nextMonth": "Next month",
+    "todayValue": "Today, {date}"
   },
   "toast": {
     "retry": "Retry",

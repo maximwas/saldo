@@ -1,6 +1,8 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
+import type { Route } from 'next'
+import { usePathname, useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -25,6 +27,7 @@ import type { ObligationOptions, ObligationRow } from '../api/obligations.api'
 import { useCandidateOperations, useObligationOptions, usePayObligation } from '../hooks/obligations.hook'
 import {
   type PayObligationFormValues,
+  payFormDefaults,
   payObligationFormSchema,
   toPayObligationInput,
 } from '../schemas/pay-obligation-form.schema'
@@ -43,8 +46,10 @@ const NO_OPTIONS: ObligationOptions = {
   categories: [],
 }
 
-// Figma «Saldo» → Confirm payment 2:15014 / 2:15535: summary line, Amount, Payment date, Account (hint: creates one
-// actual operation), «Link an existing operation» rows with a Link button, footer Cancel + Paid.
+// Figma «Saldo» → Pay step 55:127451 / 56:127816 (and Confirm payment 2:15014 / 2:15535 for the links): «Pay <name>»,
+// «Planned for 10.11», Amount, Payment date (today by default, «Today, 03.11», hint: the entry lands on that date),
+// Account (hint: the money leaves it), «Link an existing operation» rows with a Link button, footer Cancel + Paid. The
+// toast says where the fact went and «Show» opens that day in the calendar (55:127506).
 export function PayObligationSheet({ obligation, onClose }: PayObligationSheetProps) {
   const translate = useTranslations('obligations')
   const dbErrorText = useDbErrorText()
@@ -53,6 +58,8 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const queryClient = useQueryClient()
+  const router = useRouter()
+  const pathname = usePathname()
   const pay = usePayObligation()
   // ids are made once per open sheet: a retry after a lost answer replays the same payment instead of paying twice
   const [ids] = useState(() => ({
@@ -61,24 +68,10 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
   }))
   const candidates = useCandidateOperations(obligation.direction, true)
   const options = useObligationOptions().data ?? NO_OPTIONS
-  const account =
-    options.accounts.find((item) => item.id === obligation.accountId) ??
-    options.accounts.find((item) => item.currency === obligation.currency) ??
-    options.accounts[0]
-  const suggested =
-    account?.currency === obligation.currency ? (obligation.remainingMinor ?? obligation.plannedMinor) : null
   const accountName = new Map(options.accounts.map((item) => [item.id, item.name]))
   const form = useForm<z.input<typeof payObligationFormSchema>, unknown, PayObligationFormValues>({
     resolver: useZodResolver(payObligationFormSchema),
-    defaultValues: {
-      amount: suggested === null ? '' : fromMinor(suggested, obligation.currency),
-      currency: (account?.currency ?? obligation.currency) as PayObligationFormValues['currency'],
-      accountId: account?.id ?? null,
-      existingOperationId: null,
-      occurredOn: obligation.dueOn.localeCompare(today) <= 0 ? obligation.dueOn : today,
-      settle: false,
-      note: '',
-    },
+    defaultValues: payFormDefaults(obligation, options.accounts, today),
   })
   const currency = form.watch('currency')
   const amountText = form.watch('amount')
@@ -91,17 +84,15 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
       day: '2-digit',
       month: '2-digit',
     })
-  const dueLabel = shortDate(obligation.dueOn)
-  const installment =
-    obligation.sourceType === 'credit' && obligation.sequenceNo !== null
-      ? translate(obligation.installmentTotal === null ? 'installmentNumber' : 'installment', {
-          number: obligation.sequenceNo,
-          total: obligation.installmentTotal ?? 0,
-        })
-      : null
-  const kind = installment
-    ? `${translate(`kind.${obligation.sourceType as 'credit'}`)}, ${installment}`
-    : translate(`kind.${obligation.sourceType as 'manual'}`)
+
+  // on the calendar «Show» keeps its view and filters; from anywhere else it opens the calendar on that day
+  const showDay = (day: string) => {
+    const params = new URLSearchParams(pathname === '/calendar' ? window.location.search : '')
+
+    params.set('date', day)
+    params.delete('item')
+    router.push(`/calendar?${params}` as Route)
+  }
 
   const submit = (values: PayObligationFormValues, linked: boolean) =>
     pay.mutate(
@@ -117,7 +108,15 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
       }),
       {
         onSuccess: () => {
-          notify.success(translate(linked ? 'pay.linked' : 'pay.done'))
+          if (linked) {
+            notify.success(translate('pay.linked'))
+          } else {
+            notify.success(translate('pay.done', { date: shortDate(values.occurredOn) }), {
+              label: translate('pay.show'),
+              onAction: () => showDay(values.occurredOn),
+            })
+          }
+
           onClose()
         },
         onError: (error) => {
@@ -159,7 +158,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
     <Sheet
       open
       onOpenChange={(open) => !open && onClose()}
-      title={translate('pay.title')}
+      title={translate('pay.title', { title: obligation.title })}
       footer={
         <>
           <SheetClose>{translate('pay.cancel')}</SheetClose>
@@ -170,11 +169,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
       }
     >
       <p className="text-label text-text-secondary">
-        {translate('pay.summary', {
-          title: obligation.title,
-          kind,
-          date: dueLabel,
-        })}
+        {translate('pay.summary', { date: shortDate(obligation.dueOn) })}
       </p>
       <form
         id={FORM_ID}
@@ -203,8 +198,10 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           name="occurredOn"
           label={translate('pay.date')}
           required
+          hint={translate('pay.dateHint')}
           render={(field) => (
             <DatePicker
+              todayLabel
               value={field.value}
               onValueChange={(next) => field.onChange(next ?? '')}
               onBlur={field.onBlur}
@@ -216,7 +213,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           name="accountId"
           label={translate('pay.account')}
           required
-          hint={translate('pay.accountHint')}
+          hint={translate('pay.accountHint', { direction: obligation.direction })}
           render={(field) => (
             <Select
               options={options.accounts.map((item) => ({

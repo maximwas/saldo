@@ -56,12 +56,12 @@
     "saved": "Payment saved"
   },
   "pay": {
-    "title": "Confirm payment",
-    "summary": "{title} · {kind} · planned date {date}",
+    "title": "Pay {title}",
+    "summary": "Planned for {date}",
     "amount": "Amount",
     "date": "Payment date",
     "account": "Account",
-    "accountHint": "Creates one actual operation",
+    "accountHint": "{direction, select, in {The money arrives in this account} other {The money leaves this account}}",
     "settle": "Close the payment completely",
     "settleHint": "If the amount is below the plan, the rest is no longer expected",
     "linkTitle": "Link an existing operation",
@@ -70,9 +70,11 @@
     "link": "Link",
     "confirm": "Paid",
     "cancel": "Cancel",
-    "done": "Payment confirmed",
+    "done": "Paid · written on {date}",
     "linked": "Operation linked",
-    "alreadyPaid": "Someone else just updated this payment — nothing was doubled. Data is refreshed, check the state and try again."
+    "alreadyPaid": "Someone else just updated this payment — nothing was doubled. Data is refreshed, check the state and try again.",
+    "dateHint": "The entry appears in the calendar on the payment date",
+    "show": "Show"
   },
   "cancelPayment": {
     "title": "Cancel the payment?",

@@ -7,7 +7,7 @@ const calendarParsers = {
   view: parseAsStringLiteral(CALENDAR_VIEWS).withDefault('month'),
   /** the selected day; the view shows its month, its week or the day itself */
   date: parseAsString,
-  /** the selected entry of the day panel */
+  /** the entry whose popup is open: a link or a reload opens it again */
   item: parseAsString,
   ...filterParsers,
 }
