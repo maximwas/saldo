@@ -87,7 +87,8 @@ test('editor офлайн і owner онлайн оплачують один пл
   const mark = `e2e-${crypto.randomUUID().slice(0, 8)}`
 
   await owner.goto('/payments')
-  await owner.getByRole('button', { name: 'Додати платіж' }).click()
+  // an empty list names the button «add a planned payment»: run alone, no other spec has added payments yet
+  await owner.getByRole('button', { name: /^Додати (плановий )?платіж$/ }).click()
 
   const form = owner.getByRole('dialog')
 

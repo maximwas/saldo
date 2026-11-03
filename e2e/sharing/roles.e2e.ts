@@ -22,8 +22,29 @@ test('editor вносить витрату — owner бачить її у сво
 
   const row = owner.getByRole('row', { name: new RegExp(mark) })
 
-  // no author initial on operation rows since Maxim's 3.11 remark (4ea0a32): the row itself is the proof
+  // a space of two or more people names the author before the amount, never before the title (Figma TableRow 2:9770)
+  await expect(row.getByRole('img', { name: 'Додав(ла): Олена' })).toBeVisible()
+})
+
+test('у просторі однієї людини автора не видно', async ({ pageAs }) => {
+  const mark = `e2e-${crypto.randomUUID().slice(0, 8)}`
+  const stranger = await pageAs('stranger')
+
+  // the stranger's own space has no account yet, so a planned payment (no account needed, due today) is the record
+  await stranger.goto('/payments')
+  await stranger.getByRole('button', { name: /^Додати (плановий )?платіж$/ }).click()
+
+  const form = stranger.getByRole('dialog')
+
+  await form.getByLabel('Назва').fill(mark)
+  await form.getByLabel('Сума').fill('12,00')
+  await form.getByRole('button', { name: 'Зберегти' }).click()
+  await expect(form).toBeHidden()
+
+  const row = stranger.getByRole('listitem').filter({ hasText: mark })
+
   await expect(row).toHaveCount(1)
+  await expect(row.getByRole('img', { name: /Додав\(ла\)/ })).toHaveCount(0)
 })
 
 test('viewer не бачить «Додати», а ?add=expense нічого не відкриває й не зберігає @mobile', async ({ pageAs }) => {
