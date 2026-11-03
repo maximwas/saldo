@@ -537,7 +537,6 @@ export function OperationEditor({
     body = (
       <>
         <SegmentedControl
-          stretch="track"
           label={translate('add.typeLabel')}
           options={ADD_KINDS.map((value) => ({
             value,
@@ -558,7 +557,6 @@ export function OperationEditor({
         <OperationSource operationId={item.row.id} />
         {/* Figma 5:101464: the edit sheet keeps the type switch; a transfer is made anew, so only the two kinds flip */}
         <SegmentedControl
-          stretch="track"
           label={translate('add.typeLabel')}
           options={ADD_KINDS.map((value) => ({
             value,
