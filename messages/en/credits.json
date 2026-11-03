@@ -1,6 +1,7 @@
 {
   "add": "Add credit",
   "loadFailed": "Could not load credits",
+  "refreshFailed": "Could not refresh credits",
   "empty": "No credits or instalment plans yet",
   "emptyHint": "Add a purchase in instalments: a full schedule, equal instalments or an existing credit by its next date and balance.",
   "count": "{count, plural, one {# credit} other {# credits}}",

@@ -2,6 +2,7 @@
   "title": "Personal debts",
   "add": "Add debt",
   "loadFailed": "Could not load debts",
+  "refreshFailed": "Could not refresh debts",
   "empty": "No debts",
   "emptyHint": "Write down who you lent to or borrowed from: Saldo will remind you of the due date and count repayments without double bookkeeping.",
   "note": "A loan is neither income nor an expense: it changes the account balance, not the earnings reports.",

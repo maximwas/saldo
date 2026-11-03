@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { Select } from '@/components/ui/select.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
@@ -192,17 +193,14 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
       )}
       {isAlone ? (
         <Card title={translate('membersTitle')}>
-          <div className="flex flex-col items-center gap-3 p-2 text-center">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-cat-blue-soft text-cat-blue-text"
-            >
-              <Users className="size-5" />
-            </span>
-            <p className="self-stretch text-body font-semibold text-text-primary">{translate('empty.title')}</p>
-            <p className="self-stretch text-label text-text-secondary">{translate('empty.text')}</p>
-            {inviteButton}
-          </div>
+          <EmptyState
+            bare
+            icon={Users}
+            tone="blue"
+            title={translate('empty.title')}
+            hint={translate('empty.text')}
+            action={inviteButton}
+          />
         </Card>
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">

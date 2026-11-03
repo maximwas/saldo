@@ -7,11 +7,13 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Tabs } from '@/components/ui/tabs.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { formatRate } from '@/lib/money/fx.utils'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useAccounts } from '../hooks/accounts.hook'
 import { type AccountView, totalInBase } from '../utils/accounts.utils'
 import { AccountFormSheet } from './account-form-sheet.component'
@@ -34,18 +36,20 @@ export function AccountsScreen() {
   const moneyText = useMoneyText()
   const canWrite = useCanWrite()
   const desktop = useIsDesktop()
-  const { data, isPending, isError, refetch } = useAccounts()
+  const query = useAccounts()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
   const [tab, setTab] = useState<Tab>('active')
   const [form, setForm] = useState<FormTarget | null>(null)
   const [archiving, setArchiving] = useState<AccountView | null>(null)
   const [adjusting, setAdjusting] = useState<AccountView | null>(null)
 
-  if (isPending) {
-    return <div aria-busy className="h-72 rounded-card bg-subtle" />
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (isError) {
-    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+  if (data === undefined) {
+    return <div aria-busy className="h-72 rounded-card bg-subtle" />
   }
 
   const active = data.accounts.filter((account) => account.archivedAt === null)
@@ -89,17 +93,15 @@ export function AccountsScreen() {
   return (
     <>
       {data.accounts.length === 0 ? (
-        <section className="flex flex-col items-center gap-3 rounded-card bg-card px-5 py-12 text-center shadow-card">
-          <span
-            aria-hidden
-            className="flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary-text"
-          >
-            <Wallet className="size-5" />
-          </span>
-          <h2 className="text-card-title text-text-primary">{translate('empty.title')}</h2>
-          <p className="max-w-sm text-label text-text-secondary">{translate('empty.hint')}</p>
-          {canWrite ? <Button onClick={() => setForm({ account: null })}>{translate('empty.action')}</Button> : null}
-        </section>
+        <EmptyState
+          icon={Wallet}
+          tone="blue"
+          title={translate('empty.title')}
+          hint={translate('empty.hint')}
+          action={
+            canWrite ? <Button onClick={() => setForm({ account: null })}>{translate('empty.action')}</Button> : null
+          }
+        />
       ) : (
         <>
           {/* Figma 2:21073: tabs, then the buttons, bottom-aligned; 2:21278: the buttons (Transfer stretches) above the tabs */}

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { SubscriptionPayment } from '../api/subscriptions.api'
 import { useDateLabel } from '../hooks/date-label.hook'
 import { useSubscription, useSubscriptionPayments } from '../hooks/subscriptions.hook'
@@ -37,12 +38,14 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
   const today = useToday()
   const dateLabel = useDateLabel()
   const { data: subscription } = useSubscription(subscriptionId)
-  const { data, isPending, isError, refetch } = useSubscriptionPayments(subscriptionId)
+  const query = useSubscriptionPayments(subscriptionId)
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
   const shown = view === 'recent' ? recentPayments(data ?? [], today) : newestFirst(data ?? [])
 
   // the error card takes the section's place: a card inside the card would double the frame
-  if (isError) {
-    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
   return (
@@ -51,7 +54,7 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
         <h2 className="text-card-title text-text-primary">{translate(view === 'recent' ? 'recent' : 'all')}</h2>
         {action}
       </div>
-      {isPending ? <div aria-busy className="h-32 rounded-md bg-subtle" /> : null}
+      {data === undefined ? <div aria-busy className="h-32 rounded-md bg-subtle" /> : null}
       {data && shown.length === 0 ? <p className="text-label text-text-secondary">{translate('empty')}</p> : null}
       <ul className="flex flex-col gap-4">
         {shown.map((payment) => (

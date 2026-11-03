@@ -1,16 +1,18 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { ArrowLeftRight, Search } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
-import { useSyncQueue } from '@/lib/query/sync-queue.hook'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { mergeQueued } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
 import { useOperationFilters } from '../hooks/operation-filters.hook'
@@ -33,7 +35,6 @@ export function OperationsScreen() {
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const space = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const canWrite = useCanWrite()
-  const { online, updatedAt } = useSyncQueue()
   const { url, filters, period, today, active, setUrl, reset } = useOperationFilters()
   const list = useQuery(operationQueries.list(ledgerId, filters))
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
@@ -57,6 +58,7 @@ export function OperationsScreen() {
     enabled: wholeMonth,
   })
   const options = useQuery(operationQueries.options(ledgerId))
+  const { failedLoad, retry } = useScreenQueryState([list, options], translate('refreshFailed'))
   // the screen is a streamed Suspense boundary: it hydrates after the device cache is restored, so the first client
   // render repeats the server's skeleton and the data comes one render later (no hydration mismatch)
   const hydrated = useSyncExternalStore(
@@ -133,10 +135,11 @@ export function OperationsScreen() {
     })
 
   let content: React.ReactNode
-  // Figma 39:106643: a failed list shows only the error card under the header, without filters
-  const failed = list.isError || options.isError
 
-  if (!hydrated || list.isPending || options.isPending) {
+  // Figma 39:106643: a failed first load shows only the error card under the header, without filters
+  if (failedLoad) {
+    content = <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+  } else if (!hydrated || list.data === undefined || options.data === undefined) {
     content = (
       // Figma operations loading frame 5:103704 (mobile; desktop has no frame and takes the same): the totals card
       // (padding 16, gap 12, two 56 bars) and day cards (padding 16, gap 16, a 140×14 title, lines with a 72 end bar)
@@ -156,22 +159,9 @@ export function OperationsScreen() {
         </SkeletonCard>
       </div>
     )
-  } else if (failed) {
-    content = (
-      <ErrorState
-        title={translate('loadFailed')}
-        onRetryAction={() => {
-          void list.refetch()
-          void options.refetch()
-        }}
-      />
-    )
   } else if (items.length === 0 && !active) {
     content = (
-      <div className="flex flex-col items-center gap-3 rounded-card bg-card px-5 py-12 text-center shadow-card">
-        <p className="text-card-title text-text-primary">{translate('empty.title')}</p>
-        <p className="text-body text-text-secondary">{translate('empty.hint')}</p>
-      </div>
+      <EmptyState icon={ArrowLeftRight} tone="blue" title={translate('empty.title')} hint={translate('empty.hint')} />
     )
   } else if (items.length === 0) {
     // Figma 5:102493: the totals stay (zeros), then the card (padding 64/32) with EmptyState (420 wide, padding 8,
@@ -179,18 +169,17 @@ export function OperationsScreen() {
     content = (
       <>
         <OperationSummary totals={totals} period={period} withPlanMinor={null} />
-        <div className="flex flex-col items-center rounded-card bg-card px-8 py-16 shadow-card">
-          <div className="flex w-full max-w-105 flex-col items-center gap-3 p-2 text-center">
-            <span className="flex size-10 items-center justify-center rounded-full bg-subtle text-text-secondary">
-              <Search aria-hidden size={20} />
-            </span>
-            <p className="text-body font-semibold text-text-primary">{translate('empty.filtered')}</p>
-            <p className="text-label text-text-secondary">{filteredText()}</p>
+        <EmptyState
+          icon={Search}
+          tone="neutral"
+          title={translate('empty.filtered')}
+          hint={filteredText()}
+          action={
             <Button variant="secondary" onClick={reset}>
               {translate('filters.reset')}
             </Button>
-          </div>
-        </div>
+          }
+        />
       </>
     )
   } else {
@@ -220,18 +209,8 @@ export function OperationsScreen() {
       {/* Figma 5:104416: a viewer reads the page under an Info banner, without write actions */}
       {canWrite ? null : <Banner>{translate('viewOnly', { space })}</Banner>}
       {/* Figma 5:105115: offline, the page's own warning replaces the app one on desktop (OfflineBanner) */}
-      {online || updatedAt === null ? null : (
-        <Banner kind="warning" role="alert" className="hidden lg:flex">
-          {translate('offline', {
-            time: formatter.dateTime(new Date(updatedAt), {
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone,
-            }),
-          })}
-        </Banner>
-      )}
-      {failed ? null : (
+      <PageOfflineBanner text={(time) => translate('offline', { time })} />
+      {failedLoad ? null : (
         <OperationFilters
           period={period}
           accountId={url.account}

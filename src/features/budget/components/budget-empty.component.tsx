@@ -1,7 +1,8 @@
+import { Wallet } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
-import { CategoryIcon } from '@/components/ui/category-icon.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
@@ -40,33 +41,33 @@ export function BudgetEmpty({ month }: { month: string }) {
 
   return (
     <Card title={<MonthSwitch month={month} />}>
-      <div className="flex flex-col items-center gap-3 p-2 text-center">
-        <CategoryIcon icon="wallet" color="blue" />
-        <h3 className="self-stretch text-body font-semibold text-text-primary">
-          {translate('empty.title', { month: monthLabel(month, false) })}
-        </h3>
-        <p className="self-stretch text-label text-text-secondary">
-          {translate('empty.text', { month: monthOf(previous) })}
-        </p>
-        {canWrite ? (
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button variant="secondary" disabled={copy.isPending} onClick={copyFromPrevious}>
-              {translate('copy.fromPrevious', { month: monthOf(previous) })}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() =>
-                open({
-                  kind: 'limit',
-                  categoryId: null,
-                })
-              }
-            >
-              {translate('empty.start')}
-            </Button>
-          </div>
-        ) : null}
-      </div>
+      <EmptyState
+        bare
+        icon={Wallet}
+        tone="blue"
+        title={translate('empty.title', { month: monthLabel(month, false) })}
+        hint={translate('empty.text', { month: monthOf(previous) })}
+        action={
+          canWrite ? (
+            <>
+              <Button variant="secondary" disabled={copy.isPending} onClick={copyFromPrevious}>
+                {translate('copy.fromPrevious', { month: monthOf(previous) })}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() =>
+                  open({
+                    kind: 'limit',
+                    categoryId: null,
+                  })
+                }
+              >
+                {translate('empty.start')}
+              </Button>
+            </>
+          ) : null
+        }
+      />
     </Card>
   )
 }

@@ -1,5 +1,6 @@
 {
   "loadFailed": "Could not load statistics",
+  "refreshFailed": "Could not refresh the statistics",
   "filters": { "period": "Period", "bucket": "Group by", "who": "Who", "allMembers": "Everyone", "view": "View" },
   "periods": { "3m": "Last 3 months", "6m": "Last 6 months", "12m": "Last 12 months" },
   "buckets": { "day": "By day", "week": "By week", "month": "By month", "year": "By year" },
@@ -29,8 +30,7 @@
   "state": {
     "offline": "No network. The statistics will appear as soon as the connection is back.",
     "error": "Could not load.",
-    "stale": "No network. Showing data as of {time} — new operations appear after sync.",
-    "refreshFailed": "Could not refresh the statistics"
+    "stale": "No network. Showing data as of {time} — new operations appear after sync."
   },
   "empty": {
     "operations": "No operations in this period.",

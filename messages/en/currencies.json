@@ -1,5 +1,6 @@
 {
   "loadFailed": "Could not load rates",
+  "refreshFailed": "Could not refresh rates",
   "names": {
     "UAH": "hryvnia",
     "USD": "dollar",

@@ -1,13 +1,15 @@
 'use client'
 
-import { Check, Plus, Repeat, Settings2 } from 'lucide-react'
+import { Plus, Repeat, Settings2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Button } from '@/components/ui/button.component'
+import { Chip } from '@/components/ui/chip.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
-import { cn } from '@/lib/utils/cn.utils'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useSubscriptionParams } from '../hooks/subscription-params.hook'
 import { useSubscriptions } from '../hooks/subscriptions.hook'
 import { filterCounts, matchesFilter, SUBSCRIPTION_FILTERS } from '../utils/subscription-series.utils'
@@ -15,34 +17,6 @@ import { DefaultsSheet } from './defaults-sheet.component'
 import { SubscriptionFormSheet } from './subscription-form-sheet.component'
 import { SubscriptionRow } from './subscription-row.component'
 import { SubscriptionTotals } from './subscription-totals.component'
-
-type EmptyStateProps = {
-  onAddAction: () => void
-}
-
-// Figma «Saldo» → Subscriptions · Empty 5:102252
-function EmptyState({ onAddAction }: EmptyStateProps) {
-  const translate = useTranslations('subscriptions.empty')
-  const canWrite = useCanWrite()
-
-  return (
-    <section className="flex flex-col items-center gap-3 rounded-card bg-card px-5 py-12 text-center shadow-card">
-      <span
-        aria-hidden
-        className="flex size-10 items-center justify-center rounded-full bg-cat-pink-soft text-cat-pink"
-      >
-        <Repeat className="size-5" />
-      </span>
-      <h2 className="text-card-title text-text-primary">{translate('title')}</h2>
-      <p className="max-w-sm text-label text-text-secondary">{translate('hint')}</p>
-      {canWrite ? (
-        <Button variant="secondary" onClick={onAddAction}>
-          {translate('action')}
-        </Button>
-      ) : null}
-    </section>
-  )
-}
 
 function FilterChips() {
   const translate = useTranslations('subscriptions.filters')
@@ -56,21 +30,9 @@ function FilterChips() {
         const selected = filter === state
 
         return (
-          <button
-            key={filter}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => setParams({ state: filter })}
-            className={cn(
-              'flex h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-label font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
-              selected
-                ? 'border-primary-soft bg-primary-soft text-primary-text'
-                : 'border-border-strong bg-card text-text-primary hover:bg-subtle',
-            )}
-          >
-            {selected ? <Check aria-hidden className="size-4" /> : null}
+          <Chip key={filter} selected={selected} onClick={() => setParams({ state: filter })}>
             {translate(filter, { count: counts[filter] })}
-          </button>
+          </Chip>
         )
       })}
     </fieldset>
@@ -83,12 +45,23 @@ export function SubscriptionList() {
   const translate = useTranslations('subscriptions')
   const canWrite = useCanWrite()
   const isOwner = useLedgerStore((ledger) => ledger.role === 'owner')
-  const { data, isPending, isError, refetch } = useSubscriptions()
+  const query = useSubscriptions()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
   const { state } = useSubscriptionParams()
   const [creating, setCreating] = useState(false)
   const [editingDefaults, setEditingDefaults] = useState(false)
 
-  if (isPending) {
+  if (failedLoad) {
+    return (
+      <>
+        <PaymentsTabs />
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+      </>
+    )
+  }
+
+  if (data === undefined) {
     return (
       <>
         <PaymentsTabs />
@@ -100,22 +73,26 @@ export function SubscriptionList() {
     )
   }
 
-  if (isError) {
-    return (
-      <>
-        <PaymentsTabs />
-        <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
-      </>
-    )
-  }
-
   const shown = data.filter((subscription) => matchesFilter(subscription, state))
 
   return (
     <>
       <PaymentsTabs />
       {data.length === 0 ? (
-        <EmptyState onAddAction={() => setCreating(true)} />
+        // Figma «Saldo» → Subscriptions · Empty 5:102252
+        <EmptyState
+          icon={Repeat}
+          tone="pink"
+          title={translate('empty.title')}
+          hint={translate('empty.hint')}
+          action={
+            canWrite ? (
+              <Button variant="secondary" onClick={() => setCreating(true)}>
+                {translate('empty.action')}
+              </Button>
+            ) : null
+          }
+        />
       ) : (
         <>
           <SubscriptionTotals />

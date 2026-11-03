@@ -7,6 +7,8 @@ type TabsProps<Value extends string> = {
   options: readonly {
     value: Value
     label: string
+    /** the tab's content when the tabs hold it (a Base UI Panel); without it the tabs only switch */
+    panel?: React.ReactNode
   }[]
   value: Value
   onValueChange: (value: Value) => void
@@ -16,7 +18,11 @@ type TabsProps<Value extends string> = {
 // else text-secondary), padding 10/4/0, gap 10, a 2px primary indicator under the active one
 export function Tabs<Value extends string>({ label, options, value, onValueChange }: TabsProps<Value>) {
   return (
-    <TabsPrimitive.Root value={value} onValueChange={(next) => onValueChange(next as Value)}>
+    <TabsPrimitive.Root
+      value={value}
+      onValueChange={(next) => onValueChange(next as Value)}
+      className="flex flex-col gap-4 lg:gap-6"
+    >
       <TabsPrimitive.List aria-label={label} className="flex items-end gap-6 border-b border-border">
         {options.map((option) => (
           <TabsPrimitive.Tab
@@ -29,6 +35,17 @@ export function Tabs<Value extends string>({ label, options, value, onValueChang
           </TabsPrimitive.Tab>
         ))}
       </TabsPrimitive.List>
+      {options.map((option) =>
+        option.panel === undefined ? null : (
+          <TabsPrimitive.Panel
+            key={option.value}
+            value={option.value}
+            className="flex flex-col gap-4 outline-none lg:gap-6"
+          >
+            {option.panel}
+          </TabsPrimitive.Panel>
+        ),
+      )}
     </TabsPrimitive.Root>
   )
 }

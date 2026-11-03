@@ -9,10 +9,12 @@ import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { resumeWrites } from '@/lib/query/ledger-writes.mutations'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
 import type { DebtRow } from '../api/debts.api'
 import { useDebts, useQueuedRepayments } from '../hooks/debts.hook'
@@ -96,20 +98,27 @@ export function DebtsScreen() {
   const queryClient = useQueryClient()
   const { online } = useSyncQueue()
   const queued = useQueuedRepayments()
-  const { data, isPending, isError, refetch } = useDebts()
+  const query = useDebts()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
   const [sheet, setSheet] = useState<Sheet>(null)
 
-  if (isPending) {
+  if (failedLoad) {
+    return (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <PaymentsTabs />
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+      </div>
+    )
+  }
+
+  if (data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <PaymentsTabs />
         <DebtsSkeleton />
       </div>
     )
-  }
-
-  if (isError) {
-    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
   const close = () => setSheet(null)
@@ -149,19 +158,13 @@ export function DebtsScreen() {
         </div>
       )}
       {data.length === 0 ? (
-        <section className="flex flex-col items-center rounded-card bg-card px-5 py-10 shadow-card">
-          <div className="flex w-full max-w-100 flex-col items-center gap-3 p-2 text-center">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-cat-green-soft text-cat-green-text"
-            >
-              <HandCoins className="size-5" />
-            </span>
-            <h2 className="w-full text-body font-semibold text-text-primary">{translate('empty')}</h2>
-            <p className="w-full text-label text-text-secondary">{translate('emptyHint')}</p>
-            {canWrite && <Button onClick={addDebt}>{translate('add')}</Button>}
-          </div>
-        </section>
+        <EmptyState
+          icon={HandCoins}
+          tone="green"
+          title={translate('empty')}
+          hint={translate('emptyHint')}
+          action={canWrite && <Button onClick={addDebt}>{translate('add')}</Button>}
+        />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 lg:gap-6">

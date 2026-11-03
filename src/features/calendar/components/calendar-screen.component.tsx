@@ -4,9 +4,11 @@ import { CalendarSearch } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
 import { activeQuickSet, fromFilter } from '../utils/calendar-filters.utils'
@@ -31,25 +33,19 @@ function EmptyPeriod() {
   }
 
   return (
-    <div className="flex flex-col items-center rounded-card bg-card px-6 py-16 shadow-card">
-      <div className="flex w-full max-w-105 flex-col items-center gap-3 p-2 text-center">
-        <span
-          aria-hidden
-          className="flex size-10 items-center justify-center rounded-full bg-cat-yellow-soft text-cat-yellow-text"
-        >
-          <CalendarSearch size={20} />
-        </span>
-        <p className="self-stretch text-body font-semibold text-text-primary">{title}</p>
-        {filtered && (
-          <>
-            <p className="self-stretch text-label text-text-secondary">{translate('empty.text')}</p>
-            <Button variant="secondary" onClick={() => void setUrl(fromFilter({}))}>
-              {translate('filters.reset')}
-            </Button>
-          </>
-        )}
-      </div>
-    </div>
+    <EmptyState
+      icon={CalendarSearch}
+      tone="yellow"
+      title={title}
+      hint={filtered && translate('empty.text')}
+      action={
+        filtered && (
+          <Button variant="secondary" onClick={() => void setUrl(fromFilter({}))}>
+            {translate('filters.reset')}
+          </Button>
+        )
+      }
+    />
   )
 }
 
@@ -68,21 +64,14 @@ function CalendarBody() {
   const translate = useTranslations('calendar')
   const { view } = useCalendarParams()
   const { entries, totals } = useCalendarData()
+  const { failedLoad, retry } = useScreenQueryState([entries, totals], translate('refreshFailed'))
 
-  if (entries.isPending || totals.isPending) {
-    return <GridSkeleton />
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (entries.isError || totals.isError) {
-    return (
-      <ErrorState
-        title={translate('loadFailed')}
-        onRetryAction={() => {
-          void entries.refetch()
-          void totals.refetch()
-        }}
-      />
-    )
+  if (entries.data === undefined || totals.data === undefined) {
+    return <GridSkeleton />
   }
 
   if (view === 'day') {

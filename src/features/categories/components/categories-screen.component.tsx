@@ -10,6 +10,7 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import {
   useCategories,
   useCategoryOperationCounts,
@@ -56,7 +57,9 @@ const HOW = [
 export function CategoriesScreen() {
   const translate = useTranslations('categories')
   const canWrite = useCanWrite()
-  const { data, isPending, isError, refetch } = useCategories()
+  const query = useCategories()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
   const reorder = useReorderCategories()
   const update = useUpdateCategory()
   const [kind, setKind] = useState<CategoryKind>('expense')
@@ -73,7 +76,11 @@ export function CategoriesScreen() {
   } | null>(null)
   const latestIds = useRef<string[]>([])
 
-  if (isPending) {
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+  }
+
+  if (data === undefined) {
     // Figma categories loading frame 2:56714: a card (padding 20, gap 20), a 120×20 title, four rows (gap 12) of a
     // 40 circle and two lines (16 and 12 high, radius xs)
     return (
@@ -90,10 +97,6 @@ export function CategoriesScreen() {
         ))}
       </SkeletonCard>
     )
-  }
-
-  if (isError) {
-    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
   const tree = buildCategoryTree(data)
