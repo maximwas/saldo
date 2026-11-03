@@ -17,6 +17,7 @@
   "empty": "Категорій ще немає",
   "archiveTitle": "Архів · {count}",
   "archivedBadge": "Архів",
+  "systemBadge": "Системна",
   "menu": {
     "label": "Дії з категорією",
     "up": "Вище",

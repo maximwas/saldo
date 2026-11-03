@@ -75,3 +75,30 @@ test('«Видалити всі дані» бачить лише власник,
   await expect(viewer.getByRole('button', { name: 'Операції (CSV)' })).toBeVisible()
   await expect(viewer.getByRole('button', { name: 'Видалити всі дані' })).toHaveCount(0)
 })
+
+// Figma 43:117209 with the Topbar «Platform=Mobile Back» 45:120247: a settings subpage on a phone is a page of its own
+test('на телефоні «Дані» — окрема сторінка з назвою й кнопкою «назад» до налаштувань @mobile', async ({
+  pageAs,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'the back button is the phone Topbar')
+
+  const page = await pageAs('owner')
+
+  await page.goto('/settings/data')
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Дані',
+    }),
+  ).toBeVisible()
+
+  await page.getByRole('link', { name: 'Назад до налаштувань' }).click()
+
+  await expect(page).toHaveURL(/\/settings$/)
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Налаштування',
+    }),
+  ).toBeVisible()
+})

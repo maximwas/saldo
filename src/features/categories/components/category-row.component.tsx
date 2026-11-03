@@ -35,7 +35,7 @@ type CategoryRowProps = {
 
 // Figma «Saldo» → CategoryRow 2:49893 (desktop 2:49639, mobile 2:50386): 64 high, gap 12, a 32×44 grip (when it can be
 // dragged), badge 40, the name body-medium over a caption with the operation count in text-tertiary, the archive pill, «···» 44,
-// border-bottom. The dragged row is raised (color-raised, radius-md, shadow-float, side padding 12: 35:104589).
+// border-bottom. The system «Subscriptions» row carries a muted «System» pill (43:119575 / 43:119960). The dragged row is raised (color-raised, radius-md, shadow-float, side padding 12: 35:104589).
 export function CategoryRow({
   category,
   operations,
@@ -126,6 +126,7 @@ export function CategoryRow({
         {meta ? <span className="text-caption text-text-tertiary">{meta}</span> : null}
       </div>
       {archived ? <Badge tone="muted">{translate('archivedBadge')}</Badge> : null}
+      {category.systemKey && !archived ? <Badge tone="muted">{translate('systemBadge')}</Badge> : null}
       {canWrite && !menuHidden ? <Menu label={translate('menu.label')} items={items} /> : null}
     </div>
   )

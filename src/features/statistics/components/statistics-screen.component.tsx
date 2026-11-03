@@ -6,6 +6,7 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useEffect } from 'react'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CATEGORY_TONES } from '@/constants/category-colors.constants'
@@ -21,8 +22,8 @@ import { StatisticsFilters } from './statistics-filters.component'
 import { SubscriptionsCard } from './subscriptions-card.component'
 import { SummaryCards } from './summary-cards.component'
 
-// Figma «Saldo» → Statistics: 2:73594 / 2:77703 (desktop chart and table), 2:78033 / 4:79439 (mobile), 4:79641 empty,
-// 4:79708 loading, 4:79761 error and offline. Auto, reserves, goals and taxes blocks wait for their phases.
+// Figma «Saldo» → Statistics: 2:73594 / 2:77703 (desktop chart and table), 2:78033 / 4:79439 (mobile); states in
+// section 2:73593: 41:109346 empty, 41:109639 loading, 41:109930 first load failed, 41:110223 offline with cache. Auto, reserves, goals and taxes blocks wait for their phases.
 function OfflineBanner() {
   const translate = useTranslations('statistics')
   const format = useFormatter()
@@ -122,6 +123,7 @@ export function StatisticsScreen() {
     }
   }, [failedRefresh, query.errorUpdatedAt])
 
+  const failedLoad = query.isError && query.data === undefined
   const pending = query.data === undefined && !query.isError && query.fetchStatus !== 'paused'
   const empty = query.data !== undefined && cashflowTotals(query.data).operationsCount === 0
 
@@ -131,7 +133,8 @@ export function StatisticsScreen() {
       <StatisticsFilters />
       {pending && <StatisticsSkeleton />}
       {empty && <EmptyPeriod />}
-      {!pending && !empty && (
+      {failedLoad && <ErrorState title={translate('loadFailed')} onRetryAction={() => void query.refetch()} />}
+      {!pending && !empty && !failedLoad && (
         <>
           <SummaryCards />
           <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">

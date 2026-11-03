@@ -1,6 +1,7 @@
 {
   "title": "Settings",
   "tabsLabel": "Settings sections",
+  "back": "Back to settings",
   "tabs": {
     "general": "General",
     "access": "Access",
