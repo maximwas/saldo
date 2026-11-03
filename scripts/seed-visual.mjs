@@ -1,6 +1,6 @@
 // Fills demo@example.com (made by supabase/seed.sql) with the rest of docs/design/demo-data.md for the visual tests:
-// the story's October operations, this month's paid household bills, the EUR → card transfer and budget in the
-// current Kyiv month, and the category seed.sql lacks. DEMO_TODAY=YYYY-MM-DD pins today (2026-10-30 for the visual specs, as in seed.sql).
+// the story's October operations, this month's household bills already due (paid), the EUR → card transfer and budget
+// in the current Kyiv month, and the category seed.sql lacks. DEMO_TODAY=YYYY-MM-DD pins today (2026-10-30 for the visual specs, as in seed.sql).
 // Local stack only; run after `supabase db reset`. Writes go through the app's RPCs as the demo user (RLS applies).
 import { execSync } from 'node:child_process'
 import { createClient } from '@supabase/supabase-js'
@@ -137,13 +137,26 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) {
 }
 
 const monthStart = `${today.slice(0, 7)}-01`
+const todayNo = Number(today.slice(8))
+const onDay = (dayNo) => `${today.slice(0, 8)}${String(dayNo).padStart(2, '0')}`
 // October's days 1..29 squeezed into 1..today, so every month screen is full and no operation is in the future;
 // from the 30th on they are the story's own days
-const squeezed = (dayNo) => Math.min(dayNo, Math.ceil((dayNo * Number(today.slice(8))) / 30))
-const day = (dayNo) => `${today.slice(0, 8)}${String(squeezed(dayNo)).padStart(2, '0')}`
+const day = (dayNo) => onDay(Math.min(dayNo, Math.ceil((dayNo * todayNo) / 30)))
+
+// this month's bills (seed.sql has them from today on), paid by their operations below the way the app's «Paid» links
+// an existing operation: [title = the operation's counterparty, planned amount]
+const PAID_BILLS = [
+  ['Оренда квартири', 1_400_000],
+  ['Kyivstar', 25_000],
+  ['Комунальні платежі', 230_000],
+  ['Фітнес-клуб', 110_000],
+]
+const isBill = (recipient) => PAID_BILLS.some(([title]) => title === recipient)
+// a bill's operation is on the bill's own day: one before today is paid, a bill still to come has none yet
+const written = ([dayNo, recipient]) => !isBill(recipient) || dayNo < todayNo
 
 // balances stay those of demo-data.md: the opening balance on the 1st is what the month's movements leave out
-const expensesMinor = EXPENSES.reduce((sum, [, , , minor]) => sum + minor, 0)
+const expensesMinor = EXPENSES.filter(written).reduce((sum, [, , , minor]) => sum + minor, 0)
 const incomesMinor = INCOMES.reduce((sum, [, , minor]) => sum + minor, 0)
 
 must(
@@ -185,8 +198,10 @@ const operation = (seq, kind, date, minor, category, counterparty) => ({
 })
 const operations = [
   ...INCOMES.map(([dayNo, title, minor], index) => operation(index, 'income', day(dayNo), minor, 'Фриланс', title)),
-  ...EXPENSES.map(([dayNo, recipient, category, minor], index) =>
-    operation(10 + index, 'expense', day(dayNo), minor, category, recipient),
+  ...EXPENSES.flatMap(([dayNo, recipient, category, minor], index) =>
+    written(EXPENSES[index])
+      ? [operation(10 + index, 'expense', isBill(recipient) ? onDay(dayNo) : day(dayNo), minor, category, recipient)]
+      : [],
   ),
 ]
 
@@ -195,18 +210,17 @@ for (const row of operations) {
   must(await client.rpc('create_operation', { p_operation: row }), `operation ${row.counterparty}`)
 }
 
-// this month's bills (seed.sql has them from next month on), paid by their operations above the way the app's
-// «Paid» links an existing operation: [title = the operation's counterparty, planned amount]
-const PAID_BILLS = [
-  ['Оренда квартири', 1_400_000],
-  ['Kyivstar', 25_000],
-  ['Комунальні платежі', 230_000],
-  ['Фітнес-клуб', 110_000],
-]
+let paidBills = 0
 
 for (const [index, [title, plannedMinor]] of PAID_BILLS.entries()) {
   const paidBy = operations.find((row) => row.counterparty === title)
   const obligationId = id(300 + index)
+
+  if (paidBy === undefined) {
+    continue
+  }
+
+  paidBills += 1
 
   must(
     await client.from('obligations').upsert(
@@ -313,6 +327,6 @@ must(
 const balances = must(await client.from('account_balances').select('account_id, balance_minor'), 'balances')
 
 console.log(
-  `seed-visual: ${operations.length} operations, ${PAID_BILLS.length} paid bills, 1 transfer, ${Object.keys(LIMITS).length} limits`,
+  `seed-visual: ${operations.length} operations, ${paidBills} paid bills, 1 transfer, ${Object.keys(LIMITS).length} limits`,
 )
 console.log(balances.map((row) => `${row.account_id.slice(-2)}=${row.balance_minor}`).join(' '))

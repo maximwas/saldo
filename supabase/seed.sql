@@ -3,7 +3,7 @@
 -- space as of 30.10.2026 — accounts, rates, subscriptions, credits, debts and planned payments. Every story date is
 -- shifted by v_shift days so that 30.10.2026 is today in Kyiv and the demo never goes stale; the setting
 -- saldo.demo_today = 'YYYY-MM-DD' pins today (the visual specs need 2026-10-30, the day of the Figma frames). The
--- monthly household bills follow the current Kyiv month instead, like the operations of scripts/seed-visual.mjs.
+-- monthly household bills keep their own day of the month instead, like a real household's.
 -- Sign in locally as demo@example.com / saldo-demo-local-password (a local stack only, so not a secret).
 -- Subscriptions, credits and debts go through the phase 2 RPCs as the demo user, the way the app writes them; the
 -- installments paid before tracking (paid_before_tracking_count) get no operations, the debts are old ones without a
@@ -108,27 +108,26 @@ begin
     ('i_owe', 'Тарас', null, 200000, '2026-11-20')
   ) as d (direction, person, reason, amount_minor, due_on);
 
-  -- planned payments (source_type 'manual', one row a month): the household's bills on their day of the current Kyiv
-  -- month and the next 11. This month's rent, mobile, utilities and gym are paid by their operations in
-  -- scripts/seed-visual.mjs (this file has no operations), so they start next month here; this month's insurance is
-  -- overdue, two days before today at the latest. The internet bill keeps its story date, 10.11 + v_shift.
+  -- planned payments (source_type 'manual', one row a month): the household's bills on their own day of the month,
+  -- from today on for a year. This month's rent, mobile, utilities and gym before today are paid by their operations
+  -- in scripts/seed-visual.mjs (this file has no operations); the internet contract starts on the next 10th. The one
+  -- overdue bill, on purpose: the latest insurance day before today (28.10 on 30.10 and on 3.11), not paid.
   insert into public.obligations (ledger_id, title, occurrence_on, due_on, planned_amount_minor, currency, account_id,
     category_id)
   select v_ledger, p.title, x.due_on, x.due_on, p.amount_minor, 'UAH', v_card, cat.id
   from (values
-    ('Оренда квартири', 'Житло', 1400000::bigint, 1, 1),
-    ('Kyivstar', 'Зв''язок', 25000, 15, 1),
-    ('Комунальні платежі', 'Житло', 230000, 19, 1),
-    ('Фітнес-клуб', 'Здоров''я', 110000, 24, 1),
-    ('Медична страховка', 'Здоров''я', 45000, 28, 0)
-  ) as p (title, category, amount_minor, day_no, first_month)
-  join public.categories cat on cat.ledger_id = v_ledger and cat.kind = 'expense' and cat.name = p.category
-  cross join lateral generate_series(p.first_month, 11) n
+    ('Оренда квартири', 'Житло', 1400000::bigint, 1),
+    ('Інтернет', null, 35000, 10),
+    ('Kyivstar', 'Зв''язок', 25000, 15),
+    ('Комунальні платежі', 'Житло', 230000, 19),
+    ('Фітнес-клуб', 'Здоров''я', 110000, 24),
+    ('Медична страховка', 'Здоров''я', 45000, 28)
+  ) as p (title, category, amount_minor, day_no)
+  left join public.categories cat on cat.ledger_id = v_ledger and cat.kind = 'expense' and cat.name = p.category
+  cross join lateral generate_series(-1, 11) n
   cross join lateral (select (date_trunc('month', v_today::timestamp)
-    + make_interval(months => n, days => p.day_no - 1))::date) m (on_day)
-  cross join lateral (select case when n = 0 then least(m.on_day, v_today - 2) else m.on_day end) x (due_on)
-  union all
-  select v_ledger, 'Інтернет', x.due_on, x.due_on, 35000, 'UAH', v_card, null
-  from generate_series(0, 11) n
-  cross join lateral (select (date '2026-11-10' + v_shift + make_interval(months => n))::date) x (due_on);
+    + make_interval(months => n, days => p.day_no - 1))::date) x (due_on)
+  -- the latest 28th before today: 27 days after the 1st of the month of today - 28
+  where x.due_on >= v_today
+    or (p.day_no = 28 and x.due_on = (date_trunc('month', (v_today - 28)::timestamp) + interval '27 days')::date);
 end $$;
