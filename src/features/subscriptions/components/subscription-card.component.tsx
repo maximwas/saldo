@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
@@ -86,7 +87,7 @@ type SubscriptionCardProps = {
 export function SubscriptionCard({ subscriptionId }: SubscriptionCardProps) {
   const translate = useTranslations('subscriptions.card')
   const canWrite = useCanWrite()
-  const { data: subscription, isPending, isError } = useSubscription(subscriptionId)
+  const { data: subscription, isPending, isError, refetch } = useSubscription(subscriptionId)
   const { tab, setParams, closeCard } = useSubscriptionParams()
   const tabs = CARD_TABS.filter((value) => canWrite || value !== 'settings')
   const current = tabs.includes(tab) ? tab : 'overview'
@@ -102,12 +103,21 @@ export function SubscriptionCard({ subscriptionId }: SubscriptionCardProps) {
     return <div aria-busy className="h-96 rounded-card bg-subtle" />
   }
 
-  if (isError || !subscription) {
+  if (isError) {
+    return (
+      <>
+        {back}
+        <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+      </>
+    )
+  }
+
+  if (!subscription) {
     return (
       <>
         {back}
         <p role="alert" className="text-body text-text-secondary">
-          {translate(isError ? 'loadFailed' : 'notFound')}
+          {translate('notFound')}
         </p>
       </>
     )

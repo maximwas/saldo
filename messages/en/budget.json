@@ -1,5 +1,5 @@
 {
-  "loadFailed": "Could not load the budget. Refresh the page.",
+  "loadFailed": "Could not load the budget",
   "month": {
     "previous": "Previous month",
     "next": "Next month"

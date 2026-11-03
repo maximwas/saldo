@@ -1,5 +1,5 @@
 {
-  "loadFailed": "Could not load subscriptions. Refresh the page",
+  "loadFailed": "Could not load subscriptions",
   "add": "Add subscription",
   "count": "{count, plural, one {# subscription} other {# subscriptions}}",
   "filteredEmpty": "No subscriptions in this state",
@@ -98,7 +98,7 @@
   "card": {
     "back": "All subscriptions",
     "edit": "Edit",
-    "loadFailed": "Could not load the subscription. Refresh the page",
+    "loadFailed": "Could not load the subscription",
     "notFound": "Subscription not found: it may have been removed",
     "tabs": {
       "label": "Subscription sections",

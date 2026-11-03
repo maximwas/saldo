@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useCredits, usePayInstallment } from '../hooks/credits.hook'
@@ -54,7 +55,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const locale = useLocale()
   const canWrite = useCanWrite()
   const pay = usePayInstallment()
-  const { data, isPending, isError } = useCredits()
+  const { data, isPending, isError, refetch } = useCredits()
   const [dialog, setDialog] = useState<Dialog>(null)
 
   if (isPending) {
@@ -63,10 +64,14 @@ export function CreditCard({ creditId }: CreditCardProps) {
 
   const credit = data?.credits.find((candidate) => candidate.id === creditId)
 
-  if (isError || !credit) {
+  if (isError) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
+  }
+
+  if (!credit) {
     return (
       <p role="alert" className="text-body text-negative-text">
-        {translate(isError ? 'loadFailed' : 'card.notFound')}
+        {translate('card.notFound')}
       </p>
     )
   }

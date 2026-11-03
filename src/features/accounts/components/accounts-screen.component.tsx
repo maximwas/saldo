@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Tabs } from '@/components/ui/tabs.component'
 import { useCanWrite } from '@/contexts/ledger.context'
@@ -32,7 +33,7 @@ export function AccountsScreen() {
   const locale = useLocale()
   const canWrite = useCanWrite()
   const desktop = useIsDesktop()
-  const { data, isPending, isError } = useAccounts()
+  const { data, isPending, isError, refetch } = useAccounts()
   const [tab, setTab] = useState<Tab>('active')
   const [form, setForm] = useState<FormTarget | null>(null)
   const [archiving, setArchiving] = useState<AccountView | null>(null)
@@ -43,11 +44,7 @@ export function AccountsScreen() {
   }
 
   if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
+    return <ErrorState title={translate('loadFailed')} onRetryAction={refetch} />
   }
 
   const active = data.accounts.filter((account) => account.archivedAt === null)

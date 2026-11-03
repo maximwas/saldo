@@ -1,5 +1,5 @@
 {
-  "loadFailed": "Could not load rates. Refresh the page.",
+  "loadFailed": "Could not load rates",
   "names": {
     "UAH": "hryvnia",
     "USD": "dollar",
