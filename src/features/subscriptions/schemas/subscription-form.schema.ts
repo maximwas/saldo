@@ -27,7 +27,6 @@ export const subscriptionFormSchema = z.object({
     .uuid()
     .nullable()
     .refine((id) => id !== null, 'subscriptionAccountRequired'),
-  categoryId: z.uuid().nullable(),
   unit: z.enum(RECURRENCE_UNITS),
   /** «every N»: typed as text, 1–999 */
   count: z
@@ -59,7 +58,6 @@ export const newSubscriptionFormInput = (context: NewFormContext): SubscriptionF
   amountMinor: null,
   currency: context.currency as SubscriptionFormInput['currency'],
   accountId: context.accountId,
-  categoryId: null,
   unit: 'month',
   count: '1',
   firstOn: context.today,
@@ -77,7 +75,6 @@ export const subscriptionFormInput = (subscription: SubscriptionView): Subscript
   amountMinor: null,
   currency: subscription.currency as SubscriptionFormInput['currency'],
   accountId: subscription.accountId,
-  categoryId: subscription.categoryId,
   unit: subscription.unit,
   count: String(subscription.count),
   firstOn: subscription.firstOn,
@@ -100,7 +97,6 @@ const toSeriesSource = (values: SubscriptionFormValues, archivedAt: string | nul
 function toFields(values: SubscriptionFormValues) {
   return {
     name: values.name.trim(),
-    category_id: values.categoryId,
     account_id: values.accountId,
     interval_unit: values.unit,
     interval_count: Number(values.count),
