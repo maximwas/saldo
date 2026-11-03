@@ -13,7 +13,7 @@ const log = logger.child({
   module: 'mcp',
 })
 
-export type ToolLedger = {
+type ToolLedger = {
   id: string
   name: string
   role: LedgerRole
@@ -32,7 +32,7 @@ export type ToolContext = {
   today: string
 }
 
-export type ToolOutcome = {
+type ToolOutcome = {
   data: Record<string, unknown>
   /** a write tool without confirm: true answered with a preview and wrote nothing */
   preview?: boolean

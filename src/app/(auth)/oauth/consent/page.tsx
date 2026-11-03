@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import { Suspense } from 'react'
 import { Brand } from '@/components/layout/brand.component'
 import { type ConsentView, OAuthConsentCard } from '@/features/auth/components/oauth-consent-card.component'
 import { isKnownRedirect, redirectHost } from '@/features/auth/utils/oauth-redirect.utils'
@@ -44,7 +45,16 @@ async function lookUp(authorizationId: string | undefined): Promise<ConsentLooku
   }
 }
 
-export default async function OAuthConsentPage({ searchParams }: PageProps<'/oauth/consent'>) {
+// the lookup is request data (the session, the id): it streams in <Suspense>, as the login page does
+export default function OAuthConsentPage({ searchParams }: PageProps<'/oauth/consent'>) {
+  return (
+    <Suspense>
+      <ConsentContent searchParams={searchParams} />
+    </Suspense>
+  )
+}
+
+async function ConsentContent({ searchParams }: Pick<PageProps<'/oauth/consent'>, 'searchParams'>) {
   const { authorization_id: authorizationId } = await searchParams
   const found = await lookUp(typeof authorizationId === 'string' ? authorizationId : undefined)
 
