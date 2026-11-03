@@ -84,12 +84,9 @@ function ScheduleRow({
 
   return (
     <li
-      className={cn(
-        'flex items-center gap-4 border-b border-border py-3 last:border-b-0',
-        collapsed && 'max-lg:hidden',
-      )}
+      className={cn('flex items-start gap-4 border-b border-border py-3 last:border-b-0', collapsed && 'max-lg:hidden')}
     >
-      <span className="w-6 shrink-0 text-label font-medium text-text-tertiary tabular-nums">{number}</span>
+      <span className="w-6 shrink-0 py-0.5 text-label font-medium text-text-tertiary tabular-nums">{number}</span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 max-lg:items-start">
         <span
           className={cn(

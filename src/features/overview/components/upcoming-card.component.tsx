@@ -56,7 +56,7 @@ export function UpcomingCard({ overview }: UpcomingCardProps) {
       ) : (
         <ul className="flex flex-col">
           {overview.upcoming.map((obligation) => (
-            <li key={obligation.id} className="flex items-center gap-4 py-3">
+            <li key={obligation.id} className="flex items-start gap-4 py-3">
               <ServiceLogo name={obligation.title} />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <p className="truncate text-body font-medium text-text-primary">{obligation.title}</p>

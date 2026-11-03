@@ -142,8 +142,8 @@ export function CreditRow({ credit }: CreditRowProps) {
   )
 
   return (
-    <li className="relative -mx-3 flex flex-col gap-3 overflow-hidden rounded-md border-b border-border px-3 py-4 transition-colors last:border-b-0 hover:bg-subtle lg:flex-row lg:items-center lg:gap-5">
-      <div className="flex items-center gap-3 lg:hidden">
+    <li className="relative -mx-3 flex flex-col gap-3 overflow-hidden rounded-md border-b border-border px-3 py-4 transition-colors last:border-b-0 hover:bg-subtle lg:flex-row lg:items-start lg:gap-5">
+      <div className="flex items-start gap-3 lg:hidden">
         <ServiceLogo name={title} />
         <div className="flex min-w-0 flex-1 flex-col items-start">
           {linkFor(mobilePress)}

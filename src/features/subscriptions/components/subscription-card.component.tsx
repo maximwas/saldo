@@ -48,7 +48,7 @@ function SubscriptionHeader({ subscription }: SubscriptionHeaderProps) {
         ) : null}
       </div>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-start gap-4">
           <ServiceLogo name={subscription.name} className="size-12" />
           <div className="flex min-w-0 flex-col gap-1">
             <Amount minor={price.amountMinor} currency={price.currency} size="l" />

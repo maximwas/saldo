@@ -109,7 +109,7 @@ export function CategoryRow({
 
   const meta = metaOf()
   const body = (
-    <div className="flex min-h-16 items-center gap-3">
+    <div className="flex min-h-16 items-start gap-3 py-2.5">
       {sortable ? (
         <button
           type="button"
@@ -121,7 +121,7 @@ export function CategoryRow({
         </button>
       ) : null}
       <CategoryBadge icon={category.icon} color={category.color} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
         <span className="truncate text-body font-medium text-text-primary">{category.name}</span>
         {meta ? <span className="text-caption text-text-tertiary">{meta}</span> : null}
       </div>

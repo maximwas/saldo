@@ -94,7 +94,7 @@ function TopCategories({ overview }: MonthCardProps) {
       <p className="text-label font-medium text-text-secondary">{translate('month.top')}</p>
       <ul className="flex flex-col gap-4">
         {(overview.month.top ?? []).map((top) => (
-          <li key={top.categoryId} className="flex items-center gap-3">
+          <li key={top.categoryId} className="flex items-start gap-3">
             <CategoryBadge
               icon={category(top.categoryId)?.icon ?? null}
               color={category(top.categoryId)?.color ?? null}

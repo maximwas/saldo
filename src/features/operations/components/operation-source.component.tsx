@@ -70,7 +70,7 @@ export function OperationSource({ operationId }: OperationSourceProps) {
 
   return (sources.data ?? []).map((source) =>
     desktop ? (
-      <div key={source.obligationId} className="flex items-center gap-3 rounded-inner bg-primary-soft py-3 pr-2 pl-4">
+      <div key={source.obligationId} className="flex items-start gap-3 rounded-inner bg-primary-soft py-3 pr-2 pl-4">
         {text(source)}
         <Button variant="ghost" size="s" render={<Link href={sourceHref(source) as Route} />} nativeButton={false}>
           {translate('open')}
@@ -80,7 +80,7 @@ export function OperationSource({ operationId }: OperationSourceProps) {
       <Link
         key={source.obligationId}
         href={sourceHref(source) as Route}
-        className="flex min-h-11 items-center gap-3 rounded-inner bg-primary-soft py-3 pr-3 pl-4 outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex min-h-11 items-start gap-3 rounded-inner bg-primary-soft py-3 pr-3 pl-4 outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {text(source)}
         <ChevronRight aria-hidden size={20} className="shrink-0 text-text-primary" />

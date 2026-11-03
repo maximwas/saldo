@@ -40,7 +40,7 @@ export function AccountsCard({ overview }: AccountsCardProps) {
               const foreign = account.currency !== overview.baseCurrency
 
               return (
-                <li key={account.id} className="flex items-center gap-4 py-3">
+                <li key={account.id} className="flex items-start gap-4 py-3">
                   {/* an account without a colour keeps the blue of the primary tile it had */}
                   <CategoryIcon icon={KIND_ICON[account.kind]} color={account.color ?? 'blue'} />
                   <div className="flex min-w-0 flex-1 flex-col gap-1">

@@ -363,7 +363,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                 <tr key={plan.id} className="h-16 border-b border-border">
                   <td className="pr-2 pl-4 text-label text-text-secondary">{shortDate(plan.dueOn)}</td>
                   <td className="px-2">
-                    <span className="flex min-w-0 items-center gap-3">
+                    <span className="flex min-w-0 items-start gap-3">
                       <ServiceLogo name={plan.title} size={32} />
                       <span className="flex min-w-0 flex-col gap-0.5">
                         <span className="truncate text-body font-medium text-text-primary">{plan.title}</span>
@@ -409,7 +409,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                 >
                   <td className="pr-2 pl-4 text-label text-text-secondary">{shortDate(item.row.occurredOn)}</td>
                   <td className="px-2">
-                    <span className="flex min-w-0 items-center gap-3">
+                    <span className="flex min-w-0 items-start gap-3">
                       {leadingOf(item, 32)}
                       <span className="flex min-w-0 flex-col gap-0.5">
                         <RowButton
@@ -454,7 +454,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
             </header>
             <ul>
               {planned.map((plan) => (
-                <li key={plan.id} className="flex min-h-18 items-center gap-4 py-3">
+                <li key={plan.id} className="flex min-h-18 items-start gap-4 py-3">
                   <ServiceLogo name={plan.title} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="truncate text-body font-medium text-text-primary">{plan.title}</span>
@@ -485,7 +485,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   <RowButton
                     onPressAction={() => onSelectAction(item)}
                     // a transfer shows two amounts: they drop to their own line instead of cutting the title
-                    className={`cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-primary relative -mx-3 flex min-h-18 flex-1 items-center gap-x-4 overflow-hidden rounded-md px-3 py-3 transition-colors hover:bg-subtle ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
+                    className={`cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-primary relative -mx-3 flex min-h-18 flex-1 items-start gap-x-4 overflow-hidden rounded-md px-3 py-3 transition-colors hover:bg-subtle ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
                   >
                     {leadingOf(item, 40)}
                     <span className="flex min-w-0 flex-1 flex-col gap-1">

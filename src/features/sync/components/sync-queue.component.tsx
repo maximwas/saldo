@@ -111,7 +111,7 @@ function QueueRow({ write, onResolveAction, onRetryAction, onDiscardAction }: Qu
 
   return (
     <li className="flex flex-col gap-2 border-t border-border py-2 first:border-t-0">
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <WriteMark write={write} />
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-label font-medium text-text-primary">

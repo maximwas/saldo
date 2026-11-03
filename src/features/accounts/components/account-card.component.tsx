@@ -71,7 +71,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
         {translate('card.back')}
       </Link>
       <section className="flex flex-col gap-6 rounded-card bg-card p-5 shadow-card lg:p-6">
-        <header className="flex items-center gap-4">
+        <header className="flex items-start gap-4">
           <CategoryIcon icon={account.icon ?? style.icon} color={account.color ?? style.color} />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <h2 className="truncate text-card-title text-text-primary">{account.name}</h2>
