@@ -101,35 +101,39 @@ export function Sheet({
 
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange} swipeDirection="down">
-      <Drawer.Portal>
-        <Drawer.Backdrop className={BACKDROP_CLASS} />
-        {/* Figma draws every sheet whole, up to 19 px below the top (33:101738): the sheet may grow to spacing-4 from it */}
-        <Drawer.Viewport className="pointer-events-none fixed inset-x-0 top-4 bottom-0 z-40 flex flex-col justify-end">
-          <Drawer.Popup
-            initialFocus={initialFocus}
-            className="pointer-events-auto flex max-h-full translate-y-(--drawer-swipe-movement-y) flex-col rounded-t-card bg-raised shadow-float outline-none transition-transform duration-(--duration-slow) ease-(--ease-emphasized) data-ending-style:translate-y-full data-starting-style:translate-y-full data-swiping:transition-none"
-          >
-            <div className="flex justify-center pt-2 pb-1" aria-hidden>
-              <div className="h-1 w-9 rounded-full bg-border-strong" />
-            </div>
-            <div className="flex items-center gap-3 py-2 pr-4 pl-5">
-              <Drawer.Title className={TITLE_CLASS}>{title}</Drawer.Title>
-              {headerAction}
-              <Drawer.Close aria-label={translate('close')} className={cn(CLOSE_CLASS, 'size-11')}>
-                <X className="size-5" aria-hidden />
-              </Drawer.Close>
-            </div>
-            <Drawer.Content className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-2 pb-5 scrollbar-none">
-              {children}
-            </Drawer.Content>
-            {footer ? (
-              <div className="flex items-center gap-3 border-t border-border bg-raised px-5 pt-4 pb-8 *:flex-1">
-                {footer}
+      {/* measures the on-screen keyboard into --drawer-keyboard-inset and scrolls the body to the focused field */}
+      <Drawer.VirtualKeyboardProvider>
+        <Drawer.Portal>
+          <Drawer.Backdrop className={BACKDROP_CLASS} />
+          {/* Figma draws every sheet whole, up to 19 px below the top (33:101738): the sheet may grow to spacing-4 from it;
+              the keyboard lifts the bottom edge, so the body and the footer buttons stay above it */}
+          <Drawer.Viewport className="pointer-events-none fixed inset-x-0 top-4 bottom-(--drawer-keyboard-inset,0px) z-40 flex flex-col justify-end">
+            <Drawer.Popup
+              initialFocus={initialFocus}
+              className="pointer-events-auto flex max-h-full translate-y-(--drawer-swipe-movement-y) flex-col rounded-t-card bg-raised shadow-float outline-none transition-transform duration-(--duration-slow) ease-(--ease-emphasized) data-ending-style:translate-y-full data-starting-style:translate-y-full data-swiping:transition-none"
+            >
+              <div className="flex justify-center pt-2 pb-1" aria-hidden>
+                <div className="h-1 w-9 rounded-full bg-border-strong" />
               </div>
-            ) : null}
-          </Drawer.Popup>
-        </Drawer.Viewport>
-      </Drawer.Portal>
+              <div className="flex items-center gap-3 py-2 pr-4 pl-5">
+                <Drawer.Title className={TITLE_CLASS}>{title}</Drawer.Title>
+                {headerAction}
+                <Drawer.Close aria-label={translate('close')} className={cn(CLOSE_CLASS, 'size-11')}>
+                  <X className="size-5" aria-hidden />
+                </Drawer.Close>
+              </div>
+              <Drawer.Content className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-2 pb-5 scrollbar-none">
+                {children}
+              </Drawer.Content>
+              {footer ? (
+                <div className="flex items-center gap-3 border-t border-border bg-raised px-5 pt-4 pb-8 *:flex-1">
+                  {footer}
+                </div>
+              ) : null}
+            </Drawer.Popup>
+          </Drawer.Viewport>
+        </Drawer.Portal>
+      </Drawer.VirtualKeyboardProvider>
     </Drawer.Root>
   )
 }
