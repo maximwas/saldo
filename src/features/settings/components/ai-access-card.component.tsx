@@ -118,7 +118,8 @@ export function AiAccessCard({ grants, mcpUrl }: AiAccessCardProps) {
         title={translate('revokeTitle', { name })}
         footer={
           <>
-            <SheetClose>{translate('keep')}</SheetClose>
+            {/* Figma 43:116795: on phones «Keep» hugs its label and the danger button takes the rest */}
+            <SheetClose className="max-md:flex-none">{translate('keep')}</SheetClose>
             <Button variant="danger" disabled={pending} onClick={() => void revoke()}>
               {translate('revokeConfirm')}
             </Button>
