@@ -85,8 +85,10 @@ test('«Оплачено» створює одну операцію, видал�
   await page.goto('/')
 
   const notice = page.getByText(/з минулою датою/)
-  const row = page.getByRole('listitem').filter({ has: page.getByText(mark, { exact: true }) })
-  const title = row.getByText(mark, { exact: true })
+  // the overdue plan sorts first in the capped Overview card; today's plan can be pushed out by other specs' plans
+  const lateName = `${mark}-late`
+  const row = page.getByRole('listitem').filter({ has: page.getByText(lateName, { exact: true }) })
+  const title = row.getByText(lateName, { exact: true })
 
   await expect(notice).toBeVisible()
   await expect(title).toBeVisible()
