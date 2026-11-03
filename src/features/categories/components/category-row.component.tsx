@@ -77,15 +77,20 @@ export function CategoryRow({
           onSelect: () => onMoveAction?.('down'),
           disabled: !canMoveDown,
         },
-        {
-          label: translate('menu.edit'),
-          onSelect: () => onEditAction?.(),
-        },
-        {
-          label: translate('menu.delete'),
-          onSelect: () => onArchiveAction?.(),
-          danger: true,
-        },
+        // the system «Subscriptions» category is never renamed or deleted (system_subscriptions_category.sql)
+        ...(category.systemKey
+          ? []
+          : [
+              {
+                label: translate('menu.edit'),
+                onSelect: () => onEditAction?.(),
+              },
+              {
+                label: translate('menu.delete'),
+                onSelect: () => onArchiveAction?.(),
+                danger: true,
+              },
+            ]),
       ]
 
   function metaOf() {

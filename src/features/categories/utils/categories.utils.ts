@@ -12,6 +12,8 @@ export type CategoryView = {
   sortOrder: number
   archivedAt: string | null
   version: number
+  /** 'subscriptions' = the system «Subscriptions» category: always there, never renamed, archived or deleted */
+  systemKey: string | null
 }
 
 type CategoryNode = CategoryView & {
@@ -106,6 +108,7 @@ export type CategoryRow = {
   sort_order: number
   archived_at: string | null
   version: number
+  system_key: string | null
 }
 
 export const toCategory = (row: CategoryRow): CategoryView => ({
@@ -118,4 +121,5 @@ export const toCategory = (row: CategoryRow): CategoryView => ({
   sortOrder: row.sort_order,
   archivedAt: row.archived_at,
   version: row.version,
+  systemKey: row.system_key,
 })
