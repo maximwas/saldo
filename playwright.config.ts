@@ -16,6 +16,8 @@ const env = {
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: localStack.PUBLISHABLE_KEY,
   SUPABASE_SECRET_KEY: localStack.SECRET_KEY,
   CRON_SECRET: 'e2e-local-cron-secret-0123456789abcdef',
+  // MCP write tools (plan 10.8) are off by default; the MCP e2e covers them
+  MCP_WRITE_ENABLED: 'true',
   // a public key made for tests only (its private half is not kept): it just turns the «Enable push» button on
   NEXT_PUBLIC_VAPID_PUBLIC_KEY:
     'BBmLRIpb4CoqxU_xQg2VJ9VCIhKgro4i1pLJGxlMmCqRuSv7VwjmDou5MMC70TIAU5pyH9imDfDC8J45WL0vfxM',

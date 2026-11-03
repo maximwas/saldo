@@ -3,7 +3,12 @@ import type { McpServer } from '@modelcontextprotocol/server'
 import { addDays, format, parseISO } from 'date-fns'
 import { z } from 'zod'
 import { CURRENCIES } from '@/constants/currencies.constants'
-import { createObligation, listObligations, payObligation } from '@/features/obligations/api/obligations.api'
+import {
+  createObligation,
+  listObligationPayments,
+  listObligations,
+  payObligation,
+} from '@/features/obligations/api/obligations.api'
 import { createObligationInputSchema } from '@/features/obligations/schemas/obligation-input.schema'
 import { payObligationInputSchema } from '@/features/obligations/schemas/pay-obligation-input.schema'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
@@ -82,6 +87,9 @@ async function findOpenObligation({ supabase, ledger }: ToolContext, obligationI
 
   return obligation
 }
+
+const isPaid = async ({ supabase }: ToolContext, obligationId: string, paymentId: string) =>
+  (await listObligationPayments(supabase, obligationId)).some((payment) => payment.id === paymentId)
 
 type Obligation = Awaited<ReturnType<typeof findOpenObligation>>
 
@@ -204,6 +212,12 @@ function registerMarkPaid(server: McpServer) {
       assertWriter(context)
 
       const paymentId = args.payment_id ?? crypto.randomUUID()
+
+      // a repeat after the payment went through: the plan is no longer open, the same payment id says it is done
+      if (args.confirm && (await isPaid(context, args.obligation_id, paymentId))) {
+        return { data: { alreadyWritten: { paymentId } } }
+      }
+
       const input = await toPayInput(args, paymentId, context)
 
       if (!args.confirm) {
