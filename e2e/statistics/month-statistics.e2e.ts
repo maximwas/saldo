@@ -99,3 +99,28 @@ test('перекази й позика не потрапляють у доход
   expect(await tableTotal(page, 'Доходи проти витрат', 1)).toBe(income)
   expect(await tableTotal(page, 'Доходи проти витрат', 2)).toBe(expense)
 })
+
+// Figma 41:109930: the first load failed and nothing is cached, so the screen is one ErrorState under the filters
+test('перше завантаження не вдалося: картка «Не вдалося завантажити статистику», «Спробувати ще» її прибирає', async ({
+  pageAs,
+}) => {
+  const page = await pageAs('owner')
+  const cashflow = '**/rest/v1/rpc/stats_cashflow'
+
+  await page.route(cashflow, (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: '{"message":"e2e"}',
+    }),
+  )
+  await page.goto('/statistics')
+
+  // TanStack Query retries three times before the error shows
+  await expect(page.getByRole('alert').getByText('Не вдалося завантажити статистику')).toBeVisible({ timeout: 20_000 })
+
+  await page.unroute(cashflow)
+  await page.getByRole('button', { name: 'Спробувати ще' }).click()
+
+  await expect(page.getByText('Не вдалося завантажити статистику')).toHaveCount(0)
+})
