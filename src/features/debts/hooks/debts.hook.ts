@@ -1,7 +1,7 @@
 import { useMutationState, useQuery } from '@tanstack/react-query'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useLedgerWrite } from '@/lib/query/ledger-write.hook'
 import { defineWrites } from '@/lib/query/ledger-writes.mutations'
-import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import { addDebtMovement, closeDebt, saveDebt } from '../api/debts.api'
 import { debtQueries } from '../api/debts.queries'
 import type { AddDebtMovementInput } from '../schemas/add-debt-movement-input.schema'

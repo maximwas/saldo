@@ -131,7 +131,8 @@ saldo/
       env.ts
       auth/dal.server.ts
       supabase/browser-client.ts  server-client.ts  admin-client.server.ts  pg-error.utils.ts
-      query/query-client.ts  idb-persister.ts
+      query/query-client.ts  ledger-writes.mutations.ts  ledger-write.hook.ts
+      offline/device-storage.ts
       money/money.utils.ts  fx.utils.ts
       recurrence/recurrence.utils.ts
       finance/available-money.utils.ts  reserve-allocation.utils.ts
@@ -164,7 +165,7 @@ src/features/subscriptions/
 | Суфікс | Призначення | Приклад |
 |---|---|---|
 | `.component.tsx` | React-компонент | `src/features/operations/components/operation-row.component.tsx` |
-| `.hook.ts` | хук; файл `x-y.hook.ts` експортує `useXY` | `src/features/subscriptions/hooks/subscription-filters.hook.ts` → `useSubscriptionFilters` |
+| `.hook.ts` | хук; файл `x-y.hook.ts` експортує `useXY`, без префікса `use-` в імені файлу; `<f>.hook.ts` фічі збирає її читання й записи | `src/features/subscriptions/hooks/subscription-filters.hook.ts` → `useSubscriptionFilters`, `src/lib/query/ledger-write.hook.ts` → `useLedgerWrite` |
 | `.context.tsx` | контекст + провайдер + хук, лише DI | `src/contexts/clock.context.tsx` |
 | `.store.ts` | zustand-store UI-стану | `src/store/ui.store.ts` |
 | `.api.ts` | виклики supabase-js (select, upsert, rpc) | `src/features/obligations/api/obligations.api.ts` |
@@ -182,8 +183,10 @@ src/features/subscriptions/
 | `.fixture.ts` | фікстури й дані e2e | `e2e/fixtures/roles.fixture.ts` |
 | `.setup.ts` | setup-проєкт Playwright | `e2e/auth.setup.ts` |
 
-Без суфіксів: reserved-файли Next (`page`, `layout`, `loading`, `error`, `not-found`, `route`, `proxy`, `manifest`),
-а також `src/lib/env.ts`, клієнти supabase, `database.types.ts` (згенерований). `"use client"` пишеться у файлі.
+Без суфіксів: reserved-файли Next (`page`, `layout`, `loading`, `error`, `not-found`, `route`, `proxy`, `manifest`,
+`instrumentation`), `src/i18n/request.ts` (шлях next-intl), а також `src/lib/env.ts`, клієнти supabase і TanStack Query
+(`src/lib/query/query-client.ts`), сховище пристрою `src/lib/offline/device-storage.ts`, `database.types.ts` (згенерований):
+жоден суфікс із таблиці їм не пасує. `"use client"` пишеться у файлі.
 
 ## 3. Імпорти
 

@@ -1,7 +1,7 @@
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { dropReceipt, keepReceipt, readReceipt } from '@/lib/offline/device-storage'
+import { useLedgerWrite } from '@/lib/query/ledger-write.hook'
 import { defineWrites } from '@/lib/query/ledger-writes.mutations'
-import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import type { SaldoClient } from '@/types/supabase.types'
 import { compressReceipt } from '../utils/receipt-compress.utils'
 import {
@@ -19,14 +19,14 @@ type KeptReceipt = {
 }
 
 /** the queued upload of a photo kept on the device: nothing kept means an earlier try already uploaded it */
-async function uploadKeptReceipt(client: SaldoClient, { ledgerId, operationId }: KeptReceipt) {
+async function uploadKeptReceipt(supabase: SaldoClient, { ledgerId, operationId }: KeptReceipt) {
   const file = await readReceipt(operationId)
 
   if (!file) {
     return
   }
 
-  await uploadReceipt(client, {
+  await uploadReceipt(supabase, {
     ledgerId,
     operationId,
     file,
