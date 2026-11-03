@@ -1,8 +1,8 @@
 import { listAccountOptions, listCategoryOptions } from '@/lib/finance/ledger-options.api'
 import type { Database, Json } from '@/types/database.types'
 import type { SaldoClient } from '@/types/supabase.types'
+import { type CalendarFilter, calendarFilterSchema } from '../schemas/calendar-filter.schema'
 import type { DayTotals } from '../utils/calendar.utils'
-import { type CalendarFilter, calendarFilterSchema } from '../utils/calendar-filters.utils'
 
 /** one fact (an operation) or one plan (what remains of an obligation); a paid plan is its fact, never both (§18) */
 export type CalendarEntry = {
