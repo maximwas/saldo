@@ -74,6 +74,16 @@ describe('parseNbuRates', () => {
     ).toEqual(['USD', 'EUR', 'PLN'])
   })
 
+  it('leaves out the metals and the SDR NBU publishes among the currencies', () => {
+    const extras = ['XAU', 'XAG', 'XPT', 'XPD', 'XDR'].map((code) => ({
+      cc: code,
+      rate: 120_000.5,
+      exchangedate: '07.03.2031',
+    }))
+
+    expect(parseNbuRates([...answer, ...extras]).map((row) => row.baseCurrency)).toEqual(['USD', 'EUR', 'PLN'])
+  })
+
   it('gives nothing for an empty answer (a date NBU has not set yet)', () => {
     expect(parseNbuRates([])).toEqual([])
   })

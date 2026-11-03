@@ -36,10 +36,19 @@ const nbuAnswerSchema = z.array(
     .loose(),
 )
 
+/** NBU also publishes gold, silver, platinum, palladium and the IMF's SDR (XAU, XAG, XPT, XPD, XDR): not money anyone
+ * holds or pays with, so they are never stored or listed among the rates */
+export const NOT_CURRENCIES: readonly string[] = ['XAU', 'XAG', 'XPT', 'XPD', 'XDR']
+
 /** NBU answer → «1 unit of the currency costs `rate` UAH» for every currency NBU publishes (Maxim, 3.11). A broken row of
- * a currency a space may hold throws, so a bad answer is never written; a broken row of another currency is skipped */
+ * a currency a space may hold throws, so a bad answer is never written; a broken row of another currency is skipped,
+ * and so are the metals and the SDR */
 export function parseNbuRates(json: unknown): FxRate[] {
   return nbuAnswerSchema.parse(json).flatMap((row): FxRate[] => {
+    if (NOT_CURRENCIES.includes(row.cc)) {
+      return []
+    }
+
     const parsed = nbuRowSchema.safeParse(row)
 
     if (!parsed.success) {

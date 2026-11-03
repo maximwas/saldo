@@ -44,6 +44,12 @@ describe('rateBoard', () => {
     expect(rateBoard([], 'UAH', '2026-11-03', ['GBP']).map((row) => row.currency)).toEqual(['EUR', 'GBP', 'USD'])
   })
 
+  it('does not list a stored gold or SDR rate among the currencies', () => {
+    const stored = [...demo, nbu('XAU', '165000.5', '2026-11-03'), nbu('XDR', '56.1', '2026-11-03')]
+
+    expect(rateBoard(stored, 'UAH', '2026-11-03').map((row) => row.currency)).toEqual(['CZK', 'EUR', 'PLN', 'USD'])
+  })
+
   it('the day change is today minus the latest earlier day', () => {
     expect(rowOf('USD')?.change).toBe('0.12')
     expect(rowOf('PLN')?.change).toBe('-0.03')
