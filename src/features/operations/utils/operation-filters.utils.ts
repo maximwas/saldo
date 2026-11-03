@@ -62,17 +62,6 @@ export function resolveFilters(url: UrlFilters, today: string): OperationFilters
   }
 }
 
-/**
- * PostgREST `or` filter for the «Text» chip: the payee or the note contains the text. LIKE wildcards in the text are
- * literal (backslash-escaped), and the value is double-quoted so commas and brackets do not split the filter.
- */
-export function textFilter(text: string): string {
-  const like = `%${text.replace(/[\\%_]/g, (char) => `\\${char}`)}%`
-  const quoted = `"${like.replace(/[\\"]/g, (char) => `\\${char}`)}"`
-
-  return `counterparty.ilike.${quoted},note.ilike.${quoted}`
-}
-
 /** a filter other than the default «this month, everything» is on: the empty state then offers a reset */
 export const hasActiveFilters = (url: UrlFilters) =>
   url.period !== null ||

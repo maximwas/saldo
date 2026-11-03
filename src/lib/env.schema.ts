@@ -8,6 +8,7 @@ export const serverEnvSchema = {
   VAPID_PRIVATE_KEY: z.string().optional(), // phase 3: Web Push
   GOOGLE_CLIENT_ID: z.string().optional(), // phase 9: Google Calendar
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  MCP_WRITE_ENABLED: z.enum(['true', 'false']).optional(), // phase 10: MCP write tools, off unless 'true'
 }
 
 export const clientEnvSchema = {

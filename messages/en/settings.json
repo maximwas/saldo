@@ -6,6 +6,7 @@
     "access": "Access",
     "notifications": "Notifications",
     "currencies": "Currencies",
+    "security": "Security",
     "data": "Data"
   },
   "themeTitle": "Theme",
@@ -168,6 +169,16 @@
     "notifications": "Push, email, reminders",
     "data": "Export, backups, deletion",
     "notice": "Your role in the space «{space}» is «{role}». Only the owner, {owner}, can change data.",
-    "signedInAs": "Saldo · you are signed in as {email}"
+    "signedInAs": "Saldo · you are signed in as {email}",
+    "security": "AI access through MCP"
+  },
+  "security": {
+    "aiTitle": "AI access (MCP)",
+    "aiHint": "Claude, ChatGPT, Perplexity, Gemini and other AI clients read Saldo on your behalf at {url}. Each client gets access only after your consent and never deletes anything.",
+    "empty": "No client has access yet.",
+    "grantedAt": "Access since {date}",
+    "revoke": "Revoke",
+    "revoked": "Access revoked",
+    "revokeFailed": "Could not revoke the access. Try again."
   }
 }
