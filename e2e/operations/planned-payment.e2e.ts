@@ -13,13 +13,15 @@ test('«Оплачено» створює одну операцію, видал�
   const page = await pageAs('owner')
   const mark = `e2e-${crypto.randomUUID().slice(0, 8)}`
   const upcoming = page.getByRole('listitem').filter({ hasText: mark })
+  // with no open payments yet (a fresh database) the button is the empty state's longer «add a planned payment»
+  const addPayment = page.getByRole('button', { name: /^Додати (плановий )?платіж$/ })
 
   await ensureIncomeDate(page)
 
   const expenseBefore = await monthExpenseMinor(page)
 
   await page.goto('/payments')
-  await page.getByRole('button', { name: 'Додати платіж' }).click()
+  await addPayment.click()
 
   const form = page.getByRole('dialog')
 
@@ -60,7 +62,7 @@ test('«Оплачено» створює одну операцію, видал�
 
   // a plan whose date has passed without a payment waits in the overdue group (§7)
   await page.goto('/payments')
-  await page.getByRole('button', { name: 'Додати платіж' }).click()
+  await addPayment.click()
 
   const late = page.getByRole('dialog')
 

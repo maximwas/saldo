@@ -18,8 +18,8 @@ import { SpaceSwitcher } from './space-switcher.component'
 // Figma «Saldo» → Topbar 2:8195. Desktop (lg): padding 24/32, page-title, search 280, bell 44, Add button.
 // Mobile: padding 12/20 on app, SpaceSwitcher over a display/number title, bell 40 with a 44 hit area.
 // A settings subpage on a phone is a page of its own («Platform=Mobile Back» 45:120247): a 40 back button to the
-// section list, the subpage title, the bell; no space, no date. Every settings page on desktop has the space as its
-// subtitle instead of the date (Settings, Data desktop 43:116906 and every other settings desktop frame).
+// section list, the subpage title, the bell; no space, no date. Every settings page and Statistics on desktop have the
+// space as their subtitle instead of the date (Settings, Data desktop 43:116906, the Statistics desktop frame).
 const SETTINGS_SUBPAGES = ['general', 'access', 'notifications', 'currencies', 'security', 'data'] as const
 
 export function Topbar() {
@@ -35,7 +35,7 @@ export function Topbar() {
   const spacePage = pathname === '/space'
   const subpage = SETTINGS_SUBPAGES.find((key) => pathname === `/settings/${key}`)
   const title = titleKey ? translateNav(titleKey) : translateCommon('brand')
-  const settingsPage = pathname === '/settings' || subpage !== undefined
+  const spaceSubtitle = pathname === '/settings' || subpage !== undefined || pathname === '/statistics'
   const spaceName = ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? ''
   // the space's zone, not the browser's: «today» is the same for both people in a shared space
   const today = formatter.dateTime(now(), {
@@ -84,7 +84,7 @@ export function Topbar() {
             (spacePage || subpage) && 'max-lg:hidden',
           )}
         >
-          {settingsPage ? (
+          {spaceSubtitle ? (
             <>
               <span className="lg:hidden">{today}</span>
               <span className="max-lg:hidden">{translateSettings('hub.title', { space: spaceName })}</span>

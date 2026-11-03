@@ -1,6 +1,7 @@
 import type { CategoryColor } from '@/constants/category-colors.constants'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { type FxRate, findRate, findRateRow } from '@/lib/money/fx.utils'
+import { NOT_CURRENCIES } from './nbu-rates.utils'
 
 export type BoardRate = {
   currency: string
@@ -81,6 +82,11 @@ export function rateBoard(
   ])
 
   currencies.delete(baseCurrency)
+
+  // the metal rows a cron stored before it left them out
+  for (const code of NOT_CURRENCIES) {
+    currencies.delete(code)
+  }
 
   return [...currencies].sort().map((currency) => boardRow(rates, currency, baseCurrency, today))
 }

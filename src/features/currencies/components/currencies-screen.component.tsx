@@ -4,13 +4,12 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone } from '@/components/ui/skeleton.component'
-import { CURRENCIES } from '@/constants/currencies.constants'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { formatRate } from '@/lib/money/fx.utils'
 import { currencySymbol } from '@/lib/money/money.utils'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
-import { useRates } from '../hooks/currencies.hook'
+import { useRateHistory, useRates } from '../hooks/currencies.hook'
 import { rateBoard } from '../utils/currencies.utils'
 import { RateForm } from './rate-form.component'
 
@@ -26,26 +25,22 @@ export function CurrenciesScreen() {
   const canWrite = useCanWrite()
   const today = useToday()
   const query = useRates()
+  const historyQuery = useRateHistory()
   const { data } = query
-  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const history = historyQuery.data
+  const { failedLoad, retry } = useScreenQueryState([query, historyQuery], translate('refreshFailed'))
 
   if (failedLoad) {
     return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (data === undefined) {
+  if (data === undefined || history === undefined) {
     return <Bone className="h-72 rounded-card" />
   }
 
   const formatDate = (day: string) =>
     new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(`${day}T12:00:00`))
   const baseSymbol = currencySymbol(data.baseCurrency, locale)
-  // the daily NBU rows of every currency would bury the account pairs: the history keeps those, the card above has all
-  const history = data.rates.filter(
-    (row) =>
-      (CURRENCIES as readonly string[]).includes(row.baseCurrency) &&
-      (CURRENCIES as readonly string[]).includes(row.quoteCurrency),
-  )
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
