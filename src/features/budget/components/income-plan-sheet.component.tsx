@@ -15,7 +15,8 @@ import { type IncomeFormInput, type IncomeFormValues, incomeFormSchema } from '.
 
 const FORM_ID = 'budget-income-form'
 
-// the expected income of the month; never summed into the fact (§12). Empty = no plan.
+// Figma frames 41:111493 (desktop) / 41:112030 (mobile): the expected income of the month; never summed into the fact
+// (§12). Empty = no plan.
 export function IncomePlanSheet() {
   const translate = useTranslations('budget.incomeSheet')
   const monthLabel = useMonthLabel()

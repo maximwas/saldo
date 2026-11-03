@@ -10,8 +10,8 @@ import { useMonthLabel, useMonthOf } from '../hooks/month-label.hook'
 import { shiftMonth } from '../utils/budget.utils'
 import { MonthSwitch } from './month-switch.component'
 
-// Figma frame 2:28501 (mobile): the month card with an empty state: a blue wallet badge, title, text and «Copy from
-// the previous month». «Add a limit» (start from scratch) is not in the frame: without it a month with nothing to copy
+// Figma frames 41:107591 (desktop) / 2:28501 (mobile): the month card with an empty state: a blue wallet badge, title,
+// text, «Copy from the previous month» (secondary) and «Add a limit» (ghost): without it a month with nothing to copy
 // could not be started.
 export function BudgetEmpty({ month }: { month: string }) {
   const translate = useTranslations('budget')

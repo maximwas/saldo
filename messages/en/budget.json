@@ -1,5 +1,7 @@
 {
   "loadFailed": "Could not load the budget",
+  "stale": "No network. Showing data as of {time} — budget changes appear after sync.",
+  "refreshFailed": "Could not refresh the budget",
   "month": {
     "previous": "Previous month",
     "next": "Next month"
