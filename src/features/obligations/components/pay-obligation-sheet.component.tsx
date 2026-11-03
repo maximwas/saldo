@@ -48,8 +48,9 @@ const NO_OPTIONS: ObligationOptions = {
 
 // Figma «Saldo» → Pay step 55:127451 / 56:127816 (and Confirm payment 2:15014 / 2:15535 for the links): «Pay <name>»,
 // «Planned for 10.11», Amount, Payment date (today by default, «Today, 03.11», hint: the entry lands on that date),
-// Account (hint: the money leaves it), «Link an existing operation» rows with a Link button, footer Cancel + Paid. The
-// toast says where the fact went and «Show» opens that day in the calendar (55:127506).
+// Account (hint: the money leaves it), footer Cancel + Paid. «Link an existing operation» waits behind a quiet link,
+// so the default view is the pay step alone; opened, it lists the rows with a Link button. The toast says where the
+// fact went and «Show» opens that day in the calendar (55:127506).
 export function PayObligationSheet({ obligation, onClose }: PayObligationSheetProps) {
   const translate = useTranslations('obligations')
   const dbErrorText = useDbErrorText()
@@ -66,7 +67,8 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
     paymentId: crypto.randomUUID(),
     operationId: crypto.randomUUID(),
   }))
-  const candidates = useCandidateOperations(obligation.direction, true)
+  const [linking, setLinking] = useState(false)
+  const candidates = useCandidateOperations(obligation.direction, linking)
   const options = useObligationOptions().data ?? NO_OPTIONS
   const accountName = new Map(options.accounts.map((item) => [item.id, item.name]))
   const form = useForm<z.input<typeof payObligationFormSchema>, unknown, PayObligationFormValues>({
@@ -245,41 +247,47 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           />
         )}
       </form>
-      <section className="flex flex-col gap-1">
-        <h3 className="text-label font-medium text-text-secondary">{translate('pay.linkTitle')}</h3>
-        <p className="text-caption text-text-tertiary">{translate('pay.linkHint')}</p>
-        {(candidates.data ?? []).length === 0 && !candidates.isPending && (
-          <p className="text-caption text-text-tertiary">{translate('pay.linkEmpty')}</p>
-        )}
-        <ul className="flex flex-col" aria-busy={candidates.isPending}>
-          {candidates.isPending &&
-            [0, 1].map((row) => (
-              <li key={row} className="py-3">
-                <SkeletonLine end="w-20" />
-              </li>
+      {linking ? (
+        <section className="flex flex-col gap-1">
+          <h3 className="text-label font-medium text-text-secondary">{translate('pay.linkTitle')}</h3>
+          <p className="text-caption text-text-tertiary">{translate('pay.linkHint')}</p>
+          {(candidates.data ?? []).length === 0 && !candidates.isPending && (
+            <p className="text-caption text-text-tertiary">{translate('pay.linkEmpty')}</p>
+          )}
+          <ul className="flex flex-col" aria-busy={candidates.isPending}>
+            {candidates.isPending &&
+              [0, 1].map((row) => (
+                <li key={row} className="py-3">
+                  <SkeletonLine end="w-20" />
+                </li>
+              ))}
+            {(candidates.data ?? []).map((operation) => (
+              <OperationLine
+                key={operation.id}
+                title={operation.counterparty ?? operation.note ?? accountName.get(operation.accountId) ?? ''}
+                subtitle={`${shortDate(operation.occurredOn)} · ${accountName.get(operation.accountId) ?? ''}`}
+                minor={obligation.direction === 'out' ? -operation.amountMinor : operation.amountMinor}
+                currency={operation.currency}
+                action={
+                  <Button
+                    size="s"
+                    variant="secondary"
+                    type="button"
+                    disabled={pay.isPending}
+                    onClick={() => link(operation)}
+                  >
+                    {translate('pay.link')}
+                  </Button>
+                }
+              />
             ))}
-          {(candidates.data ?? []).map((operation) => (
-            <OperationLine
-              key={operation.id}
-              title={operation.counterparty ?? operation.note ?? accountName.get(operation.accountId) ?? ''}
-              subtitle={`${shortDate(operation.occurredOn)} · ${accountName.get(operation.accountId) ?? ''}`}
-              minor={obligation.direction === 'out' ? -operation.amountMinor : operation.amountMinor}
-              currency={operation.currency}
-              action={
-                <Button
-                  size="s"
-                  variant="secondary"
-                  type="button"
-                  disabled={pay.isPending}
-                  onClick={() => link(operation)}
-                >
-                  {translate('pay.link')}
-                </Button>
-              }
-            />
-          ))}
-        </ul>
-      </section>
+          </ul>
+        </section>
+      ) : (
+        <Button variant="ghost" size="s" type="button" className="self-start" onClick={() => setLinking(true)}>
+          {translate('pay.linkTitle')}
+        </Button>
+      )}
     </Sheet>
   )
 }

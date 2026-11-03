@@ -33,8 +33,9 @@ const STATE_TONE = {
 
 // Figma «Saldo» → Upcoming payments ListItem 2:12287 / 2:13332: Leading 40 (ServiceLogo, a letter tile, or the
 // CategoryBadge of a big expense), title body-medium, «source · installment · account» + StatusPill, a plan Amount over
-// the date on the right, desktop Secondary S «Paid» button; padding 12/0, gap 16. On mobile the row itself opens the
-// confirm sheet and a credit drops the account from the subtitle.
+// the date on the right, desktop Secondary S «Paid» button at the top (ListItem 2:8012 Trailing, conventions §4.6c);
+// padding 12/0, gap 16. On mobile the row itself opens the confirm sheet and a credit drops the account from the
+// subtitle.
 // a search result links here: bring the row into view
 const scrollIntoView = (node: HTMLLIElement | null) => node?.scrollIntoView({ block: 'center' })
 
@@ -85,7 +86,7 @@ export function ObligationRowItem({
       ref={linked ? scrollIntoView : undefined}
       className={cn('flex flex-col', linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card')}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <button
           type="button"
           disabled={!canWrite || !open}
@@ -125,7 +126,7 @@ export function ObligationRowItem({
           {ripple}
         </button>
         {canWrite && open && (
-          <Button size="s" variant="secondary" className="hidden lg:inline-flex" onClick={onPay}>
+          <Button size="s" variant="secondary" className="mt-3 hidden lg:inline-flex" onClick={onPay}>
             {translate(obligation.sourceType === 'debt' ? 'actions.toDebt' : 'actions.paid')}
           </Button>
         )}
