@@ -1,10 +1,11 @@
 'use client'
 
 import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Copy, Trash2, TriangleAlert, Undo2 } from 'lucide-react'
+import { Copy, Trash2, Undo2 } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Menu } from '@/components/ui/menu.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
@@ -527,10 +528,7 @@ export function OperationEditor({
           {' · '}
           {transfer ? null : <Amount minor={amount.minor} currency={amount.currency} />}
         </p>
-        <p className="flex items-start gap-3 rounded-inner bg-warning-soft px-4 py-3 text-body text-warning-text">
-          <TriangleAlert aria-hidden size={20} className="mt-0.5 shrink-0" />
-          {warning}
-        </p>
+        <Banner kind="warning">{warning}</Banner>
       </>
     )
   } else if (mode === 'create') {
@@ -706,15 +704,17 @@ export function OperationEditor({
     >
       {body}
       {conflict ? (
-        <p
+        <Banner
+          kind="warning"
           role="alert"
-          className="flex flex-wrap items-center gap-3 rounded-inner bg-warning-soft px-4 py-3 text-body text-warning-text"
+          action={
+            <Button type="button" size="s" variant="secondary" onClick={refresh}>
+              {translate('refresh')}
+            </Button>
+          }
         >
-          <span className="flex-1">{translate('conflict')}</span>
-          <Button type="button" size="s" variant="secondary" onClick={refresh}>
-            {translate('refresh')}
-          </Button>
-        </p>
+          {translate('conflict')}
+        </Banner>
       ) : null}
       {error ? (
         <p role="alert" className="text-body text-negative-text">
