@@ -4,7 +4,7 @@ import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Copy, Trash2, TriangleAlert, Undo2 } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { Menu } from '@/components/ui/menu.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
@@ -14,11 +14,11 @@ import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
-import { currencySymbol, formatMinor, fromMinor } from '@/lib/money/money.utils'
+import { formatRate, impliedRate } from '@/lib/money/fx.utils'
+import { fromMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localTime } from '@/lib/utils/clock.utils'
 import { useDraftsStore } from '@/store/drafts.store'
-import { useUiStore } from '@/store/ui.store'
 import {
   useCreateOperation,
   useCreateTransfer,
@@ -35,7 +35,6 @@ import {
 } from '../schemas/operation-form.schema'
 import { type TransferFormValues, toCreateTransferInput } from '../schemas/transfer-form.schema'
 import { displayAmount, refundableMinor } from '../utils/operation-display.utils'
-import { formatRate, impliedRate } from '../utils/rate.utils'
 import { OperationForm } from './operation-form.component'
 import { OperationSource } from './operation-source.component'
 import { ReceiptField } from './receipt-field.component'
@@ -100,6 +99,7 @@ export function OperationEditor({
   const translateKinds = useTranslations('operations.kinds')
   const translateSync = useTranslations('sync')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const formatter = useFormatter()
   const clock = useClock()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -122,7 +122,6 @@ export function OperationEditor({
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const desktop = useIsDesktop()
-  const hideAmounts = useUiStore((state) => state.hideAmounts)
   const [refunding, setRefunding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
@@ -239,9 +238,7 @@ export function OperationEditor({
     amount_minor,
     currency,
   }: ReturnType<typeof toCreateOperationInput>) {
-    const amount = hideAmounts
-      ? `•••• ${currencySymbol(currency, locale)}`
-      : formatMinor(direction === 'out' ? -amount_minor : amount_minor, currency, locale)
+    const amount = moneyText(direction === 'out' ? -amount_minor : amount_minor, currency)
 
     return translateSync(desktop ? 'savedOfflineOperation' : 'savedOfflineOperationShort', {
       kind: savedKind,
@@ -518,7 +515,7 @@ export function OperationEditor({
       ? translate('deleteConfirm.transfer')
       : translate(item.row.direction === 'out' ? 'deleteConfirm.balanceUp' : 'deleteConfirm.balanceDown', {
           account: accountName(item.row.accountId),
-          amount: formatMinor(item.row.amountMinor, item.row.currency, locale),
+          amount: moneyText(item.row.amountMinor, item.row.currency),
         })
 
     body = (
@@ -576,7 +573,7 @@ export function OperationEditor({
         </OperationForm>
         {refundedMinor > 0 ? (
           <p className="text-label text-text-secondary">
-            {translate('refund.refunded', { amount: formatMinor(refundedMinor, item.row.currency, locale) })}
+            {translate('refund.refunded', { amount: moneyText(refundedMinor, item.row.currency) })}
           </p>
         ) : null}
         {/* Figma 15:76568 «Refund»: a top border, padding-top 12, a full-width Ghost «record refund», the limit
@@ -588,7 +585,7 @@ export function OperationEditor({
               {translate('refund.submit')}
             </Button>
             <span className="text-caption text-text-tertiary">
-              {translate('refund.limit', { amount: formatMinor(refundLeft, item.row.currency, locale) })}
+              {translate('refund.limit', { amount: moneyText(refundLeft, item.row.currency) })}
             </span>
           </div>
         ) : null}

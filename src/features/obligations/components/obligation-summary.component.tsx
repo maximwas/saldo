@@ -1,7 +1,6 @@
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { useFormatter, useTranslations } from 'next-intl'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import type { ObligationRow } from '../api/obligations.api'
 import { type CurrencyTotals, summarizePayments } from '../utils/obligation-summary.utils'
 
@@ -11,21 +10,21 @@ type ObligationSummaryProps = {
 
 // «15 922,57 ₴ + 2,99 $»: the base sum first, then each other currency as it is
 function useTotalsText(totals: CurrencyTotals) {
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
-  const parts = [formatMinor(totals.base, baseCurrency, locale)]
+  const parts = [moneyText(totals.base, baseCurrency)]
 
   for (const { currency, minor } of totals.others) {
-    parts.push(formatMinor(minor, currency, locale))
+    parts.push(moneyText(minor, currency))
   }
 
   return parts.join(' + ')
 }
 
 function useOthersText(totals: CurrencyTotals) {
-  const locale = useLocale()
+  const moneyText = useMoneyText()
 
-  return totals.others.map(({ currency, minor }) => formatMinor(minor, currency, locale)).join(' + ')
+  return totals.others.map(({ currency, minor }) => moneyText(minor, currency)).join(' + ')
 }
 
 // Figma «Saldo» → Upcoming payments, desktop Summary 2:12226: StatCards (padding 24, gap 12, label-medium, Amount L plan,

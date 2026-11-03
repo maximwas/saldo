@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query'
 import { CalendarClock, ChevronRight } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationSource as Source } from '../operations.types'
 import { sourceHref } from '../utils/operation-display.utils'
@@ -25,7 +25,7 @@ export function OperationSource({ operationId }: OperationSourceProps) {
   const translate = useTranslations('operations.source')
   const translateType = useTranslations('obligations.source')
   const formatter = useFormatter()
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const sources = useQuery(operationQueries.sources(ledgerId, operationId))
   const desktop = useIsDesktop()
@@ -48,7 +48,7 @@ export function OperationSource({ operationId }: OperationSourceProps) {
         })
       : translate('meta', {
           type,
-          amount: formatMinor(source.plannedMinor, source.currency, locale),
+          amount: moneyText(source.plannedMinor, source.currency),
           section,
         })
   }

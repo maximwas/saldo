@@ -3,7 +3,7 @@
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { useRipple } from '@/components/ui/ripple.hook'
@@ -12,7 +12,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import type { Credit, CreditInstallment } from '../api/credits.api'
 import { useCredits, usePayInstallment } from '../hooks/credits.hook'
-import { type CreditProgress, creditProgress, dayText, moneyText } from '../utils/credits.utils'
+import { type CreditProgress, creditProgress, dayText } from '../utils/credits.utils'
 import { InstallmentSteps } from './installment-steps.component'
 
 type CreditRowProps = {
@@ -31,13 +31,14 @@ type StepsBlockProps = {
 function useNextTexts(credit: Credit, next: CreditInstallment | null) {
   const translate = useTranslations('credits')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
 
   if (!next) {
     return null
   }
 
-  const amount = moneyText(next.remainingMinor, credit.currency, locale)
+  const amount = moneyText(next.remainingMinor, credit.currency)
   const date = dayText(next.dueOn, locale)
 
   if (next.state === 'unconfirmed') {
@@ -73,7 +74,7 @@ function useNextTexts(credit: Credit, next: CreditInstallment | null) {
 // Figma «Saldo» → InstallmentSteps 2:10378: title + «amount × count», the segments, «N of M paid» + the next one
 function StepsBlock({ title, credit, progress, nextText }: StepsBlockProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
 
   return (
     <div className="flex min-w-0 flex-col gap-3 lg:flex-1">
@@ -81,7 +82,7 @@ function StepsBlock({ title, credit, progress, nextText }: StepsBlockProps) {
         <span className="min-w-0 truncate text-body font-medium text-text-primary">{title}</span>
         <span className="shrink-0 text-label text-text-secondary">
           {translate('perInstallment', {
-            amount: moneyText(credit.regularInstallmentMinor, credit.currency, locale),
+            amount: moneyText(credit.regularInstallmentMinor, credit.currency),
             count: credit.installmentsCount,
           })}
         </span>

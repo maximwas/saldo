@@ -1,9 +1,4 @@
-import { currencySymbol, formatMinor } from '@/lib/money/money.utils'
 import type { Credit, CreditInstallment } from '../api/credits.api'
-
-/** money inside a sentence: an unknown sum reads «? ₴», never 0 */
-export const moneyText = (minor: number | null, currency: string, locale: string) =>
-  minor === null ? `? ${currencySymbol(currency, locale)}` : formatMinor(minor, currency, locale)
 
 /** YYYY-MM-DD → 05.11 (or 05.11.2026); noon UTC, so no time zone moves the day */
 export const dayText = (iso: string, locale: string, withYear = false) =>

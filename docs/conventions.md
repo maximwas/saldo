@@ -337,8 +337,10 @@ return {
   `generateMetadata`, Server Actions). Функція перекладу зветься `translate` (`translateNav`, `translateError` для
   другого namespace). Константи й утиліти тримають ключі (`NavLink.key`, `PgError.kind` → `errors.db.<kind>`), а не
   тексти. Назва бренду — теж ключ (`common.brand`).
-- Дати — `useFormatter().dateTime(…, { timeZone })` з поясом простору; суми — `Amount` з `minor` і `currency`
-  (`formatMinor` у `src/lib/money/money.utils.ts`, рядок десяткового числа в `Intl.NumberFormat`, без float). Сирого
+- Дати — `useFormatter().dateTime(…, { timeZone })` з поясом простору; суми — `Amount` з `minor` і `currency`, сума в
+  тексті (підпис, tooltip, aria-label, toast) — `useMoneyText()` з того ж модуля: обидва ховають суми за «Приховати
+  суми». `formatMinor` (`src/lib/money/money.utils.ts`, рядок десяткового числа в `Intl.NumberFormat`, без float) — лише
+  для CSV, MCP і сервера. Курс — `formatRate` у `src/lib/money/fx.utils.ts`. Сирого
   `new Intl.DateTimeFormat('uk')` у компонентах немає.
 - `<html lang>` рендериться поза Suspense, де читається локаль (cacheComponents), тому його оновлює `AppProviders`.
 

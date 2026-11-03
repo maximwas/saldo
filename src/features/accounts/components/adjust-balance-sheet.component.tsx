@@ -1,9 +1,9 @@
 'use client'
 
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -15,7 +15,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { useClock, useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { useAdjustBalance } from '../hooks/accounts.hook'
 import { type AdjustmentFormValues, adjustmentFormSchema, toAdjustmentInput } from '../schemas/adjustment-form.schema'
 import type { AccountView } from '../utils/accounts.utils'
@@ -33,7 +33,7 @@ type AdjustBalanceSheetProps = {
 // shortcut: the actual balance is 0 or more (MoneyInput has no minus); a negative one is entered as an operation.
 export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceSheetProps) {
   const translate = useTranslations('accounts.adjust')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const clock = useClock()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -87,7 +87,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
       <p className="text-label text-text-secondary">
         {translate('now', {
           account: account.name,
-          amount: formatMinor(account.balanceMinor, currency, locale),
+          amount: moneyText(account.balanceMinor, currency),
         })}
       </p>
       <form id={FORM_ID} noValidate onSubmit={form.handleSubmit(submit)} className="flex flex-col gap-4">

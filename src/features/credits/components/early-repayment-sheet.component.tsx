@@ -1,10 +1,10 @@
 'use client'
 
 import { Info } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -19,7 +19,7 @@ import {
   earlyRepaymentFormSchema,
   toReplaceCreditScheduleInput,
 } from '../schemas/early-repayment-form.schema'
-import { moneyText, type Payoff } from '../utils/credits.utils'
+import type { Payoff } from '../utils/credits.utils'
 
 type EarlyRepaymentSheetProps = {
   credit: Credit
@@ -35,7 +35,7 @@ const FORM_ID = 'early-repayment-form'
 // new schedule, which Saldo never guesses (§9).
 export function EarlyRepaymentSheet({ credit, payoff, onCloseAction }: EarlyRepaymentSheetProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
   const replace = useReplaceCreditSchedule()
   const pay = usePayInstallment()
@@ -80,7 +80,7 @@ export function EarlyRepaymentSheet({ credit, payoff, onCloseAction }: EarlyRepa
       <form id={FORM_ID} onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <p className="text-label text-text-secondary">
           {translate('payoff.text', {
-            amount: moneyText(payoff.amountMinor, credit.currency, locale),
+            amount: moneyText(payoff.amountMinor, credit.currency),
             count: payoff.count,
           })}
         </p>

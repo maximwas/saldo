@@ -1,7 +1,8 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { Bone, SkeletonLine } from '@/components/ui/skeleton.component'
@@ -9,7 +10,6 @@ import { Switch } from '@/components/ui/switch.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
-import { formatMinor } from '@/lib/money/money.utils'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import type { ObligationRow } from '../api/obligations.api'
 import { useDeleteObligationPayment, useObligationOptions, useObligationPayments } from '../hooks/obligations.hook'
@@ -27,7 +27,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
   const translate = useTranslations('obligations')
   const translateErrors = useTranslations('errors')
   const format = useFormatter()
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const names = useMemberNames()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const options = useObligationOptions()
@@ -104,7 +104,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
             date: shortDate(obligation.dueOn),
             account: accountName,
             direction: obligation.direction,
-            amount: payment ? formatMinor(payment.amountMinor, obligation.currency, locale) : '',
+            amount: payment ? moneyText(payment.amountMinor, obligation.currency) : '',
           })}
         </p>
       )}

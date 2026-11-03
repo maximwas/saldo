@@ -5,7 +5,7 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { ActionSheet, Menu, type MenuItem } from '@/components/ui/menu.component'
@@ -13,7 +13,7 @@ import { useRipple } from '@/components/ui/ripple.hook'
 import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Switch } from '@/components/ui/switch.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { formatRate } from '@/lib/money/fx.utils'
 import { useUpdateAccount } from '../hooks/accounts.hook'
 import { ACCOUNT_KIND_STYLE, type AccountView } from '../utils/accounts.utils'
 
@@ -33,6 +33,7 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
   const translate = useTranslations('accounts')
   const translateCurrency = useTranslations('currencies')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const desktop = useIsDesktop()
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const canWrite = useCanWrite()
@@ -108,19 +109,16 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
     </>
   )
   const convertedText = () => {
-    if (account.baseMinor === null) {
+    if (account.baseMinor === null || account.rate === null) {
       return translate('noRate')
     }
 
-    const amount = formatMinor(account.baseMinor, baseCurrency, locale)
+    const amount = moneyText(account.baseMinor, baseCurrency)
 
     return desktop
       ? translate('converted', {
           amount,
-          rate: new Intl.NumberFormat(locale, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 4,
-          }).format(Number(account.rate)),
+          rate: formatRate(account.rate, locale),
         })
       : translate('convertedShort', { amount })
   }

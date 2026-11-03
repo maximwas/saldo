@@ -1,13 +1,13 @@
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { formatMinor } from '@/lib/money/money.utils'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
 import { useBudgetCategories, useCurrentBudget, useSaveLimit } from '../hooks/budget.hook'
 import { useMonthLabel } from '../hooks/month-label.hook'
@@ -31,7 +31,7 @@ type LimitWrite = {
 // category's remainder.
 export function LimitSheet({ categoryId }: { categoryId: string | null }) {
   const translate = useTranslations('budget.limitSheet')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const monthLabel = useMonthLabel()
   const { ledgerId, baseCurrency } = useLedger()
   const close = useBudgetSheetStore((state) => state.close)
@@ -59,7 +59,7 @@ export function LimitSheet({ categoryId }: { categoryId: string | null }) {
   const limited = new Set(data?.facts.filter((fact) => fact.limitId).map((fact) => fact.categoryId))
   const name = categories.find((category) => category.id === categoryId)?.name
   const monthName = monthLabel(month, false)
-  const money = (minor: number) => formatMinor(minor, baseCurrency, locale)
+  const money = (minor: number) => moneyText(minor, baseCurrency)
   const nameOf = (id: string | null) => categories.find((category) => category.id === id)?.name ?? ''
   const progress = existing ? limitProgress(existing) : null
   const over = existing && progress?.state === 'over' ? progress : null

@@ -2,17 +2,16 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { HandCoins, Plus } from 'lucide-react'
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { resumeWrites } from '@/lib/query/ledger-writes.mutations'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
 import type { DebtRow } from '../api/debts.api'
@@ -92,7 +91,7 @@ function sheetFor(debt: DebtRow, action: DebtAction): Sheet {
 // repayment), view-only Desktop 2:65522 (no action buttons).
 export function DebtsScreen() {
   const translate = useTranslations('debts')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const canWrite = useCanWrite()
   const queryClient = useQueryClient()
   const { online } = useSyncQueue()
@@ -137,7 +136,7 @@ export function DebtsScreen() {
         >
           {translate('offline', {
             person: waiting.person,
-            amount: formatMinor(queued[0]?.movement.amount_minor ?? 0, waiting.currency, locale),
+            amount: moneyText(queued[0]?.movement.amount_minor ?? 0, waiting.currency),
           })}
         </Banner>
       )}
@@ -230,7 +229,7 @@ type DebtTotalProps = {
 function DebtTotal({ debts, direction, label }: DebtTotalProps) {
   const translate = useTranslations('debts')
   const format = useFormatter()
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const totals = owedTotals(debts, direction)
   const count = openCount(debts, direction)
   const lead = partlyRepaid(debts, direction)
@@ -247,8 +246,8 @@ function DebtTotal({ debts, direction, label }: DebtTotalProps) {
   const leadText = lead
     ? translate('summary.repaidLead', {
         person: lead.person,
-        repaid: formatMinor(lead.repaidMinor, lead.currency, locale),
-        principal: formatMinor(lead.principalMinor, lead.currency, locale),
+        repaid: moneyText(lead.repaidMinor, lead.currency),
+        principal: moneyText(lead.principalMinor, lead.currency),
       })
     : null
   const extra = leadText ?? dueText

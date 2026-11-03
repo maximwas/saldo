@@ -11,7 +11,8 @@ const currencyFormat = (currency: string, locale: string) =>
 export const minorDigits = (currency: string) =>
   currencyFormat(currency, 'en').resolvedOptions().maximumFractionDigits ?? 0
 
-/** minor units → «1 234,56 ₴», «−800,00 €» in the active locale; Intl gets a decimal string, so no float touches the sum */
+/** minor units → «1 234,56 ₴», «−800,00 €» in the active locale; Intl gets a decimal string, so no float touches the sum.
+ * Text for CSV, MCP and the server; screen text goes through useMoneyText, which hides amounts */
 export function formatMinor(minor: bigint | number, currency: string, locale: string): string {
   const fractionDigits = minorDigits(currency)
 
@@ -49,3 +50,18 @@ export const currencySymbol = (currency: string, locale: string) =>
   currencyFormat(currency, locale)
     .formatToParts(0)
     .find((part) => part.type === 'currency')?.value ?? currency
+
+/** screen text of a sum: masked «•••• ₴» («hide amounts»), unknown «? ₴» (never 0) or the formatted sum */
+export function amountText(minor: bigint | number | null, currency: string, locale: string, hidden: boolean): string {
+  const symbol = currencySymbol(currency, locale)
+
+  if (hidden) {
+    return `•••• ${symbol}`
+  }
+
+  if (minor === null) {
+    return `? ${symbol}`
+  }
+
+  return formatMinor(minor, currency, locale)
+}
