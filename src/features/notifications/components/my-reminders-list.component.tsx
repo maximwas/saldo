@@ -47,7 +47,7 @@ export function MyRemindersList() {
       ) : (
         <ul className="flex flex-col">
           {rows.map(({ reminder, next }) => (
-            <li key={reminder.sourceId} className="flex items-center gap-4 py-3">
+            <li key={reminder.sourceId} className="flex items-start gap-4 py-3">
               <ServiceLogo name={reminder.title} />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <p className="truncate text-body font-medium text-text-primary">{reminder.title}</p>

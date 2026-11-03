@@ -30,7 +30,7 @@ function GrantRow({ grant, onRevokeAction, pending }: GrantRowProps) {
   const formatter = useFormatter()
 
   return (
-    <li className="flex items-center gap-3 border-b border-border py-3 last:border-b-0">
+    <li className="flex items-start gap-3 border-b border-border py-3 last:border-b-0">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle text-text-secondary">
         <Plug aria-hidden size={20} />
       </span>

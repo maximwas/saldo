@@ -59,7 +59,7 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
       {data && shown.length === 0 ? <p className="text-label text-text-secondary">{translate('empty')}</p> : null}
       <ul className="flex flex-col gap-4">
         {shown.map((payment) => (
-          <li key={payment.id} className="flex items-center gap-4">
+          <li key={payment.id} className="flex items-start gap-4">
             <ServiceLogo name={subscription?.name ?? ''} />
             <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="text-body font-medium text-text-primary">

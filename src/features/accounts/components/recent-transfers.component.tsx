@@ -83,7 +83,7 @@ export function RecentTransfers({ accounts }: RecentTransfersProps) {
             desktop ? (
               <li key={transfer.id} className="flex h-16 items-center gap-4 border-b border-border bg-card px-4">
                 <span className="w-18 shrink-0 text-label text-text-secondary">{dayOf(transfer)}</span>
-                <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
                   {icon('size-8')}
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="truncate text-body font-medium text-text-primary">
@@ -102,7 +102,7 @@ export function RecentTransfers({ accounts }: RecentTransfersProps) {
                 </span>
               </li>
             ) : (
-              <li key={transfer.id} className="flex items-center gap-4 py-3">
+              <li key={transfer.id} className="flex items-start gap-4 py-3">
                 {icon('size-10')}
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="truncate text-body font-medium text-text-primary">

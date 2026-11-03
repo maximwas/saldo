@@ -21,7 +21,7 @@ export function SettingsLink({ href, icon, title, subtitle }: SettingsLinkProps)
   return (
     <Link
       href={href}
-      className="relative -mx-3 flex h-16 cursor-pointer items-center gap-3 overflow-hidden rounded-md border-b border-border px-3 outline-none transition-colors group-last:border-b-0 hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
+      className="relative -mx-3 flex min-h-16 cursor-pointer items-start gap-3 overflow-hidden rounded-md border-b border-border px-3 py-2.5 outline-none transition-colors group-last:border-b-0 hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
       {...pressProps}
     >
       <span
@@ -34,7 +34,7 @@ export function SettingsLink({ href, icon, title, subtitle }: SettingsLinkProps)
         <span className="text-body font-medium text-text-primary">{title}</span>
         <span className="truncate text-caption text-text-tertiary">{subtitle}</span>
       </span>
-      <ChevronRight aria-hidden className="size-5 shrink-0 text-text-primary" />
+      <ChevronRight aria-hidden className="my-0.5 size-5 shrink-0 text-text-primary" />
       {ripple}
     </Link>
   )

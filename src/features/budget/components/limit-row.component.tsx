@@ -62,13 +62,13 @@ export function LimitRow({ fact, category }: LimitRowProps) {
               categoryId,
             })
           }
-          className="relative -m-2 flex cursor-pointer items-center gap-3 overflow-hidden rounded-md p-2 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
+          className="relative -m-2 flex cursor-pointer items-start gap-3 overflow-hidden rounded-md p-2 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
         >
           {content}
           {ripple}
         </button>
       ) : (
-        <div className="flex items-center gap-3">{content}</div>
+        <div className="flex items-start gap-3">{content}</div>
       )}
     </li>
   )

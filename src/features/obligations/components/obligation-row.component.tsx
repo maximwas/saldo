@@ -91,7 +91,7 @@ export function ObligationRowItem({
           disabled={!canWrite || !open}
           onClick={onPay}
           {...(canWrite && open ? pressProps : {})}
-          className="relative flex min-w-0 flex-1 items-center gap-4 -mx-3 overflow-hidden rounded-md px-3 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary enabled:cursor-pointer enabled:hover:bg-subtle disabled:cursor-default"
+          className="relative flex min-w-0 flex-1 items-start gap-4 -mx-3 overflow-hidden rounded-md px-3 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary enabled:cursor-pointer enabled:hover:bg-subtle disabled:cursor-default"
         >
           {obligation.sourceType === 'big_expense' ? (
             <CategoryBadge icon={category?.icon ?? null} color={category?.color ?? null} />

@@ -29,11 +29,12 @@ type SpaceRowProps = {
   children: React.ReactNode
 }
 
-// a clickable row: hover subtle and a ripple from the press point, like every list row
+// a clickable row: hover subtle and a ripple from the press point, like every list row; the avatar sits on the first
+// text line (items-start), a one-line row passes items-center
 function SpaceRow({ menu, onSelect, className, children }: SpaceRowProps) {
   const { pressProps, ripple } = useRipple()
   const rowClass = cn(
-    'relative flex items-center gap-3 overflow-hidden rounded-sm px-3 outline-none transition-colors',
+    'relative flex items-start gap-3 overflow-hidden rounded-sm px-3 outline-none transition-colors',
     className,
   )
 
@@ -81,20 +82,25 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
               {translate('space.list')}
             </Menu.GroupLabel>
             {spaces.map((space) => (
-              <SpaceRow key={space.id} menu onSelect={() => onSelectAction?.(space.id)} className="h-14 w-72">
+              <SpaceRow
+                key={space.id}
+                menu
+                onSelect={() => onSelectAction?.(space.id)}
+                className="min-h-14 w-72 py-1.5"
+              >
                 <LetterAvatar name={space.name} size={32} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-body font-medium text-text-primary">{space.name}</span>
                   <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
                 </span>
                 {space.id === current.id && (
-                  <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
+                  <Check aria-label={translate('currentSpace')} size={20} className="my-0.5 text-text-primary" />
                 )}
               </SpaceRow>
             ))}
           </Menu.Group>
           <Menu.Separator className="my-1 h-px bg-border" />
-          <SpaceRow menu onSelect={() => setCreating(true)} className="h-10 text-body text-text-primary">
+          <SpaceRow menu onSelect={() => setCreating(true)} className="h-10 items-center text-body text-text-primary">
             <Plus aria-hidden size={20} />
             {translate('space.create.action')}
           </SpaceRow>
@@ -114,7 +120,7 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
               setSheetOpen(false)
               onSelectAction?.(space.id)
             }}
-            className="h-14"
+            className="min-h-14 py-1.5"
           >
             <LetterAvatar name={space.name} size={32} />
             <span className="flex min-w-0 flex-1 flex-col">
@@ -122,7 +128,7 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
               <span className="truncate text-caption text-text-tertiary">{translate(`roles.${space.role}`)}</span>
             </span>
             {space.id === current.id && (
-              <Check aria-label={translate('currentSpace')} size={20} className="text-text-primary" />
+              <Check aria-label={translate('currentSpace')} size={20} className="my-0.5 text-text-primary" />
             )}
           </SpaceRow>
         ))}
@@ -133,7 +139,7 @@ export function SpaceSwitcher({ spaces, currentId, platform, onSelectAction }: S
             setSheetOpen(false)
             setCreating(true)
           }}
-          className="h-11 text-body text-text-primary"
+          className="h-11 items-center text-body text-text-primary"
         >
           <Plus aria-hidden size={20} />
           {translate('space.create.action')}

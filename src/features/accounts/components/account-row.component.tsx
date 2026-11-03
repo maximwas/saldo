@@ -126,7 +126,7 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
 
   if (desktop) {
     return (
-      <li className="relative -mx-3 flex items-center gap-4 overflow-hidden rounded-md border-b border-border px-3 py-4 transition-colors hover:bg-subtle">
+      <li className="relative -mx-3 flex items-start gap-4 overflow-hidden rounded-md border-b border-border px-3 py-4 transition-colors hover:bg-subtle">
         <CategoryIcon icon={account.icon ?? style.icon} color={account.color ?? style.color} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <Link
@@ -181,14 +181,14 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
           type="button"
           aria-label={`${account.name}: ${translate('menu.label')}`}
           onClick={() => setSheetOpen(true)}
-          className="relative -mx-3 -my-1 flex cursor-pointer items-center gap-3 overflow-hidden rounded-md px-3 py-1 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
+          className="relative -mx-3 -my-1 flex cursor-pointer items-start gap-3 overflow-hidden rounded-md px-3 py-1 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
           {...pressProps}
         >
           {head}
           {ripple}
         </button>
       ) : (
-        <div className="flex items-center gap-3">{head}</div>
+        <div className="flex items-start gap-3">{head}</div>
       )}
       {switches ? <div className="flex flex-col pl-12">{switches}</div> : null}
       {canWrite ? (

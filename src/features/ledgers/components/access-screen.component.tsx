@@ -194,7 +194,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
                     return (
                       <li
                         key={member.userId}
-                        className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border py-4 last:border-b-0"
+                        className="flex flex-wrap items-start gap-x-4 gap-y-3 border-b border-border py-4 last:border-b-0"
                       >
                         <LetterAvatar name={name} />
                         <div className="flex min-w-0 flex-1 basis-40 flex-col">
@@ -254,7 +254,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
               <Card title={translate('pendingTitle')}>
                 <ul className="flex flex-col gap-4">
                   {invites.map((invite) => (
-                    <li key={invite.id} className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                    <li key={invite.id} className="flex flex-wrap items-start gap-x-4 gap-y-3">
                       <LetterAvatar name={invite.email} />
                       <div className="flex min-w-0 flex-1 basis-40 flex-col">
                         <span className="truncate text-body font-semibold text-text-primary">{invite.email}</span>

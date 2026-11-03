@@ -174,7 +174,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
         }
       >
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-4 pb-5">
+          <div className="flex items-start gap-4 pb-5">
             <ServiceLogo name={credit.lender ?? credit.name} />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-3">

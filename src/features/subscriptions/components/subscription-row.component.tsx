@@ -88,7 +88,7 @@ export function SubscriptionRow({ subscription }: SubscriptionRowProps) {
         type="button"
         onClick={() => openCard(subscription.id)}
         {...pressProps}
-        className="relative -mx-3 -my-3 flex min-w-0 flex-1 cursor-pointer items-center gap-4 overflow-hidden rounded-md px-3 py-3 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
+        className="relative -mx-3 -my-3 flex min-w-0 flex-1 cursor-pointer items-start gap-4 overflow-hidden rounded-md px-3 py-3 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
       >
         <ServiceLogo name={subscription.name} />
         <span className="flex min-w-0 flex-1 flex-col gap-1">

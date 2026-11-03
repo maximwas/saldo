@@ -110,7 +110,7 @@ export function DebtRowItem({ debt, onActionAction }: DebtRowItemProps) {
     <li
       ref={linked ? scrollIntoView : undefined}
       className={cn(
-        'flex items-center gap-4 border-b border-border py-4 last:border-b-0',
+        'flex items-start gap-4 border-b border-border py-4 last:border-b-0',
         linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card',
       )}
     >

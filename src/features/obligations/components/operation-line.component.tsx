@@ -16,7 +16,7 @@ type OperationLineProps = {
 // padding 12/0, gap 16
 export function OperationLine({ title, subtitle, minor, currency, action }: OperationLineProps) {
   return (
-    <li className="flex items-center gap-4 py-3">
+    <li className="flex items-start gap-4 py-3">
       <ServiceLogo name={title} />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="truncate text-body font-medium text-text-primary">{title}</span>
