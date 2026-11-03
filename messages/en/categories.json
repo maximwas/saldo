@@ -17,6 +17,7 @@
   "empty": "No categories yet",
   "archiveTitle": "Archive · {count}",
   "archivedBadge": "Archived",
+  "systemBadge": "System",
   "menu": {
     "label": "Category actions",
     "up": "Move up",
