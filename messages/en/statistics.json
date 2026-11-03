@@ -7,10 +7,18 @@
     "income": "Income",
     "expense": "Expenses",
     "result": "Result",
-    "note": "{count, plural, one {# operation} other {# operations}} in the period. Transfers, loans and adjustments are not included; a refund reduces expenses.",
+    "expenseCaption": "{operations, plural, one {# operation} other {# operations}} · {categories, plural, one {# category} other {# categories}}",
+    "excluded": "Transfers, reserves, loans and adjustments are not included; a refund reduces expenses.",
     "unknown": "Not counted, no known rate: {count}."
   },
   "noData": "no data",
+  "others": "Others ({count})",
+  "emptyPeriod": {
+    "title": "No data for {month}",
+    "titleOther": "No data for this period",
+    "text": "Choose another period or add operations for this period.",
+    "show": "Show {month}"
+  },
   "noCategory": "No category",
   "total": "Total",
   "unknownBadge": "no rate: {count}",
@@ -19,7 +27,8 @@
   "state": {
     "offline": "No network. The statistics will appear as soon as the connection is back.",
     "error": "Could not load.",
-    "stale": "No network. Showing data as of {time}: new operations appear after sync."
+    "stale": "No network. Showing data as of {time} — new operations appear after sync.",
+    "refreshFailed": "Could not refresh the statistics"
   },
   "empty": {
     "operations": "No operations in this period.",

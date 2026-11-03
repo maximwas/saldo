@@ -24,9 +24,9 @@ export function BarsChart({ data, series, currency, summary }: BarsChartProps) {
   const locale = useLocale()
 
   return (
-    <div role="img" aria-label={summary} className="h-64 w-full text-caption">
+    <div role="img" aria-label={summary} className="h-50 w-full text-caption lg:h-58">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
+        <BarChart data={data} barGap={4}>
           <XAxis
             dataKey="label"
             tickLine={false}
@@ -42,7 +42,12 @@ export function BarsChart({ data, series, currency, summary }: BarsChartProps) {
             }}
             formatter={(value) => formatMinor(Number(value), currency, locale)}
           />
-          <Legend formatter={(name) => <span className="text-text-secondary">{name}</span>} />
+          <Legend
+            position="top"
+            iconType="circle"
+            iconSize={10}
+            formatter={(name) => <span className="text-text-secondary">{name}</span>}
+          />
           {series.map((item) => (
             <Bar
               isAnimationActive={false}
@@ -50,7 +55,8 @@ export function BarsChart({ data, series, currency, summary }: BarsChartProps) {
               dataKey={item.key}
               name={item.name}
               fill={item.fill}
-              radius={4}
+              radius={6}
+              maxBarSize={20}
             />
           ))}
         </BarChart>

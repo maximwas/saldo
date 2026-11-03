@@ -9,7 +9,7 @@ import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
 import { BUCKETS, isRolling, periodOptions, VIEWS } from '../utils/statistics-period.utils'
 
 const ALL = 'all'
-const CHIP = 'h-9 w-auto min-w-0 gap-1.5 rounded-full px-3 text-label font-medium'
+const CHIP = 'h-9.5 w-auto min-w-0 gap-1.5 rounded-full px-3 text-label font-medium'
 const CHIP_ON = 'border-primary-soft bg-primary-soft text-primary-text'
 
 // a chip has no visible label, so a screen-reader label is attached to the Select
@@ -68,7 +68,7 @@ export function StatisticsFilters() {
   }))
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <Chip
           id="statistics-period"
@@ -116,6 +116,7 @@ export function StatisticsFilters() {
         )}
       </div>
       <SegmentedControl
+        stretch
         label={translate('filters.view')}
         options={VIEWS.map((value) => ({
           value,
