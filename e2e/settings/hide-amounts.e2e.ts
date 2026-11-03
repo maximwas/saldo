@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test'
+import { pickCategory } from '../fixtures/category.fixture'
 import { ensureIncomeDate } from '../fixtures/overview.fixture'
 import { test } from '../fixtures/roles.fixture'
 
@@ -9,6 +10,25 @@ test('«Приховати суми» ховає й суми в тексті: г
   const page = await pageAs('owner')
 
   await ensureIncomeDate(page)
+
+  // the tiles need a month with a limit: on a fresh database the budget is its empty state
+  await page.goto('/budget')
+
+  const addLimit = page.getByRole('button', { name: 'Додати ліміт' })
+
+  await expect(addLimit.or(page.getByText('Результат, факт', { exact: true })).first()).toBeVisible()
+
+  if (await addLimit.isVisible()) {
+    await addLimit.click()
+
+    const limit = page.getByRole('dialog')
+
+    await pickCategory(page, limit, 'Кафе')
+    await limit.getByLabel('Ліміт на місяць').fill('1000')
+    await limit.getByRole('button', { name: 'Зберегти' }).click()
+    await expect(limit).toBeHidden()
+  }
+
   await page.goto('/settings/general')
 
   const hide = page.getByRole('switch', { name: 'Приховати суми' })

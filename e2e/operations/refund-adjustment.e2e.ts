@@ -48,7 +48,8 @@ test('повернення зменшує витрати місяця, а не �
   await expect(sheet).toBeHidden()
 
   await page.goto('/')
-  expect(await monthExpenseMinor(page)).toBe(expenseBefore + PURCHASE_MINOR - REFUND_MINOR)
+  // polled: the overview paints the cached figures first and refetches them; the others come in the same refetch
+  await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore + PURCHASE_MINOR - REFUND_MINOR)
   expect(await monthIncomeMinor(page)).toBe(incomeBefore)
 
   const cashBefore = await accountBalanceMinor(page, DEMO.savingsName)
@@ -72,7 +73,7 @@ test('повернення зменшує витрати місяця, а не �
   await expect(adjust).toBeHidden()
 
   await page.goto('/')
-  expect(await accountBalanceMinor(page, DEMO.savingsName)).toBe(actual)
+  await expect.poll(() => accountBalanceMinor(page, DEMO.savingsName)).toBe(actual)
   // an adjustment is neither income nor spending (§5)
   expect(await monthExpenseMinor(page)).toBe(expenseBefore + PURCHASE_MINOR - REFUND_MINOR)
   expect(await monthIncomeMinor(page)).toBe(incomeBefore)

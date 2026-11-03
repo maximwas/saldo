@@ -30,12 +30,15 @@ test('витрата змінює залишок і «Доступно» рів�
   await expect(page.getByRole('row', { name: new RegExp(mark) })).toHaveCount(1)
 
   await page.goto('/')
-  expect(await accountBalanceMinor(page, DEMO.cardName)).toBe(balanceBefore - EXPENSE_MINOR)
-  expect(await availableMinor(page)).toBe(availableBefore - EXPENSE_MINOR)
-  expect(await monthExpenseMinor(page)).toBe(expenseBefore + EXPENSE_MINOR)
+  // polled: the overview paints the cached figures first and refetches them
+  await expect.poll(() => accountBalanceMinor(page, DEMO.cardName)).toBe(balanceBefore - EXPENSE_MINOR)
+  await expect.poll(() => availableMinor(page)).toBe(availableBefore - EXPENSE_MINOR)
+  await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore + EXPENSE_MINOR)
 
-  // a reload must not change anything: the operation was counted once on the server, not once per render
+  // a reload must not change anything: the operation was counted once on the server, not once per render. The cache
+  // already shows the right figure, so read it only once the refetch is over
   await page.reload()
+  await page.waitForLoadState('networkidle')
   expect(await availableMinor(page)).toBe(availableBefore - EXPENSE_MINOR)
 })
 
@@ -57,8 +60,9 @@ test('переказ між рахунками не додає витрат мі
   await expect(sheet).toBeHidden()
 
   await page.goto('/')
-  expect(await monthExpenseMinor(page)).toBe(expenseBefore)
   // from the first account to the second one by default
-  expect(await accountBalanceMinor(page, DEMO.cardName)).toBe(cardBefore - 50_000)
-  expect(await accountBalanceMinor(page, DEMO.savingsName)).toBe(cashBefore + 50_000)
+  // polled: the overview paints the cached figures first and refetches them; the others come in the same refetch
+  await expect.poll(() => accountBalanceMinor(page, DEMO.cardName)).toBe(cardBefore - 50_000)
+  await expect.poll(() => accountBalanceMinor(page, DEMO.savingsName)).toBe(cashBefore + 50_000)
+  expect(await monthExpenseMinor(page)).toBe(expenseBefore)
 })
