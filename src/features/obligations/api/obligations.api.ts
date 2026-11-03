@@ -1,4 +1,5 @@
 import { listAccountOptions, listCategoryOptions } from '@/lib/finance/ledger-options.api'
+import { versionConflict } from '@/lib/supabase/version-conflict.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import {
   type CreateObligationInput,
@@ -393,10 +394,7 @@ export async function updateObligation(supabase: SaldoClient, input: UpdateOblig
   }
 
   if (data.length === 0) {
-    throw {
-      code: 'PT409',
-      message: 'obligation was changed by someone else',
-    }
+    throw versionConflict()
   }
 }
 

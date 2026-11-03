@@ -102,6 +102,13 @@
       },
       "reminder-rules": {
         "saveReminderRule": "Reminder"
+      },
+      "notifications": {
+        "markNotificationsRead": "Notifications read",
+        "clearReadNotifications": "Clearing notifications"
+      },
+      "ledgers": {
+        "setMyNotifyChannels": "Space reminders"
       }
     }
   },
