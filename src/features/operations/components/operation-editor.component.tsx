@@ -16,6 +16,7 @@ import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useMemberNames } from '@/lib/members/member-names.hook'
 import { formatRate, impliedRate } from '@/lib/money/fx.utils'
 import { fromMinor } from '@/lib/money/money.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localTime } from '@/lib/utils/clock.utils'
 import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
@@ -96,7 +97,7 @@ export function OperationEditor({
   onOpenAction,
 }: OperationEditorProps) {
   const translate = useTranslations('operations')
-  const translateErrors = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const translateKinds = useTranslations('operations.kinds')
   const translateSync = useTranslations('sync')
   const locale = useLocale()
@@ -263,7 +264,7 @@ export function OperationEditor({
     if (pgError.kind === 'conflict') {
       setConflict(true)
     } else {
-      setError(translateErrors(pgError.kind))
+      setError(dbErrorText(caught))
     }
   }
 

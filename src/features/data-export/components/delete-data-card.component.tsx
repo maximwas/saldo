@@ -12,7 +12,7 @@ import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { deleteLedgerData } from '../api/data-export.api'
 
 // Figma «Saldo» 43:116906 / 43:117209 (confirm 43:118142 / 43:118619, deleted 43:118839): owner only (the page renders it for the owner, delete_ledger_data refuses anyone else with 42501). The space, its
@@ -40,7 +40,7 @@ type DeleteDataSheetProps = {
 
 function DeleteDataSheet({ onCloseAction }: DeleteDataSheetProps) {
   const translate = useTranslations('settings.data')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const router = useRouter()
   const queryClient = useQueryClient()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -60,7 +60,7 @@ function DeleteDataSheet({ onCloseAction }: DeleteDataSheetProps) {
       await queryClient.invalidateQueries()
       router.refresh()
     } catch (caught) {
-      setError(translateError(toPgError(caught as { code?: string }).kind))
+      setError(dbErrorText(caught))
     } finally {
       setPending(false)
     }

@@ -11,7 +11,7 @@ import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { createLedgerInvite } from '../api/access.api'
 import { createInviteInputSchema, INVITE_ROLES } from '../schemas/access.schema'
@@ -48,7 +48,7 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const ledgerName = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const translate = useTranslations('settings.access')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const translateField = useTranslations('errors')
   const isDesktop = useIsSheetDialog()
   const [email, setEmail] = useState('')
@@ -131,7 +131,7 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
         changeOpen(false)
         notify.error(translate('inviteSheet.offline'))
       } else {
-        setError(translateError(toPgError({ code }).kind))
+        setError(dbErrorText(caught))
       }
     } finally {
       setIsPending(false)

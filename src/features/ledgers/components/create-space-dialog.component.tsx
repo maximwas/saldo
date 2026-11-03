@@ -8,7 +8,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { switchLedger } from '../api/ledgers.actions'
 import { createLedger } from '../api/ledgers.api'
 import { createLedgerSchema } from '../schemas/ledger.schema'
@@ -29,7 +29,7 @@ const CURRENCY_OPTIONS = CURRENCIES.map((value) => ({
 // (Dialog 2:10240 on desktop, BottomSheet 2:10281 on phones) with the login form's fields.
 export function CreateSpaceDialog({ open, onOpenChange }: CreateSpaceDialogProps) {
   const translate = useTranslations('shell.space.create')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const ids = {
     name: useId(),
     error: useId(),
@@ -65,7 +65,7 @@ export function CreateSpaceDialog({ open, onOpenChange }: CreateSpaceDialogProps
       onOpenChange(false)
       setLedgerId(crypto.randomUUID())
     } catch (caught) {
-      setError(translateError(toPgError(caught as { code?: string }).kind))
+      setError(dbErrorText(caught))
     } finally {
       setIsPending(false)
     }

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { setMyDisplayName } from '../api/access.api'
 
 type DisplayNameFormProps = {
@@ -23,7 +23,7 @@ export function DisplayNameForm({ name: initialName }: DisplayNameFormProps) {
   const router = useRouter()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const translate = useTranslations('settings.myName')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const [name, setName] = useState(initialName ?? '')
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
@@ -41,7 +41,7 @@ export function DisplayNameForm({ name: initialName }: DisplayNameFormProps) {
       notify.success(translate('saved'))
       router.refresh()
     } catch (caught) {
-      setError(translateError(toPgError(caught as { code?: string }).kind))
+      setError(dbErrorText(caught))
     } finally {
       setIsPending(false)
     }

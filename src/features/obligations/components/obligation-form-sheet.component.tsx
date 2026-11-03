@@ -17,7 +17,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import type { ObligationOptions, ObligationRow } from '../api/obligations.api'
 import { useCreateObligation, useObligationOptions, useUpdateObligation } from '../hooks/obligations.hook'
 import {
@@ -44,7 +44,7 @@ const NO_OPTIONS: ObligationOptions = {
 // No Figma frame for create / edit yet ( has Confirm payment only): built from the form primitives.
 export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheetProps) {
   const translate = useTranslations('obligations')
-  const translateErrors = useTranslations('errors')
+  const dbErrorText = useDbErrorText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const today = useToday()
   const options = useObligationOptions().data ?? NO_OPTIONS
@@ -77,7 +77,7 @@ export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheet
         notify.success(translate('form.saved'))
         onClose()
       },
-      onError: (error: unknown) => notify.error(translateErrors(`db.${toPgError(error as { code?: string }).kind}`)),
+      onError: (error: unknown) => notify.error(dbErrorText(error)),
     }
 
     if (obligation) {

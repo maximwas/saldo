@@ -9,7 +9,7 @@ import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import type { CURRENCIES } from '@/constants/currencies.constants'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import type { ObligationRow } from '../api/obligations.api'
 import { useUpdateObligation } from '../hooks/obligations.hook'
 
@@ -22,7 +22,7 @@ type ChangeDateSheetProps = {
 // series date (occurrence_on), the sum and the source stay, so a subscription or a credit keeps its schedule (§18).
 export function ChangeDateSheet({ obligation, onCloseAction }: ChangeDateSheetProps) {
   const translate = useTranslations('obligations')
-  const translateErrors = useTranslations('errors')
+  const dbErrorText = useDbErrorText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const update = useUpdateObligation()
   const [dueOn, setDueOn] = useState<string | null>(obligation.dueOn)
@@ -46,7 +46,7 @@ export function ChangeDateSheet({ obligation, onCloseAction }: ChangeDateSheetPr
           notify.success(translate('move.done'))
           onCloseAction()
         },
-        onError: (error) => notify.error(translateErrors(`db.${toPgError(error as { code?: string }).kind}`)),
+        onError: (error) => notify.error(dbErrorText(error)),
       },
     )
 

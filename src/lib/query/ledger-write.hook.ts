@@ -1,7 +1,6 @@
 import { onlineManager, type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useTranslations } from 'next-intl'
 import { notify } from '@/components/ui/toaster.component'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import type { LedgerWrite } from './ledger-writes.mutations'
 
 export type WriteCallbacks = {
@@ -36,11 +35,11 @@ function forgetSeenFailure(queryClient: QueryClient, key: readonly unknown[], in
  * errors.db.<kind> toast unless `quiet`.
  */
 export function useLedgerWrite<Input>(write: LedgerWrite<Input>, { quiet = false }: WriteOptions = {}) {
-  const translate = useTranslations('errors')
+  const dbErrorText = useDbErrorText()
   const queryClient = useQueryClient()
   const mutation = useMutation<unknown, unknown, Input>({
     mutationKey: write.key,
-    onError: quiet ? undefined : (error) => notify.error(translate(`db.${toPgError(error as { code?: string }).kind}`)),
+    onError: quiet ? undefined : (error) => notify.error(dbErrorText(error)),
   })
 
   const forget = (input: Input) => forgetSeenFailure(queryClient, write.key, input)

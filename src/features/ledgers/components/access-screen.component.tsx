@@ -15,7 +15,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { cancelLedgerInvite, getMemberContributions, removeMember, setMemberRole } from '../api/access.api'
 import type { Member, PendingInvite } from '../api/access.server'
@@ -53,7 +53,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
   const router = useRouter()
   const isDesktop = useIsSheetDialog()
   const translate = useTranslations('settings.access')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const formatter = useFormatter()
   const [inviteOpen, setInviteOpen] = useState(false)
   const [dialog, setDialog] = useState<Dialog>(null)
@@ -96,7 +96,7 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
       onDone()
       router.refresh()
     } catch (caught) {
-      const message = translateError(toPgError(caught as { code?: string }).kind)
+      const message = dbErrorText(caught)
 
       setDialogError(message)
       notify.error(message)
