@@ -6,6 +6,7 @@
     "access": "Доступ",
     "notifications": "Сповіщення",
     "currencies": "Валюти",
+    "security": "Безпека",
     "data": "Дані"
   },
   "themeTitle": "Тема",
@@ -168,6 +169,16 @@
     "notifications": "Push, email, нагадування",
     "data": "Експорт, резервні копії, видалення",
     "notice": "У вас роль «{role}» у просторі «{space}». Змінювати дані може власник — {owner}.",
-    "signedInAs": "Saldo · ви увійшли як {email}"
+    "signedInAs": "Saldo · ви увійшли як {email}",
+    "security": "AI-доступ через MCP"
+  },
+  "security": {
+    "aiTitle": "AI-доступ (MCP)",
+    "aiHint": "Claude, ChatGPT, Perplexity, Gemini та інші AI-клієнти читають Saldo від вашого імені за адресою {url}. Кожен клієнт отримує доступ лише після вашої згоди й нічого не видаляє.",
+    "empty": "Жодному клієнту ще не надано доступ.",
+    "grantedAt": "Доступ з {date}",
+    "revoke": "Відкликати",
+    "revoked": "Доступ відкликано",
+    "revokeFailed": "Не вдалося відкликати доступ. Спробуйте ще раз."
   }
 }

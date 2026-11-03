@@ -1,4 +1,4 @@
-import { Banknote, Bell, Database, Settings, Users } from 'lucide-react'
+import { Banknote, Bell, Database, Settings, ShieldCheck, Users } from 'lucide-react'
 import type { Route } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
@@ -27,7 +27,7 @@ export default function SettingsPage() {
 }
 
 // Figma 2:35785: padding 4/20/32 (the shell's), gap 16: Info Banner for a viewer, Card «Space «…»» with the rows, Leave
-// space for a member who is not the owner, the signed-in line. Security has no feature yet, so its row is left out.
+// space for a member who is not the owner, the signed-in line.
 async function SettingsSections() {
   const [session, ledger, translate, translateTabs, translateRoles] = await Promise.all([
     verifySession(),
@@ -86,6 +86,12 @@ async function SettingsSections() {
       icon: Banknote,
       title: translateTabs('currencies'),
       subtitle: <CurrenciesSummary />,
+    },
+    {
+      href: '/settings/security',
+      icon: ShieldCheck,
+      title: translateTabs('security'),
+      subtitle: translate('security'),
     },
     {
       href: '/settings/data',
