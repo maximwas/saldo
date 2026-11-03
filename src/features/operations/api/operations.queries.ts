@@ -1,10 +1,10 @@
 import { queryOptions } from '@tanstack/react-query'
+import { getPlannedToMonthEnd } from '@/lib/finance/planned-to-month-end.api'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import type { OperationFilters } from '../operations.types'
 import {
   getFormOptions,
-  getPlannedToMonthEnd,
   listOperationSources,
   listOperations,
   listReceipts,

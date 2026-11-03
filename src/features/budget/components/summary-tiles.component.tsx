@@ -4,20 +4,43 @@ import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { formatMinor } from '@/lib/money/money.utils'
+import { cn } from '@/lib/utils/cn.utils'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
 import type { BudgetMonth } from '../api/budget.api'
+import { usePlannedToMonthEnd } from '../hooks/budget.hook'
 import { budgetTotals } from '../utils/budget.utils'
 
 type TileProps = {
   label: string
-  children: React.ReactNode
+  /** a one-line note under the label (mobile) or under the amount (desktop) */
+  caption: React.ReactNode
+  amount: React.ReactNode
+  /** mobile: the note runs under the label and the amount, not beside it */
+  wideCaption?: boolean
 }
 
-function Tile({ label, children }: TileProps) {
+// Figma «Saldo» → phase 4 budget: desktop 2:12895 is a column (label, amount M, caption) in radius/inner, padding 16, gap 4;
+// mobile 2:16134 is a row (label over caption, amount S at the end) in radius/md, padding 12/16, gap 12/2
+function Tile({ label, caption, amount, wideCaption }: TileProps) {
   return (
-    <div className="flex flex-col gap-1 rounded-card bg-subtle px-4 py-3">
-      <dt className="text-label text-text-secondary">{label}</dt>
-      <dd className="flex flex-col gap-0.5">{children}</dd>
+    <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 rounded-md bg-subtle px-4 py-3 lg:flex lg:flex-1 lg:flex-col lg:items-stretch lg:gap-1 lg:rounded-inner lg:p-4">
+      <dt className="text-label font-medium text-text-primary lg:order-1 lg:text-text-secondary">{label}</dt>
+      <dd
+        className={cn(
+          'col-start-2 row-start-1 flex justify-end lg:order-2 lg:justify-start',
+          !wideCaption && 'row-span-2',
+        )}
+      >
+        {amount}
+      </dd>
+      <dd
+        className={cn(
+          'flex items-center gap-1 text-caption text-text-secondary lg:order-3 lg:text-label',
+          wideCaption ? 'col-span-2' : 'col-start-1',
+        )}
+      >
+        {caption}
+      </dd>
     </div>
   )
 }
@@ -34,7 +57,7 @@ function IncomePlanNote({ planMinor }: { planMinor: number | null }) {
       : translate('incomePlan', { amount: formatMinor(planMinor, currency, locale) })
 
   return (
-    <span className="flex items-center gap-1 text-caption text-text-secondary">
+    <>
       {text}
       {canWrite ? (
         <Button
@@ -47,12 +70,34 @@ function IncomePlanNote({ planMinor }: { planMinor: number | null }) {
           <Pencil className="size-3.5" aria-hidden />
         </Button>
       ) : null}
-    </span>
+    </>
+  )
+}
+
+type TileAmountProps = {
+  minor: number
+  kind?: 'income' | 'fact'
+}
+
+// the frames set Size S on mobile and M on desktop
+function TileAmount({ minor, kind }: TileAmountProps) {
+  const currency = useLedgerStore((ledger) => ledger.baseCurrency)
+
+  return (
+    <>
+      <Amount minor={minor} currency={currency} kind={kind} size="s" className="lg:hidden" />
+      <Amount minor={minor} currency={currency} kind={kind} size="m" className="max-lg:hidden" />
+    </>
   )
 }
 
 // income, expenses and the result of the month; only the fact: a plan is never summed into it (§12)
-export function SummaryTiles({ data }: { data: BudgetMonth }) {
+type SummaryTilesProps = {
+  data: BudgetMonth
+  month: string
+}
+
+export function SummaryTiles({ data, month }: SummaryTilesProps) {
   const translate = useTranslations('budget.summary')
   const locale = useLocale()
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
@@ -61,26 +106,30 @@ export function SummaryTiles({ data }: { data: BudgetMonth }) {
     totals.limitsMinor > 0
       ? translate('limitsTotal', { amount: formatMinor(totals.limitsMinor, currency, locale) })
       : translate('limitsNone')
+  const plannedMinor = usePlannedToMonthEnd(month)
+  // Figma 2:12934 / 2:16178: the result with the plans due by the end of this month; other months keep the note
+  const withPlanMinor = plannedMinor === null ? null : totals.resultMinor - plannedMinor
 
   return (
-    <dl className="grid gap-3 sm:grid-cols-3">
-      <Tile label={translate('income')}>
-        <Amount minor={totals.incomeFactMinor} currency={currency} kind="income" size="m" />
-        <IncomePlanNote planMinor={data.incomePlanMinor} />
-      </Tile>
-      <Tile label={translate('expense')}>
-        <Amount minor={-totals.expenseFactMinor} currency={currency} size="m" />
-        <span className="text-caption text-text-secondary">{limits}</span>
-      </Tile>
-      <Tile label={translate('result')}>
-        <Amount
-          minor={totals.resultMinor}
-          currency={currency}
-          kind={totals.resultMinor >= 0 ? 'income' : 'fact'}
-          size="m"
-        />
-        <span className="text-caption text-text-secondary">{translate('resultNote')}</span>
-      </Tile>
+    <dl className="flex flex-col gap-3 lg:flex-row lg:gap-4">
+      <Tile
+        label={translate('income')}
+        caption={<IncomePlanNote planMinor={data.incomePlanMinor} />}
+        amount={<TileAmount minor={totals.incomeFactMinor} kind="income" />}
+      />
+      <Tile label={translate('expense')} caption={limits} amount={<TileAmount minor={-totals.expenseFactMinor} />} />
+      <Tile
+        label={translate('result')}
+        caption={
+          withPlanMinor === null
+            ? translate('resultNote')
+            : translate('withPlan', {
+                amount: `${withPlanMinor > 0 ? '+' : ''}${formatMinor(withPlanMinor, currency, locale)}`,
+              })
+        }
+        amount={<TileAmount minor={totals.resultMinor} kind={totals.resultMinor >= 0 ? 'income' : 'fact'} />}
+        wideCaption
+      />
     </dl>
   )
 }

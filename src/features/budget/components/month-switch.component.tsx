@@ -9,6 +9,7 @@ type MonthSwitchProps = {
   month: string
 }
 
+// the card title of the frames (the month and year) with the arrows after it: the frames show no switch, the screen needs one
 export function MonthSwitch({ month }: MonthSwitchProps) {
   const translate = useTranslations('budget.month')
   const monthLabel = useMonthLabel()
@@ -16,6 +17,7 @@ export function MonthSwitch({ month }: MonthSwitchProps) {
 
   return (
     <div className="flex items-center gap-1">
+      <h2 className="mr-2 text-card-title text-text-primary first-letter:uppercase">{monthLabel(month)}</h2>
       <Button
         variant="ghost"
         size="s"
@@ -24,9 +26,6 @@ export function MonthSwitch({ month }: MonthSwitchProps) {
       >
         <ChevronLeft className="size-5" aria-hidden />
       </Button>
-      <h2 className="min-w-36 text-center text-card-title text-text-primary first-letter:uppercase">
-        {monthLabel(month)}
-      </h2>
       <Button variant="ghost" size="s" aria-label={translate('next')} onClick={() => setMonth(shiftMonth(month, 1))}>
         <ChevronRight className="size-5" aria-hidden />
       </Button>
