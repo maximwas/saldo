@@ -50,6 +50,6 @@ test('a section that is not built yet says «soon», what it will hold and leads
 
   await page.goto('/budget/goals')
   await expect(page.getByRole('heading', { name: '«Цілі та конверти» — скоро' })).toBeVisible()
-  await page.getByRole('link', { name: 'До розділу «Бюджет»' }).click()
+  await page.getByRole('button', { name: 'До розділу «Бюджет»' }).click()
   await expect(page).toHaveURL('/budget')
 })

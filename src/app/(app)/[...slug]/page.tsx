@@ -5,7 +5,6 @@ import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
 import { pageTitleKey, soonSection } from '@/components/layout/navigation.utils'
-import { SoonBadge } from '@/components/layout/soon-badge.component'
 import { Button } from '@/components/ui/button.component'
 import { EXTRA_TITLES, SIDEBAR_FOOTER_SECTION, SIDEBAR_SECTIONS } from '@/constants/navigation.constants'
 
@@ -63,7 +62,6 @@ async function Stub({ params }: Pick<PageProps<'/[...slug]'>, 'params'>) {
 
   return (
     <section className="flex max-w-xl flex-col items-start gap-3 rounded-card bg-card p-5 shadow-card lg:p-6">
-      <SoonBadge />
       <h2 className="text-card-title text-text-primary">
         {translate('soon.title', { title: translateNav(section.key) })}
       </h2>

@@ -39,7 +39,7 @@
   },
   "verdict": {
     "label": "Do you still need this subscription?",
-    "hint": "A note just for you: it does not change any payments. Subscriptions marked “Not sure” are gathered under the filter of the same name.",
+    "hint": "A note just for you: it does not change any payments. Subscriptions answered “Not sure” are gathered under the “Not sure” filter.",
     "keep": "Needed",
     "review": "Not sure",
     "cancel": "Not needed",
@@ -49,7 +49,13 @@
       "cancel": "{name}: marked “Not needed”. Payments go on until you cancel the subscription on its card"
     },
     "showReview": "Show",
-    "openCard": "Open"
+    "openCard": "Open",
+    "options": {
+      "keep": "Yes",
+      "review": "Not sure",
+      "cancel": "No"
+    },
+    "doneCancelHere": "{name}: marked “Not needed”. Payments go on until you press “Cancel subscription” on this page"
   },
   "defaults": {
     "open": "Default settings",

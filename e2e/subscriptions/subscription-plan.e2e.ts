@@ -98,8 +98,8 @@ test('позначка «Під питанням» каже, що змінило
 
   const row = page.getByRole('listitem').filter({ hasText: mark })
 
-  await row.getByRole('button', { name: 'Під питанням' }).click()
-  await expect(row.getByRole('button', { name: 'Під питанням' })).toHaveAttribute('aria-pressed', 'true')
+  await row.getByRole('button', { name: 'Не знаю' }).click()
+  await expect(row.getByRole('button', { name: 'Не знаю' })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByText(`${mark}: позначено «Під питанням»`, { exact: false })).toBeVisible()
   await page.getByRole('button', { name: 'Показати' }).click()
   await expect(page).toHaveURL(/state=review/)

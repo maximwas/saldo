@@ -51,7 +51,7 @@ type VerdictControlProps = SubscriptionStateProps & {
   explained?: boolean
 }
 
-/** «needed / not sure / not needed»: a viewer sees the mark, an editor sets it and a toast says what changed and where */
+/** «do you need it?» yes / not sure / no: a viewer sees the mark, an editor sets it and a toast says what changed and where */
 export function VerdictControl({ subscription, explained = false }: VerdictControlProps) {
   const translate = useTranslations('subscriptions.verdict')
   const canWrite = useCanWrite()
@@ -81,13 +81,18 @@ export function VerdictControl({ subscription, explained = false }: VerdictContr
         },
   }
 
+  // on the card the real cancel is on the same page, so the toast points there instead of «open the card»
+  const doneText = (verdict: SubscriptionVerdict) =>
+    verdict === 'cancel' && sub
+      ? translate('doneCancelHere', { name: subscription.name })
+      : translate(`done.${verdict}`, { name: subscription.name })
   const choose = (verdict: SubscriptionVerdict) =>
     update.mutate(toVerdictInput(subscription, verdict), {
-      onSuccess: () => notify.success(translate(`done.${verdict}`, { name: subscription.name }), actions[verdict]),
+      onSuccess: () => notify.success(doneText(verdict), actions[verdict]),
     })
 
   return (
-    <div className="flex flex-col gap-2 lg:max-w-xs">
+    <div className="flex shrink-0 flex-col gap-2">
       <span aria-hidden className="text-caption text-text-secondary">
         {translate('label')}
       </span>
@@ -99,10 +104,10 @@ export function VerdictControl({ subscription, explained = false }: VerdictContr
         onValueChange={choose}
         options={SUBSCRIPTION_VERDICTS.map((verdict) => ({
           value: verdict,
-          label: translate(verdict),
+          label: translate(`options.${verdict}`),
         }))}
       />
-      {explained ? <p className="text-caption text-text-secondary">{translate('hint')}</p> : null}
+      {explained ? <p className="text-caption text-text-secondary lg:max-w-xs">{translate('hint')}</p> : null}
     </div>
   )
 }
