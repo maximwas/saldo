@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useFormContext } from 'react-hook-form'
+import { useFormContext, useWatch } from 'react-hook-form'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
@@ -33,9 +33,12 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
   const translate = useTranslations('subscriptions.form')
   const translateStatus = useTranslations('subscriptions.status')
   const translateCurrency = useTranslations('currencies')
-  const { control, watch, setValue } = useFormContext<SubscriptionFormInput>()
+  const { control, setValue } = useFormContext<SubscriptionFormInput>()
   const options = useSubscriptionOptions()
-  const [service, currency, unit, status] = watch(['service', 'currency', 'unit', 'status'])
+  const [service, currency, unit, status] = useWatch({
+    control,
+    name: ['service', 'currency', 'unit', 'status'],
+  })
   const statuses = FORM_STATUSES.includes(status) ? FORM_STATUSES : [...FORM_STATUSES, status]
   const edit = mode === 'edit'
 
