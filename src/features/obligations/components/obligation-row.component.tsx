@@ -10,6 +10,7 @@ import { useRipple } from '@/components/ui/ripple.hook'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
+import { yearAware } from '@/lib/dates/day.utils'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useMemberNames } from '@/lib/members/members.hook'
 import { cn } from '@/lib/utils/cn.utils'
@@ -72,7 +73,10 @@ export function ObligationRowItem({
           total: obligation.installmentTotal ?? 0,
         })
       : null
-  const dateLabel = obligation.dueOn === today ? translate('todayLabel') : dayText(obligation.dueOn, 'short')
+  const dateLabel =
+    obligation.dueOn === today
+      ? translate('todayLabel')
+      : dayText(obligation.dueOn, yearAware('short', obligation.dueOn, today))
   const pill = awaitingSync ? 'paid' : obligation.state
   const paidKind = open ? 'plan' : 'fact'
   const amountKind = obligation.direction === 'in' ? 'income' : paidKind

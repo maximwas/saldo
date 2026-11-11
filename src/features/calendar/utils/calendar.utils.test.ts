@@ -71,7 +71,8 @@ describe('calendar period', () => {
     })
   })
 
-  it('sums the days, plan as in minus out', () => {
+  // decision 31.10: «with plan» subtracts the open outgoing plans only; expected income (a debt owed to me) is not added
+  it('sums the days, the plan only as what goes out', () => {
     const day = {
       factIncomeMinor: 0,
       factExpenseMinor: 25_000,
@@ -91,6 +92,7 @@ describe('calendar period', () => {
           ...day,
           day: '2026-10-31',
           factIncomeMinor: 6_200_000,
+          planInMinor: 250_000,
         },
       ]),
     ).toEqual({

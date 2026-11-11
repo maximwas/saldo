@@ -15,7 +15,7 @@ import { serviceLogoOf } from '@/components/ui/service-logo.utils'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
-import { formatRate, impliedRate } from '@/lib/money/fx.utils'
+import { exchangeRate, formatRate, impliedRate } from '@/lib/money/fx.utils'
 import type { RecordState } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationItem, PlannedRow } from '../operations.types'
@@ -127,8 +127,14 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
 
   function subtitleOf(item: OperationItem) {
     const { row } = item
+    // a transfer's rate comes from its own two amounts (the amount cell shows both), never from a leg's base value
+    const exchange = item.transfer ? exchangeRate(item.transfer, baseCurrency) : null
 
-    if (showsOriginal(item)) {
+    if (exchange) {
+      return translate('row.rate', { rate: formatRate(exchange.rate, locale) })
+    }
+
+    if (!item.transfer && showsOriginal(item)) {
       const rate = impliedRate(row.amountMinor, row.currency, row.baseAmountMinor as number, row.baseCurrency)
 
       return `${moneyText(row.amountMinor, row.currency)} · ${translate('row.rate', { rate: rate ? formatRate(rate, locale) : '' })}`

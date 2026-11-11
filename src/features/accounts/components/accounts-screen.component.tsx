@@ -62,11 +62,12 @@ export function AccountsScreen() {
     type: 'conjunction',
   })
   const currencies = list.format(total.unknownCurrencies)
-  // Figma 2:21073: «Total in hryvnia» is the base-currency accounts; the note adds the foreign ones at their rate
+  // «Total in hryvnia» is every counted account in the base currency (totalInBase), the sum the note names too; the note
+  // lists the base-currency accounts and the foreign ones with their rate. Figma 2:21073 showed the base-only sum, which
+  // contradicted its own sentence (QA 12.11)
   const counted = active.filter((account) => account.includeInTotal)
   const inBase = counted.filter((account) => account.currency === data.baseCurrency)
   const converted = counted.filter((account) => account.currency !== data.baseCurrency && account.baseMinor !== null)
-  const baseMinor = inBase.reduce((sum, account) => sum + account.balanceMinor, 0)
   // a converted account has a base value, so it has a rate
   const rateOf = (account: AccountView) => formatRate(account.rate ?? 0, locale)
   const totalLabel = translate('total', { currency: data.baseCurrency })
@@ -163,14 +164,14 @@ export function AccountsScreen() {
                   <span className="text-body font-semibold text-text-primary">{totalLabel}</span>
                   <span className="text-label text-text-secondary">{totalNote}</span>
                 </div>
-                <Amount minor={baseMinor} currency={data.baseCurrency} size="l" />
+                <Amount minor={total.totalMinor} currency={data.baseCurrency} size="l" />
               </div>
             ) : null}
             {tab === 'active' && !desktop ? (
               <div className="flex flex-col gap-1 pt-4">
                 <div className="flex items-center gap-3">
                   <span className="flex-1 text-body font-semibold text-text-primary">{totalLabel}</span>
-                  <Amount minor={baseMinor} currency={data.baseCurrency} size="m" />
+                  <Amount minor={total.totalMinor} currency={data.baseCurrency} size="m" />
                 </div>
                 <span className="text-caption text-text-secondary">{totalNote}</span>
               </div>

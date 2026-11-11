@@ -8,7 +8,9 @@ import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { Bone, SkeletonLine } from '@/components/ui/skeleton.component'
 import { Switch } from '@/components/ui/switch.component'
 import { notify } from '@/components/ui/toaster.component'
+import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { yearAware } from '@/lib/dates/day.utils'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useMemberNames } from '@/lib/members/members.hook'
 import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
@@ -29,6 +31,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
   const dbErrorText = useDbErrorText()
   const format = useFormatter()
   const dayText = useDayText()
+  const today = useToday()
   const moneyText = useMoneyText()
   const names = useMemberNames()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
@@ -97,7 +100,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
             title: obligation.title,
             number: obligation.sequenceNo ?? 0,
             total: obligation.installmentTotal ?? obligation.sequenceNo ?? 0,
-            date: dayText(obligation.dueOn, 'short'),
+            date: dayText(obligation.dueOn, yearAware('short', obligation.dueOn, today)),
             account: accountName,
             direction: obligation.direction,
             amount: payment ? moneyText(payment.amountMinor, obligation.currency) : '',

@@ -12,7 +12,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import type { Credit, CreditInstallment } from '../api/credits.api'
-import { useCredits, usePayInstallment } from '../hooks/credits.hook'
+import { useCredits, useInstallmentsText, usePayInstallment } from '../hooks/credits.hook'
 import { type CreditProgress, creditProgress } from '../utils/credits.utils'
 import { InstallmentSteps } from './installment-steps.component'
 
@@ -75,18 +75,13 @@ function useNextTexts(credit: Credit, next: CreditInstallment | null) {
 // Figma «Saldo» → InstallmentSteps 2:10378: title + «amount × count», the segments, «N of M paid» + the next one
 function StepsBlock({ title, credit, progress, nextText }: StepsBlockProps) {
   const translate = useTranslations('credits')
-  const moneyText = useMoneyText()
+  const installmentsText = useInstallmentsText()
 
   return (
     <div className="flex min-w-0 flex-col gap-3 lg:flex-1">
       <div className="flex items-baseline justify-between gap-3">
         <span className="min-w-0 truncate text-body font-medium text-text-primary">{title}</span>
-        <span className="shrink-0 text-label text-text-secondary">
-          {translate('perInstallment', {
-            amount: moneyText(credit.regularInstallmentMinor, credit.currency),
-            count: credit.installmentsCount,
-          })}
-        </span>
+        <span className="shrink-0 text-label text-text-secondary">{installmentsText(credit)}</span>
       </div>
       <InstallmentSteps steps={progress.steps} />
       <div className="flex items-center justify-between gap-3">

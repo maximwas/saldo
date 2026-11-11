@@ -2,7 +2,7 @@
 -- Composite FKs keep every reference inside one space; RPCs are idempotent by client id and raise PT409 on a stale
 -- version. Fictional data only.
 begin;
-select plan(74);
+select plan(76);
 
 create function pg_temp.login(p_user uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_user, 'role', 'authenticated')::text, true);
@@ -162,6 +162,8 @@ select is(
   (select state from public.pay_obligation('e0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 1, 35000,
      pg_temp.op('b0000000-0000-4000-8000-000000000003', 'expense', 'a0000000-0000-4000-8000-000000000001', 35000, 'UAH'))),
   'paid', 'paying the full amount makes the obligation paid');
+select is((select counterparty from public.operations where id = 'b0000000-0000-4000-8000-000000000003'), 'Інтернет',
+  'the operation a payment writes is named after the plan');
 select is(pg_temp.balance('a0000000-0000-4000-8000-000000000001'), 53000::bigint, 'the payment is one debit');
 select is(
   (select paid_minor from public.pay_obligation('e0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 1, 35000,
@@ -204,13 +206,15 @@ select is(
   12450::bigint, 'a USD payment of a UAH obligation is converted by the space rate');
 
 -- editing a paying operation keeps the payment and the obligation consistent (update_operation)
-insert into public.obligations (id, ledger_id, title, occurrence_on, due_on, planned_amount_minor, currency)
+insert into public.obligations (id, ledger_id, title, occurrence_on, due_on, planned_amount_minor, currency, category_id)
 values ('d0000000-0000-4000-8000-000000000004', pg_temp.space('shared'), 'Електрика', current_date + 5, current_date + 5,
-  20000, 'UAH');
+  20000, 'UAH', pg_temp.cat('Житло', 'expense'));
 select is(
   (select state from public.pay_obligation('e0000000-0000-4000-8000-000000000007', 'd0000000-0000-4000-8000-000000000004', 1, 20000,
      pg_temp.op('b0000000-0000-4000-8000-000000000008', 'expense', 'a0000000-0000-4000-8000-000000000001', 20000, 'UAH'))),
   'paid', 'an operation pays the electricity in full');
+select is((select category_id from public.operations where id = 'b0000000-0000-4000-8000-000000000008'),
+  pg_temp.cat('Житло', 'expense'), 'the operation a payment writes takes the plan category');
 select throws_ok(
   $$ select public.update_operation('b0000000-0000-4000-8000-000000000008', 1, '{"amount_minor": 15000}') $$,
   '23514', null, 'a paying operation cannot go below the part it paid');

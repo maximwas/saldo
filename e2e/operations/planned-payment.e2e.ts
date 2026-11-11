@@ -40,9 +40,13 @@ test('«Оплачено» створює одну операцію, видал�
   await expect(pay).toBeHidden()
   await expect(page.getByRole('listitem').filter({ hasText: mark })).toContainText('Оплачено')
 
+  // the operation the payment wrote is named after the plan (QA 12.11: it had no payee, so Operations showed the
+  // category or the operation kind while the calendar showed the plan's name)
+  await page.goto('/operations')
+  await expect(page.getByRole('row', { name: new RegExp(mark) })).toHaveCount(1)
+
   await page.goto('/')
-  // the payment's operation has no payee to find it by: the month's expenses grew by it once (polled: the overview
-  // shows the cached month first and refetches it)
+  // the month's expenses grew by it once (polled: the overview shows the cached month first and refetches it)
   await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore + 35_000)
 
   await page.goto('/payments')

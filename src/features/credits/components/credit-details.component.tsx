@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card.component'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import type { Credit } from '../api/credits.api'
-import { useCredits } from '../hooks/credits.hook'
+import { useCredits, useInstallmentsText } from '../hooks/credits.hook'
 import { activeInstallments, creditProgress } from '../utils/credits.utils'
 
 type CreditDetailsProps = {
@@ -48,6 +48,7 @@ export function CreditDetails({ credit, footer }: CreditDetailsProps) {
   const account = accounts.find((option) => option.id === credit.accountId)?.name
   const unknown = translate('details.unknown')
   const money = (minor: number | null) => moneyText(minor, credit.currency)
+  const installmentsText = useInstallmentsText()
 
   return (
     <Card title={translate('details.title')}>
@@ -67,10 +68,7 @@ export function CreditDetails({ credit, footer }: CreditDetailsProps) {
           {credit.openedOn ? dayText(credit.openedOn, 'shortYear') : unknown}
         </DetailRow>
         <DetailRow desktopOnly label={translate('details.regular')}>
-          {translate('perInstallment', {
-            amount: money(credit.regularInstallmentMinor),
-            count: credit.installmentsCount,
-          })}
+          {installmentsText(credit)}
         </DetailRow>
         {last && (
           <DetailRow desktopOnly label={translate('details.last')}>

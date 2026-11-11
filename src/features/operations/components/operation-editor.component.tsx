@@ -16,7 +16,7 @@ import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
-import { formatRate, impliedRate } from '@/lib/money/fx.utils'
+import { exchangeRate, formatRate } from '@/lib/money/fx.utils'
 import { fromMinor } from '@/lib/money/money.utils'
 import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
@@ -109,6 +109,7 @@ export function OperationEditor({
   const clock = useClock()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const canWrite = useCanWrite()
   const queryClient = useQueryClient()
   const options = useQuery(operationQueries.options(ledgerId))
@@ -377,7 +378,7 @@ export function OperationEditor({
         id: item.row.id,
         expectedVersion: item.row.version,
       })
-      done(translate('toast.deleted'))
+      done(translate(item.transfer ? 'toast.transferDeleted' : 'toast.deleted'))
     })
 
   function refresh() {
@@ -506,9 +507,12 @@ export function OperationEditor({
     body = (
       <>
         <p className="text-body text-text-secondary">
-          {name} · {dayText(item.row.occurredOn, 'dayMonthYear')} · {accountName(item.row.accountId)}
+          {name} · {dayText(item.row.occurredOn, 'dayMonthYear')} ·{' '}
+          {transfer
+            ? `${accountName(transfer.fromAccountId)} → ${accountName(transfer.toAccountId)}`
+            : accountName(item.row.accountId)}
           {' · '}
-          {transfer ? null : <Amount minor={amount.minor} currency={amount.currency} />}
+          <Amount minor={amount.minor} currency={amount.currency} />
         </p>
         <Banner kind="warning">{warning}</Banner>
       </>
@@ -578,9 +582,7 @@ export function OperationEditor({
   } else if (item) {
     const { amount } = summary(item)
     const transfer = item.transfer
-    const rate = transfer
-      ? impliedRate(transfer.fromAmountMinor, transfer.fromCurrency, transfer.toAmountMinor, transfer.toCurrency)
-      : null
+    const exchange = transfer ? exchangeRate(transfer, baseCurrency) : null
     // Figma 15:81303: the payee and the category under the amount
     const payee =
       [item.row.counterparty, categoryName(item.row.categoryId)].filter(Boolean).join(' · ') ||
@@ -604,8 +606,8 @@ export function OperationEditor({
             ],
           ] as [string, React.ReactNode][])
         : ([[translate('form.details.account'), accountName(item.row.accountId)]] as [string, React.ReactNode][])),
-      ...(transfer && rate && transfer.fromCurrency !== transfer.toCurrency
-        ? ([[translate('form.details.rate'), formatRate(rate, locale)]] as [string, React.ReactNode][])
+      ...(exchange
+        ? ([[translate('form.details.rate'), formatRate(exchange.rate, locale)]] as [string, React.ReactNode][])
         : []),
       ...(transfer?.feeMinor
         ? ([

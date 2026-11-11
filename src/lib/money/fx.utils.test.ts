@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   convertAt,
   convertMinor,
+  exchangeRate,
   type FxRate,
   findRate,
   findRateRow,
@@ -184,5 +185,62 @@ describe('formatRateChange', () => {
     expect(formatRateChange('0.12', 'uk', 2)).toBe('+0,12')
     expect(formatRateChange('-0.03', 'uk', 2)).toBe('\u22120,03')
     expect(formatRateChange('0', 'uk', 2)).toBe('0,00')
+  })
+})
+
+describe('exchangeRate', () => {
+  it('reads hryvnias per 1 euro whichever way the money went', () => {
+    const toEuro = exchangeRate(
+      {
+        fromAmountMinor: 100_000,
+        fromCurrency: 'UAH',
+        toAmountMinor: 2_400,
+        toCurrency: 'EUR',
+      },
+      'UAH',
+    )
+    const fromEuro = exchangeRate(
+      {
+        fromAmountMinor: 2_400,
+        fromCurrency: 'EUR',
+        toAmountMinor: 100_000,
+        toCurrency: 'UAH',
+      },
+      'UAH',
+    )
+
+    expect(toEuro && formatRate(toEuro.rate, 'uk')).toBe('41,6667')
+    expect(toEuro?.unit).toBe('EUR')
+    expect(fromEuro && formatRate(fromEuro.rate, 'uk')).toBe('41,6667')
+    expect(fromEuro?.unit).toBe('EUR')
+  })
+
+  it('gives the target per 1 unit of the source when neither side is the base currency', () => {
+    const rate = exchangeRate(
+      {
+        fromAmountMinor: 10_000,
+        fromCurrency: 'USD',
+        toAmountMinor: 9_200,
+        toCurrency: 'EUR',
+      },
+      'UAH',
+    )
+
+    expect(rate?.rate.toString()).toBe('0.92')
+    expect(rate?.unit).toBe('USD')
+  })
+
+  it('has no rate inside one currency', () => {
+    expect(
+      exchangeRate(
+        {
+          fromAmountMinor: 100,
+          fromCurrency: 'UAH',
+          toAmountMinor: 100,
+          toCurrency: 'UAH',
+        },
+        'UAH',
+      ),
+    ).toBeNull()
   })
 })

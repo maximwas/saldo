@@ -1,6 +1,8 @@
 import { useTranslations } from 'next-intl'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
+import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { yearAware } from '@/lib/dates/day.utils'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import type { ObligationRow } from '../api/obligations.api'
 import { type CurrencyTotals, summarizePayments } from '../utils/obligation-summary.utils'
@@ -34,6 +36,7 @@ function useOthersText(totals: CurrencyTotals) {
 export function ObligationSummary({ open }: ObligationSummaryProps) {
   const translate = useTranslations('obligations.summary')
   const dayText = useDayText()
+  const today = useToday()
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const summary = summarizePayments(open, baseCurrency)
   const plannedText = useTotalsText(summary.planned)
@@ -44,8 +47,8 @@ export function ObligationSummary({ open }: ObligationSummaryProps) {
     return null
   }
 
-  // the last planned date is often a year ahead: without the year it read as a date already past
-  const until = dayText(summary.untilOn, 'shortYear')
+  // the last planned date is often a year ahead: the year shows whenever it is not this year
+  const until = dayText(summary.untilOn, yearAware('short', summary.untilOn, today))
   const caption = [
     translate('count', { count: summary.count }),
     plannedOthers ? translate('more', { amount: plannedOthers }) : null,

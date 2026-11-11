@@ -1,6 +1,6 @@
 import { createFormatter, createTranslator } from 'next-intl'
 import { describe, expect, it } from 'vitest'
-import { type DayFormat, dayToDate, formatDay, monthOf } from '@/lib/dates/day.utils'
+import { type DayFormat, dayToDate, formatDay, monthOf, yearAware } from '@/lib/dates/day.utils'
 import calendarEn from '../../../messages/en/calendar.json'
 import commonEn from '../../../messages/en/common.json'
 import operationsEn from '../../../messages/en/operations.json'
@@ -234,4 +234,12 @@ describe('the day text in any zone of the space or the browser', () => {
       expect(DAYS.map((day) => render('month', day.slice(0, 7), timeZone))).toEqual(EXPECTED.month.uk)
     },
   )
+})
+
+describe('yearAware', () => {
+  it('keeps a day of this year short and adds the year to any other', () => {
+    expect(yearAware('short', '2026-11-05', '2026-11-12')).toBe('short')
+    expect(yearAware('short', '2027-11-05', '2026-11-12')).toBe('shortYear')
+    expect(yearAware('dayMonth', '2025-12-31', '2026-01-02')).toBe('dayMonthYear')
+  })
 })

@@ -92,7 +92,8 @@ type DeletePaymentParams = {
 
 const OPEN_STATES = ['plan', 'partial', 'unconfirmed']
 const PAID_LIMIT = 10
-const CANDIDATE_LIMIT = 10
+// the newest operations the pay sheet ranks for linking (operation-candidates.utils) and shows the best 10 of
+const CANDIDATE_POOL = 50
 const STATE_COLUMNS =
   'obligation_id, title, source_type, direction, due_on, planned_amount_minor, paid_minor, remaining_minor, currency, account_id, category_id, state, version, source_id, sequence_no, created_by'
 
@@ -294,7 +295,7 @@ export async function listCandidateOperations(
     .in('kind', ['income', 'expense'])
     .order('occurred_on', { ascending: false })
     .order('occurred_at', { ascending: false })
-    .limit(CANDIDATE_LIMIT)
+    .limit(CANDIDATE_POOL)
 
   if (error) {
     throw error

@@ -17,6 +17,7 @@
   "estimatedNote": "Estimated schedule, not the bank's: the sums are split evenly. Check the last instalments and the date rules with the lender.",
   "installments": "Instalments",
   "perInstallment": "{amount} × {count}",
+  "perInstallmentLast": "{amount} × {count} + {last}",
   "paidOf": "{paid} of {total} paid",
   "next": "Next {date} · {amount}",
   "today": "Today · {amount}",
