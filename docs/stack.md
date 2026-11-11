@@ -105,7 +105,7 @@
 | Supabase pg_cron / pg_net | на Free є (preview 30.10.2026: pg_cron 1.6.4, pg_net 0.20.4); pg_net лише POST JSON, відповіді живуть 6 год | нагадування кожні 10 хв; URL і секрет — у Vault кожного середовища |
 | Cloudflare Workers Free | 10 мс CPU на запит і на Cron Trigger, 100 000 запитів на добу, 50 subrequests, 5 Cron Triggers; `limits.cpu_ms` відхиляється (помилка 100328) | SSR сторінки з кількома запитами до Supabase легко перевищує 10 мс (помилка 1102) — Free лише для перевірки |
 | Cloudflare Workers Paid ($5/міс.) | CPU 30 с за замовчуванням, до 5 хв (`limits.cpu_ms`); Cron Trigger з інтервалом ≥ 1 год — 15 хв CPU; 10 000 subrequests | план для production; `limits` у `wrangler.jsonc` не задано — працює на обох планах |
-| Cloudflare Workers, обидва плани | Worker до 64 MiB без стиснення (з 04.09.2026 ліміту на gzip немає), старт глобального scope ≤ 1 с, 128 МБ пам'яті | Saldo 11.2026: 21,4 MiB / gzip 4,2 MiB |
+| Cloudflare Workers, обидва плани | Worker до 64 MiB без стиснення (з 04.09.2026 ліміту на gzip немає), старт глобального scope ≤ 1 с, 128 МБ пам'яті | Saldo 11.2026: 19,6 MiB / gzip 4,06 MiB, старт ~0,4 с локально |
 | Workers Builds | Free 3000 хв/міс., 1 збірка одночасно; Paid 6000 хв; збірка до 20 хв | non-production builds вимкнені (architecture §7 «Хостинг») |
 | Google OAuth (unverified, In production) | екран попередження, до 100 користувачів | двоє, кожен підключає свій календар; довговічність токена перевірити |
 | Web Push | без ліміту з боку браузерів | підписки на кожен пристрій кожного учасника; нагадування простору — кожному учаснику з увімкненими каналами |

@@ -6,7 +6,7 @@ import { createLogger } from './logger.utils'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-// Production: JSON lines for Workers Logs (process.stdout / stderr under nodejs_compat); error and fatal go to stderr.
+// Production: JSON lines for Workers Logs (stdout / stderr under nodejs_compat); error and fatal go to stderr.
 // Dev: pino-pretty as an in-process stream. No pino transports: they run in a worker thread that breaks in Next bundles.
 const destination = isProduction
   ? pino.multistream(

@@ -187,7 +187,7 @@ src/features/subscriptions/
 
 Без суфіксів: reserved-файли Next (`page`, `layout`, `loading`, `error`, `not-found`, `route`, `proxy`, `manifest`,
 `instrumentation`), `src/i18n/request.ts` (шлях next-intl), а також `src/lib/env.ts`, клієнти supabase і TanStack Query
-(`src/lib/query/query-client.ts`), сховище пристрою `src/lib/offline/device-storage.ts`, `database.types.ts` (згенерований):
+(`src/lib/query/query-client.ts`), сховище пристрою `src/lib/offline/device-storage.ts`, `database.types.ts` (згенерований), `worker.ts` у корені (вхід Cloudflare Worker, як `next.config.ts`):
 жоден суфікс із таблиці їм не пасує. `"use client"` пишеться у файлі.
 
 ## 3. Імпорти

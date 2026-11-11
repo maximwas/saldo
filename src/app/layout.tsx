@@ -9,9 +9,8 @@ import { Suspense } from 'react'
 import { AppProviders } from '@/components/providers/app-providers.component'
 import { ServiceWorker } from '@/components/providers/service-worker.component'
 import { getActiveLedger, getSession, getUserTheme } from '@/lib/auth/dal.server'
+import { env } from '@/lib/env'
 import './globals.css'
-
-const beaconToken = process.env.NEXT_PUBLIC_CF_BEACON_TOKEN
 
 // Fixel by MacPaw (OFL, src/app/fonts/OFL.txt); the variables override --font-sans / --font-display from theme.css
 const fixelText = localFont({
@@ -95,10 +94,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           </ServiceWorker>
         </ThemeProvider>
         {/* Cloudflare Web Analytics: no cookies, and it logs no query strings (search text, ids) */}
-        {beaconToken ? (
+        {env.NEXT_PUBLIC_CF_BEACON_TOKEN ? (
           <Script
             src="https://static.cloudflareinsights.com/beacon.min.js"
-            data-cf-beacon={JSON.stringify({ token: beaconToken })}
+            data-cf-beacon={JSON.stringify({ token: env.NEXT_PUBLIC_CF_BEACON_TOKEN })}
             strategy="afterInteractive"
           />
         ) : null}

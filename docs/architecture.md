@@ -1016,6 +1016,10 @@ Server Actions для даних не використовуються; вихі
 | `MCP_WRITE_ENABLED`, `LOG_LEVEL` | runtime variable (text), необов'язкові | запис через MCP; рівень логів |
 | `WORKERS_CI_COMMIT_SHA` | ставить Workers Builds у build | ревізія `/~offline` у service worker |
 
+Ризик: `cacheComponents` + `partialPrefetching` у workerd працюють (e2e 11.2026), але Next попереджає «cannot guarantee
+Cache Components will run as expected due to … `setTimeout()`»; виправлення — opennextjs-cloudflare PR #1318, ще не
+в релізі. Якщо в production з'являться 1102 або «code had hung», найменший крок — `partialPrefetching: false`.
+
 Нагадування: `due_reminder_fires` повертає рядок на кожного учасника для трійки (правило, зобов'язання, offset),
 для якої локальний час `due_on − offset` + `at_time` у `ledgers.time_zone` ≤ `p_now` і не старший за добу
 (пропуск крону наздоганяється, нове правило не повторює минуле), зобов'язання `active`, не оплачене при
