@@ -1,6 +1,7 @@
 'use client'
 
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
+import { Activity, useState } from 'react'
 
 type TabsProps<Value extends string> = {
   label: string
@@ -17,6 +18,14 @@ type TabsProps<Value extends string> = {
 // Figma «Saldo» → Tabs 2:7682: gap 24 over a 1px border-bottom; Tab = label body-medium (text-primary when active,
 // else text-secondary), padding 10/4/0, gap 10, a 2px primary indicator under the active one
 export function Tabs<Value extends string>({ label, options, value, onValueChange }: TabsProps<Value>) {
+  // a panel stays mounted once opened, hidden under <Activity>: a half-filled form (subscription settings) survives a
+  // switch to another tab, and a panel nobody opened is never rendered
+  const [opened, setOpened] = useState<ReadonlySet<Value>>(() => new Set([value]))
+
+  if (!opened.has(value)) {
+    setOpened(new Set(opened).add(value))
+  }
+
   return (
     <TabsPrimitive.Root
       value={value}
@@ -36,13 +45,14 @@ export function Tabs<Value extends string>({ label, options, value, onValueChang
         ))}
       </TabsPrimitive.List>
       {options.map((option) =>
-        option.panel === undefined ? null : (
+        option.panel === undefined || !opened.has(option.value) ? null : (
           <TabsPrimitive.Panel
             key={option.value}
             value={option.value}
+            keepMounted
             className="flex flex-col gap-4 outline-none lg:gap-6"
           >
-            {option.panel}
+            <Activity mode={option.value === value ? 'visible' : 'hidden'}>{option.panel}</Activity>
           </TabsPrimitive.Panel>
         ),
       )}

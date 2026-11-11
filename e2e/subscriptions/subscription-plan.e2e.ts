@@ -62,4 +62,14 @@ test('зміна ціни з майбутньою датою не змінює �
   await expect(paid).toContainText('100,00')
   await expect(payments.filter({ hasText: 'План' }).first()).toContainText('150,00')
   await expect(payments.filter({ hasText: 'План' }).filter({ hasText: '100,00' })).toHaveCount(0)
+
+  // a half-typed setting survives a look at another tab: an opened panel stays under <Activity>
+  const note = page.getByRole('tabpanel').getByLabel('Примітка')
+
+  await page.getByRole('tab', { name: 'Налаштування' }).click()
+  await note.fill(`${mark} draft`)
+  await page.getByRole('tab', { name: 'Історія' }).click()
+  await expect(note).toBeHidden()
+  await page.getByRole('tab', { name: 'Налаштування' }).click()
+  await expect(note).toHaveValue(`${mark} draft`)
 })
