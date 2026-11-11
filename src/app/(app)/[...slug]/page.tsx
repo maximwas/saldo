@@ -1,7 +1,12 @@
+import { ChevronLeft } from 'lucide-react'
+import type { Route } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
-import { pageTitleKey } from '@/components/layout/navigation.utils'
+import { pageTitleKey, soonSection } from '@/components/layout/navigation.utils'
+import { SoonBadge } from '@/components/layout/soon-badge.component'
+import { Button } from '@/components/ui/button.component'
 import { EXTRA_TITLES, SIDEBAR_FOOTER_SECTION, SIDEBAR_SECTIONS } from '@/constants/navigation.constants'
 
 // shortcut: one catch-all stub for every §2 page; each feature adds its own page.tsx and leaves this list
@@ -42,16 +47,32 @@ export default function StubPage({ params }: PageProps<'/[...slug]'>) {
   )
 }
 
+// a section that is not built yet says so: what it will hold, that nothing can be added yet, and the way back
 async function Stub({ params }: Pick<PageProps<'/[...slug]'>, 'params'>) {
   const { slug } = await params
   const path = `/${slug.join('/')}`
   const titleKey = pageTitleKey(path)
+  const section = soonSection(path)
 
-  if (!titleKey || !STUB_HREFS.some((href) => href === path)) {
+  if (!titleKey || !section || !STUB_HREFS.some((href) => href === path)) {
     notFound()
   }
 
   const [translate, translateNav] = await Promise.all([getTranslations('shell'), getTranslations('nav')])
+  const backKey = pageTitleKey(section.backHref)
 
-  return <p className="text-body text-text-secondary">{translate('stub', { title: translateNav(titleKey) })}</p>
+  return (
+    <section className="flex max-w-xl flex-col items-start gap-3 rounded-card bg-card p-5 shadow-card lg:p-6">
+      <SoonBadge />
+      <h2 className="text-card-title text-text-primary">
+        {translate('soon.title', { title: translateNav(section.key) })}
+      </h2>
+      <p className="text-body text-text-primary">{translate(`soon.sections.${section.key}`)}</p>
+      <p className="text-label text-text-secondary">{translate('soon.note')}</p>
+      <Button variant="secondary" render={<Link href={section.backHref as Route} />} nativeButton={false}>
+        <ChevronLeft aria-hidden className="size-4" />
+        {translate('soon.back', { title: backKey ? translateNav(backKey) : translateNav('overview') })}
+      </Button>
+    </section>
+  )
 }

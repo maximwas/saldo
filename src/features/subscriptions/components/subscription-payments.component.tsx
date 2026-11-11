@@ -11,7 +11,7 @@ import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { SubscriptionPayment } from '../api/subscriptions.api'
 import { useSubscription, useSubscriptionPayments } from '../hooks/subscriptions.hook'
-import { newestFirst, recentPayments } from '../utils/subscription-payments.utils'
+import { historyPayments, recentPayments } from '../utils/subscription-payments.utils'
 
 const STATE_TONE = {
   plan: 'plan',
@@ -26,8 +26,8 @@ const shownMinor = (payment: SubscriptionPayment) =>
 
 type SubscriptionPaymentsProps = {
   subscriptionId: string
-  /** Overview shows the last paid and the next two; History shows all */
-  view: 'recent' | 'all'
+  /** Overview shows the last paid and the next two; History shows the past and the planned ones apart */
+  view: 'recent' | 'past' | 'upcoming'
   action?: React.ReactNode
 }
 
@@ -42,7 +42,7 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
   const query = useSubscriptionPayments(subscriptionId)
   const { data } = query
   const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
-  const shown = view === 'recent' ? recentPayments(data ?? [], today) : newestFirst(data ?? [])
+  const shown = view === 'recent' ? recentPayments(data ?? [], today) : historyPayments(data ?? [], today)[view]
 
   // the error card takes the section's place: a card inside the card would double the frame
   if (failedLoad) {
@@ -52,11 +52,13 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
   return (
     <section className="flex flex-col gap-4 rounded-card bg-card p-5 shadow-card lg:p-6">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-card-title text-text-primary">{translate(view === 'recent' ? 'recent' : 'all')}</h2>
+        <h2 className="text-card-title text-text-primary">{translate(view)}</h2>
         {action}
       </div>
       {data === undefined ? <Bone className="h-32 rounded-md" /> : null}
-      {data && shown.length === 0 ? <p className="text-label text-text-secondary">{translate('empty')}</p> : null}
+      {data && shown.length === 0 ? (
+        <p className="text-label text-text-secondary">{translate(`empty.${view}`)}</p>
+      ) : null}
       <ul className="flex flex-col gap-4">
         {shown.map((payment) => (
           <li key={payment.id} className="flex items-start gap-4">

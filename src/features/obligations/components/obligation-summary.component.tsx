@@ -44,8 +44,9 @@ export function ObligationSummary({ open }: ObligationSummaryProps) {
     return null
   }
 
-  const short = dayText(summary.untilOn, 'short')
-  const long = dayText(summary.untilOn, 'dayMonth')
+  // the last planned date is often a year ahead: without the year it read as a date already past
+  const short = dayText(summary.untilOn, 'shortYear')
+  const long = dayText(summary.untilOn, 'dayMonthYear')
   const caption = [
     translate('count', { count: summary.count }),
     plannedOthers ? translate('more', { amount: plannedOthers }) : null,
@@ -70,10 +71,10 @@ export function ObligationSummary({ open }: ObligationSummaryProps) {
         )}
       </div>
       <section className="flex flex-col gap-5 rounded-card bg-card p-6 shadow-card lg:hidden">
-        <h2 className="text-card-title text-text-primary">{translate('until', { date: long })}</h2>
+        <h2 className="text-card-title text-text-primary">{translate('plannedUntil', { date: long })}</h2>
         <dl className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <dt className="flex-1 text-label text-text-secondary">{translate('planned')}</dt>
+            <dt className="flex-1 text-label text-text-secondary">{translate('total', { count: summary.count })}</dt>
             <dd className="text-body font-medium text-text-secondary tabular-nums">{plannedText}</dd>
           </div>
           {summary.overdue.count > 0 && (

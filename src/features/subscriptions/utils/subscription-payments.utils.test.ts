@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { newestFirst, recentPayments } from './subscription-payments.utils'
+import { historyPayments, recentPayments } from './subscription-payments.utils'
 
 const payments = [
   {
@@ -42,9 +42,31 @@ describe('recentPayments', () => {
   })
 })
 
-describe('newestFirst', () => {
-  it('sorts by date, newest first, without touching the input', () => {
-    expect(newestFirst(payments)[0].dueOn).toBe('2027-01-05')
+describe('historyPayments', () => {
+  it('puts paid and past-due payments in the past, newest first, and the open ones ahead, soonest first', () => {
+    const { past, upcoming } = historyPayments(payments, '2026-10-30')
+
+    expect(past.map((payment) => payment.dueOn)).toEqual(['2026-10-20', '2026-10-05', '2026-09-05'])
+    expect(upcoming.map((payment) => payment.dueOn)).toEqual(['2026-11-05', '2026-12-05', '2027-01-05'])
+  })
+
+  it('counts a payment paid ahead of its date as past', () => {
+    const { past, upcoming } = historyPayments(
+      [
+        {
+          dueOn: '2026-11-05',
+          state: 'paid' as const,
+        },
+      ],
+      '2026-10-30',
+    )
+
+    expect(past).toHaveLength(1)
+    expect(upcoming).toHaveLength(0)
+  })
+
+  it('does not touch the input', () => {
+    historyPayments(payments, '2026-10-30')
     expect(payments[0].dueOn).toBe('2026-09-05')
   })
 })

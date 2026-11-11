@@ -33,7 +33,7 @@ test('запис календаря відкриває попап, «Оплач�
   await expect(page).not.toHaveURL(/view=day/)
   await popup
     .getByRole('button', {
-      name: 'Оплачено',
+      name: 'Оплатити',
       exact: true,
     })
     .click()

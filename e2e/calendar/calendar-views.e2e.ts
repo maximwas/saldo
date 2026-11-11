@@ -25,7 +25,7 @@ test('план, оплачений в інший тиждень, лишає по
   await page
     .getByRole('dialog', { name: mark })
     .getByRole('button', {
-      name: 'Оплачено',
+      name: 'Оплатити',
       exact: true,
     })
     .click()

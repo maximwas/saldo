@@ -24,8 +24,8 @@ function LegendItem({ dot, children }: LegendItemProps) {
   )
 }
 
-// Figma frames 2:12959 (desktop) / 2:16213 (mobile): «Limits by category» (short on mobile) with «Change limits»
-// opening the limit sheet, the legend, then a row per expense category with a limit or a fact; a category without a
+// Figma frames 2:12959 (desktop) / 2:16213 (mobile): «Limits by category» (short on mobile) with «Add a limit»
+// opening the new-limit sheet (a row opens its own limit), the legend, then a row per expense category with a limit or a fact; a category without a
 // limit shows its fact and no bar
 export function LimitsCard({ facts }: LimitsCardProps) {
   const translate = useTranslations('budget.limits')

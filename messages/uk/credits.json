@@ -37,8 +37,8 @@
     "cancelled": "Скасовано"
   },
   "actions": {
-    "paid": "Оплачено",
-    "payNumber": "Оплачено · внесок {number}",
+    "paid": "Оплатити",
+    "payNumber": "Оплатити внесок {number}",
     "payoff": "Дострокове погашення",
     "edit": "Редагувати",
     "close": "Архівувати"
@@ -56,7 +56,7 @@
     "until": "до {date}",
     "paidShort": "{paid} з {total} сплачено",
     "unconfirmedNext": "Внесок {number} · {date} · не підтверджено",
-    "unconfirmedAction": "Оплачено",
+    "unconfirmedAction": "Оплатити",
     "viewOnly": "Лише перегляд: оплати, графік і налаштування кредиту змінює власник простору."
   },
   "schedule": {

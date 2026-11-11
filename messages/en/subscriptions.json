@@ -19,7 +19,7 @@
     "trial": "Trial · {count}",
     "paused": "Paused · {count}",
     "cancelled": "Cancelled · {count}",
-    "review": "To review · {count}",
+    "review": "Not sure · {count}",
     "archived": "Archive · {count}"
   },
   "totals": {
@@ -38,10 +38,18 @@
     "archived": "Archived"
   },
   "verdict": {
-    "label": "Assessment",
-    "keep": "Keep",
-    "review": "Review",
-    "cancel": "Cancel"
+    "label": "Do you still need this subscription?",
+    "hint": "A note just for you: it does not change any payments. Subscriptions marked “Not sure” are gathered under the filter of the same name.",
+    "keep": "Needed",
+    "review": "Not sure",
+    "cancel": "Not needed",
+    "done": {
+      "keep": "{name}: marked “Needed”",
+      "review": "{name}: marked “Not sure”. Find all of these under the “Not sure” filter",
+      "cancel": "{name}: marked “Not needed”. Payments go on until you cancel the subscription on its card"
+    },
+    "showReview": "Show",
+    "openCard": "Open"
   },
   "defaults": {
     "open": "Default settings",
@@ -60,26 +68,26 @@
     "cancel": "Cancel",
     "saved": "Subscription saved",
     "name": "Name",
-    "amount": "Amount per period",
-    "amountHint": "Empty — the amount is unknown",
+    "amount": "How much you pay each time",
+    "amountHint": "Amount not known yet? Leave it empty",
     "currency": "Currency",
     "account": "Account",
     "accountHint": "Payments are planned from it",
     "accountPlaceholder": "Choose an account",
-    "count": "Every",
-    "unit": "Period",
+    "count": "You pay every",
+    "unit": "Days, months or years",
     "units": {
       "day": "Days",
       "month": "Months",
       "year": "Years"
     },
-    "firstOn": "First date",
-    "firstOnHint": "Every later date is counted from it",
-    "shortMonthRule": "Short month",
+    "firstOn": "First payment date",
+    "firstOnHint": "The next payments are counted from it",
+    "shortMonthRule": "If the month has no such day",
     "rules": {
-      "last_day": "Last day of the month",
-      "next_month_first": "1st of the next month",
-      "skip": "Skip the month"
+      "last_day": "Pay on the last day of the month",
+      "next_month_first": "Pay on the 1st of the next month",
+      "skip": "Skip that month"
     },
     "status": "State",
     "trialEndsOn": "Trial until",
@@ -92,7 +100,9 @@
     "serviceCustom": "Custom subscription",
     "serviceCustomNamed": "Custom subscription: “{name}”",
     "currencyHint": "A currency change applies to future payments only",
-    "create": "Add subscription"
+    "create": "Add subscription",
+    "repeatSummary": "{summary}, counted from the first payment date",
+    "shortMonthRuleHint": "For example, you pay on the 31st, but February has 28 days"
   },
   "card": {
     "back": "All subscriptions",
@@ -111,9 +121,9 @@
     "title": "Details",
     "amount": "Amount and currency",
     "monthly": "Monthly average",
-    "interval": "Interval",
-    "shortMonth": "Short month",
-    "firstOn": "First date",
+    "interval": "How often",
+    "shortMonth": "If the month has no such day",
+    "firstOn": "First payment",
     "nextOn": "Next date",
     "account": "Account",
     "category": "Category",
@@ -136,7 +146,7 @@
     "sheetTitle": "Change the price of {name}",
     "sheetCurrent": "Price since {date} —",
     "sheetHint": "The new price changes only the future plan; paid payments and operations stay as they are.",
-    "amount": "New price per period",
+    "amount": "New amount each time",
     "effectiveOn": "Effective from",
     "effectiveHint": "Payments before this date and paid ones keep the old price",
     "save": "Save",
@@ -189,12 +199,17 @@
   },
   "payments": {
     "recent": "Latest and next payments",
-    "all": "All payments",
     "toHistory": "Full history",
     "loadFailed": "Could not load payments",
     "refreshFailed": "Could not refresh payments",
-    "empty": "No payments yet",
-    "payment": "Payment {date}"
+    "empty": {
+      "recent": "No payments yet",
+      "past": "No payments yet",
+      "upcoming": "No payments ahead"
+    },
+    "payment": "Payment {date}",
+    "past": "Past payments",
+    "upcoming": "Planned payments ahead"
   },
   "paymentState": {
     "plan": "Plan",

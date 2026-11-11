@@ -30,7 +30,7 @@
   "todayLabel": "Сьогодні",
   "remaining": "Залишок {amount}",
   "actions": {
-    "paid": "Оплачено",
+    "paid": "Оплатити",
     "edit": "Змінити",
     "cancelPayment": "Скасувати оплату",
     "toDebt": "До боргу"
@@ -120,10 +120,10 @@
   "offlineQueuedMany": "Немає з’єднання. Оплат збережено на пристрої: {count}. Їх буде надіслано, щойно з’явиться мережа.",
   "summary": {
     "plannedUntil": "Заплановано до {date}",
-    "until": "До {date}",
-    "planned": "Заплановано",
     "overdue": "Дата минула, не підтверджено",
     "count": "{count, plural, one {# платіж} few {# платежі} many {# платежів} other {# платежу}}",
-    "more": "ще {amount}"
-  }
+    "more": "ще {amount}",
+    "total": "Усього {count, plural, one {# платіж} few {# платежі} many {# платежів} other {# платежу}}"
+  },
+  "showMore": "Показати наступний місяць"
 }

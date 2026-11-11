@@ -35,9 +35,9 @@ const STATE_TONE = {
 
 // Figma «Saldo» → Upcoming payments ListItem 2:12287 / 2:13332: Leading 40 (ServiceLogo, a letter tile, or the
 // CategoryBadge of a big expense), title body-medium, «source · installment · account» + StatusPill, a plan Amount over
-// the date on the right, desktop Secondary S «Paid» button at the top (ListItem 2:8012 Trailing, conventions §4.6c);
-// padding 12/0, gap 16. On mobile the row itself opens the confirm sheet and a credit drops the account from the
-// subtitle.
+// the date on the right, desktop Secondary S «Pay» button at the top (ListItem 2:8012 Trailing, conventions §4.6c);
+// padding 12/0, gap 16. On mobile the row itself opens the confirm sheet too, and the same «Pay» button sits under the
+// row with the other actions, so a person sees how to pay (phone QA 12.11); a credit drops the account there.
 // a search result links here: bring the row into view
 const scrollIntoView = (node: HTMLLIElement | null) => node?.scrollIntoView({ block: 'center' })
 
@@ -76,6 +76,9 @@ export function ObligationRowItem({
   const pill = awaitingSync ? 'paid' : obligation.state
   const paidKind = open ? 'plan' : 'fact'
   const amountKind = obligation.direction === 'in' ? 'income' : paidKind
+  const payLabel = obligation.sourceType === 'debt' ? 'actions.toDebt' : 'actions.paid'
+  // edit and cancel-payment show on every screen size; the pay button under the row is for the phone only
+  const desktopActions = !awaitingSync && (hasPayments || (obligation.sourceType === 'manual' && open))
 
   return (
     <li
@@ -126,7 +129,7 @@ export function ObligationRowItem({
         </button>
         {canWrite && open && (
           <Button size="s" variant="secondary" className="mt-3 hidden lg:inline-flex" onClick={onPay}>
-            {translate(obligation.sourceType === 'debt' ? 'actions.toDebt' : 'actions.paid')}
+            {translate(payLabel)}
           </Button>
         )}
       </div>
@@ -142,15 +145,20 @@ export function ObligationRowItem({
           })}
         </span>
       ) : null}
-      {canWrite && !awaitingSync && (hasPayments || (obligation.sourceType === 'manual' && open)) && (
-        <div className="flex gap-2 pb-3 pl-14">
-          {obligation.sourceType === 'manual' && open && (
+      {canWrite && (open || desktopActions) && (
+        <div className={cn('flex flex-wrap gap-2 pb-3 pl-14', !desktopActions && 'lg:hidden')}>
+          {open && (
+            <Button size="s" variant="secondary" className="lg:hidden" onClick={onPay}>
+              {translate(payLabel)}
+            </Button>
+          )}
+          {!awaitingSync && obligation.sourceType === 'manual' && open && (
             <Button size="s" variant="ghost" onClick={onEdit}>
               <Pencil aria-hidden size={16} />
               {translate('actions.edit')}
             </Button>
           )}
-          {hasPayments && (
+          {!awaitingSync && hasPayments && (
             <Button size="s" variant="ghost" onClick={onCancelPayment}>
               {translate('actions.cancelPayment')}
             </Button>

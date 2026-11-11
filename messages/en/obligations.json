@@ -30,7 +30,7 @@
   "todayLabel": "Today",
   "remaining": "Remaining {amount}",
   "actions": {
-    "paid": "Paid",
+    "paid": "Pay",
     "edit": "Edit",
     "cancelPayment": "Cancel payment",
     "toDebt": "To the debt"
@@ -120,10 +120,10 @@
   "offlineQueuedMany": "No connection. Payments saved on the device: {count}. They will be sent when the network is back.",
   "summary": {
     "plannedUntil": "Planned until {date}",
-    "until": "Until {date}",
-    "planned": "Planned",
     "overdue": "Date passed, not confirmed",
     "count": "{count, plural, one {# payment} other {# payments}}",
-    "more": "{amount} more"
-  }
+    "more": "{amount} more",
+    "total": "{count, plural, one {# payment} other {# payments}} in all"
+  },
+  "showMore": "Show the next month"
 }

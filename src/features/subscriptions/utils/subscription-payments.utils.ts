@@ -13,6 +13,13 @@ export function recentPayments<TPayment extends DatedPayment>(payments: TPayment
   return [...next.reverse(), ...(lastPaid ? [lastPaid] : [])]
 }
 
-/** History lists every payment newest first */
-export const newestFirst = <TPayment extends DatedPayment>(payments: TPayment[]) =>
-  [...payments].sort((left, right) => right.dueOn.localeCompare(left.dueOn))
+/** History: what is paid or already due, newest first, apart from the open payments ahead, soonest first */
+export function historyPayments<TPayment extends DatedPayment>(payments: TPayment[], today: string) {
+  const isPast = (payment: TPayment) => payment.state === 'paid' || payment.dueOn < today
+  const byDate = [...payments].sort((left, right) => left.dueOn.localeCompare(right.dueOn))
+
+  return {
+    past: byDate.filter(isPast).reverse(),
+    upcoming: byDate.filter((payment) => !isPast(payment)),
+  }
+}

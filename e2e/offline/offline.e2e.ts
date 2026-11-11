@@ -101,7 +101,7 @@ test('editor офлайн і owner онлайн оплачують один пл
 
   const editorItem = editor.getByRole('listitem').filter({ hasText: mark })
 
-  await editorItem.getByRole('button', { name: 'Оплачено' }).click()
+  await editorItem.getByRole('button', { name: 'Оплатити' }).click()
 
   const editorPay = editor.getByRole('dialog')
 
@@ -112,7 +112,7 @@ test('editor офлайн і owner онлайн оплачують один пл
   await expect(editorPay).toBeHidden()
   await expect(status(editor, /Офлайн · 1 зміна/)).toBeVisible()
 
-  await owner.getByRole('listitem').filter({ hasText: mark }).getByRole('button', { name: 'Оплачено' }).click()
+  await owner.getByRole('listitem').filter({ hasText: mark }).getByRole('button', { name: 'Оплатити' }).click()
 
   const ownerPay = owner.getByRole('dialog')
 

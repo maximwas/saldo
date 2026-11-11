@@ -44,3 +44,12 @@ for (const path of MENU_PATHS) {
     expect(overflows).toBe(false)
   })
 }
+
+test('a section that is not built yet says «soon», what it will hold and leads back', async ({ pageAs }) => {
+  const page = await pageAs('owner')
+
+  await page.goto('/budget/goals')
+  await expect(page.getByRole('heading', { name: '«Цілі та конверти» — скоро' })).toBeVisible()
+  await page.getByRole('link', { name: 'До розділу «Бюджет»' }).click()
+  await expect(page).toHaveURL('/budget')
+})

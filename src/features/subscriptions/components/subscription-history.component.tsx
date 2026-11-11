@@ -10,8 +10,8 @@ type SubscriptionHistoryProps = {
   subscriptionId: string
 }
 
-// History: every payment of the series (paid at the amount paid, planned at the price in force on its date) and the
-// prices with their effective dates. Figma has no own frame for the tab; it reuses the card's payment rows.
+// History: the payments already paid or due (newest first), the planned ones ahead under their own heading (soonest
+// first, at the price in force on their date) and the prices with their effective dates. Figma has no own frame for the tab; it reuses the card's payment rows.
 export function SubscriptionHistory({ subscriptionId }: SubscriptionHistoryProps) {
   const translate = useTranslations('subscriptions.price')
   const dayText = useDayText()
@@ -20,7 +20,8 @@ export function SubscriptionHistory({ subscriptionId }: SubscriptionHistoryProps
 
   return (
     <>
-      <SubscriptionPayments subscriptionId={subscriptionId} view="all" />
+      <SubscriptionPayments subscriptionId={subscriptionId} view="past" />
+      <SubscriptionPayments subscriptionId={subscriptionId} view="upcoming" />
       <section className="flex flex-col gap-3 rounded-card bg-card p-5 shadow-card lg:p-6">
         <h2 className="text-card-title text-text-primary">{translate('history')}</h2>
         <ul className="flex flex-col">

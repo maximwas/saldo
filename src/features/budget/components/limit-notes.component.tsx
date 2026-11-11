@@ -67,7 +67,14 @@ export function LimitNotes({ fact, progress }: LimitNotesProps) {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-label">
-      <span className={cn(state === 'ok' ? 'text-text-secondary' : 'font-medium text-warning-text')}>
+      {/* orange means over the limit only, as the bar and the legend; nearly spent is a darker, plain note */}
+      <span
+        className={cn(
+          state === 'ok' && 'text-text-secondary',
+          state === 'warning' && 'font-medium text-text-primary',
+          state === 'over' && 'font-medium text-warning-text',
+        )}
+      >
         {left ?? text}
       </span>
       <span className="flex items-center gap-2 text-text-secondary">

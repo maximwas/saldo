@@ -37,8 +37,8 @@
     "cancelled": "Cancelled"
   },
   "actions": {
-    "paid": "Paid",
-    "payNumber": "Paid · instalment {number}",
+    "paid": "Pay",
+    "payNumber": "Pay instalment {number}",
     "payoff": "Early repayment",
     "edit": "Edit",
     "close": "Archive"
@@ -56,7 +56,7 @@
     "until": "until {date}",
     "paidShort": "{paid} of {total} paid",
     "unconfirmedNext": "Instalment {number} · {date} · not confirmed",
-    "unconfirmedAction": "Paid",
+    "unconfirmedAction": "Pay",
     "viewOnly": "View only: payments, the schedule and the settings of a credit are changed by the owner of the space."
   },
   "schedule": {

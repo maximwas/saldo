@@ -32,13 +32,25 @@ type SubscriptionFieldsProps = {
 export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
   const translate = useTranslations('subscriptions.form')
   const translateStatus = useTranslations('subscriptions.status')
+  const translateList = useTranslations('subscriptions')
   const translateCurrency = useTranslations('currencies')
   const { control, setValue } = useFormContext<SubscriptionFormInput>()
   const options = useSubscriptionOptions()
-  const [service, currency, unit, status] = useWatch({
+  const [service, currency, unit, status, count] = useWatch({
     control,
-    name: ['service', 'currency', 'unit', 'status'],
+    name: ['service', 'currency', 'unit', 'status', 'count'],
   })
+  // «every N units» read back in words (monthly, every 3 months), so the two fields need no explaining
+  const repeat = Number(count)
+  const repeatText =
+    Number.isInteger(repeat) && repeat > 0
+      ? translate('repeatSummary', {
+          summary: translateList('interval', {
+            unit,
+            count: repeat,
+          }),
+        })
+      : undefined
   const statuses = FORM_STATUSES.includes(status) ? FORM_STATUSES : [...FORM_STATUSES, status]
   const edit = mode === 'edit'
 
@@ -119,6 +131,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
             control={control}
             name="shortMonthRule"
             label={translate('shortMonthRule')}
+            hint={translate('shortMonthRuleHint')}
             required
             render={(field) => (
               <Select
@@ -158,6 +171,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
             control={control}
             name="count"
             label={translate('count')}
+            hint={repeatText}
             render={(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
           />
           <FormField

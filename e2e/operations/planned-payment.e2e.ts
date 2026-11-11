@@ -32,7 +32,7 @@ test('«Оплачено» створює одну операцію, видал�
 
   // the payments list holds every open plan; the Overview card shows only the first few by date, and other specs'
   // plans due today can push this one out of it
-  await upcoming.getByRole('button', { name: 'Оплачено' }).click()
+  await upcoming.getByRole('button', { name: 'Оплатити' }).click()
 
   const pay = page.getByRole('dialog')
 
@@ -52,7 +52,7 @@ test('«Оплачено» створює одну операцію, видал�
 
   await cancel.getByRole('button', { name: 'Скасувати оплату' }).click()
   await expect(cancel).toBeHidden()
-  await expect(upcoming.getByRole('button', { name: 'Оплачено' })).toBeVisible()
+  await expect(upcoming.getByRole('button', { name: 'Оплатити' })).toBeVisible()
 
   await page.goto('/')
   await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore)
