@@ -13,7 +13,8 @@ type LedgerProviderProps = {
   children: React.ReactNode
 }
 
-// router.refresh() hands over a fresh server value: a new store keeps the first render after it in step with it
+// router.refresh() hands over a fresh server value: a new store keeps the first render after it in step with it.
+// useMemo stays under the compiler: subscribers hold this store instance, so its identity is a contract, not a speed-up
 export function LedgerProvider({ ledger, children }: LedgerProviderProps) {
   const store = useMemo(() => (ledger ? createLedgerStore(ledger) : null), [ledger])
 

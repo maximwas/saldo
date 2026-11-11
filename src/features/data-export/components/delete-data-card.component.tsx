@@ -61,9 +61,9 @@ function DeleteDataSheet({ onCloseAction }: DeleteDataSheetProps) {
       router.refresh()
     } catch (caught) {
       setError(dbErrorText(caught))
-    } finally {
-      setPending(false)
     }
+
+    setPending(false)
   }
 
   return (

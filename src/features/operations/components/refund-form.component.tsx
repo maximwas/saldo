@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
-import { useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
@@ -48,7 +47,7 @@ export function RefundForm({ formId, purchase, limitMinor, onSubmitAction }: Ref
   const category = categories.find((candidate) => candidate.id === purchase.categoryId)?.name
   const accountName = accounts.find((account) => account.id === purchase.accountId)?.name ?? ''
   const form = useForm<OperationFormValues>({
-    resolver: useZodResolver(useMemo(() => factFormSchema(today), [today])),
+    resolver: useZodResolver(factFormSchema(today)),
     defaultValues: {
       kind: 'refund',
       direction: 'in',

@@ -1,5 +1,5 @@
 import { useLocale } from 'next-intl'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { NumericFormat } from 'react-number-format'
 import { currencySymbol, fromMinor, minorDigits } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
@@ -45,14 +45,9 @@ export function MoneyInput({
   'aria-required': ariaRequired,
 }: MoneyInputProps) {
   const locale = useLocale()
-  const { group, decimal } = useMemo(() => {
-    const parts = new Intl.NumberFormat(locale).formatToParts(1_234_567.5)
-
-    return {
-      group: parts.find((part) => part.type === 'group')?.value ?? ' ',
-      decimal: parts.find((part) => part.type === 'decimal')?.value ?? ',',
-    }
-  }, [locale])
+  const parts = new Intl.NumberFormat(locale).formatToParts(1_234_567.5)
+  const group = parts.find((part) => part.type === 'group')?.value ?? ' '
+  const decimal = parts.find((part) => part.type === 'decimal')?.value ?? ','
   const [text, setText] = useState(() => textFromMinor(value, currency))
 
   // a value changed from outside (form reset, loaded record) replaces the text; the text the user is typing

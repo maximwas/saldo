@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
@@ -64,7 +64,7 @@ export function OperationForm({
   const accounts = options.data?.accounts ?? []
   const categories = options.data?.categories ?? []
   const balances = options.data?.balances ?? {}
-  const resolver = useZodResolver(useMemo(() => factFormSchema(today), [today]))
+  const resolver = useZodResolver(factFormSchema(today))
   const firstAccount = accounts.find((account) => !account.archived)
   const form = useForm<OperationFormValues>({
     resolver,

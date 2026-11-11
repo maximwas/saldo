@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeftRight, Search } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
@@ -75,13 +75,11 @@ export function OperationsScreen() {
   } | null>(null)
   const queued = useQueuedOperations()
   // a create still in the device's queue shows as a row with its state until the server has it (one row per id)
-  const items = useMemo(
-    () =>
-      list.data ? buildItems(mergeQueued(list.data.rows, queued.rows).sort(newestFirst), list.data.transfers) : [],
-    [list.data, queued.rows],
-  )
-  const receiptIds = useMemo(() => new Set(list.data?.receiptIds ?? []), [list.data])
-  const totals = useMemo(() => summarize(items), [items])
+  const items = list.data
+    ? buildItems(mergeQueued(list.data.rows, queued.rows).sort(newestFirst), list.data.transfers)
+    : []
+  const receiptIds = new Set(list.data?.receiptIds ?? [])
+  const totals = summarize(items)
   const [linkedId, setLinkedId] = useQueryState('operation', parseAsString.withOptions({ history: 'replace' }))
   const linked = linkedId ? items.find((item) => item.row.id === linkedId) : undefined
 

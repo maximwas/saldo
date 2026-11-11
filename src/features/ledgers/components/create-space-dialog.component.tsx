@@ -66,9 +66,9 @@ export function CreateSpaceDialog({ open, onOpenChange }: CreateSpaceDialogProps
       setLedgerId(crypto.randomUUID())
     } catch (caught) {
       setError(dbErrorText(caught))
-    } finally {
-      setIsPending(false)
     }
+
+    setIsPending(false)
   }
 
   return (
