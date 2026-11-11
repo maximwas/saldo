@@ -206,10 +206,9 @@ select is(
   12450::bigint, 'a USD payment of a UAH obligation is converted by the space rate');
 
 -- editing a paying operation keeps the payment and the obligation consistent (update_operation)
-insert into public.obligations (id, ledger_id, title, occurrence_on, due_on, planned_amount_minor, currency)
+insert into public.obligations (id, ledger_id, title, occurrence_on, due_on, planned_amount_minor, currency, category_id)
 values ('d0000000-0000-4000-8000-000000000004', pg_temp.space('shared'), 'Електрика', current_date + 5, current_date + 5,
-  20000, 'UAH');
-update public.obligations set category_id = pg_temp.cat('Житло', 'expense') where id = 'd0000000-0000-4000-8000-000000000004';
+  20000, 'UAH', pg_temp.cat('Житло', 'expense'));
 select is(
   (select state from public.pay_obligation('e0000000-0000-4000-8000-000000000007', 'd0000000-0000-4000-8000-000000000004', 1, 20000,
      pg_temp.op('b0000000-0000-4000-8000-000000000008', 'expense', 'a0000000-0000-4000-8000-000000000001', 20000, 'UAH'))),
