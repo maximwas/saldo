@@ -73,6 +73,14 @@ const DAY_FORMATS = {
 
 export type DayFormat = keyof typeof DAY_FORMATS
 
+/** the formats that have a twin with the year */
+type YearlessFormat = 'short' | 'dayMonth' | 'dayMonthShort'
+
+/** the format with the year when the day is not in today's year: «05.11» a year ahead reads as a day that has passed */
+export function yearAware(dayFormat: YearlessFormat, day: string, today: string): DayFormat {
+  return day.slice(0, 4) === today.slice(0, 4) ? dayFormat : `${dayFormat}Year`
+}
+
 /** a calendar day (or a YYYY-MM month) as text in one of DAY_FORMATS */
 export function formatDay(formatter: DateFormatter, day: string, dayFormat: DayFormat): string {
   return formatter.dateTime(dayToDate(day), {

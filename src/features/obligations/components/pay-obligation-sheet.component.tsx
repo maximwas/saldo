@@ -19,11 +19,13 @@ import { notify } from '@/components/ui/toaster.component'
 import { isMoneyQuery } from '@/constants/query-roots.constants'
 import { useClock, useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { yearAware } from '@/lib/dates/day.utils'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import type { ObligationOptions, ObligationRow } from '../api/obligations.api'
 import { useCandidateOperations, useObligationOptions, usePayObligation } from '../hooks/obligations.hook'
 import {
@@ -32,6 +34,7 @@ import {
   payObligationFormSchema,
   toPayObligationInput,
 } from '../schemas/pay-obligation-form.schema'
+import { rankCandidates } from '../utils/operation-candidates.utils'
 import { OperationLine } from './operation-line.component'
 
 type PayObligationSheetProps = {
@@ -40,6 +43,7 @@ type PayObligationSheetProps = {
 }
 
 const FORM_ID = 'pay-obligation-form'
+const CANDIDATES_SHOWN = 10
 
 // the screen mounts the sheet only after the options are loaded; the cache returns the same data here
 const NO_OPTIONS: ObligationOptions = {
@@ -76,11 +80,22 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
     resolver: useZodResolver(payObligationFormSchema),
     defaultValues: payFormDefaults(obligation, options.accounts, today),
   })
-  const [currency, amountText] = useWatch({
+  const [currency, amountText, settle] = useWatch({
     control: form.control,
-    name: ['currency', 'amount'],
+    name: ['currency', 'amount', 'settle'],
   })
+  // a phone opens the keyboard on focus and hides half the sheet: the amount waits for a tap there (QA 12.11)
+  const desktop = useIsWideLayout()
   const remaining = obligation.remainingMinor
+  const shownCandidates = rankCandidates(
+    candidates.data ?? [],
+    {
+      amountMinor: remaining ?? obligation.plannedMinor,
+      currency: obligation.currency,
+      dueOn: obligation.dueOn,
+    },
+    CANDIDATES_SHOWN,
+  )
   const sameCurrency = currency === obligation.currency
   const partial = remaining !== null && sameCurrency && (toMinor(amountText, currency) ?? remaining) < remaining
 
@@ -168,7 +183,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
       }
     >
       <p className="text-label text-text-secondary">
-        {translate('pay.summary', { date: dayText(obligation.dueOn, 'short') })}
+        {translate('pay.summary', { date: dayText(obligation.dueOn, yearAware('short', obligation.dueOn, today)) })}
       </p>
       <form
         id={FORM_ID}
@@ -183,7 +198,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
           required
           render={(field) => (
             <MoneyInput
-              autoFocus
+              autoFocus={desktop}
               sign={obligation.direction === 'out' ? '−' : '+'}
               value={toMinor(field.value, currency)}
               onValueChange={(minor) => field.onChange(minor === null ? '' : fromMinor(minor, currency))}
@@ -232,23 +247,23 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
             />
           )}
         />
+        {/* the switch row is its own label: a field label over it said «settle in full» twice (QA 12.11) */}
         {partial && (
-          <FormField
-            control={form.control}
-            name="settle"
-            label={translate('pay.settle')}
-            hint={translate('pay.settleHint')}
-            render={(field) => (
-              <Switch label={translate('pay.settle')} checked={field.value} onCheckedChange={field.onChange} />
-            )}
-          />
+          <div className="flex flex-col gap-1.5">
+            <Switch
+              label={translate('pay.settle')}
+              checked={settle}
+              onCheckedChange={(next) => form.setValue('settle', next)}
+            />
+            <p className="text-caption text-text-tertiary">{translate('pay.settleHint')}</p>
+          </div>
         )}
       </form>
       {linking ? (
         <section className="flex flex-col gap-1">
           <h3 className="text-label font-medium text-text-secondary">{translate('pay.linkTitle')}</h3>
           <p className="text-caption text-text-tertiary">{translate('pay.linkHint')}</p>
-          {(candidates.data ?? []).length === 0 && !candidates.isPending && (
+          {shownCandidates.length === 0 && !candidates.isPending && (
             <p className="text-caption text-text-tertiary">{translate('pay.linkEmpty')}</p>
           )}
           <ul className="flex flex-col" aria-busy={candidates.isPending}>
@@ -258,7 +273,7 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
                   <SkeletonLine end="w-20" />
                 </li>
               ))}
-            {(candidates.data ?? []).map((operation) => (
+            {shownCandidates.map((operation) => (
               <OperationLine
                 key={operation.id}
                 title={operation.counterparty ?? operation.note ?? accountName.get(operation.accountId) ?? ''}
