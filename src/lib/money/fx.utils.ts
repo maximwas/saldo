@@ -184,6 +184,42 @@ export function impliedRate(
   return toUnits.dividedBy(fromUnits)
 }
 
+type Exchange = {
+  fromAmountMinor: number
+  fromCurrency: string
+  toAmountMinor: number
+  toCurrency: string
+}
+
+export type ExchangeRate = {
+  rate: Decimal
+  /** the currency of the «1» the rate is per */
+  unit: string
+}
+
+/**
+ * The rate an exchange implies, read the way every rate on screen reads: how much of the base currency one unit of the
+ * other costs (₴ per 1 €), whichever way the money went. Without the base currency on either side, the target per unit
+ * of the source. `unit` is the currency of that «1». null = one currency, or an amount is missing.
+ */
+export function exchangeRate(exchange: Exchange, baseCurrency: string): ExchangeRate | null {
+  if (exchange.fromCurrency === exchange.toCurrency) {
+    return null
+  }
+
+  const fromBase = exchange.fromCurrency === baseCurrency
+  const rate = fromBase
+    ? impliedRate(exchange.toAmountMinor, exchange.toCurrency, exchange.fromAmountMinor, exchange.fromCurrency)
+    : impliedRate(exchange.fromAmountMinor, exchange.fromCurrency, exchange.toAmountMinor, exchange.toCurrency)
+
+  return rate
+    ? {
+        rate,
+        unit: fromBase ? exchange.toCurrency : exchange.fromCurrency,
+      }
+    : null
+}
+
 /** «41,50»: at least two and at most `maxDigits` decimals, in the active locale; Intl gets a decimal string, no float */
 export const formatRate = (rate: Decimal.Value, locale: string, maxDigits = 4) =>
   new Intl.NumberFormat(locale, {

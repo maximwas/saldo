@@ -1,4 +1,3 @@
-import Decimal from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 import {
   type AccountRow,
@@ -7,7 +6,6 @@ import {
   nextSortOrder,
   toAccount,
   totalInBase,
-  transferRate,
 } from './accounts.utils'
 
 const account = (patch: Partial<AccountView>): AccountView => ({
@@ -172,40 +170,5 @@ describe('adjustmentOf', () => {
 
   it('has nothing to write when the balances are equal', () => {
     expect(adjustmentOf(240_000, 240_000)).toBeNull()
-  })
-})
-
-describe('transferRate', () => {
-  const base = {
-    id: 't',
-    fromAccountId: 'a',
-    toAccountId: 'b',
-    feeMinor: null,
-    occurredAt: '2026-10-14T10:00:00Z',
-    note: null,
-  }
-
-  it('divides the major units of both sides', () => {
-    expect(
-      transferRate({
-        ...base,
-        fromAmountMinor: 80_000,
-        fromCurrency: 'EUR',
-        toAmountMinor: 3_320_000,
-        toCurrency: 'UAH',
-      }),
-    ).toEqual(new Decimal(41.5))
-  })
-
-  it('has no rate inside one currency', () => {
-    expect(
-      transferRate({
-        ...base,
-        fromAmountMinor: 100,
-        fromCurrency: 'UAH',
-        toAmountMinor: 100,
-        toCurrency: 'UAH',
-      }),
-    ).toBeNull()
   })
 })

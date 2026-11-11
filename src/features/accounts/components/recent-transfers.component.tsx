@@ -6,10 +6,10 @@ import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Card } from '@/components/ui/card.component'
 import { NEUTRAL_TONE } from '@/constants/category-colors.constants'
 import { useLedger } from '@/contexts/ledger.context'
-import { formatRate } from '@/lib/money/fx.utils'
+import { exchangeRate, formatRate } from '@/lib/money/fx.utils'
 import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useRecentTransfers } from '../hooks/accounts.hook'
-import { type AccountView, type RecentTransfer, transferRate } from '../utils/accounts.utils'
+import type { AccountView, RecentTransfer } from '../utils/accounts.utils'
 
 const ALL_TRANSFERS_HREF = '/operations?type=transfer&period=all'
 
@@ -26,7 +26,7 @@ export function RecentTransfers({ accounts }: RecentTransfersProps) {
   const locale = useLocale()
   const moneyText = useMoneyText()
   const desktop = useIsWideLayout()
-  const { timeZone } = useLedger()
+  const { timeZone, baseCurrency } = useLedger()
   const { data } = useRecentTransfers()
 
   if (!data || data.length === 0) {
@@ -43,17 +43,17 @@ export function RecentTransfers({ accounts }: RecentTransfersProps) {
     }).format(new Date(transfer.occurredAt))
 
   function meta(transfer: RecentTransfer) {
-    const rate = transferRate(transfer)
+    const exchange = exchangeRate(transfer, baseCurrency)
     const fee =
       transfer.feeMinor === null
         ? translate('noFee')
         : translate('fee', { amount: moneyText(transfer.feeMinor, transfer.fromCurrency) })
 
-    if (rate === null) {
+    if (exchange === null) {
       return fee
     }
 
-    return `${translate('rate', { rate: formatRate(rate, locale) })} · ${fee}`
+    return `${translate('rate', { rate: formatRate(exchange.rate, locale) })} · ${fee}`
   }
 
   const received = (transfer: RecentTransfer) => `→ +${moneyText(transfer.toAmountMinor, transfer.toCurrency)}`

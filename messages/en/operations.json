@@ -156,6 +156,7 @@
     "created": "Operation saved",
     "updated": "Changes saved",
     "deleted": "Operation deleted",
+    "transferDeleted": "Transfer deleted",
     "transferCreated": "Transfer saved"
   },
   "conflict": "Someone else changed this operation. Refresh and open it again.",

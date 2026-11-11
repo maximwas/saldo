@@ -136,3 +136,37 @@ describe('refundableMinor', () => {
     expect(refundableMinor(52_000, 52_000)).toBe(0)
   })
 })
+
+describe('displayAmount of a transfer', () => {
+  it('shows the sent amount as a neutral number, not the base value of a leg', () => {
+    expect(
+      displayAmount({
+        row: {
+          ...base,
+          kind: 'transfer_in',
+          direction: 'in',
+          amountMinor: 2_400,
+          currency: 'EUR',
+          baseAmountMinor: 99_600,
+          transferId: 't1',
+        },
+        transfer: {
+          id: 't1',
+          fromAccountId: 'a1',
+          toAccountId: 'a2',
+          fromAmountMinor: 100_000,
+          fromCurrency: 'UAH',
+          toAmountMinor: 2_400,
+          toCurrency: 'EUR',
+          feeMinor: null,
+        },
+        kind: 'transfer',
+      }),
+    ).toEqual({
+      minor: 100_000,
+      currency: 'UAH',
+      plus: false,
+      tone: 'transfer',
+    })
+  })
+})
