@@ -39,6 +39,21 @@ const OPERATION_KIND: Record<DebtDirection, Record<DebtMovementKind, 'debt_in' |
   },
 }
 
+type RepaymentDebt = {
+  accountId: string | null
+  currency: string
+}
+
+type RepaymentAccount = {
+  id: string
+  currency: string
+}
+
+/** the account a repayment moves money on by default: the debt's own, else the first one in the debt currency */
+export function repaymentAccountId(debt: RepaymentDebt, accounts: readonly RepaymentAccount[]): string | null {
+  return debt.accountId ?? accounts.find((account) => account.currency === debt.currency)?.id ?? null
+}
+
 /** the operation kind of a debt movement: money moves, but a loan or its repayment is never income or expense (§10) */
 export const movementOperationKind = (direction: DebtDirection, kind: DebtMovementKind) =>
   OPERATION_KIND[direction][kind]

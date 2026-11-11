@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { debtBalance, movementOperationKind, ownShareMinor, type ShareDebt } from './debts.utils'
+import { debtBalance, movementOperationKind, ownShareMinor, repaymentAccountId, type ShareDebt } from './debts.utils'
 
 describe('debtBalance', () => {
   it('lowers the balance by partial repayments and ignores the principal movement itself', () => {
@@ -100,5 +100,48 @@ describe('ownShareMinor', () => {
 
   it('leaves the whole purchase as own spending when nobody owes a share', () => {
     expect(ownShareMinor(purchase, [])).toBe(90_000)
+  })
+})
+
+describe('repaymentAccountId', () => {
+  const accounts = [
+    {
+      id: 'usd',
+      currency: 'USD',
+    },
+    {
+      id: 'card',
+      currency: 'UAH',
+    },
+  ]
+
+  it('takes the debt account, else the first account in the debt currency, else none', () => {
+    expect(
+      repaymentAccountId(
+        {
+          accountId: 'own',
+          currency: 'UAH',
+        },
+        accounts,
+      ),
+    ).toBe('own')
+    expect(
+      repaymentAccountId(
+        {
+          accountId: null,
+          currency: 'UAH',
+        },
+        accounts,
+      ),
+    ).toBe('card')
+    expect(
+      repaymentAccountId(
+        {
+          accountId: null,
+          currency: 'EUR',
+        },
+        accounts,
+      ),
+    ).toBeNull()
   })
 })
