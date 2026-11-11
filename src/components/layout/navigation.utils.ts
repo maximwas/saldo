@@ -5,6 +5,7 @@ import {
   type NavSection,
   SIDEBAR_FOOTER_SECTION,
   SIDEBAR_SECTIONS,
+  SOON_SECTIONS,
   SPACE_SECTIONS,
 } from '@/constants/navigation.constants'
 
@@ -42,3 +43,7 @@ export function pageTitleKey(pathname: string): NavKey | null {
 /** Space in the TabBar is active on its own page and on every section the TabBar has no room for */
 export const isSpaceActive = (pathname: string) =>
   pathname === '/space' || activeHref(pathname, SPACE_SECTIONS) !== null
+
+/** the not-yet-built section a page belongs to (its own page or a sub-page), null for a working page */
+export const soonSection = (pathname: string) =>
+  SOON_SECTIONS.find((section) => matches(pathname, section.href)) ?? null

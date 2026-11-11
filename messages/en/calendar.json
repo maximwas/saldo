@@ -116,7 +116,7 @@
     }
   },
   "actions": {
-    "pay": "Paid",
+    "pay": "Pay",
     "move": "Change the date",
     "source": {
       "subscription": "Open the subscription",

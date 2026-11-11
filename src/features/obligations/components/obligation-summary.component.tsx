@@ -44,8 +44,8 @@ export function ObligationSummary({ open }: ObligationSummaryProps) {
     return null
   }
 
-  const short = dayText(summary.untilOn, 'short')
-  const long = dayText(summary.untilOn, 'dayMonth')
+  // the last planned date is often a year ahead: without the year it read as a date already past
+  const until = dayText(summary.untilOn, 'shortYear')
   const caption = [
     translate('count', { count: summary.count }),
     plannedOthers ? translate('more', { amount: plannedOthers }) : null,
@@ -57,7 +57,7 @@ export function ObligationSummary({ open }: ObligationSummaryProps) {
     <>
       <div className="grid grid-cols-3 gap-6 max-lg:hidden">
         <section className="flex flex-col gap-3 rounded-card bg-card p-6 shadow-card">
-          <h2 className="text-label font-medium text-text-secondary">{translate('plannedUntil', { date: short })}</h2>
+          <h2 className="text-label font-medium text-text-secondary">{translate('plannedUntil', { date: until })}</h2>
           <Amount minor={summary.planned.base} currency={baseCurrency} kind="plan" size="l" />
           <p className="text-caption text-text-tertiary">{caption}</p>
         </section>
@@ -70,10 +70,10 @@ export function ObligationSummary({ open }: ObligationSummaryProps) {
         )}
       </div>
       <section className="flex flex-col gap-5 rounded-card bg-card p-6 shadow-card lg:hidden">
-        <h2 className="text-card-title text-text-primary">{translate('until', { date: long })}</h2>
+        <h2 className="text-card-title text-text-primary">{translate('plannedUntil', { date: until })}</h2>
         <dl className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <dt className="flex-1 text-label text-text-secondary">{translate('planned')}</dt>
+            <dt className="flex-1 text-label text-text-secondary">{translate('total', { count: summary.count })}</dt>
             <dd className="text-body font-medium text-text-secondary tabular-nums">{plannedText}</dd>
           </div>
           {summary.overdue.count > 0 && (

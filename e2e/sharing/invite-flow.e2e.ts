@@ -23,7 +23,7 @@ test('запрошення: людина з акаунтом Saldo стає edit
 
   await invite.getByLabel('Email').fill(`guest-${crypto.randomUUID().slice(0, 8)}@example.com`)
   await invite.getByRole('button', { name: /^Створити/ }).click()
-  await expect(invite.getByText('Користувача з такою поштою немає в Saldo')).toBeVisible()
+  await expect(invite.getByText('У Saldo немає акаунта з цією поштою', { exact: false })).toBeVisible()
   await invite.getByLabel('Email').fill(email)
   await invite.getByLabel('Роль').click()
   await owner.getByRole('option', { name: 'Редагує' }).click()

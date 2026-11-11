@@ -26,7 +26,7 @@ type SubscriptionHeaderProps = {
 }
 
 // Figma «Saldo» → Subscription card 2:21453 / 2:21781, the top card: name + «Edit», logo, the next payment's amount,
-// «period · next date» + state, the assessment on the right
+// «period · next date» + state, the «do you need it» mark with its explanation on the right
 function SubscriptionHeader({ subscription }: SubscriptionHeaderProps) {
   const translate = useTranslations('subscriptions')
   const today = useToday()
@@ -63,12 +63,7 @@ function SubscriptionHeader({ subscription }: SubscriptionHeaderProps) {
             </span>
           </div>
         </div>
-        {subscription.archivedAt ? null : (
-          <div className="flex flex-col gap-2">
-            <span className="text-caption text-text-secondary">{translate('verdict.label')}</span>
-            <VerdictControl subscription={subscription} />
-          </div>
-        )}
+        {subscription.archivedAt ? null : <VerdictControl subscription={subscription} explained />}
       </div>
     </section>
   )

@@ -97,7 +97,7 @@ test('після «Оплачено» крон нового сповіщення
   await addReminderSubscription(page, paid)
   await addReminderSubscription(page, control)
   await page.goto('/payments')
-  await page.getByRole('listitem').filter({ hasText: paid }).first().getByRole('button', { name: 'Оплачено' }).click()
+  await page.getByRole('listitem').filter({ hasText: paid }).first().getByRole('button', { name: 'Оплатити' }).click()
 
   const pay = page.getByRole('dialog')
 

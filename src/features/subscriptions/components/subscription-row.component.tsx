@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge.component'
 import { useRipple } from '@/components/ui/ripple.hook'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { notify, type ToastAction } from '@/components/ui/toaster.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
@@ -13,7 +14,12 @@ import type { SubscriptionView } from '../api/subscriptions.api'
 import { useSubscriptionParams } from '../hooks/subscription-params.hook'
 import { useSubscriptionOptions, useUpdateSubscription } from '../hooks/subscriptions.hook'
 import { toVerdictInput } from '../schemas/subscription-form.schema'
-import { nextPaymentOn, SUBSCRIPTION_VERDICTS, shownPrice } from '../utils/subscription-series.utils'
+import {
+  nextPaymentOn,
+  SUBSCRIPTION_VERDICTS,
+  type SubscriptionVerdict,
+  shownPrice,
+} from '../utils/subscription-series.utils'
 
 // a StatusPill Kind per state (badge.component): Active → positive, Trial → info, Paused → neutral, Cancelled and
 // Archive → muted; the intent to cancel is the amber «not done yet»
@@ -40,28 +46,69 @@ export function SubscriptionState({ subscription }: SubscriptionStateProps) {
   return <Badge tone={STATUS_TONE[subscription.status]}>{translate(subscription.status)}</Badge>
 }
 
-/** «keep / review / cancel»: a viewer sees the verdict, an editor sets it */
-export function VerdictControl({ subscription }: SubscriptionStateProps) {
+type VerdictControlProps = SubscriptionStateProps & {
+  /** the card also says what the mark does; a list row only asks the question */
+  explained?: boolean
+}
+
+/** «do you need it?» yes / not sure / no: a viewer sees the mark, an editor sets it and a toast says what changed and where */
+export function VerdictControl({ subscription, explained = false }: VerdictControlProps) {
   const translate = useTranslations('subscriptions.verdict')
   const canWrite = useCanWrite()
   const update = useUpdateSubscription()
+  const { sub, setParams, openCard } = useSubscriptionParams()
 
   if (!canWrite) {
     return subscription.verdict ? <Badge tone="neutral">{translate(subscription.verdict)}</Badge> : null
   }
 
+  // «not sure» leads to its filter; «not needed» from the list leads to the card, where the real cancel is
+  const actions: Partial<Record<SubscriptionVerdict, ToastAction>> = {
+    review: {
+      label: translate('showReview'),
+      onAction: () =>
+        setParams({
+          state: 'review',
+          sub: null,
+          tab: null,
+        }),
+    },
+    cancel: sub
+      ? undefined
+      : {
+          label: translate('openCard'),
+          onAction: () => openCard(subscription.id),
+        },
+  }
+
+  // on the card the real cancel is on the same page, so the toast points there instead of «open the card»
+  const doneText = (verdict: SubscriptionVerdict) =>
+    verdict === 'cancel' && sub
+      ? translate('doneCancelHere', { name: subscription.name })
+      : translate(`done.${verdict}`, { name: subscription.name })
+  const choose = (verdict: SubscriptionVerdict) =>
+    update.mutate(toVerdictInput(subscription, verdict), {
+      onSuccess: () => notify.success(doneText(verdict), actions[verdict]),
+    })
+
   return (
-    <SegmentedControl
-      label={translate('label')}
-      value={subscription.verdict ?? undefined}
-      pending={update.isPending}
-      stretch
-      onValueChange={(verdict) => update.mutate(toVerdictInput(subscription, verdict))}
-      options={SUBSCRIPTION_VERDICTS.map((verdict) => ({
-        value: verdict,
-        label: translate(verdict),
-      }))}
-    />
+    <div className="flex shrink-0 flex-col gap-2">
+      <span aria-hidden className="text-caption text-text-secondary">
+        {translate('label')}
+      </span>
+      <SegmentedControl
+        label={translate('label')}
+        value={subscription.verdict ?? undefined}
+        pending={update.isPending}
+        stretch
+        onValueChange={choose}
+        options={SUBSCRIPTION_VERDICTS.map((verdict) => ({
+          value: verdict,
+          label: translate(`options.${verdict}`),
+        }))}
+      />
+      {explained ? <p className="text-caption text-text-secondary lg:max-w-xs">{translate('hint')}</p> : null}
+    </div>
   )
 }
 
@@ -70,7 +117,7 @@ type SubscriptionRowProps = {
 }
 
 // Figma «Saldo» → Subscriptions 2:17361 / 2:17618 (ListItem): logo, name, «period · account» + state, the next payment's
-// amount and date on the right, the assessment beside it (under the row on mobile). The row opens the card.
+// amount and date on the right, the «do you need it» mark beside it (under the row on mobile). The row opens the card.
 export function SubscriptionRow({ subscription }: SubscriptionRowProps) {
   const translate = useTranslations('subscriptions')
   const today = useToday()

@@ -44,3 +44,41 @@ export function groupByBucket<Row extends { dueOn: string }>(
 
   return groups
 }
+
+const SHOWN_DAYS = 30
+
+type MonthGroup<Row> = {
+  /** YYYY-MM */
+  month: string
+  rows: Row[]
+}
+
+/**
+ * The payments after the next 7 days by month, in date order; `shown` months start within 30 days (at least one), the
+ * rest wait for «Show more», so a 13-month plan is not one endless list.
+ */
+export function laterByMonth<Row extends { dueOn: string }>(rows: readonly Row[], today: string) {
+  const months: MonthGroup<Row>[] = []
+
+  for (const row of [...rows].sort((first, second) => first.dueOn.localeCompare(second.dueOn))) {
+    const month = row.dueOn.slice(0, 7)
+    const last = months.at(-1)
+
+    if (last?.month === month) {
+      last.rows.push(row)
+    } else {
+      months.push({
+        month,
+        rows: [row],
+      })
+    }
+  }
+
+  const horizonMonth = addDaysIso(today, SHOWN_DAYS).slice(0, 7)
+  const startingSoon = months.filter((group) => group.month <= horizonMonth).length
+
+  return {
+    months,
+    shown: months.length === 0 ? 0 : Math.max(1, startingSoon),
+  }
+}

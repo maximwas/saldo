@@ -72,7 +72,7 @@ function ToastCard({ id, kind, text, onAction, actionLabel }: ToastCardProps) {
   )
 }
 
-type ToastAction = {
+export type ToastAction = {
   label: string
   onAction: () => void
 }

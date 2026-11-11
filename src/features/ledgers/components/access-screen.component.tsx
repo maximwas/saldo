@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { UserPlus, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
+import { parseAsBoolean, useQueryState } from 'nuqs'
 import { useState } from 'react'
 import { Avatar } from '@/components/ui/avatar.component'
 import { Banner } from '@/components/ui/banner.component'
@@ -56,7 +57,8 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
   const translate = useTranslations('settings.access')
   const dbErrorText = useDbErrorText()
   const formatter = useFormatter()
-  const [inviteOpen, setInviteOpen] = useState(false)
+  // ?invite=true: the Space page's «Invite» lands here with the sheet open
+  const [inviteOpen, setInviteOpen] = useQueryState('invite', parseAsBoolean.withDefault(false))
   const [dialog, setDialog] = useState<Dialog>(null)
   const [isPending, setIsPending] = useState(false)
   const [dialogError, setDialogError] = useState<string | null>(null)

@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { SPACE_TILES } from '@/constants/navigation.constants'
 import { cn } from '@/lib/utils/cn.utils'
+import { soonSection } from './navigation.utils'
+import { SoonBadge } from './soon-badge.component'
 
 // Figma «Saldo» → "Menu C · Space" 11:73245: 2 columns, gap 8; tile 60 high, icon in a 32 circle, pressed = primary-soft.
 // shortcut: the Figma attention dot on Credits waits for the credits data
@@ -22,7 +24,8 @@ export function SpaceTiles() {
             <span aria-hidden className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', tone)}>
               <Icon size={16} />
             </span>
-            <span className="truncate">{translate(`space.tiles.${key}`)}</span>
+            <span className="flex-1 truncate">{translate(`space.tiles.${key}`)}</span>
+            {soonSection(href) ? <SoonBadge /> : null}
           </Link>
         ))}
       </nav>

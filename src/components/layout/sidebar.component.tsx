@@ -15,7 +15,8 @@ import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
 import { cn } from '@/lib/utils/cn.utils'
 import { AccountMenu } from './account-menu.component'
 import { Brand } from './brand.component'
-import { activeHref } from './navigation.utils'
+import { activeHref, soonSection } from './navigation.utils'
+import { SoonBadge } from './soon-badge.component'
 import { SpaceSwitcher } from './space-switcher.component'
 import { SyncIndicator } from './sync-indicator.component'
 
@@ -40,6 +41,7 @@ function NavItem({ section, active }: NavItemProps) {
     >
       <Icon aria-hidden size={20} className={cn('shrink-0', active && 'text-primary')} />
       <span className="flex-1 truncate">{translate(section.key)}</span>
+      {soonSection(section.href) ? <SoonBadge /> : null}
     </Link>
   )
 }
@@ -52,18 +54,21 @@ type NavSubItemProps = {
 // Figma «Saldo» → NavSubItem 2:11282: 36 high, a 20 indent in place of the icon, Active has no fill
 function NavSubItem({ link, active }: NavSubItemProps) {
   const translate = useTranslations('nav')
+  const soon = soonSection(link.href) !== null
 
   return (
     <Link
       href={link.href as Route}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex h-9 shrink-0 items-center gap-3 rounded-md px-3 text-label outline-none hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary',
+        'flex min-h-9 shrink-0 items-center gap-3 rounded-md px-3 py-1.5 text-label outline-none hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary',
         active ? 'font-semibold text-primary-text' : 'font-medium text-text-secondary',
       )}
     >
       <span aria-hidden className="size-5 shrink-0" />
-      <span className="flex-1 truncate">{translate(link.key)}</span>
+      {/* a «soon» item wraps instead of cutting its name next to the badge */}
+      <span className={cn('flex-1', !soon && 'truncate')}>{translate(link.key)}</span>
+      {soon ? <SoonBadge /> : null}
     </Link>
   )
 }
@@ -90,7 +95,8 @@ export function Sidebar() {
       <nav aria-label={translate('navLabel')} className="flex flex-1 flex-col gap-1">
         {SIDEBAR_SECTIONS.map((section) => {
           const active = section.href === current
-          const children = active ? section.children : undefined
+          // a section that is not built yet opens no sub-items: its sub-pages say the same «soon»
+          const children = active && !soonSection(section.href) ? section.children : undefined
           const currentChild = children ? activeHref(pathname, children) : null
 
           return [

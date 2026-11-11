@@ -46,11 +46,11 @@ export function SpaceCard() {
           platform="button"
           onSelectAction={switchLedger}
         />
-        {/* shortcut: Invite opens Settings until the access tab (plan 1.18) exists */}
+        {/* Invite opens Access with the invite sheet already open (?invite=true) */}
         {canInvite && (
           <Button
             variant="ghost"
-            render={<Link href="/settings" />}
+            render={<Link href="/settings/access?invite=true" />}
             nativeButton={false}
             className="cursor-pointer gap-1.5 px-3 bg-primary-soft text-label font-semibold"
           >
