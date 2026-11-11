@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Credit, CreditInstallment } from '../api/credits.api'
-import { creditProgress, creditTotals, monthNotes, payoffOf } from './credits.utils'
+import { creditProgress, creditTotals, installmentParts, monthNotes, payoffOf } from './credits.utils'
 
 const installment = (
   sequenceNo: number,
@@ -153,5 +153,31 @@ describe('payoffOf', () => {
   it('offers nothing for a closed credit or a fully paid one', () => {
     expect(payoffOf(credit({ status: 'closed' }))).toBeNull()
     expect(payoffOf(credit({ installments: [installment(3, '2026-10-05', 'paid', 270_825)] }))).toBeNull()
+  })
+})
+
+describe('installmentParts', () => {
+  it('names a smaller last installment apart, so the parts add up to what remains', () => {
+    expect(
+      installmentParts(
+        credit({
+          installmentsCount: 12,
+          regularInstallmentMinor: 124_992,
+          lastInstallmentMinor: 124_988,
+        }),
+      ),
+    ).toEqual({
+      regularMinor: 124_992,
+      count: 11,
+      lastMinor: 124_988,
+    })
+  })
+
+  it('keeps equal installments as one count', () => {
+    expect(installmentParts(credit({ lastInstallmentMinor: 270_825 }))).toEqual({
+      regularMinor: 270_825,
+      count: 5,
+      lastMinor: null,
+    })
   })
 })

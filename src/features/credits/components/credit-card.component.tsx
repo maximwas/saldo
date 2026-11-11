@@ -17,7 +17,7 @@ import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
-import { useCredits, usePayInstallment } from '../hooks/credits.hook'
+import { useCredits, useInstallmentsText, usePayInstallment } from '../hooks/credits.hook'
 import { activeInstallments, creditProgress, payoffOf } from '../utils/credits.utils'
 import { CloseCreditSheet } from './close-credit-sheet.component'
 import { CreditDetails } from './credit-details.component'
@@ -57,6 +57,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const translate = useTranslations('credits')
   const dayText = useDayText()
   const moneyText = useMoneyText()
+  const installmentsText = useInstallmentsText()
   const canWrite = useCanWrite()
   const pay = usePayInstallment()
   const query = useCredits()
@@ -92,17 +93,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const monthly = translate('card.monthly', {
     day: Number((next ?? activeInstallments(credit)[0])?.dueOn.slice(8, 10)),
   })
-  const meta = [
-    credit.lender,
-    translate('perInstallment', {
-      amount: moneyText(credit.regularInstallmentMinor, credit.currency),
-      count: credit.installmentsCount,
-    }),
-    monthly,
-    account,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  const meta = [credit.lender, installmentsText(credit), monthly, account].filter(Boolean).join(' · ')
 
   const paidText = translate('card.paidSummary', {
     paid: progress.paidCount,

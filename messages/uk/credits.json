@@ -17,6 +17,7 @@
   "estimatedNote": "Графік розрахунковий, не банківський: суми поділено порівну. Останні внески й правила перенесення звірте з кредитором.",
   "installments": "Внески",
   "perInstallment": "{amount} × {count}",
+  "perInstallmentLast": "{amount} × {count} + {last}",
   "paidOf": "{paid} з {total} сплачено",
   "next": "Наступний {date} · {amount}",
   "today": "Сьогодні · {amount}",
