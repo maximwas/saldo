@@ -148,10 +148,15 @@ describe('impliedRate', () => {
 })
 
 describe('formatRate', () => {
-  it('keeps at least two decimals and trims to four', () => {
+  it('shows two decimals, four below 1, where two would hide the rate', () => {
     expect(formatRate(impliedRate(80_000, 'EUR', 3_320_000, 'UAH') as never, 'en')).toBe('41.50')
-    expect(formatRate(impliedRate(300, 'USD', 12_480, 'UAH') as never, 'en')).toBe('41.60')
-    expect(formatRate(impliedRate(300, 'USD', 12_481, 'UAH') as never, 'en')).toBe('41.6033')
+    expect(formatRate(impliedRate(300, 'USD', 12_481, 'UAH') as never, 'en')).toBe('41.60')
+    expect(formatRate(impliedRate(2_400, 'EUR', 100_000, 'UAH') as never, 'uk')).toBe('41,67')
+    expect(formatRate('0.0240963855', 'en')).toBe('0.0241')
+  })
+
+  it('keeps at least two decimals and trims to the digits asked for', () => {
+    expect(formatRate(impliedRate(300, 'USD', 12_481, 'UAH') as never, 'en', 4)).toBe('41.6033')
     expect(formatRate('0.0240963855', 'en', 6)).toBe('0.024096')
   })
 })
@@ -209,9 +214,9 @@ describe('exchangeRate', () => {
       'UAH',
     )
 
-    expect(toEuro && formatRate(toEuro.rate, 'uk')).toBe('41,6667')
+    expect(toEuro && formatRate(toEuro.rate, 'uk')).toBe('41,67')
     expect(toEuro?.unit).toBe('EUR')
-    expect(fromEuro && formatRate(fromEuro.rate, 'uk')).toBe('41,6667')
+    expect(fromEuro && formatRate(fromEuro.rate, 'uk')).toBe('41,67')
     expect(fromEuro?.unit).toBe('EUR')
   })
 

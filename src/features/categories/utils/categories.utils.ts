@@ -12,7 +12,7 @@ export type CategoryView = {
   sortOrder: number
   archivedAt: string | null
   version: number
-  /** 'subscriptions' = the system «Subscriptions» category: always there, never renamed, archived or deleted */
+  /** 'subscriptions' | 'credits' = a system category («Subscriptions», «Credits»): always there, never renamed, archived or deleted */
   systemKey: string | null
 }
 

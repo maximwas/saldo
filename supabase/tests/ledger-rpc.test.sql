@@ -45,9 +45,9 @@ select is(
   (select role from public.ledger_members where ledger_id = 'f0000000-0000-4000-8000-000000000001'
      and user_id = '00000000-0000-4000-8000-000000000203'),
   'owner', 'the author owns the new space');
-select is((select count(*)::int from public.categories where ledger_id = 'f0000000-0000-4000-8000-000000000001'), 15,
+select is((select count(*)::int from public.categories where ledger_id = 'f0000000-0000-4000-8000-000000000001'), 16,
   'the new space gets the standard categories');
--- Figma «Saldo» 13:74335 (default categories)
+-- Figma «Saldo» 13:74335 (default categories), plus the system «Credits» of 12.11.2026 that Figma does not have yet
 select is(
   (select string_agg(concat_ws(' ', kind, name, color, icon), ', ' order by kind desc, sort_order) from public.categories
      where ledger_id = 'f0000000-0000-4000-8000-000000000001'),
@@ -55,7 +55,7 @@ select is(
   'expense Житло blue house, expense Продукти green shopping-basket, expense Кафе yellow coffee, expense Транспорт cyan bus, '
   'expense Авто orange car, expense Підписки pink repeat, expense Здоров''я red heart-pulse, '
   'expense Покупки purple shopping-bag, expense Відпочинок teal tree-palm, expense Податки slate landmark, '
-  'expense Інше graphite ellipsis',
+  'expense Кредити indigo credit-card, expense Інше graphite ellipsis',
   'the standard categories carry the names, colours and icons of the defaults table');
 select lives_ok($$ select public.create_ledger('f0000000-0000-4000-8000-000000000001', 'Друга', 'EUR') $$,
   'a repeated create is accepted');

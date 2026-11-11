@@ -36,7 +36,7 @@ begin
   select id into v_subscriptions from public.categories where ledger_id = v_ledger and name = 'Підписки';
   -- not a standard category; the mobile bill below takes it
   insert into public.categories (id, ledger_id, kind, name, color, sort_order)
-  values ('de000000-0000-4000-8000-000000000902', v_ledger, 'expense', 'Зв''язок', 'teal', 13);
+  values ('de000000-0000-4000-8000-000000000902', v_ledger, 'expense', 'Зв''язок', 'teal', 14);
 
   insert into public.accounts (id, ledger_id, name, kind, currency, opening_balance_minor, opening_balance_on,
     include_in_available, sort_order) values

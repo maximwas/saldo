@@ -29,8 +29,8 @@ create temp table ids as select
   (select id from public.categories where ledger_id = (select ledger_id from space) and name = 'Інше' and kind = 'expense') as other;
 grant select on ids to authenticated;
 
-select is((select count(*)::int from public.categories where ledger_id = (select ledger_id from space) and system_key is not null),
-  1, 'a new space has one system category');
+select is((select count(*)::int from public.categories where ledger_id = (select ledger_id from space) and system_key = 'subscriptions'),
+  1, 'a new space has one system «Subscriptions»');
 select is((select name from public.categories where id = (select sys from ids)), 'Підписки', 'it is «Підписки»');
 
 select pg_temp.login('00000000-0000-4000-8000-000000000501');

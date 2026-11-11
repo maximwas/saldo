@@ -77,7 +77,7 @@ export function CategoryRow({
           onSelect: () => onMoveAction?.('down'),
           disabled: !canMoveDown,
         },
-        // the system «Subscriptions» category is never renamed or deleted (system_subscriptions_category.sql)
+        // a system category («Subscriptions», «Credits») is never renamed or deleted (system_*_category.sql)
         ...(category.systemKey
           ? []
           : [

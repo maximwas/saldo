@@ -55,7 +55,7 @@ create function pg_temp.balance(p_account uuid) returns bigint language sql as $
   select balance_minor from public.account_balances where account_id = p_account
 $$;
 
-select is((select count(*)::int from public.categories where ledger_id = pg_temp.space('shared')), 15,
+select is((select count(*)::int from public.categories where ledger_id = pg_temp.space('shared')), 16,
   'a new space starts with the standard categories of §6');
 select is((select count(*)::int from public.categories where ledger_id = pg_temp.space('shared') and kind = 'income'), 4,
   'income and expense categories are separate');

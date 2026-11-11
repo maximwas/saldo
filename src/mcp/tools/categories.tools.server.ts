@@ -37,9 +37,9 @@ export function registerCategoriesTools(server: McpServer) {
   )
 }
 
-/** the DB triggers refuse it too (42501, migration 20261103164941): this only says why first */
+/** the DB triggers refuse it too (42501, migrations 20261103164941 and 20261111234432): this only says why first */
 const SYSTEM_REFUSAL =
-  'This is the system category «Підписки»: Saldo never renames or archives it; its colour, icon and order can change.'
+  'This is a system category («Підписки» or «Кредити»): Saldo never renames or archives it; its colour, icon and order can change.'
 
 const categoryIdField = z.uuid().describe('From list_categories')
 const categoryNameField = z.string().trim().min(1).max(80)
@@ -228,7 +228,7 @@ export const CATEGORIES_WRITE_TOOLS = [
     {
       title: 'Change a category',
       description:
-        'Renames a category, changes its colour or icon, or brings it back from the archive. The system «Підписки» is never renamed.',
+        'Renames a category, changes its colour or icon, or brings it back from the archive. The system «Підписки» and «Кредити» are never renamed.',
       inputSchema: updateCategoryArgs,
       destructive: true,
     },
@@ -239,7 +239,7 @@ export const CATEGORIES_WRITE_TOOLS = [
     {
       title: 'Archive a category',
       description:
-        'Archives a category and its subcategories, optionally moving their operations and plans to move_to; nothing is deleted. The system «Підписки» is never archived.',
+        'Archives a category and its subcategories, optionally moving their operations and plans to move_to; nothing is deleted. The system «Підписки» and «Кредити» are never archived.',
       inputSchema: archiveCategoryArgs,
       destructive: true,
     },
