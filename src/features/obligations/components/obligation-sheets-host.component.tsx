@@ -28,6 +28,12 @@ export function ObligationSheetsHost() {
   const rows = unpay ? [...(data?.open ?? []), ...(data?.paid ?? [])] : data?.open
   const found = rows?.find((row) => row.id === id)
 
+  // a closed sheet forgets its row, so the next one opens on the fresh row: after «Change the date» the old snapshot
+  // kept the old date and version, and «Paid» failed with PT409 until a reload (QA 12.11)
+  if (id === null && opened !== null) {
+    setOpened(null)
+  }
+
   if (found && opened?.id !== found.id) {
     setOpened(found)
   }
