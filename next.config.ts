@@ -5,6 +5,8 @@ import createNextIntlPlugin from 'next-intl/plugin'
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // memoizes components and hooks at build time: no hand-written useMemo / useCallback / memo (conventions §4.8)
+  reactCompiler: true,
   typedRoutes: true,
   turbopack: {
     rules: {

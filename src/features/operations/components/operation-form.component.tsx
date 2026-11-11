@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
@@ -83,10 +83,11 @@ export function OperationForm({
     },
   })
   const draft = useFormDraft(draftKey ?? null, form)
-  const currency = form.watch('currency')
-  const accountId = form.watch('accountId')
+  const [currency, accountId, editedKind] = useWatch({
+    control: form.control,
+    name: ['currency', 'accountId', 'kind'],
+  })
   const balance = balances[accountId]
-  const editedKind = form.watch('kind')
   const categoryKind = editedKind === 'income' ? 'income' : 'expense'
   const expense = editedKind === 'expense'
   // the hints show in the desktop dialog only (2:16567 vs 2:18677) and never for an income (2:17848)

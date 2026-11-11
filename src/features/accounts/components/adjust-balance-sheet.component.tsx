@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
@@ -51,7 +51,11 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
       note: '',
     },
   })
-  const actualMinor = toMinor(form.watch('actual'), currency)
+  const actual = useWatch({
+    control: form.control,
+    name: 'actual',
+  })
+  const actualMinor = toMinor(actual, currency)
   // Figma 16:86454: a balance equal to Saldo's reads 0,00, an empty field «—»
   const differenceMinor = actualMinor === null ? null : actualMinor - account.balanceMinor
 

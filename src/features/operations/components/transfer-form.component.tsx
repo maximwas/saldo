@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useLocale, useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -62,14 +62,10 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
       note: '',
     },
   })
-  const [fromCurrency, toCurrency, fromAmount, toAmount, fee, occurredOn] = form.watch([
-    'fromCurrency',
-    'toCurrency',
-    'fromAmount',
-    'toAmount',
-    'fee',
-    'occurredOn',
-  ])
+  const [fromCurrency, toCurrency, fromAmount, toAmount, fee, occurredOn, fromAccountId, toAccountId] = useWatch({
+    control: form.control,
+    name: ['fromCurrency', 'toCurrency', 'fromAmount', 'toAmount', 'fee', 'occurredOn', 'fromAccountId', 'toAccountId'],
+  })
   const crossCurrency = fromCurrency !== toCurrency
   const fromMinorValue = toMinor(fromAmount, fromCurrency)
   const toMinorValue = toMinor(toAmount, toCurrency)
@@ -97,7 +93,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           name="fromAccountId"
           label={translate('from')}
           required
-          hint={balanceHint(form.watch('fromAccountId'), fromCurrency)}
+          hint={balanceHint(fromAccountId, fromCurrency)}
           render={(field) => (
             <Select
               options={accountOptions(accounts)}
@@ -128,7 +124,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           name="toAccountId"
           label={translate('to')}
           required
-          hint={balanceHint(form.watch('toAccountId'), toCurrency)}
+          hint={balanceHint(toAccountId, toCurrency)}
           render={(field) => (
             <Select
               options={accountOptions(accounts)}

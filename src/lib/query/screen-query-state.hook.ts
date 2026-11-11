@@ -1,5 +1,5 @@
 import type { UseQueryResult } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 import { notify } from '@/components/ui/toaster.component'
 
 /**
@@ -19,10 +19,12 @@ export function useScreenQueryState(queries: readonly UseQueryResult<unknown, un
     }
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: one toast per failed refresh, keyed on its time
+  // the toast reads this render's text and queries, but only a new failure time shows it again
+  const showRefreshFailed = useEffectEvent(() => notify.error(refreshFailed, { onRetry: retry }))
+
   useEffect(() => {
     if (failedAt > 0) {
-      notify.error(refreshFailed, { onRetry: retry })
+      showRefreshFailed()
     }
   }, [failedAt])
 

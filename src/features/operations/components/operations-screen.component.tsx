@@ -85,29 +85,29 @@ export function OperationsScreen() {
   const [linkedId, setLinkedId] = useQueryState('operation', parseAsString.withOptions({ history: 'replace' }))
   const linked = linkedId ? items.find((item) => item.row.id === linkedId) : undefined
 
-  // a search result links ?period=<month>&operation=<id>: open its sheet (edit, or view for a viewer), then drop the id
-  useEffect(() => {
-    if (!linked) {
-      return
-    }
-
-    setEditor((current) => ({
-      open: true,
-      target: {
-        mode: 'edit',
-        item: linked,
-      },
-      key: (current?.key ?? 0) + 1,
-    }))
-    void setLinkedId(null)
-  }, [linked, setLinkedId])
-
   const openEditor = (target: EditorTarget) =>
     setEditor((current) => ({
       open: true,
       target,
       key: (current?.key ?? 0) + 1,
     }))
+  const linkedOpen = editor?.open === true && editor.target.mode === 'edit' && editor.target.item.row.id === linkedId
+
+  // a search result links ?period=<month>&operation=<id>: its sheet (edit, or view for a viewer) opens in the same
+  // render as the list
+  if (linked && !linkedOpen) {
+    openEditor({
+      mode: 'edit',
+      item: linked,
+    })
+  }
+
+  // then the id leaves the URL (the outside world), so Back or a reload does not open it again
+  useEffect(() => {
+    if (linked) {
+      void setLinkedId(null)
+    }
+  }, [linked, setLinkedId])
 
   // Figma 5:102493: the empty filter names what it looked for (period, type, account, category, text)
   function filteredText() {
