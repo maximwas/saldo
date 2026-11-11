@@ -78,6 +78,18 @@ describe('seriesRows', () => {
 
     expect(nextPaymentOn(intended, TODAY)).toBe('2026-10-31')
   })
+
+  it('skips a date that is paid already: paying 31.10 early makes 30.11 the next one', () => {
+    expect(
+      nextPaymentOn(
+        {
+          ...monthly,
+          paidOn: ['2026-10-31'],
+        },
+        TODAY,
+      ),
+    ).toBe('2026-11-30')
+  })
 })
 
 describe('shownPrice', () => {

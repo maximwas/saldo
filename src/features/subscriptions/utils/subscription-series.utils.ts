@@ -15,6 +15,8 @@ const HORIZON_MONTHS = 13
 export type SeriesSource = Series & {
   status: SubscriptionStatus
   archivedAt: string | null
+  /** nominal dates (occurrence_on) from today on that are paid already: an early payment moves «next» on */
+  paidOn?: readonly string[]
 }
 
 /** a row of upsert_series_obligations: the nominal date is the idempotency key, the server prices it */
@@ -55,9 +57,10 @@ export function seriesRows(source: SeriesSource, today: string): SeriesRow[] {
   }).map(toSeriesRow)
 }
 
-/** the next planned payment date within the horizon; null when there is none */
+/** the next unpaid payment date within the horizon; null when there is none. Credits and plans read their first
+ * unpaid obligation the same way */
 export const nextPaymentOn = (source: SeriesSource, today: string) =>
-  seriesRows(source, today)[0]?.occurrence_on ?? null
+  seriesRows(source, today).find((row) => !source.paidOn?.includes(row.occurrence_on))?.occurrence_on ?? null
 
 /** the price of the next payment (today's while nothing is planned, the first one before it starts): what a row and
  * the card header show */

@@ -39,6 +39,8 @@ export type SubscriptionView = Subscription & {
   verdict: SubscriptionVerdict | null
   archivedAt: string | null
   version: number
+  /** nominal dates from about today on that are paid already (SeriesSource.paidOn) */
+  paidOn: string[]
 }
 
 /** an obligation of the series as «History» shows it */
@@ -72,8 +74,9 @@ type SubscriptionRow = Database['public']['Tables']['subscriptions']['Row'] & {
 
 const SUBSCRIPTION_COLUMNS = '*, subscription_prices(effective_on, amount_minor, currency)'
 
-function toSubscriptionView(row: SubscriptionRow): SubscriptionView {
+function toSubscriptionView(row: SubscriptionRow, paidOn: string[]): SubscriptionView {
   return {
+    paidOn,
     id: row.id,
     name: row.name,
     categoryId: row.category_id,
@@ -104,17 +107,32 @@ function toSubscriptionView(row: SubscriptionRow): SubscriptionView {
 
 /** every subscription of the space with its price history, archived ones too (the «Archive» filter) */
 export async function listSubscriptions(supabase: SaldoClient, ledgerId: string): Promise<SubscriptionView[]> {
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .select(SUBSCRIPTION_COLUMNS)
-    .eq('ledger_id', ledgerId)
-    .order('name')
+  // paid dates from yesterday in UTC on: a superset of «today on» in every space time zone, and a short list
+  const since = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
+  const [subscriptions, paid] = await Promise.all([
+    supabase.from('subscriptions').select(SUBSCRIPTION_COLUMNS).eq('ledger_id', ledgerId).order('name'),
+    supabase
+      .from('obligation_states')
+      .select('source_id, occurrence_on')
+      .eq('ledger_id', ledgerId)
+      .eq('source_type', 'subscription')
+      .eq('lifecycle', 'active')
+      .eq('state', 'paid')
+      .gte('occurrence_on', since),
+  ])
 
-  if (error) {
-    throw error
+  if (subscriptions.error) {
+    throw subscriptions.error
   }
 
-  return (data as SubscriptionRow[]).map(toSubscriptionView)
+  if (paid.error) {
+    throw paid.error
+  }
+
+  const paidOf = (id: string) =>
+    (paid.data ?? []).flatMap((row) => (row.source_id === id && row.occurrence_on ? [row.occurrence_on] : []))
+
+  return (subscriptions.data as SubscriptionRow[]).map((row) => toSubscriptionView(row, paidOf(row.id)))
 }
 
 type PaymentRow = {
