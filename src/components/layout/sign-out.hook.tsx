@@ -10,6 +10,18 @@ import { clearDeviceData } from '@/lib/offline/device-storage'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 
+// the device cleanup is best effort: an IndexedDB request another connection holds (another tab, the worker) or a
+// database closed under it must not keep a signed-out person on the page (QA 12.11, phone: cookie gone, no redirect)
+const CLEANUP_LIMIT_MS = 3000
+
+async function clearDeviceDataInTime() {
+  try {
+    await Promise.race([clearDeviceData(), new Promise((resolve) => setTimeout(resolve, CLEANUP_LIMIT_MS))])
+  } catch {
+    // what is left is keyed by this person (query-cache:<user id>): another account never restores it
+  }
+}
+
 /** this device stops getting reminders: its push_subscriptions row goes while the session can still delete it */
 async function forgetPushDevice() {
   try {
@@ -36,7 +48,7 @@ async function endSession() {
     return false
   }
 
-  await clearDeviceData()
+  await clearDeviceDataInTime()
   // a full load: nothing of the signed-in app (its query client, its persister) survives into /login
   window.location.replace('/login')
 
