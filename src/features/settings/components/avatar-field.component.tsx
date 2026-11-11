@@ -87,9 +87,9 @@ export function AvatarField() {
       notify.success(translate('photoRemoved'))
     } catch {
       notify.error(translate('removeFailed'))
-    } finally {
-      setRemoving(false)
     }
+
+    setRemoving(false)
   }
 
   return (

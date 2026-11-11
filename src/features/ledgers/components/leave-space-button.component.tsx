@@ -54,9 +54,9 @@ export function LeaveSpaceButton({ currentUserId, ownerName, className }: LeaveS
 
       setError(message)
       notify.error(message)
-    } finally {
-      setIsPending(false)
     }
+
+    setIsPending(false)
   }
 
   return (

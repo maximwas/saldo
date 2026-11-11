@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { FormProvider, useForm, useFormContext } from 'react-hook-form'
+import { FormProvider, useForm, useFormContext, useWatch } from 'react-hook-form'
 import { ReminderRuleCard } from '@/components/reminders/reminder-rule-card.component'
 import { Amount } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
@@ -174,9 +174,11 @@ function CreateDebtSheet({ onCloseAction }: { onCloseAction: () => void }) {
 
 function OriginFields() {
   const translate = useTranslations('debts')
-  const { watch, setValue } = useFormContext<DebtFormValues>()
-  const origin = watch('origin')
-  const direction = watch('direction')
+  const { control, setValue } = useFormContext<DebtFormValues>()
+  const [origin, direction] = useWatch({
+    control,
+    name: ['origin', 'direction'],
+  })
 
   return (
     <>
@@ -212,11 +214,11 @@ function OriginFields() {
 // amount, currency (set by the account or the purchase where there is one), account, purchase and the date
 function AmountFields() {
   const translate = useTranslations('debts')
-  const { watch, setValue, control } = useFormContext<DebtFormValues>()
-  const origin = watch('origin')
-  const currency = watch('currency')
-  const amount = watch('amount')
-  const purchaseId = watch('purchaseId')
+  const { setValue, control } = useFormContext<DebtFormValues>()
+  const [origin, currency, amount, purchaseId] = useWatch({
+    control,
+    name: ['origin', 'currency', 'amount', 'purchaseId'],
+  })
   const purchases = usePurchases(origin === 'purchase_share')
   const debts = useDebts()
   const purchase = purchases.data?.find((item) => item.id === purchaseId)

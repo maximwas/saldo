@@ -5,7 +5,7 @@ import type { Route } from 'next'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import type { z } from 'zod'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -76,8 +76,10 @@ export function PayObligationSheet({ obligation, onClose }: PayObligationSheetPr
     resolver: useZodResolver(payObligationFormSchema),
     defaultValues: payFormDefaults(obligation, options.accounts, today),
   })
-  const currency = form.watch('currency')
-  const amountText = form.watch('amount')
+  const [currency, amountText] = useWatch({
+    control: form.control,
+    name: ['currency', 'amount'],
+  })
   const remaining = obligation.remainingMinor
   const sameCurrency = currency === obligation.currency
   const partial = remaining !== null && sameCurrency && (toMinor(amountText, currency) ?? remaining) < remaining

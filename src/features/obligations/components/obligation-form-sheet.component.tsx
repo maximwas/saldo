@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import type { z } from 'zod'
 import { AddedBy } from '@/components/ui/author.component'
 import { Button } from '@/components/ui/button.component'
@@ -63,8 +63,10 @@ export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheet
       categoryId: obligation?.categoryId ?? null,
     },
   })
-  const direction = form.watch('direction')
-  const currency = form.watch('currency')
+  const [direction, currency] = useWatch({
+    control: form.control,
+    name: ['direction', 'currency'],
+  })
   const pending = create.isPending || update.isPending
   const kind = direction === 'in' ? 'income' : 'expense'
   const none = {

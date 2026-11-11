@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
@@ -73,8 +73,12 @@ export function LimitSheet({ categoryId }: { categoryId: string | null }) {
           (fact.remainingMinor ?? 0) > 0,
       )
     : []
-  const source = sources.find((fact) => fact.categoryId === form.watch('sourceId'))
-  const moveMinor = (form.watch('limitMinor') ?? 0) - (existing?.limitMinor ?? 0)
+  const [sourceId, limitMinor, carryMode] = useWatch({
+    control: form.control,
+    name: ['sourceId', 'limitMinor', 'carryMode'],
+  })
+  const source = sources.find((fact) => fact.categoryId === sourceId)
+  const moveMinor = (limitMinor ?? 0) - (existing?.limitMinor ?? 0)
 
   let title = translate('titleNew', { month: monthName })
 
@@ -179,7 +183,7 @@ export function LimitSheet({ categoryId }: { categoryId: string | null }) {
         <LimitSheetFields
           control={form.control}
           choices={categoryId ? null : categories.filter((category) => !limited.has(category.id))}
-          carryMode={form.watch('carryMode')}
+          carryMode={carryMode}
           nextMonth={dayText(shiftMonth(month, 1), 'month')}
           move={
             over

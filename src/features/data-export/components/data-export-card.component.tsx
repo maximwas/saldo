@@ -67,15 +67,17 @@ export function DataExportCard() {
   const [pending, setPending] = useState<ExportKind | null>(null)
 
   async function run(kind: ExportKind) {
+    const exportFile = kind === 'csv' ? exportCsv : exportArchive
+
     setPending(kind)
 
     try {
-      await (kind === 'csv' ? exportCsv : exportArchive)(ledgerId, today)
+      await exportFile(ledgerId, today)
     } catch {
       notify.error(translate('exportFailed'))
-    } finally {
-      setPending(null)
     }
+
+    setPending(null)
   }
 
   return (

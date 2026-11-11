@@ -2,7 +2,7 @@ import { Dialog } from '@base-ui/react/dialog'
 import { Drawer } from '@base-ui/react/drawer'
 import { X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { cn } from '@/lib/utils/cn.utils'
 import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
@@ -32,7 +32,7 @@ const CLOSE_CLASS =
   'flex shrink-0 cursor-pointer items-center justify-center rounded-md text-text-secondary outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary'
 const TITLE_CLASS = 'flex-1 text-card-title text-text-primary'
 const BACKDROP_CLASS =
-  'fixed inset-0 z-40 bg-scrim transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0'
+  'fixed inset-0 z-40 bg-scrim transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0 starting:opacity-0'
 
 // Figma «Saldo» → BottomSheet 2:10281 (mobile: radius card on top, handle 36x4, header with 44 close, scrolling body
 // padding 8/20/20, sticky footer with top border and full-width buttons) and Dialog 2:10240 (desktop: 480 wide, 640 for the operation form,
@@ -51,11 +51,10 @@ export function Sheet({
   // a sheet is opened by a click, so it never renders during hydration
   const desktop = useIsSheetDialog()
   // Screens mount a sheet already open (a row, a URL id) and unmount it on close, while Base UI plays the enter and exit
-  // transitions only for an open that changes after mount. So the root opens one render after mount, and a close
-  // (✕, backdrop, swipe, Escape, SheetClose) first plays the exit and only then reaches the caller.
-  const [ready, setReady] = useState(false)
+  // transitions only for an open that changes after mount. So the enter comes from CSS @starting-style (`starting:`),
+  // and a close (✕, backdrop, swipe, Escape, SheetClose) first plays the exit and only then reaches the caller.
   const [closing, setClosing] = useState(false)
-  const shown = open && ready && !closing
+  const shown = open && !closing
   const root = {
     open: shown,
     onOpenChange: (next: boolean) => (next ? onOpenChange(true) : setClosing(true)),
@@ -66,8 +65,6 @@ export function Sheet({
       }
     },
   }
-
-  useEffect(() => setReady(true), [])
 
   if (desktop) {
     return (
@@ -80,7 +77,7 @@ export function Sheet({
             <Dialog.Popup
               initialFocus={initialFocus}
               className={cn(
-                'pointer-events-auto flex max-h-full max-w-full flex-col gap-5 rounded-card bg-raised p-6 shadow-float outline-none transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0',
+                'pointer-events-auto flex max-h-full max-w-full flex-col gap-5 rounded-card bg-raised p-6 shadow-float outline-none transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0 starting:opacity-0',
                 DIALOG_WIDTH[size],
               )}
             >
@@ -111,7 +108,7 @@ export function Sheet({
           <Drawer.Viewport className="pointer-events-none fixed inset-x-0 top-4 bottom-(--drawer-keyboard-inset,0px) z-40 flex flex-col justify-end">
             <Drawer.Popup
               initialFocus={initialFocus}
-              className="pointer-events-auto flex max-h-full translate-y-(--drawer-swipe-movement-y) flex-col rounded-t-card bg-raised shadow-float outline-none transition-transform duration-(--duration-slow) ease-(--ease-emphasized) data-ending-style:translate-y-full data-starting-style:translate-y-full data-swiping:transition-none"
+              className="pointer-events-auto flex max-h-full translate-y-(--drawer-swipe-movement-y) flex-col rounded-t-card bg-raised shadow-float outline-none transition-transform duration-(--duration-slow) ease-(--ease-emphasized) data-ending-style:translate-y-full data-starting-style:translate-y-full starting:translate-y-full data-swiping:transition-none"
             >
               <div className="flex justify-center pt-2 pb-1" aria-hidden>
                 <div className="h-1 w-9 rounded-full bg-border-strong" />

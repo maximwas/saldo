@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
@@ -132,7 +132,10 @@ function CategoryForm({ target, onSubmitAction }: CategoryFormProps) {
       icon: category?.icon ?? 'tag',
     },
   })
-  const color = form.watch('color')
+  const color = useWatch({
+    control: form.control,
+    name: 'color',
+  })
 
   return (
     <form

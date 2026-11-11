@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { type SubmitEvent, useMemo, useState } from 'react'
+import { type SubmitEvent, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -51,16 +51,11 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
   const [nameError, setNameError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
-  const zoneOptions = useMemo(() => {
-    const zones = new Set(Intl.supportedValuesOf('timeZone').map(canonicalZone))
-
-    zones.add(canonicalZone(settings.timeZone))
-
-    return [...zones].sort().map((value) => ({
-      value,
-      label: value.replaceAll('_', ' '),
-    }))
-  }, [settings.timeZone])
+  const zones = new Set(Intl.supportedValuesOf('timeZone').map(canonicalZone)).add(canonicalZone(settings.timeZone))
+  const zoneOptions = [...zones].sort().map((value) => ({
+    value,
+    label: value.replaceAll('_', ' '),
+  }))
   const weekOptions = WEEK_DAYS.map((value) => ({
     value: String(value),
     // Ukrainian weekday names are lowercase, a list label starts with a capital
@@ -104,9 +99,9 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
       )
 
       setError(pgError.constraint === BASE_CURRENCY_LOCKED ? translate('baseCurrencyLocked') : dbErrorText(caught))
-    } finally {
-      setIsPending(false)
     }
+
+    setIsPending(false)
   }
 
   return (

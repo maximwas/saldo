@@ -133,9 +133,9 @@ export function InviteSheet({ open, onOpenChange }: InviteSheetProps) {
       } else {
         setError(dbErrorText(caught))
       }
-    } finally {
-      setIsPending(false)
     }
+
+    setIsPending(false)
   }
 
   async function copy(link: string) {

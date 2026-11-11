@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeftRight, Search } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
@@ -75,32 +75,13 @@ export function OperationsScreen() {
   } | null>(null)
   const queued = useQueuedOperations()
   // a create still in the device's queue shows as a row with its state until the server has it (one row per id)
-  const items = useMemo(
-    () =>
-      list.data ? buildItems(mergeQueued(list.data.rows, queued.rows).sort(newestFirst), list.data.transfers) : [],
-    [list.data, queued.rows],
-  )
-  const receiptIds = useMemo(() => new Set(list.data?.receiptIds ?? []), [list.data])
-  const totals = useMemo(() => summarize(items), [items])
+  const items = list.data
+    ? buildItems(mergeQueued(list.data.rows, queued.rows).sort(newestFirst), list.data.transfers)
+    : []
+  const receiptIds = new Set(list.data?.receiptIds ?? [])
+  const totals = summarize(items)
   const [linkedId, setLinkedId] = useQueryState('operation', parseAsString.withOptions({ history: 'replace' }))
   const linked = linkedId ? items.find((item) => item.row.id === linkedId) : undefined
-
-  // a search result links ?period=<month>&operation=<id>: open its sheet (edit, or view for a viewer), then drop the id
-  useEffect(() => {
-    if (!linked) {
-      return
-    }
-
-    setEditor((current) => ({
-      open: true,
-      target: {
-        mode: 'edit',
-        item: linked,
-      },
-      key: (current?.key ?? 0) + 1,
-    }))
-    void setLinkedId(null)
-  }, [linked, setLinkedId])
 
   const openEditor = (target: EditorTarget) =>
     setEditor((current) => ({
@@ -108,6 +89,23 @@ export function OperationsScreen() {
       target,
       key: (current?.key ?? 0) + 1,
     }))
+  const linkedOpen = editor?.open === true && editor.target.mode === 'edit' && editor.target.item.row.id === linkedId
+
+  // a search result links ?period=<month>&operation=<id>: its sheet (edit, or view for a viewer) opens in the same
+  // render as the list
+  if (linked && !linkedOpen) {
+    openEditor({
+      mode: 'edit',
+      item: linked,
+    })
+  }
+
+  // then the id leaves the URL (the outside world), so Back or a reload does not open it again
+  useEffect(() => {
+    if (linked) {
+      void setLinkedId(null)
+    }
+  }, [linked, setLinkedId])
 
   // Figma 5:102493: the empty filter names what it looked for (period, type, account, category, text)
   function filteredText() {

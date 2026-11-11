@@ -294,9 +294,9 @@ export function OperationEditor({
       onOpenChangeAction(false)
     } catch (caught) {
       fail(caught)
-    } finally {
-      setSaving(false)
     }
+
+    setSaving(false)
   }
 
   const saveOperation = (values: OperationFormValues) =>

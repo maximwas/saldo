@@ -46,9 +46,9 @@ export function DisplayNameForm({ name: initialName }: DisplayNameFormProps) {
       router.refresh()
     } catch (caught) {
       setError(dbErrorText(caught))
-    } finally {
-      setIsPending(false)
     }
+
+    setIsPending(false)
   }
 
   return (

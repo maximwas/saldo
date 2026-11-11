@@ -1,4 +1,5 @@
 import stylistic from '@stylistic/eslint-plugin'
+import reactHooks from 'eslint-plugin-react-hooks'
 import tseslint from 'typescript-eslint'
 
 // code comments are English; Ukrainian lives only in UI texts (docs/conventions.md §3a)
@@ -121,6 +122,11 @@ export default tseslint.config(
   {
     files: ['src/**/*.{ts,tsx}'],
     rules: { 'no-restricted-syntax': ['error', NAMED_PARAMETER_TYPE, ONE_DAY_ANCHOR] },
+  },
+  // React Compiler is on (next.config.ts): its rules report code it cannot compile safely (docs/conventions.md §4.8)
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ...reactHooks.configs.flat.recommended,
   },
   // typed rules: every .ts/.tsx is in tsconfig.json; .mjs/.cjs stay untyped
   {

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import type { z } from 'zod'
 import { Button } from '@/components/ui/button.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -74,7 +74,10 @@ export function CreditFormSheet({ credit, onCloseAction }: CreditFormSheetProps)
     resolver: useZodResolver(creditFormSchema),
     defaultValues: defaultsOf(credit, today, baseCurrency),
   })
-  const mode = form.watch('mode')
+  const mode = useWatch({
+    control: form.control,
+    name: 'mode',
+  })
   const ModeFields = MODE_FIELDS[mode]
 
   const onSubmit = form.handleSubmit((values) =>

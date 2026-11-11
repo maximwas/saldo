@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -54,7 +54,11 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
       occurredOn: today,
     },
   })
-  const amount = toMinor(methods.watch('amount'), debt.currency)
+  const amountText = useWatch({
+    control: methods.control,
+    name: 'amount',
+  })
+  const amount = toMinor(amountText, debt.currency)
   const left = amount === null ? null : debt.remainingMinor - amount
   const pending = repay.isPending || close.isPending
   const dayText = useDayText()

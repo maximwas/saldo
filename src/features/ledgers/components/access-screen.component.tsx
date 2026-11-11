@@ -102,9 +102,9 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
 
       setDialogError(message)
       notify.error(message)
-    } finally {
-      setIsPending(false)
     }
+
+    setIsPending(false)
   }
 
   const changeRole = (member: Member, nextRole: string | null) => {

@@ -6,6 +6,8 @@ import createNextIntlPlugin from 'next-intl/plugin'
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // memoizes components and hooks at build time: no hand-written useMemo / useCallback / memo (conventions §4.8)
+  reactCompiler: true,
   typedRoutes: true,
   // left to the Cloudflare bundler, which picks the package's workerd build: its JSON Schema validator (Ajv) compiles
   // with new Function, which workerd forbids, and the workerd build swaps it for @cfworker/json-schema
