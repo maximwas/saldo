@@ -60,7 +60,7 @@ const NEW_CATEGORIES = [
     id: id(901),
     name: 'Розваги',
     color: 'plum',
-    sort_order: 12,
+    sort_order: 13,
   },
 ]
 
