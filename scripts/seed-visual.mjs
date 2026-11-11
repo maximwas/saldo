@@ -1,6 +1,6 @@
 // Fills demo@example.com (made by supabase/seed.sql) with the rest of docs/design/demo-data.md for the visual tests:
 // the story's October operations, this month's household bills already due (paid), the EUR → card transfer and budget
-// in the current Kyiv month, and the category seed.sql lacks. DEMO_TODAY=YYYY-MM-DD pins today (2026-10-30 for the visual specs, as in seed.sql).
+// in the current Kyiv month, the subscriptions' charges paid on their own day, and the category seed.sql lacks. DEMO_TODAY=YYYY-MM-DD pins today (2026-10-30 for the visual specs, as in seed.sql).
 // Local stack only; run after `supabase db reset`. Writes go through the app's RPCs as the demo user (RLS applies).
 import { execSync } from 'node:child_process'
 import { createClient } from '@supabase/supabase-js'
@@ -264,6 +264,58 @@ for (const [index, [title, plannedMinor]] of PAID_BILLS.entries()) {
   )
 }
 
+// seed.sql's subscriptions (fixed ids) and the operation names of their charges
+const SUBSCRIPTIONS = [
+  ['Netflix', 'de000000-0000-4000-8000-0000000000b1'],
+  ['Spotify', 'de000000-0000-4000-8000-0000000000b2'],
+  ['Google One', 'de000000-0000-4000-8000-0000000000b3'],
+]
+let paidSubscriptions = 0
+
+for (const [index, [name, subscriptionId]] of SUBSCRIPTIONS.entries()) {
+  const paidBy = operations.find((row) => row.counterparty === name)
+  const obligationId = id(500 + index)
+
+  if (paidBy === undefined) {
+    continue
+  }
+
+  paidSubscriptions += 1
+
+  // the server prices the date from the subscription; a date it already has is skipped, so a rerun writes nothing
+  must(
+    await client.rpc('upsert_series_obligations', {
+      p_source_type: 'subscription',
+      p_source_id: subscriptionId,
+      p_rows: [
+        {
+          id: obligationId,
+          occurrence_on: paidBy.occurred_on,
+          due_on: paidBy.occurred_on,
+        },
+      ],
+    }),
+    `${name} date`,
+  )
+
+  const { version } = must(
+    await client.from('obligations').select('version').eq('id', obligationId).single(),
+    `${name} version`,
+  )
+
+  must(
+    await client.rpc('pay_obligation', {
+      p_payment_id: id(600 + index),
+      p_obligation_id: obligationId,
+      p_expected_version: version,
+      p_amount_minor: paidBy.amount_minor,
+      p_existing_operation_id: paidBy.id,
+      p_settle: false,
+    }),
+    `pay ${name}`,
+  )
+}
+
 must(
   await client.rpc('create_transfer', {
     p_transfer: {
@@ -327,6 +379,6 @@ must(
 const balances = must(await client.from('account_balances').select('account_id, balance_minor'), 'balances')
 
 console.log(
-  `seed-visual: ${operations.length} operations, ${paidBills} paid bills, 1 transfer, ${Object.keys(LIMITS).length} limits`,
+  `seed-visual: ${operations.length} operations, ${paidBills} paid bills, ${paidSubscriptions} paid subscriptions, 1 transfer, ${Object.keys(LIMITS).length} limits`,
 )
 console.log(balances.map((row) => `${row.account_id.slice(-2)}=${row.balance_minor}`).join(' '))
