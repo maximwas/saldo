@@ -119,7 +119,8 @@ export function sumTotals(days: DayTotals[]) {
     incomeMinor,
     expenseMinor,
     resultMinor: incomeMinor - expenseMinor,
-    planMinor: sum((day) => day.planInMinor - day.planOutMinor),
+    // decision 31.10: «with plan» subtracts the open outgoing plans only; expected income is not added (§3)
+    planMinor: -sum((day) => day.planOutMinor),
     unknownCount: sum((day) => day.unknownCount),
     entriesCount: sum((day) => day.entriesCount),
   }
