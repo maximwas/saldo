@@ -1,11 +1,12 @@
 'use client'
 
 import { useFormatter, useTranslations } from 'next-intl'
-import { useState, useSyncExternalStore } from 'react'
+import { useState } from 'react'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { SyncQueuePopover, SyncQueueSheet } from '@/features/sync/components/sync-queue.component'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
 import type { SyncSummary } from '@/lib/query/sync-queue.utils'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { SyncStatus } from './sync-status.component'
 
 type SyncIndicatorProps = {
@@ -21,11 +22,7 @@ export function SyncIndicator({ platform = 'sidebar' }: SyncIndicatorProps) {
   const { summary, updatedAt } = useSyncQueue()
   const [open, setOpen] = useState(false)
   // the restored cache gives the browser a time the server never had: show it only after hydration, so both match
-  const hydrated = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  )
+  const hydrated = useHydrated()
   const sidebar = platform === 'sidebar'
   const time =
     hydrated && updatedAt

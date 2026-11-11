@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { Card } from '@/components/ui/card.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useClock } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
@@ -13,6 +14,7 @@ import { nextReminder } from '@/lib/reminders/reminder-schedule.utils'
 import { useReminderText } from '@/lib/reminders/reminder-text.hook'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { localDate, localTime } from '@/lib/utils/clock.utils'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 
 // Figma «Saldo» → «My reminders» 36:111531 · Card 36:111834: ListItem rows, padding 12/0, gap 16: the logo, the title
 // (body-medium) over «Subscription · 3 and 1 days before at 09:00» (label), the date of the next reminder at the end.
@@ -26,6 +28,7 @@ export function MyRemindersList() {
     queryKey: ledgerQueryKey('reminder-rules', ledgerId, 'mine'),
     queryFn: () => listMyReminders(getBrowserSupabase(), ledgerId),
   })
+  const hydrated = useHydrated()
   const moment = now()
   const rows = (data ?? [])
     .map((reminder: MyReminder) => ({
@@ -40,6 +43,15 @@ export function MyRemindersList() {
     }))
     .filter((row) => row.next !== null)
     .sort((first, second) => (first.next?.date ?? '').localeCompare(second.next?.date ?? ''))
+
+  // the server has no list: a skeleton until hydration and the first load, then the list or «none»
+  if (!hydrated || data === undefined) {
+    return (
+      <Card title={translate('title')} className="h-full">
+        <Bone aria-busy className="h-32 rounded-md" />
+      </Card>
+    )
+  }
 
   return (
     <Card title={translate('title')} className="h-full">

@@ -11,6 +11,7 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useSubscriptionParams } from '../hooks/subscription-params.hook'
 import { useSubscriptions } from '../hooks/subscriptions.hook'
 import { filterCounts, matchesFilter, SUBSCRIPTION_FILTERS } from '../utils/subscription-series.utils'
@@ -49,6 +50,7 @@ export function SubscriptionList() {
   const query = useSubscriptions()
   const { data } = query
   const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const { state } = useSubscriptionParams()
   const [creating, setCreating] = useState(false)
   const [editingDefaults, setEditingDefaults] = useState(false)
@@ -62,7 +64,7 @@ export function SubscriptionList() {
     )
   }
 
-  if (data === undefined) {
+  if (!hydrated || data === undefined) {
     return (
       <>
         <PaymentsTabs />

@@ -14,6 +14,7 @@ import { Tabs } from '@/components/ui/tabs.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { formatRate } from '@/lib/money/fx.utils'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useAccounts } from '../hooks/accounts.hook'
 import { type AccountView, totalInBase } from '../utils/accounts.utils'
@@ -40,6 +41,7 @@ export function AccountsScreen() {
   const query = useAccounts()
   const { data } = query
   const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const [tab, setTab] = useState<Tab>('active')
   const [form, setForm] = useState<FormTarget | null>(null)
   const [archiving, setArchiving] = useState<AccountView | null>(null)
@@ -49,7 +51,7 @@ export function AccountsScreen() {
     return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (data === undefined) {
+  if (!hydrated || data === undefined) {
     return <Bone className="h-72 rounded-card" />
   }
 

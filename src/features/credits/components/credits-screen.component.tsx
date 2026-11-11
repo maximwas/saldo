@@ -15,6 +15,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import type { Credit } from '../api/credits.api'
 import { useCredits } from '../hooks/credits.hook'
 import { type CreditTotals, creditTotals, monthNotes, nextMonthOf } from '../utils/credits.utils'
@@ -136,6 +137,7 @@ export function CreditsScreen() {
   const query = useCredits()
   const { data } = query
   const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const [creating, setCreating] = useState(false)
 
   if (failedLoad) {
@@ -147,7 +149,7 @@ export function CreditsScreen() {
     )
   }
 
-  if (data === undefined) {
+  if (!hydrated || data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <PaymentsTabs />

@@ -10,6 +10,7 @@ import { useDayText } from '@/lib/dates/day-text.hook'
 import { formatRate } from '@/lib/money/fx.utils'
 import { currencySymbol } from '@/lib/money/money.utils'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useRateHistory, useRates } from '../hooks/currencies.hook'
 import { rateBoard } from '../utils/currencies.utils'
 import { RateForm } from './rate-form.component'
@@ -31,12 +32,13 @@ export function CurrenciesScreen() {
   const { data } = query
   const history = historyQuery.data
   const { failedLoad, retry } = useScreenQueryState([query, historyQuery], translate('refreshFailed'))
+  const hydrated = useHydrated()
 
   if (failedLoad) {
     return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (data === undefined || history === undefined) {
+  if (!hydrated || data === undefined || history === undefined) {
     return <Bone className="h-72 rounded-card" />
   }
 

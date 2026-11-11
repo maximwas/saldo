@@ -6,6 +6,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { formatRate } from '@/lib/money/fx.utils'
 import { currencySymbol } from '@/lib/money/money.utils'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useRates } from '../hooks/currencies.hook'
 import { rateBoard } from '../utils/currencies.utils'
 
@@ -17,11 +18,13 @@ export function CurrenciesSummary() {
   const today = useToday()
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const { data } = useRates()
-  const rates = data
-    ? rateBoard(data.rates, data.baseCurrency, today).filter((row) =>
-        (CURRENCIES as readonly string[]).includes(row.currency),
-      )
-    : []
+  const hydrated = useHydrated()
+  const rates =
+    hydrated && data
+      ? rateBoard(data.rates, data.baseCurrency, today).filter((row) =>
+          (CURRENCIES as readonly string[]).includes(row.currency),
+        )
+      : []
 
   return [
     translate('summaryBase', { symbol: currencySymbol(baseCurrency, locale) }),

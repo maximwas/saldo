@@ -6,6 +6,7 @@ import { Banner } from '@/components/ui/banner.component'
 import { ErrorState } from '@/components/ui/error-state.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useCurrentBudget } from '../hooks/budget.hook'
 import { BudgetEmpty } from './budget-empty.component'
 import { BudgetSheets } from './budget-sheets.component'
@@ -24,6 +25,7 @@ export function BudgetScreen() {
   const budget = useCurrentBudget()
   const { month, data } = budget
   const { failedLoad, retry } = useScreenQueryState([budget], translate('refreshFailed'))
+  const hydrated = useHydrated()
 
   if (failedLoad) {
     return (
@@ -34,7 +36,7 @@ export function BudgetScreen() {
     )
   }
 
-  if (data === undefined) {
+  if (!hydrated || data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <BudgetTabs />
