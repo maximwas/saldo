@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useClock } from '@/contexts/clock.context'
 import { useLedger } from '@/contexts/ledger.context'
 import { switchLedger } from '@/features/ledgers/api/ledgers.actions'
@@ -35,6 +35,7 @@ export function Topbar() {
   const spacePage = pathname === '/space'
   const subpage = SETTINGS_SUBPAGES.find((key) => pathname === `/settings/${key}`)
   const title = titleKey ? translateNav(titleKey) : translateCommon('brand')
+  const tabTitle = titleKey ? `${title} · ${translateCommon('brand')}` : title
   const spaceSubtitle = pathname === '/settings' || subpage !== undefined || pathname === '/statistics'
   const spaceName = ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? ''
   // the space's zone, not the browser's: «today» is the same for both people in a shared space
@@ -44,6 +45,11 @@ export function Topbar() {
     month: 'long',
     timeZone,
   })
+
+  // the browser tab names the screen (QA2 #17): the root metadata gives every page «Saldo», the shell knows the screen
+  useEffect(() => {
+    document.title = tabTitle
+  }, [tabTitle])
 
   return (
     <header className="flex items-center justify-between gap-4 bg-app px-5 py-3 lg:px-8 lg:py-6">

@@ -62,7 +62,10 @@ export function CalendarToolbar() {
         >
           <ChevronRight aria-hidden size={20} />
         </Button>
-        <h2 className="min-w-0 flex-1 truncate font-display text-number-sm text-text-primary lg:flex-none">{title}</h2>
+        {/* phones: a smaller title that wraps instead of being cut by «Today» (QA2 #7) */}
+        <h2 className="min-w-0 flex-1 text-balance font-display text-card-title text-text-primary lg:flex-none lg:truncate lg:text-number-sm">
+          {title}
+        </h2>
         <Button
           variant="secondary"
           size="s"

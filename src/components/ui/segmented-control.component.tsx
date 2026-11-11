@@ -18,6 +18,8 @@ type SegmentedControlProps<Value extends string> = {
   onValueChange: (value: Value) => void
   /** disables the options and marks the group busy while a change is saved */
   pending?: boolean
+  /** the value cannot change now: say why next to the control */
+  disabled?: boolean
   /** below lg the control fills its row and the options share it (Figma mobile list rows); natural width from lg */
   stretch?: boolean
 }
@@ -35,6 +37,7 @@ export function SegmentedControl<Value extends string>({
   value,
   onValueChange,
   pending = false,
+  disabled = false,
   stretch = false,
 }: SegmentedControlProps<Value>) {
   const selectedColumn = options.findIndex((option) => option.value === value) + 1
@@ -67,11 +70,11 @@ export function SegmentedControl<Value extends string>({
             type="button"
             lang={option.lang}
             aria-pressed={selected}
-            disabled={pending}
+            disabled={pending || disabled}
             onClick={() => onValueChange(option.value)}
             style={{ gridColumnStart: index + 1 }}
             className={cn(
-              'relative row-start-1 flex cursor-pointer items-center justify-center rounded-logo-md py-2 text-label outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
+              'relative row-start-1 flex cursor-pointer items-center after:absolute after:-inset-y-1 after:inset-x-0 disabled:cursor-not-allowed justify-center rounded-logo-md py-2 text-label outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
               stretch ? 'min-w-0 px-2 lg:px-4' : 'px-4',
               selected
                 ? 'font-semibold text-text-primary'

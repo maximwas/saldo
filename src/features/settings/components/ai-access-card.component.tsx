@@ -1,15 +1,18 @@
 'use client'
 
-import { Plug } from 'lucide-react'
+import { Copy, Plug } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { Field } from '@/components/ui/field.component'
+import { Input } from '@/components/ui/input.component'
 import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import type { OAuthGrantView } from '../api/oauth-grants.server'
 
@@ -65,6 +68,17 @@ export function AiAccessCard({ grants, mcpUrl }: AiAccessCardProps) {
   const [confirming, setConfirming] = useState<OAuthGrantView | null>(null)
   const [open, setOpen] = useState(false)
   const name = confirming?.clientName ?? ''
+  // the address the person opened Saldo at: the build-time site URL can differ (a preview or a local port)
+  const address = useHydrated() ? new URL(new URL(mcpUrl).pathname, window.location.origin).href : mcpUrl
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(address)
+      notify.success(translate('copied'))
+    } catch {
+      notify.error(translate('copyFailed'))
+    }
+  }
 
   function ask(grant: OAuthGrantView) {
     setConfirming(grant)
@@ -97,7 +111,16 @@ export function AiAccessCard({ grants, mcpUrl }: AiAccessCardProps) {
     <Card title={translate('aiTitle')}>
       {/* the Card body slot: gap 16 between the hint and the list */}
       <div className="flex flex-col gap-4">
-        <p className="text-label text-text-secondary">{translate('aiHint', { url: mcpUrl })}</p>
+        <p className="text-label text-text-secondary">{translate('aiHint')}</p>
+        <div className="flex items-end gap-2">
+          <Field label={translate('address')} className="min-w-0 flex-1">
+            <Input readOnly value={address} onFocus={(event) => event.currentTarget.select()} />
+          </Field>
+          <Button type="button" variant="secondary" onClick={() => void copy()}>
+            <Copy aria-hidden size={16} />
+            {translate('copy')}
+          </Button>
+        </div>
         {grants.length === 0 ? (
           <p className="text-label text-text-tertiary">{translate('empty')}</p>
         ) : (

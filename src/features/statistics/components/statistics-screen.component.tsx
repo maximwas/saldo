@@ -10,6 +10,7 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { statisticsQueries } from '../api/statistics.queries'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
 import { cashflowTotals } from '../utils/statistics.utils'
@@ -85,8 +86,10 @@ export function StatisticsScreen() {
   const { params } = useStatisticsFilters()
   const query = useQuery(statisticsQueries.cashflow(params))
   const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
-  const pending = query.data === undefined && !failedLoad && query.fetchStatus !== 'paused'
-  const empty = query.data !== undefined && cashflowTotals(query.data).operationsCount === 0
+  const hydrated = useHydrated()
+  // until hydration the server's skeleton, whatever the device cache or the network says
+  const pending = !hydrated || (query.data === undefined && !failedLoad && query.fetchStatus !== 'paused')
+  const empty = !pending && query.data !== undefined && cashflowTotals(query.data).operationsCount === 0
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
@@ -98,14 +101,15 @@ export function StatisticsScreen() {
       {!pending && !empty && !failedLoad && (
         <>
           <SummaryCards />
-          <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+          <div className="grid gap-4 *:min-w-0 lg:grid-cols-2 lg:gap-6">
             <CategoriesCard />
             <CashflowCard />
             <BudgetCard />
             <ForecastCard />
-            <SubscriptionsCard />
-            <CreditsCard />
           </div>
+          {/* the tables of subscriptions and credits have up to 6 columns: full width, so no column is cut off */}
+          <SubscriptionsCard />
+          <CreditsCard />
         </>
       )}
     </div>

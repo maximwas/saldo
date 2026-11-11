@@ -17,6 +17,7 @@ import { useDayText } from '@/lib/dates/day-text.hook'
 import { resumeWrites } from '@/lib/query/ledger-writes.mutations'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import type { DebtRow } from '../api/debts.api'
 import { useDebts, useQueuedRepayments } from '../hooks/debts.hook'
 import { type CurrencyTotal, nearestDue, openCount, owedTotals, partlyRepaid } from '../utils/debt-groups.utils'
@@ -102,6 +103,7 @@ export function DebtsScreen() {
   const query = useDebts()
   const { data } = query
   const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const [sheet, setSheet] = useState<Sheet>(null)
 
   if (failedLoad) {
@@ -113,7 +115,7 @@ export function DebtsScreen() {
     )
   }
 
-  if (data === undefined) {
+  if (!hydrated || data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <PaymentsTabs />
@@ -168,7 +170,7 @@ export function DebtsScreen() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:gap-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:gap-6">
             {GROUPS.map((group) => (
               <DebtTotal
                 key={group.key}
@@ -291,7 +293,7 @@ function TotalAmounts({ totals }: { totals: CurrencyTotal[] }) {
 function DebtsSkeleton() {
   return (
     <div aria-busy className="flex flex-col gap-4 lg:gap-6">
-      <div className="grid grid-cols-2 gap-4 lg:gap-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:gap-6">
         {[0, 1].map((key) => (
           <SkeletonCard key={key} className="gap-3 p-6">
             <Bone className="h-3 w-30 rounded-sm" />

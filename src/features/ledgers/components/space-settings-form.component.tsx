@@ -120,8 +120,11 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
             }))}
             value={currency}
             onValueChange={setCurrency}
+            disabled={settings.baseCurrencyLocked}
           />
-          <p className="text-caption text-text-tertiary">{translate('baseCurrencyHint')}</p>
+          <p className="text-caption text-text-tertiary">
+            {translate(settings.baseCurrencyLocked ? 'baseCurrencyLockedHint' : 'baseCurrencyHint')}
+          </p>
         </div>
         <Field label={translate('timeZone')} hint={translate('timeZoneHint')}>
           <Select options={zoneOptions} value={timeZone} onValueChange={(value) => setTimeZone(value ?? timeZone)} />

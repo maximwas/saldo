@@ -16,6 +16,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import type { ObligationRow } from '../api/obligations.api'
 import { useObligationOptions, useObligations } from '../hooks/obligations.hook'
 import { useQueuedPayments } from '../hooks/queued-payments.hook'
@@ -41,6 +42,7 @@ export function ObligationsScreen() {
   const { data } = query
   const options = useObligationOptions()
   const { failedLoad, retry } = useScreenQueryState([query, options], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const router = useRouter()
   const queuedPayments = useQueuedPayments()
   const { online } = useSyncQueue()
@@ -59,7 +61,7 @@ export function ObligationsScreen() {
     )
   }
 
-  if (data === undefined || options.data === undefined) {
+  if (!hydrated || data === undefined || options.data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <PaymentsTabs />
@@ -95,10 +97,11 @@ export function ObligationsScreen() {
   const waiting = data.open.filter((row) => queuedPayments.has(row.id))
   const addPayment = () => setForm({ obligation: null })
 
-  const renderRow = (row: ObligationRow) => (
+  const renderRow = (row: ObligationRow, overdue = false) => (
     <ObligationRowItem
       key={row.id}
       obligation={row}
+      overdue={overdue}
       awaitingSync={queuedPayments.has(row.id)}
       onPay={() =>
         row.sourceType === 'debt' ? router.push('/payments/debts' as Route) : void setSheet({ pay: row.id })
@@ -157,14 +160,14 @@ export function ObligationsScreen() {
                 {translate(canWrite ? 'overdueHint' : 'overdueHintViewer')}
               </p>
             )}
-            <ul className="flex flex-col">{groups[bucket].map(renderRow)}</ul>
+            <ul className="flex flex-col">{groups[bucket].map((row) => renderRow(row, bucket === 'overdue'))}</ul>
           </div>
         </section>
       ))}
       {data.paid.length > 0 && (
         <section className={CARD}>
           <h2 className="text-card-title text-text-primary">{translate('groups.paid')}</h2>
-          <ul className="flex flex-col">{data.paid.map(renderRow)}</ul>
+          <ul className="flex flex-col">{data.paid.map((row) => renderRow(row))}</ul>
         </section>
       )}
       <ObligationSheetsHost />

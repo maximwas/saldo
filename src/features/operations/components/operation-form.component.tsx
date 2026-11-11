@@ -162,7 +162,7 @@ export function OperationForm({
             <CategorySelect
               categories={categories}
               kind={categoryKind}
-              noneLabel={translate('noCategory')}
+              placeholder={translate('categoryPlaceholder')}
               value={field.value}
               onValueChange={field.onChange}
               disabled={disabled}
@@ -192,7 +192,14 @@ export function OperationForm({
           name="occurredTime"
           label={translate('time')}
           render={(field) => (
-            <Input {...field} disabled={disabled} inputMode="numeric" maxLength={5} autoComplete="off" />
+            <Input
+              {...field}
+              disabled={disabled}
+              inputMode="numeric"
+              maxLength={5}
+              autoComplete="off"
+              placeholder={translate('timePlaceholder')}
+            />
           )}
         />
       </div>

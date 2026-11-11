@@ -67,16 +67,22 @@ export function CategoryRow({
         },
       ]
     : [
-        {
-          label: translate('menu.up'),
-          onSelect: () => onMoveAction?.('up'),
-          disabled: !canMoveUp,
-        },
-        {
-          label: translate('menu.down'),
-          onSelect: () => onMoveAction?.('down'),
-          disabled: !canMoveDown,
-        },
+        ...(canMoveUp
+          ? [
+              {
+                label: translate('menu.up'),
+                onSelect: () => onMoveAction?.('up'),
+              },
+            ]
+          : []),
+        ...(canMoveDown
+          ? [
+              {
+                label: translate('menu.down'),
+                onSelect: () => onMoveAction?.('down'),
+              },
+            ]
+          : []),
         // the system «Subscriptions» category is never renamed or deleted (system_subscriptions_category.sql)
         ...(category.systemKey
           ? []

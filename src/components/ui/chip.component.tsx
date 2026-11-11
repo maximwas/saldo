@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils/cn.utils'
 // nothing jumps: Default border-strong (hover subtle, pressed border fill), Selected primary border + primary-soft + check
 export const chipClass = (selected: boolean) =>
   cn(
-    'flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-2 text-label font-medium outline-none transition-colors duration-(--duration-fast) ease-(--ease-standard) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+    'relative flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-2 text-label after:absolute after:-inset-y-1 after:inset-x-0 font-medium outline-none transition-colors duration-(--duration-fast) ease-(--ease-standard) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
     selected
       ? 'border-primary bg-primary-soft text-primary-text'
       : 'border-border-strong text-text-primary hover:bg-subtle active:bg-border',
@@ -13,11 +13,13 @@ export const chipClass = (selected: boolean) =>
 
 type ChipProps = Omit<React.ComponentProps<'button'>, 'className'> & {
   selected: boolean
+  /** placement only, e.g. the order in a row */
+  className?: string
 }
 
-export function Chip({ selected, children, ...props }: ChipProps) {
+export function Chip({ selected, className, children, ...props }: ChipProps) {
   return (
-    <button type="button" aria-pressed={selected} className={chipClass(selected)} {...props}>
+    <button type="button" aria-pressed={selected} className={cn(chipClass(selected), className)} {...props}>
       {selected ? <Check className="size-4 shrink-0" aria-hidden /> : null}
       {children}
     </button>

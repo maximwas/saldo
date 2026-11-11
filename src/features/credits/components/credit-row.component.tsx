@@ -116,8 +116,9 @@ export function CreditRow({ credit }: CreditRowProps) {
   const progress = creditProgress(credit)
   const nextTexts = useNextTexts(credit, progress.next)
   const account = accounts.find((option) => option.id === credit.accountId)?.name
-  const title = credit.lender ?? credit.name
-  const purpose = [credit.lender ? credit.name : null, account].filter(Boolean).join(' · ')
+  // a name that already starts with the lender («Comfy — laptop») is the title itself, so the lender is not said twice
+  const title = credit.lender && !credit.name.startsWith(credit.lender) ? credit.lender : credit.name
+  const purpose = [title === credit.name ? null : credit.name, account].filter(Boolean).join(' · ')
   const next = progress.next
   const payButton = canWrite && next && credit.status === 'active' && (
     <Button size="s" variant="secondary" className="relative shrink-0" onClick={() => pay(next.id)}>
@@ -159,7 +160,12 @@ export function CreditRow({ credit }: CreditRowProps) {
       </div>
       <div className="flex flex-col items-start gap-3 empty:hidden lg:hidden">{badges}</div>
       <div className="lg:hidden">
-        <StepsBlock title={credit.name} credit={credit} progress={progress} nextText={nextTexts?.short ?? null} />
+        <StepsBlock
+          title={title === credit.name ? translate('installments') : credit.name}
+          credit={credit}
+          progress={progress}
+          nextText={nextTexts?.short ?? null}
+        />
       </div>
       <ServiceLogo name={title} className="max-lg:hidden" />
       <div className="flex w-50 shrink-0 flex-col items-start gap-1 max-lg:hidden">

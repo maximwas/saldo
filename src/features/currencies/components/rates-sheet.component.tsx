@@ -101,16 +101,21 @@ export function RatesSheet({ onOpenChange, baseCurrency, board, pinned, nbuDay, 
       <li key={row.currency} className="border-b border-border py-1 last:border-b-0">
         <label
           htmlFor={`pin-${row.currency}`}
-          className="flex min-h-11 cursor-pointer items-center gap-3 has-data-disabled:cursor-not-allowed"
+          className="flex min-h-11 cursor-pointer items-start gap-3 py-1.5 has-data-disabled:cursor-not-allowed"
         >
-          <Checkbox
-            id={`pin-${row.currency}`}
-            checked={checked}
-            disabled={!checked && full}
-            onCheckedChange={(next) =>
-              onPinnedChange(next ? [...pinned, row.currency] : pinned.filter((currency) => currency !== row.currency))
-            }
-          />
+          {/* the 20 box sits on the first text line (24), conventions §4.6c */}
+          <span className="flex shrink-0 py-0.5">
+            <Checkbox
+              id={`pin-${row.currency}`}
+              checked={checked}
+              disabled={!checked && full}
+              onCheckedChange={(next) =>
+                onPinnedChange(
+                  next ? [...pinned, row.currency] : pinned.filter((currency) => currency !== row.currency),
+                )
+              }
+            />
+          </span>
           <LetterAvatar
             name={row.currency}
             letter={currencySymbol(row.currency, locale)}

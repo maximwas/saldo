@@ -89,7 +89,10 @@ export function Sheet({
                 </Dialog.Close>
               </div>
               <div className="-m-1 flex min-h-0 flex-col gap-4 overflow-y-auto p-1 scrollbar-none">{children}</div>
-              {footer ? <div className="flex items-center gap-3 *:flex-1">{footer}</div> : null}
+              {/* the top border says the body scrolls under the buttons, so a half-hidden last field reads as more */}
+              {footer ? (
+                <div className="flex items-center gap-3 border-t border-border pt-5 *:flex-1">{footer}</div>
+              ) : null}
             </Dialog.Popup>
           </Dialog.Viewport>
         </Dialog.Portal>

@@ -23,6 +23,8 @@ type ObligationRowItemProps = {
   onPay: () => void
   onEdit: () => void
   onCancelPayment: () => void
+  /** in the «date passed, not confirmed» group: its title says it, so the row drops the «not confirmed» pill */
+  overdue?: boolean
 }
 
 // StatusPill Kind per state: Plan, Partial, Unconfirmed, Paid
@@ -47,6 +49,7 @@ export function ObligationRowItem({
   onPay,
   onEdit,
   onCancelPayment,
+  overdue = false,
 }: ObligationRowItemProps) {
   const { pressProps, ripple } = useRipple()
   const [linkedId] = useQueryState('obligation', parseAsString)
@@ -80,7 +83,12 @@ export function ObligationRowItem({
   return (
     <li
       ref={linked ? scrollIntoView : undefined}
-      className={cn('flex flex-col', linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card')}
+      // the highlight covers the whole row: the pay button and the actions line under it belong to the same payment
+      className={cn(
+        '-mx-3 flex flex-col rounded-md px-3 transition-colors',
+        canWrite && open && 'hover:bg-subtle',
+        linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card',
+      )}
     >
       <div className="flex items-start gap-4">
         <button
@@ -88,7 +96,7 @@ export function ObligationRowItem({
           disabled={!canWrite || !open}
           onClick={onPay}
           {...(canWrite && open ? pressProps : {})}
-          className="relative flex min-w-0 flex-1 items-start gap-4 -mx-3 overflow-hidden rounded-md px-3 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary enabled:cursor-pointer enabled:hover:bg-subtle disabled:cursor-default"
+          className="relative flex min-w-0 flex-1 items-start gap-4 overflow-hidden rounded-md py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary enabled:cursor-pointer disabled:cursor-default"
         >
           {obligation.sourceType === 'big_expense' ? (
             <CategoryBadge icon={category?.icon ?? null} color={category?.color ?? null} />
@@ -104,7 +112,9 @@ export function ObligationRowItem({
                 {accountName ? <span className={cn(isCredit && 'max-lg:hidden')}>{` · ${accountName}`}</span> : null}
                 {awaitingSync ? ` · ${translate('awaitingSync')}` : ''}
               </span>
-              <Badge tone={STATE_TONE[pill]}>{translate(`state.${pill}`)}</Badge>
+              {overdue && pill === 'unconfirmed' ? null : (
+                <Badge tone={STATE_TONE[pill]}>{translate(`state.${pill}`)}</Badge>
+              )}
             </span>
           </span>
           <span className="flex shrink-0 flex-col items-end gap-0.5">

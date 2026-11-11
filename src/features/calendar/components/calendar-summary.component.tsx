@@ -6,6 +6,7 @@ import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useLedger } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
 import { sumTotals } from '../utils/calendar.utils'
@@ -22,8 +23,9 @@ export function CalendarSummary() {
   const { view } = useCalendarParams()
   const { params, totals } = useCalendarData()
   const sum = sumTotals(totals.data ?? [])
+  const hydrated = useHydrated()
 
-  if (totals.isPending) {
+  if (!hydrated || totals.isPending) {
     return (
       <SkeletonCard aria-busy className="flex-row flex-wrap gap-3 p-4 lg:p-5">
         {[0, 1, 2, 3].map((cell) => (
@@ -50,6 +52,12 @@ export function CalendarSummary() {
       kind: sum.resultMinor < 0 ? ('shortfall' as const) : ('income' as const),
     },
   ]
+
+  // a day with plans only: three «0,00» tiles say nothing, the day's list below says it all (QA2 #7)
+  if (view === 'day' && sum.incomeMinor === 0 && sum.expenseMinor === 0) {
+    return null
+  }
+
   const withPlan = dayText(params.to, 'short')
   const planCaption =
     sum.planMinor === 0

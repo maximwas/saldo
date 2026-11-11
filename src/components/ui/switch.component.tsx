@@ -15,6 +15,8 @@ type SwitchProps = {
 // Off border-strong, On primary, Disabled border. The wrapping label makes the whole row a click target and the name.
 export function Switch({ label, checked, onCheckedChange, disabled, name, className }: SwitchProps) {
   const switchId = useId()
+  // Base UI's switch is a span: label[for] does not name it, so the label text names it by id
+  const labelId = useId()
 
   return (
     <label
@@ -25,9 +27,12 @@ export function Switch({ label, checked, onCheckedChange, disabled, name, classN
         className,
       )}
     >
-      <span className="flex-1">{label}</span>
+      <span id={labelId} className="flex-1">
+        {label}
+      </span>
       <SwitchPrimitive.Root
         id={switchId}
+        aria-labelledby={labelId}
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled}

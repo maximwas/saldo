@@ -718,6 +718,11 @@ export function RateForm() {
    коли він уже в картці. Свою розмітку порожнього стану не пишемо; `ErrorState` побудований на ньому.
 3. **Офлайн** — сторінка, що малює своє попередження на десктопі, бере `PageOfflineBanner` (`src/components/layout`) і
    додає свій шлях в `OWN_WARNING_PATHS` шелового `OfflineBanner`, щоб на десктопі не було двох банерів.
+4. **Гідратація** — кеш пристрою (`PersistQueryClientProvider`) відновлюється раніше, ніж гідратуються стрімінгові
+   `<Suspense>`, а сервер цього кешу не має. Тож компонент, що малює дані запиту (екран, шел, підпис у налаштуваннях),
+   до кінця гідратації показує те саме, що сервер: `useHydrated()` із `src/lib/utils/hydrated.hook.ts`, умова
+   `!hydrated || data === undefined` → скелетон. Свою копію `useSyncExternalStore(subscribeNever, …)` не пишемо.
+   Охороняє e2e `e2e/shell/navigation.e2e.ts` («hydrates over the device cache without a mismatch»).
 
 ### 4.6c Іконка в рядку — зверху (Максим, 03.11.2026)
 
@@ -726,7 +731,7 @@ export function RateForm() {
 на рядку; іконку 20 біля рядка 24 обгортаємо `<span className="flex shrink-0 py-0.5">` (як `Banner`, `Toaster`), плитка
 40 просто стоїть угорі разом із назвою. Сповіщення пишемо через `Banner`, а не власною розміткою. `items-center` з
 іконкою лишається лише там, де текст справді один рядок (фіксована висота, `truncate`): пункт меню, опція `Select`.
-Охороняє e2e `e2e/operations/planned-payment.e2e.ts`.
+Охороняють e2e `e2e/operations/planned-payment.e2e.ts` і `e2e/shell/icon-alignment.e2e.ts` (рядки на 390 px).
 
 ### 4.7 Чиста функція + тест
 

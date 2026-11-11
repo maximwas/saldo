@@ -3,7 +3,7 @@
 import { Bell, Check } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { useState, useSyncExternalStore } from 'react'
+import { useState } from 'react'
 import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Button } from '@/components/ui/button.component'
 import { EmptyState } from '@/components/ui/empty-state.component'
@@ -12,6 +12,7 @@ import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import type { AppNotification } from '../api/notifications.api'
 import { useClearRead, useMarkRead, useNotifications } from '../hooks/notifications.hook'
 import { usePush } from '../hooks/push.hook'
@@ -144,11 +145,7 @@ export function NotificationsScreen() {
   const loaded = notifications.data
   // the bell in the Topbar hydrates first and may have fetched the list already: the first client render must still
   // match the server's, so the list appears after hydration
-  const hydrated = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  )
+  const hydrated = useHydrated()
   const data = hydrated ? loaded : undefined
   const markRead = useMarkRead()
   const [clearing, setClearing] = useState(false)
@@ -164,7 +161,10 @@ export function NotificationsScreen() {
         <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-label text-text-secondary">{translate('summary', { count: unread.length })}</p>
+          {/* an empty list says «no new notifications» in its own card: the line above would repeat it */}
+          {data?.length === 0 ? null : (
+            <p className="text-label text-text-secondary">{translate('summary', { count: unread.length })}</p>
+          )}
           <div className="flex flex-wrap gap-2">
             {unread.length > 0 ? (
               <Button type="button" variant="ghost" onClick={() => markRead.mutate(undefined)}>

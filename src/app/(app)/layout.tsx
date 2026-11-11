@@ -20,7 +20,8 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) lg:pb-0">
           <Topbar />
-          <main className="px-5 pt-1 pb-8 lg:px-8 lg:pt-0 lg:pb-12">
+          {/* phones: pb-20 ends the page above the FAB (56 high, 100 over the bottom, the tab bar is 91) */}
+          <main className="px-5 pt-1 pb-20 lg:px-8 lg:pt-0 lg:pb-12">
             <OfflineBanner />
             <PageTransition className="flex flex-col gap-4 lg:gap-6">{children}</PageTransition>
           </main>
