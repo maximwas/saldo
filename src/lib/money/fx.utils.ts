@@ -220,8 +220,11 @@ export function exchangeRate(exchange: Exchange, baseCurrency: string): Exchange
     : null
 }
 
-/** «41,50»: at least two and at most `maxDigits` decimals, in the active locale; Intl gets a decimal string, no float */
-export const formatRate = (rate: Decimal.Value, locale: string, maxDigits = 4) =>
+/**
+ * «41,67»: at least two and at most `maxDigits` decimals, in the active locale; Intl gets a decimal string, no float.
+ * By default two, four below 1 («0,0241») where two would hide the rate (as the rates board, boardDigits).
+ */
+export const formatRate = (rate: Decimal.Value, locale: string, maxDigits = new Decimal(rate).abs().lt(1) ? 4 : 2) =>
   new Intl.NumberFormat(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: maxDigits,
