@@ -5,6 +5,7 @@ allowBuilds:
   lefthook: true
   sharp: false
   unrs-resolver: false
+  workerd: true
 minimumReleaseAgeExclude:
   - knip@6.44.0
   - lucide-react@1.65.0

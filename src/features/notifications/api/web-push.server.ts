@@ -27,7 +27,7 @@ export type PushPayload = {
 /** gone = the browser dropped the subscription (404 / 410): the caller deletes it */
 export type PushOutcome = 'sent' | 'gone' | 'failed'
 
-/** VAPID keys are optional env (Vercel has none yet): without both, push is skipped and notifications stay in-app */
+/** VAPID keys are optional env (production has none yet): without both, push is skipped and notifications stay in-app */
 export function vapidPrivateKey(): string | null {
   if (!env.VAPID_PRIVATE_KEY || !env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
     return null

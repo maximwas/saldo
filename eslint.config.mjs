@@ -38,7 +38,16 @@ const ONE_DAY_ANCHOR = {
 
 // a thin layer for the style rules Biome 2.6 lacks (docs/conventions.md §3a); Biome stays the linter and formatter
 export default tseslint.config(
-  { ignores: ['.next/**', 'node_modules/**', 'src/types/database.types.ts', 'e2e/.auth/**'] },
+  {
+    ignores: [
+      '.next/**',
+      '.open-next/**',
+      '.wrangler/**',
+      'node_modules/**',
+      'src/types/database.types.ts',
+      'e2e/.auth/**',
+    ],
+  },
   {
     files: ['src/**/*.{ts,tsx}', 'e2e/**/*.ts', '*.{ts,mjs}', '.dependency-cruiser.cjs', 'scripts/**/*.mjs'],
     languageOptions: { parser: tseslint.parser },

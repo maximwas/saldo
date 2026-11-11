@@ -40,7 +40,8 @@
 ```
 saldo/
   CLAUDE.md
-  biome.json  .dependency-cruiser.cjs  knip.json  lefthook.yml  vitest.config.ts  playwright.config.ts  vercel.json
+  biome.json  .dependency-cruiser.cjs  knip.json  lefthook.yml  vitest.config.ts  playwright.config.ts
+  wrangler.jsonc  open-next.config.ts  worker.ts   (Cloudflare Worker: architecture §7 «Хостинг»)
   next.config.ts  tsconfig.json  package.json  .env.example
   .github/workflows/backup.yml  .github/workflows/ci.yml   (ci.yml: jobs check і gitleaks)
   docs/                                  spec, research, design, architecture, plan, stack, conventions
@@ -368,7 +369,7 @@ return {
   `PgError` для UI (`errors.db.<kind>`). Необроблені помилки сторінок, Route Handlers і Server Actions пише
   `onRequestError` у `src/instrumentation.ts` — ловити їх, щоб лише залогувати, не треба.
 - Рівень — env `LOG_LEVEL` (`.env.example`), за замовчуванням `debug` у dev і `info` у проді. Прод — JSON-рядки,
-  які показують Vercel Runtime Logs; dev — `pino-pretty`. Транспорти pino (worker thread) не використовуємо.
+  які показують Workers Logs; dev — `pino-pretty`. Транспорти pino (worker thread) не використовуємо.
 
 ```ts
 const log = logger.child({
@@ -1090,7 +1091,9 @@ RPC-інваріанти без UI — pgTAP або ручна перевірк�
 
 **Середовище.** Лише локальний стек: `supabase start`, потім `pnpm test:e2e`. Конфіг (§5.6) бере ключі з
 `supabase status` і падає, якщо URL не `127.0.0.1`/`localhost`. Застосунок — `next build && next start` на порту 3100
-через `webServer` (локально перевикористовується вже запущений). Лише Chromium: проєкт `desktop` і `mobile`
+через `webServer` (локально перевикористовується вже запущений); `E2E_RUNTIME=workerd` — той самий набір проти збірки
+Cloudflare Worker (`opennextjs-cloudflare build` + `preview`), `--env-file /dev/null` обходить `.dev.vars`, і Worker
+отримує env e2e через `CLOUDFLARE_INCLUDE_PROCESS_ENV`. Лише Chromium: проєкт `desktop` і `mobile`
 (Pixel 7, лише тести з тегом `@mobile`).
 
 **База.** `e2e/global-setup.ts` раз на прогін робить `supabase db reset` (міграції + `seed.sql`), створює чотирьох
@@ -1213,7 +1216,7 @@ auth.users where email = 'demo@example.com'" -c "set saldo.demo_today = '2026-10
 
 ### Гілки й релізи
 
-- `main` — гілка за замовчуванням на GitHub і продакшн (Vercel). `develop` — інтеграційна гілка, preview. Vercel деплоїть лише `main` і `develop` (`git.deploymentEnabled` у `vercel.json`): гілки фіч не збирає, бо Hobby дає 100 деплоїв на добу, і пуші агентів вичерпали їх за вечір 30.10.2026.
+- `main` — гілка за замовчуванням на GitHub і продакшн (Cloudflare Workers, Workers Builds). `develop` — інтеграційна гілка. Non-production builds вимкнені: версія з гілки взяла б прод-секрети й прод Supabase (architecture §7 «Хостинг»). На Vercel до 11.2026 збирались лише `main` і `develop`: Hobby дає 100 деплоїв на добу, і пуші агентів вичерпали їх за вечір 30.10.2026.
 - Кожен пункт або група пунктів — своя гілка від `develop` → PR у `develop` (`gh pr create --base develop`: база за
   замовчуванням тепер `main`). Агенти працюють у worktree від `develop` (`.claude/settings.local.json`:
   `worktree.baseRef: "head"`).

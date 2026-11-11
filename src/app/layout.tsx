@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
+import Script from 'next/script'
 import { NextIntlClientProvider } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { ThemeProvider } from 'next-themes'
@@ -7,9 +8,10 @@ import NextTopLoader from 'nextjs-toploader'
 import { Suspense } from 'react'
 import { AppProviders } from '@/components/providers/app-providers.component'
 import { ServiceWorker } from '@/components/providers/service-worker.component'
-import { VercelInsights } from '@/components/providers/vercel-insights.component'
 import { getActiveLedger, getSession, getUserTheme } from '@/lib/auth/dal.server'
 import './globals.css'
+
+const beaconToken = process.env.NEXT_PUBLIC_CF_BEACON_TOKEN
 
 // Fixel by MacPaw (OFL, src/app/fonts/OFL.txt); the variables override --font-sans / --font-display from theme.css
 const fixelText = localFont({
@@ -92,7 +94,14 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
             </Suspense>
           </ServiceWorker>
         </ThemeProvider>
-        <VercelInsights />
+        {/* Cloudflare Web Analytics: no cookies, and it logs no query strings (search text, ids) */}
+        {beaconToken ? (
+          <Script
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={JSON.stringify({ token: beaconToken })}
+            strategy="afterInteractive"
+          />
+        ) : null}
       </body>
     </html>
   )
