@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "saldo",
+  "main": "worker.ts",
+  "compatibility_date": "2026-11-04",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "keep_names": false,
+  "workers_dev": false,
+  "preview_urls": true,
+  "observability": { "enabled": true },
+  // /api/cron/daily (worker.ts scheduled); Cron Triggers run on the deployed production version only
+  "triggers": { "crons": ["0 3 * * *"] },
+  "previews": {
+    "observability": { "enabled": true }
+  }
+}

@@ -50,8 +50,7 @@
 | @t3-oss/env-nextjs | 0.13.11 | типізовані env, розділ server/client | — |
 | pino | 10.4.0 (MIT, 02.10.2026) | серверні логи: JSON у проді, `redact`, child-логери (ADR 26) | LogTape 2.4.2, consola 3.4.2 (без релізів з 03.2025), next-logger 5.0.2 |
 | pino-pretty | 13.2.0 (MIT, 04.10.2026) | читабельні логи в dev, потік у тому ж процесі (без transport) | — |
-| @vercel/analytics | 2.0.1 (MIT, 02.10.2026) | Vercel Web Analytics без cookies; `beforeSend` відрізає query string, Vercel бачить лише шлях | — |
-| @vercel/speed-insights | 2.0.0 (Apache-2.0, 03.07.2026) | Core Web Vitals з реальних пристроїв, той самий `beforeSend` | — |
+| Cloudflare Web Analytics | скрипт `beacon.min.js`, без пакета | відвідування й Core Web Vitals без cookies; query string Cloudflare не логує; лише з `NEXT_PUBLIC_CF_BEACON_TOKEN` | @vercel/analytics, @vercel/speed-insights (працюють лише на Vercel, прибрано 11.2026) |
 
 ## Домен
 
@@ -67,7 +66,8 @@
 
 | Пакет | Версія | Навіщо | Відкинуто |
 |---|---|---|---|
-| serwist, @serwist/turbopack | 9.5.13 | service worker для Next 16 + Turbopack | next-pwa (без Turbopack) |
+| serwist, @serwist/turbopack | 9.5.13 | service worker для Next 16 + Turbopack; файли збирає `next build` (`use cache` у маршруті), Worker віддає готові | next-pwa (без Turbopack) |
+| esbuild-wasm | 0.28.2 (MIT, 08.08.2026), dev | лише щоб бандлер OpenNext знайшов необов'язковий імпорт Serwist; у Worker не виконується | конфігуратор Serwist (`@serwist/cli`): інша схема збірки SW |
 | @pushforge/builder | 2.0.5 | Web Push (VAPID) на Web Crypto | web-push 3.6.7 (MPL-2.0, 21 міс. без релізу) |
 | @googleapis/calendar | 20.1.0 | Google Calendar API v3 | googleapis (величезний) |
 | tsdav | 2.5.0 | iCloud CalDAV | — |
@@ -84,27 +84,29 @@
 | dependency-cruiser | 18.7.0 (MIT) | правило «фічі не імпортують одна одну», `api-is-portable` |
 | @playwright/test | 1.64.1 (Apache-2.0) | e2e проти локального Supabase і `next start`, лише Chromium; `pnpm test:e2e`, лише локально |
 | supabase (CLI) | 2.122.0 | міграції, локальна БД, `gen types`, `db dump` |
-| Vercel | — | деплой, `regions: ["fra1"]`, cron раз на добу; домен `saldo.maksymvasianin.com` (Cloudflare CNAME, DNS only) |
+| @opennextjs/cloudflare | 1.20.15 (MIT, 30.10.2026; 1.20.16 вимагає next ≥ 16.4.5) | збірка Next для Cloudflare Workers (`opennextjs-cloudflare build`, `preview`, `deploy`, `upload`) |
+| wrangler | 4.158.0 (MIT / Apache-2.0, 05.11.2026) | `wrangler.jsonc`: Worker `saldo`, Cron Trigger раз на добу, preview у workerd; деплой — Workers Builds з GitHub, домен `saldo.maksymvasianin.com` — Custom Domain Worker |
 | GitHub Actions | — | нічний бекап, CI на PR без secrets: job `check` (lint, typecheck, depcruise, knip, Vitest) і `gitleaks`; pgTAP і e2e лише локально (30.10.2026; `pnpm test:e2e` — 60 тестів ≈ 1 хв разом із `next build`) |
 | gitleaks | 8.30 (MIT; лише security-патчі, drop-in заміна — betterleaks) | пошук секретів у lefthook pre-commit і CI |
 | age | 1.3 (BSD-3-Clause, apt на ubuntu-latest) | шифрування бекапу на публічний ключ |
 | pgTAP | 1.3.3 (у стеку Supabase) | тести RLS просторів (`supabase test db`); вхід ролями — хелпер `pg_temp.login`, без basejump/dbdev (`docs/conventions.md` §6.2) |
-| pnpm | 12.14.0 (`packageManager`), Node 26.x LTS (`engines`, `.nvmrc`, CI, Vercel) | менеджер пакетів |
+| pnpm | 12.14.0 (`packageManager`), Node 26.x LTS (`engines`, `.nvmrc`, CI, Workers Builds) | менеджер пакетів |
 
 ## Ліміти безкоштовних тарифів, що мають значення
 
 | Сервіс | Ліміт | Наслідок для Saldo |
 |---|---|---|
 | Supabase Free | БД 500 МБ, egress 5 ГБ, 2 активні проєкти | вистачає на роки; фото — у Storage, не в БД |
-| Supabase Free | Storage 1 ГБ, файл до 50 МБ, без image transformations | стиснення фото в браузері; запасні Vercel Blob / R2 |
-| Supabase Free | пауза після 7 днів без активності | Vercel cron + нічний бекап щодня звертаються до БД |
+| Supabase Free | Storage 1 ГБ, файл до 50 МБ, без image transformations | стиснення фото в браузері; запасний R2 |
+| Supabase Free | пауза після 7 днів без активності | Cron Trigger Worker + нічний бекап щодня звертаються до БД |
 | Supabase Free | без автоматичних бекапів і PITR | GitHub Actions dump щоночі |
 | Supabase Auth | 50 000 MAU; вбудований SMTP 2 листи/год, лише адреси команди | двоє людей — 2 MAU (MCP-клієнти — ті самі MAU); листів не шлемо: запрошення — посилання, яке власник пересилає сам (ADR 20) |
 | Supabase Free, двоє людей | ті самі 500 МБ / 1 ГБ / 5 ГБ egress на проєкт | дві людини ≈ подвоєння операцій і фото — усе ще роки запасу; RLS через функцію членства додає накладні витрати, некритично на цьому обсязі |
 | Supabase pg_cron / pg_net | на Free є (preview 30.10.2026: pg_cron 1.6.4, pg_net 0.20.4); pg_net лише POST JSON, відповіді живуть 6 год | нагадування кожні 10 хв; URL і секрет — у Vault кожного середовища |
-| Vercel Hobby | cron раз на добу, точність ±59 хв, до 100 задач | часті нагадування — через pg_cron |
-| Vercel Hobby | функції до 300 с, один регіон | синхронізація календаря пакетами |
-| Vercel Hobby | лише особисте некомерційне використання | Saldo підходить (дві людини, некомерційно) |
+| Cloudflare Workers Free | 10 мс CPU на запит і на Cron Trigger, 100 000 запитів на добу, 50 subrequests, 5 Cron Triggers; `limits.cpu_ms` відхиляється (помилка 100328) | SSR сторінки з кількома запитами до Supabase легко перевищує 10 мс (помилка 1102) — Free лише для перевірки |
+| Cloudflare Workers Paid ($5/міс.) | CPU 30 с за замовчуванням, до 5 хв (`limits.cpu_ms`); Cron Trigger з інтервалом ≥ 1 год — 15 хв CPU; 10 000 subrequests | план для production; `limits` у `wrangler.jsonc` не задано — працює на обох планах |
+| Cloudflare Workers, обидва плани | Worker до 64 MiB без стиснення (з 04.09.2026 ліміту на gzip немає), старт глобального scope ≤ 1 с, 128 МБ пам'яті | Saldo 11.2026: 19,6 MiB / gzip 4,06 MiB, старт ~0,4 с локально |
+| Workers Builds | Free 3000 хв/міс., 1 збірка одночасно; Paid 6000 хв; збірка до 20 хв | non-production builds вимкнені (architecture §7 «Хостинг») |
 | Google OAuth (unverified, In production) | екран попередження, до 100 користувачів | двоє, кожен підключає свій календар; довговічність токена перевірити |
 | Web Push | без ліміту з боку браузерів | підписки на кожен пристрій кожного учасника; нагадування простору — кожному учаснику з увімкненими каналами |
 | GitHub Free, публічний репо | Actions-хвилини без ліміту; артефакти й логи може завантажити будь-хто з акаунтом GitHub; secret scanning і push protection безкоштовні | бекап лише зашифрований age (ADR 23); у логах нічого з даних |

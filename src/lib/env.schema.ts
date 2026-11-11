@@ -16,4 +16,5 @@ export const clientEnvSchema = {
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().startsWith('sb_publishable_'),
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(), // phase 3: Web Push
+  NEXT_PUBLIC_CF_BEACON_TOKEN: z.string().optional(), // Cloudflare Web Analytics; empty = no script
 }

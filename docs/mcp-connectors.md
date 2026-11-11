@@ -14,7 +14,7 @@
   `list_calendar` (факти й плани за період з тими самими фільтрами, що в Календарі), `get_statistics` (місяць, рік,
   3/6/12 місяців, «Хто»), `list_notifications`, `list_reminders` (правила нагадувань), `list_members` (ролі й імена
   учасників, без email).
-- **Запис** — лише коли у Vercel `MCP_WRITE_ENABLED=true`, усе, що застосунок дає створити чи змінити:
+- **Запис** — лише коли в runtime-змінних Worker `MCP_WRITE_ENABLED=true`, усе, що застосунок дає створити чи змінити:
   - операції: `add_operation`, `update_operation`, `add_transfer`, `add_refund`; планові: `create_planned_payment`,
     `update_planned_payment`, `cancel_planned_payment`, `mark_paid`;
   - підписки: `create_subscription` (категорія завжди системна «Підписки»), `update_subscription`,
@@ -44,7 +44,8 @@
 3. Перевірка: `curl https://<ref>.supabase.co/.well-known/oauth-authorization-server/auth/v1` → 200 з
    `registration_endpoint`; і `curl -i https://saldo.maksymvasianin.com/api/mcp -X POST` → 401 з `resource_metadata`.
 4. Міграція `20261103165324_mcp_audit_log` — `supabase db push` разом із релізом фази.
-5. Vercel Firewall: `/api/mcp` і `/.well-known/*` без челенджів (Attack Mode, Bot Protection) — клієнти ходять із
+5. Cloudflare (зона `maksymvasianin.com`): Bot Fight Mode вимкнений (його не обійти правилом для шляху), WAF і rate
+   limiting без челенджів для `/api/mcp` і `/.well-known/*` — клієнти ходять із
    серверів Anthropic (`160.79.104.0/21`), OpenAI, Perplexity.
 
 ## Claude (claude.ai, Claude Desktop, мобільний)
