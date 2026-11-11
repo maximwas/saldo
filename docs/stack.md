@@ -7,7 +7,7 @@
 
 | Пакет | Версія | Навіщо | Відкинуто |
 |---|---|---|---|
-| next | 16.4.3 | App Router, `proxy.ts`, Turbopack, Route Handlers для cron і інтеграцій | — |
+| next | 16.4.5 (security release 03.11.2026) | App Router, `proxy.ts`, Turbopack, Route Handlers для cron і інтеграцій | — |
 | react, react-dom | 19.3.1 | | — |
 | typescript | 6.0.3 | | 7.0.2 (нативний): сумісність із Next і Biome не підтверджена |
 | next-intl | 4.14.9 (MIT, 02.10.2026) | локалізація `uk` / `en` без i18n-маршрутизації, типізовані ключі, `useFormatter` (ADR 25) | `[locale]`-маршрутизація; react-i18next (без RSC) |
@@ -85,7 +85,7 @@
 | dependency-cruiser | 18.7.0 (MIT) | правило «фічі не імпортують одна одну», `api-is-portable` |
 | @playwright/test | 1.64.1 (Apache-2.0) | e2e проти локального Supabase і `next start`, лише Chromium; `pnpm test:e2e`, лише локально |
 | supabase (CLI) | 2.122.0 | міграції, локальна БД, `gen types`, `db dump` |
-| @opennextjs/cloudflare | 1.20.15 (MIT, 30.10.2026; 1.20.16 вимагає next ≥ 16.4.5) | збірка Next для Cloudflare Workers (`opennextjs-cloudflare build`, `preview`, `deploy`, `upload`) |
+| @opennextjs/cloudflare | 1.20.16 (MIT, 03.11.2026; вимагає next ≥ 16.4.5) | збірка Next для Cloudflare Workers (`opennextjs-cloudflare build`, `preview`, `deploy`, `upload`) |
 | wrangler | 4.158.0 (MIT / Apache-2.0, 05.11.2026) | `wrangler.jsonc`: Worker `saldo`, Cron Trigger раз на добу, preview у workerd; деплой — Workers Builds з GitHub, домен `saldo.maksymvasianin.com` — Custom Domain Worker |
 | GitHub Actions | — | нічний бекап, CI на PR без secrets: job `check` (lint, typecheck, depcruise, knip, Vitest) і `gitleaks`; pgTAP і e2e лише локально (30.10.2026; `pnpm test:e2e` — 60 тестів ≈ 1 хв разом із `next build`) |
 | gitleaks | 8.30 (MIT; лише security-патчі, drop-in заміна — betterleaks) | пошук секретів у lefthook pre-commit і CI |
