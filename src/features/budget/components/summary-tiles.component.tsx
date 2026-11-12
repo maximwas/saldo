@@ -62,8 +62,8 @@ function IncomePlanNote({ planMinor }: { planMinor: number | null }) {
         <Button
           variant="ghost"
           size="s"
-          // 24 high in the tile: the ::after of Button s grows to a 44 tap target
-          className="h-6 px-1 after:-inset-2.5"
+          // 22x24 in the tile: the ::after of Button s grows to a 46x48 tap target
+          className="h-6 px-1 after:-inset-3"
           aria-label={translate('editIncomePlan')}
           onClick={() => open({ kind: 'income' })}
         >

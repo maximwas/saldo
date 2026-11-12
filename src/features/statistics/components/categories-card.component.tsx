@@ -102,28 +102,31 @@ function CategoriesChart({ data, donut = true }: CategoriesChartProps) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div
-        role="img"
-        aria-label={translate('categories.summary', { count: drawn.length })}
-        className={cn('relative size-45 shrink-0 lg:size-55', !donut && 'hidden')}
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              isAnimationActive={false}
-              data={drawn}
-              dataKey="factMinor"
-              nameKey="name"
-              innerRadius="64%"
-              stroke="none"
-            />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-caption text-text-secondary">{translate('summary.expense')}</span>
-          <Amount minor={data.totalMinor} currency={currency} className="max-lg:text-label max-lg:font-semibold" />
+      {/* not rendered at all without the donut: a hidden ResponsiveContainer measures 0×0 and recharts warns */}
+      {donut && (
+        <div
+          role="img"
+          aria-label={translate('categories.summary', { count: drawn.length })}
+          className="relative size-45 shrink-0 lg:size-55"
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                isAnimationActive={false}
+                data={drawn}
+                dataKey="factMinor"
+                nameKey="name"
+                innerRadius="64%"
+                stroke="none"
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span className="text-caption text-text-secondary">{translate('summary.expense')}</span>
+            <Amount minor={data.totalMinor} currency={currency} className="max-lg:text-label max-lg:font-semibold" />
+          </div>
         </div>
-      </div>
+      )}
       <ul className="w-full min-w-0 flex-1">
         {data.shares.map((share, index) => (
           <li key={share.id ?? 'none'} className={cn(ROW_CLASS, index >= MOBILE_ROWS && 'max-lg:hidden')}>

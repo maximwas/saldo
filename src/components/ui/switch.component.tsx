@@ -37,7 +37,8 @@ export function Switch({ label, checked, onCheckedChange, disabled, name, classN
         onCheckedChange={onCheckedChange}
         disabled={disabled}
         name={name}
-        className="flex h-6 w-11 shrink-0 items-center rounded-full bg-border-strong p-0.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card data-checked:bg-primary data-disabled:bg-border"
+        // the 24 high track takes taps 44 high (::after), like Button s and Chip (QA P10)
+        className="relative flex h-6 w-11 shrink-0 items-center rounded-full bg-border-strong p-0.5 outline-none after:absolute after:-inset-y-2.5 after:inset-x-0 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card data-checked:bg-primary data-disabled:bg-border"
       >
         <SwitchPrimitive.Thumb className="size-5 rounded-full bg-card shadow-card transition-transform data-checked:translate-x-5" />
       </SwitchPrimitive.Root>

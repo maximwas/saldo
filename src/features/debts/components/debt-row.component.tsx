@@ -105,7 +105,7 @@ export function DebtRowItem({ debt, onActionAction }: DebtRowItemProps) {
     <li
       ref={linked ? scrollIntoView : undefined}
       className={cn(
-        'flex items-start gap-4 border-b border-border py-4 last:border-b-0',
+        'relative flex items-start gap-4 border-b border-border py-4 last:border-b-0',
         linked && 'rounded-inner ring-2 ring-primary ring-offset-4 ring-offset-card',
       )}
     >
@@ -136,11 +136,19 @@ export function DebtRowItem({ debt, onActionAction }: DebtRowItemProps) {
         </span>
       </div>
       {canRepay && (
-        <Button size="s" variant="secondary" className="max-lg:hidden" onClick={() => onActionAction('repay')}>
+        <Button size="s" variant="secondary" className="z-10 max-lg:hidden" onClick={() => onActionAction('repay')}>
           {translate(owedToMe ? 'actions.repay' : 'actions.repayIOwe')}
         </Button>
       )}
-      {canWrite && !closed && <Menu label={translate('row.menu')} items={items} className="-mr-3" />}
+      {/* one row, one tap target (QA P11): the «···» trigger's ::after covers the row, so a tap anywhere opens the same
+          menu; the keyboard reaches it as the trigger, and «Repay» on desktop stays above it (z-10) */}
+      {canWrite && !closed && (
+        <Menu
+          label={`${debt.person}: ${translate('row.menu')}`}
+          items={items}
+          className="-mr-3 after:absolute after:inset-0"
+        />
+      )}
     </li>
   )
 }

@@ -56,7 +56,7 @@ const subscription: SubscriptionView = {
   verdict: null,
   archivedAt: null,
   version: 3,
-  paidOn: [],
+  plannedOn: [],
   prices: [
     {
       effectiveOn: '2026-01-05',

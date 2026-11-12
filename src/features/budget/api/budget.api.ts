@@ -1,3 +1,4 @@
+import { otherLast } from '@/lib/finance/category-order.utils'
 import { versionConflict } from '@/lib/supabase/version-conflict.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import {
@@ -127,7 +128,7 @@ export async function getBudgetCategories(supabase: SaldoClient, ledgerId: strin
     throw error
   }
 
-  return data
+  return data.sort(otherLast)
 }
 
 /** the id of the month row, created first when the month has none; a repeated id (replayed offline write) is a no-op */
