@@ -77,7 +77,7 @@ test('запис календаря відкриває попап, «Оплач�
   await expect(sheet.getByRole('button', { name: 'Відкрити операцію' })).toBeVisible()
 })
 
-test('«Змінити дату», а потім «Оплачено» без перезавантаження бере нову дату й оплачує', async ({ pageAs }) => {
+test('«Змінити дату», а потім «Оплатити» без перезавантаження бере нову дату й оплачує', async ({ pageAs }) => {
   const page = await pageAs('owner')
   const mark = `e2e-${crypto.randomUUID().slice(0, 8)}`
   const today = kyivToday()
@@ -122,7 +122,7 @@ test('«Змінити дату», а потім «Оплачено» без п�
   await page
     .getByRole('dialog', { name: mark })
     .getByRole('button', {
-      name: 'Оплачено',
+      name: 'Оплатити',
       exact: true,
     })
     .click()
