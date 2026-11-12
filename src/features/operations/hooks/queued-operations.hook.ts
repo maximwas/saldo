@@ -1,10 +1,9 @@
 import { type Mutation, useMutationState } from '@tanstack/react-query'
-import { useMemo } from 'react'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import type { CreateOperationInput } from '@/lib/finance/create-operation-input.schema'
 import { type RecordState, recordState } from '@/lib/query/sync-queue.utils'
-import { operationsWrites } from '../api/operations.mutations'
 import type { OperationRow } from '../operations.types'
+import { operationsWrites } from './operations.hook'
 
 type QueuedOperation = {
   input: CreateOperationInput
@@ -51,12 +50,10 @@ export function useQueuedOperations() {
     select: toQueued,
   })
 
-  return useMemo(() => {
-    const mine = queued.filter(({ input }) => input.ledger_id === ledgerId)
+  const mine = queued.filter(({ input }) => input.ledger_id === ledgerId)
 
-    return {
-      rows: mine.map(({ input }) => toRow(input, baseCurrency)),
-      states: new Map(mine.map(({ input, state }) => [input.id, state])),
-    }
-  }, [queued, ledgerId, baseCurrency])
+  return {
+    rows: mine.map(({ input }) => toRow(input, baseCurrency)),
+    states: new Map(mine.map(({ input, state }) => [input.id, state])),
+  }
 }

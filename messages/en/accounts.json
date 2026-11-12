@@ -1,5 +1,6 @@
 {
-  "loadFailed": "Could not load accounts. Refresh the page.",
+  "loadFailed": "Could not load accounts",
+  "refreshFailed": "Could not refresh accounts",
   "tabs": {
     "label": "Show accounts",
     "active": "Active · {count}",

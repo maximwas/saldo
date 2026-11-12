@@ -158,5 +158,29 @@ export const SPACE_TILES: readonly SpaceTile[] = [
   },
 ]
 
+/** sections not built yet: the menu marks them «soon» and their pages say what will be there; the routes stay (§2) */
+export const SOON_SECTIONS = [
+  {
+    key: 'goals',
+    href: '/budget/goals',
+    backHref: '/budget',
+  },
+  {
+    key: 'bigExpenses',
+    href: '/budget/big-expenses',
+    backHref: '/budget',
+  },
+  {
+    key: 'auto',
+    href: '/auto',
+    backHref: '/',
+  },
+  {
+    key: 'taxes',
+    href: '/taxes',
+    backHref: '/',
+  },
+] as const
+
 /** pages outside the menu that still need a Topbar title */
 export const EXTRA_TITLES: readonly NavLink[] = [link('notifications', '/notifications'), link('space', '/space')]

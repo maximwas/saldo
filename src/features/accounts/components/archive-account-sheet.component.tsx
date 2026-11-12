@@ -1,12 +1,12 @@
 'use client'
 
-import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { useAccountActivity, useUpdateAccount } from '../hooks/accounts.hook'
 import type { AccountView } from '../utils/accounts.utils'
 
@@ -22,6 +22,7 @@ type ArchiveAccountSheetProps = {
 export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSheetProps) {
   const translate = useTranslations('accounts')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const { timeZone } = useClock()
   const update = useUpdateAccount()
   const activity = useAccountActivity(account?.id ?? '', account !== null)
@@ -47,7 +48,7 @@ export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSh
   }
 
   const summaryOf = (target: AccountView) => {
-    const balance = formatMinor(target.balanceMinor, target.currency, locale)
+    const balance = moneyText(target.balanceMinor, target.currency)
     const data = activity.data
 
     if (data === undefined) {
@@ -81,9 +82,7 @@ export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSh
       title={translate('archive.title', { name: account?.name ?? '' })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('form.cancel')}
-          </Button>
+          <SheetClose>{translate('form.cancel')}</SheetClose>
           <Button type="button" onClick={archive} disabled={update.isPending}>
             {translate('archive.confirm')}
           </Button>
@@ -93,12 +92,7 @@ export function ArchiveAccountSheet({ account, onCloseAction }: ArchiveAccountSh
       {account ? (
         <>
           <p className="text-label text-text-secondary">{summaryOf(account)}</p>
-          <p className="flex gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body-medium text-primary-text">
-            <span className="py-0.5">
-              <Info className="size-5 shrink-0" aria-hidden />
-            </span>
-            <span className="flex-1">{translate('archive.info')}</span>
-          </p>
+          <Banner>{translate('archive.info')}</Banner>
         </>
       ) : null}
     </Sheet>

@@ -39,6 +39,8 @@ export type SubscriptionView = Subscription & {
   verdict: SubscriptionVerdict | null
   archivedAt: string | null
   version: number
+  /** due dates of the unpaid payments from about today on (SeriesSource.plannedOn) */
+  plannedOn: string[]
 }
 
 /** an obligation of the series as «History» shows it */
@@ -72,8 +74,9 @@ type SubscriptionRow = Database['public']['Tables']['subscriptions']['Row'] & {
 
 const SUBSCRIPTION_COLUMNS = '*, subscription_prices(effective_on, amount_minor, currency)'
 
-function toSubscriptionView(row: SubscriptionRow): SubscriptionView {
+function toSubscriptionView(row: SubscriptionRow, plannedOn: string[]): SubscriptionView {
   return {
+    plannedOn,
     id: row.id,
     name: row.name,
     categoryId: row.category_id,
@@ -104,17 +107,33 @@ function toSubscriptionView(row: SubscriptionRow): SubscriptionView {
 
 /** every subscription of the space with its price history, archived ones too (the «Archive» filter) */
 export async function listSubscriptions(supabase: SaldoClient, ledgerId: string): Promise<SubscriptionView[]> {
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .select(SUBSCRIPTION_COLUMNS)
-    .eq('ledger_id', ledgerId)
-    .order('name')
+  // unpaid dates from yesterday in UTC on: a superset of «today on» in every space time zone
+  const since = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
+  const [subscriptions, planned] = await Promise.all([
+    supabase.from('subscriptions').select(SUBSCRIPTION_COLUMNS).eq('ledger_id', ledgerId).order('name'),
+    supabase
+      .from('obligation_states')
+      .select('source_id, due_on')
+      .eq('ledger_id', ledgerId)
+      .eq('source_type', 'subscription')
+      .eq('lifecycle', 'active')
+      .neq('state', 'paid')
+      .gte('due_on', since)
+      .order('due_on'),
+  ])
 
-  if (error) {
-    throw error
+  if (subscriptions.error) {
+    throw subscriptions.error
   }
 
-  return (data as SubscriptionRow[]).map(toSubscriptionView)
+  if (planned.error) {
+    throw planned.error
+  }
+
+  const plannedOf = (id: string) =>
+    (planned.data ?? []).flatMap((row) => (row.source_id === id && row.due_on ? [row.due_on] : []))
+
+  return (subscriptions.data as SubscriptionRow[]).map((row) => toSubscriptionView(row, plannedOf(row.id)))
 }
 
 type PaymentRow = {

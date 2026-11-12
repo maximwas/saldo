@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { monthGrid, periodRange, sourceHref, sumTotals } from './calendar.utils'
+import {
+  cellLines,
+  dayTotalLines,
+  entryStatus,
+  entryTone,
+  LEGEND,
+  monthGrid,
+  outsideDays,
+  paidMarks,
+  periodRange,
+  sourceHref,
+  sumTotals,
+} from './calendar.utils'
 import { activeChips, activeQuickSet, fromFilter, toFilter } from './calendar-filters.utils'
 
 describe('calendar filter', () => {
@@ -59,7 +71,8 @@ describe('calendar period', () => {
     })
   })
 
-  it('sums the days, plan as in minus out', () => {
+  // decision 31.10: «with plan» subtracts the open outgoing plans only; expected income (a debt owed to me) is not added
+  it('sums the days, the plan only as what goes out', () => {
     const day = {
       factIncomeMinor: 0,
       factExpenseMinor: 25_000,
@@ -79,6 +92,7 @@ describe('calendar period', () => {
           ...day,
           day: '2026-10-31',
           factIncomeMinor: 6_200_000,
+          planInMinor: 250_000,
         },
       ]),
     ).toEqual({
@@ -96,5 +110,188 @@ describe('calendar period', () => {
     expect(sourceHref('credit', 'c1')).toBe('/payments/credits/c1')
     expect(sourceHref('manual', null)).toBe('/payments')
     expect(sourceHref(null, null)).toBeNull()
+  })
+})
+
+const november = periodRange('month', '2026-11-03')
+
+const fact = {
+  id: 'f1',
+  entry: 'fact' as const,
+  day: '2026-11-03',
+  state: 'fact',
+  obligationId: null as string | null,
+  plannedOn: null as string | null,
+}
+
+describe('calendar cells and marks', () => {
+  it('lists three entries of a cell and folds the rest into one «more N» line', () => {
+    expect(cellLines(['a', 'b', 'c'])).toEqual({
+      shown: ['a', 'b', 'c'],
+      more: 0,
+    })
+    expect(cellLines(['a', 'b', 'c', 'd', 'e'])).toEqual({
+      shown: ['a', 'b', 'c'],
+      more: 2,
+    })
+  })
+
+  it('marks the plan day of a plan paid on another day, by that plan day', () => {
+    const early = {
+      ...fact,
+      id: 'early',
+      obligationId: 'o1',
+      plannedOn: '2026-11-10',
+    }
+    const onTime = {
+      ...fact,
+      id: 'on-time',
+      obligationId: 'o2',
+      plannedOn: '2026-11-03',
+    }
+    const marks = paidMarks(
+      [
+        fact,
+        early,
+        onTime,
+        {
+          ...early,
+          id: 'plan',
+          entry: 'plan' as const,
+        },
+      ],
+      {
+        from: '2026-11-01',
+        to: '2026-11-30',
+      },
+    )
+
+    expect([...marks.keys()]).toEqual(['2026-11-10'])
+    expect(marks.get('2026-11-10')?.map((entry) => entry.id)).toEqual(['early'])
+  })
+
+  it('marks only the plan days of the period, a payment made in another period included', () => {
+    const lastMonth = {
+      ...fact,
+      id: 'last-month',
+      day: '2026-10-28',
+      obligationId: 'o3',
+      plannedOn: '2026-11-05',
+    }
+    const nextMonthPlan = {
+      ...fact,
+      id: 'next-month-plan',
+      obligationId: 'o4',
+      plannedOn: '2026-12-02',
+    }
+    const marks = paidMarks([lastMonth, nextMonthPlan], november)
+
+    expect([...marks.keys()]).toEqual(['2026-11-05'])
+    expect(marks.get('2026-11-05')?.map((entry) => entry.day)).toEqual(['2026-10-28'])
+  })
+
+  it('reads the pay days outside the period once each, in order', () => {
+    expect(outsideDays(['2026-11-03', '2026-10-28', '2026-12-01', '2026-10-28'], november)).toEqual([
+      '2026-10-28',
+      '2026-12-01',
+    ])
+    expect(outsideDays(['2026-11-05'], periodRange('day', '2026-11-05'))).toEqual([])
+  })
+
+  it('gives an entry without a source the primary mark, never the grey of «paid earlier»', () => {
+    const manual = {
+      kind: 'expense',
+      sourceType: 'manual',
+    }
+
+    expect(entryTone(manual)).toBe('text-primary')
+    expect(
+      entryTone({
+        kind: 'expense',
+        sourceType: null,
+      }),
+    ).toBe('text-primary')
+    expect(LEGEND.map(([, tone]) => tone)).not.toContain('text-neutral')
+  })
+
+  it('says whether an entry waits, was paid on its day or on another one, or is a plain operation', () => {
+    expect(entryStatus(fact)).toBe('fact')
+    expect(
+      entryStatus({
+        ...fact,
+        obligationId: 'o1',
+        plannedOn: '2026-11-03',
+      }),
+    ).toBe('paid')
+    expect(
+      entryStatus({
+        ...fact,
+        obligationId: 'o1',
+        plannedOn: '2026-11-10',
+      }),
+    ).toBe('paidElsewhere')
+    expect(
+      entryStatus({
+        ...fact,
+        entry: 'plan',
+        state: 'plan',
+      }),
+    ).toBe('planned')
+    expect(
+      entryStatus({
+        ...fact,
+        entry: 'plan',
+        state: 'partial',
+      }),
+    ).toBe('partial')
+    expect(
+      entryStatus({
+        ...fact,
+        entry: 'plan',
+        state: 'unconfirmed',
+      }),
+    ).toBe('overdue')
+  })
+})
+
+describe('dayTotalLines', () => {
+  it('labels what was spent and what is still planned, and leaves out what is zero', () => {
+    expect(
+      dayTotalLines({
+        day: '2026-11-03',
+        factIncomeMinor: 0,
+        factExpenseMinor: 305_725,
+        planInMinor: 0,
+        planOutMinor: 158_325,
+        unknownCount: 0,
+        entriesCount: 3,
+      }),
+    ).toEqual([
+      {
+        key: 'spent',
+        minor: -305_725,
+        kind: 'fact',
+      },
+      {
+        key: 'planned',
+        minor: -158_325,
+        kind: 'plan',
+      },
+    ])
+  })
+
+  it('names income as received and expected, never as spent', () => {
+    expect(
+      dayTotalLines({
+        day: '2026-11-14',
+        factIncomeMinor: 100_000,
+        factExpenseMinor: 0,
+        planInMinor: 190_000,
+        planOutMinor: 0,
+        unknownCount: 0,
+        entriesCount: 2,
+      }).map((line) => line.key),
+    ).toEqual(['received', 'expected'])
+    expect(dayTotalLines(undefined)).toEqual([])
   })
 })

@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { convertAt, convertMinor, type FxRate, findRate, scaleMinor, toFxRate } from './fx.utils'
+import {
+  convertAt,
+  convertMinor,
+  exchangeRate,
+  type FxRate,
+  findRate,
+  findRateRow,
+  formatRate,
+  formatRateChange,
+  impliedRate,
+  scaleMinor,
+  toFxRate,
+} from './fx.utils'
 
 type RateArgs = {
   pair: string
@@ -121,5 +133,119 @@ describe('scaleMinor', () => {
 
   it('refuses to divide by 0', () => {
     expect(() => scaleMinor(100, 1, 0, 'down')).toThrow(RangeError)
+  })
+})
+
+describe('impliedRate', () => {
+  it('derives the rate from the real amounts of both accounts', () => {
+    expect(impliedRate(80_000, 'EUR', 3_320_000, 'UAH')?.toString()).toBe('41.5')
+  })
+
+  it('is null for a missing or zero amount', () => {
+    expect(impliedRate(0, 'EUR', 3_320_000, 'UAH')).toBeNull()
+    expect(impliedRate(80_000, 'EUR', 0, 'UAH')).toBeNull()
+  })
+})
+
+describe('formatRate', () => {
+  it('shows two decimals, four below 1, where two would hide the rate', () => {
+    expect(formatRate(impliedRate(80_000, 'EUR', 3_320_000, 'UAH') as never, 'en')).toBe('41.50')
+    expect(formatRate(impliedRate(300, 'USD', 12_481, 'UAH') as never, 'en')).toBe('41.60')
+    expect(formatRate(impliedRate(2_400, 'EUR', 100_000, 'UAH') as never, 'uk')).toBe('41,67')
+    expect(formatRate('0.0240963855', 'en')).toBe('0.0241')
+  })
+
+  it('keeps at least two decimals and trims to the digits asked for', () => {
+    expect(formatRate(impliedRate(300, 'USD', 12_481, 'UAH') as never, 'en', 4)).toBe('41.6033')
+    expect(formatRate('0.0240963855', 'en', 6)).toBe('0.024096')
+  })
+})
+
+describe('findRateRow', () => {
+  it('gives the row rule A picks: the newest on or before the day, manual on a tie', () => {
+    const rows = [
+      {
+        baseCurrency: 'EUR',
+        quoteCurrency: 'UAH',
+        rate: '41.38',
+        rateOn: '2026-11-03',
+        source: 'reference' as const,
+      },
+      {
+        baseCurrency: 'EUR',
+        quoteCurrency: 'UAH',
+        rate: '41.5',
+        rateOn: '2026-11-03',
+        source: 'manual' as const,
+      },
+    ]
+
+    expect(findRateRow(rows, 'EUR', 'UAH', '2026-11-03')?.rate).toBe('41.5')
+    expect(findRateRow(rows, 'EUR', 'UAH', '2026-11-02')).toBeNull()
+  })
+})
+
+describe('formatRateChange', () => {
+  it('signs a change with plus or a real minus, and zero without a sign', () => {
+    expect(formatRateChange('0.12', 'uk', 2)).toBe('+0,12')
+    expect(formatRateChange('-0.03', 'uk', 2)).toBe('\u22120,03')
+    expect(formatRateChange('0', 'uk', 2)).toBe('0,00')
+  })
+})
+
+describe('exchangeRate', () => {
+  it('reads hryvnias per 1 euro whichever way the money went', () => {
+    const toEuro = exchangeRate(
+      {
+        fromAmountMinor: 100_000,
+        fromCurrency: 'UAH',
+        toAmountMinor: 2_400,
+        toCurrency: 'EUR',
+      },
+      'UAH',
+    )
+    const fromEuro = exchangeRate(
+      {
+        fromAmountMinor: 2_400,
+        fromCurrency: 'EUR',
+        toAmountMinor: 100_000,
+        toCurrency: 'UAH',
+      },
+      'UAH',
+    )
+
+    expect(toEuro && formatRate(toEuro.rate, 'uk')).toBe('41,67')
+    expect(toEuro?.unit).toBe('EUR')
+    expect(fromEuro && formatRate(fromEuro.rate, 'uk')).toBe('41,67')
+    expect(fromEuro?.unit).toBe('EUR')
+  })
+
+  it('gives the target per 1 unit of the source when neither side is the base currency', () => {
+    const rate = exchangeRate(
+      {
+        fromAmountMinor: 10_000,
+        fromCurrency: 'USD',
+        toAmountMinor: 9_200,
+        toCurrency: 'EUR',
+      },
+      'UAH',
+    )
+
+    expect(rate?.rate.toString()).toBe('0.92')
+    expect(rate?.unit).toBe('USD')
+  })
+
+  it('has no rate inside one currency', () => {
+    expect(
+      exchangeRate(
+        {
+          fromAmountMinor: 100,
+          fromCurrency: 'UAH',
+          toAmountMinor: 100,
+          toCurrency: 'UAH',
+        },
+        'UAH',
+      ),
+    ).toBeNull()
   })
 })

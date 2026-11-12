@@ -12,6 +12,9 @@ export type ActiveLedger = {
   timeZone: string
   baseCurrency: string
   ledgers: LedgerSummary[]
+  /** the signed-in person: the account in the shell, «your» version of a conflict */
+  userId: string
+  email: string | null
 }
 
 // A factory, never a module-level store: the state is the signed-in user's data, so every request / provider mount

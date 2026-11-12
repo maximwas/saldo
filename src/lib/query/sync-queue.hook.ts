@@ -19,11 +19,27 @@ export type QueuedWrite = {
   error: unknown
   submittedAt: number
   state: RecordState
+  /** on its way to the server now; a paused write waits for its turn in the queue or for the network */
+  sending: boolean
 }
 
-const isWaiting = (mutation: Mutation) =>
-  mutation.options.scope?.id === WRITES_SCOPE &&
-  (mutation.state.status === 'pending' || mutation.state.status === 'error')
+// ids of the writes the queue has listed: a sent one stays as «synced» until the rest are sent (Figma 41:106073);
+// TanStack keeps no time of a write's success, so the queue remembers which successes belong to this round
+const listed = new Set<number>()
+
+const isListed = (mutation: Mutation) => {
+  if (mutation.options.scope?.id !== WRITES_SCOPE) {
+    return false
+  }
+
+  if (mutation.state.status === 'pending' || mutation.state.status === 'error') {
+    listed.add(mutation.mutationId)
+
+    return true
+  }
+
+  return mutation.state.status === 'success' && listed.has(mutation.mutationId)
+}
 
 // plain values, not the Mutation: useMutationState compares results deeply, and a Mutation keeps its identity
 const toQueued = (mutation: Mutation): QueuedWrite => ({
@@ -33,6 +49,7 @@ const toQueued = (mutation: Mutation): QueuedWrite => ({
   error: mutation.state.error,
   submittedAt: mutation.state.submittedAt,
   state: recordState(mutation.state),
+  sending: mutation.state.status === 'pending' && !mutation.state.isPaused,
 })
 
 const subscribeOnline = (notify: () => void) => onlineManager.subscribe(notify)
@@ -104,17 +121,33 @@ export function useSyncQueue() {
   const queryClient = useQueryClient()
   const online = useOnline()
   const updatedAt = useLastUpdate()
-  const queue = useMutationState({
+  const writes = useMutationState({
     filters: {
-      predicate: isWaiting,
+      predicate: isListed,
     },
     select: toQueued,
   })
+  const queue = writes.filter((write) => write.state !== 'synced')
+  const sending = queue.some((write) => write.sending)
+
+  if (!sending) {
+    // the round is over: its synced rows leave the list
+    for (const write of writes) {
+      if (write.state === 'synced') {
+        listed.delete(write.id)
+      }
+    }
+  }
 
   return {
     online,
     updatedAt,
+    /** unsent, failed and conflicting writes */
     queue,
+    /** the queue sheet's rows: the queue and, while it is being sent, the writes already sent («synced») */
+    rows: sending ? writes : queue,
+    /** a write is on its way now: «sync now» waits */
+    sending,
     summary: summarizeQueue(
       queue.map((write) => write.state),
       online,

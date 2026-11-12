@@ -1,11 +1,8 @@
 import { Progress } from '@base-ui/react/progress'
-import { Pencil } from 'lucide-react'
-import type { Route } from 'next'
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
-import { Button } from '@/components/ui/button.component'
-import { CategoryIcon } from '@/components/ui/category-icon.component'
+import { CategoryBadge } from '@/components/ui/category-badge.component'
+import { useRipple } from '@/components/ui/ripple.hook'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { cn } from '@/lib/utils/cn.utils'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
@@ -16,34 +13,26 @@ import { LimitNotes } from './limit-notes.component'
 type LimitRowProps = {
   fact: BudgetFact
   category: BudgetCategory | null
-  month: string
 }
 
-// Figma frame 2:12799: icon, name and fact on one line, the bar, then the remainder and "of limit · N %"
-export function LimitRow({ fact, category, month }: LimitRowProps) {
+// Figma frames 2:12991 / 2:16245: a 40 badge (the category colour), name and fact on one line, the 8 px bar, then the
+// remainder and «of limit · N %»; gap 12 / 8. A writer taps the row to change its limit (ripple, hover as the rows); an
+// over-limit row opens the «over the limit» variant of the sheet (2:30757).
+export function LimitRow({ fact, category }: LimitRowProps) {
   const translate = useTranslations('budget.limits')
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
   const canWrite = useCanWrite()
   const open = useBudgetSheetStore((state) => state.open)
+  const { pressProps, ripple } = useRipple()
   const progress = limitProgress(fact)
   const name = category?.name ?? translate('noCategory')
-
-  return (
-    <li className="flex items-start gap-3 py-3">
-      <CategoryIcon icon={category?.icon ?? null} color={category?.color ?? null} />
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <div className="flex items-baseline justify-between gap-3">
-          {fact.categoryId ? (
-            <Link
-              href={`/operations?period=${month}&category=${fact.categoryId}&type=expense` as Route}
-              aria-label={translate('operations', { name })}
-              className="truncate rounded-xs text-body font-medium text-text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              {name}
-            </Link>
-          ) : (
-            <span className="truncate text-body font-medium text-text-primary">{name}</span>
-          )}
+  const categoryId = fact.categoryId
+  const content = (
+    <>
+      <CategoryBadge icon={category?.icon ?? null} color={category?.color ?? null} />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex items-baseline gap-2">
+          <span className="min-w-0 flex-1 truncate text-body font-medium text-text-primary">{name}</span>
           <Amount minor={fact.factMinor} currency={currency} />
         </div>
         {progress.state === 'none' ? null : (
@@ -57,22 +46,29 @@ export function LimitRow({ fact, category, month }: LimitRowProps) {
         )}
         <LimitNotes fact={fact} progress={progress} />
       </div>
-      {canWrite && fact.categoryId ? (
-        <Button
-          variant="ghost"
-          size="s"
+    </>
+  )
+
+  return (
+    <li className="flex flex-col">
+      {canWrite && categoryId ? (
+        <button
+          type="button"
           aria-label={translate('edit', { name })}
+          {...pressProps}
           onClick={() =>
             open({
               kind: 'limit',
-              categoryId: fact.categoryId,
+              categoryId,
             })
           }
+          className="relative -m-2 flex cursor-pointer items-start gap-3 overflow-hidden rounded-md p-2 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <Pencil className="size-4" aria-hidden />
-        </Button>
+          {content}
+          {ripple}
+        </button>
       ) : (
-        canWrite && <span className="w-9 shrink-0" aria-hidden />
+        <div className="flex items-start gap-3">{content}</div>
       )}
     </li>
   )

@@ -6,7 +6,7 @@ import { MotionConfig } from 'motion/react'
 import { useLocale } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import { Toaster } from '@/components/ui/toaster.component'
 import { MOTION } from '@/constants/motion.constants'
 import type { AppTheme } from '@/constants/theme.constants'
@@ -36,20 +36,20 @@ type AppProvidersProps = {
 
 export function AppProviders({ ledger, userId, theme, children }: AppProvidersProps) {
   const [queryClient] = useState(makeAppQueryClient)
-  const persistOptions = useMemo(() => (userId ? devicePersistOptions(userId) : null), [userId])
+  const persistOptions = userId ? devicePersistOptions(userId) : null
   const locale = useLocale()
   const { setTheme } = useTheme()
-  const appliedTheme = useRef<AppTheme | null>(null)
 
   // next-themes paints the device's last choice before hydration (localStorage); the account's choice then wins, so
   // a theme picked on another device follows after sign-in or a reload. Applied once per server value: setTheme changes
-  // identity on every pick, and re-running with the stale prop would undo the user's choice
+  // identity on every pick, so it is an effect event, and re-running with the stale prop would undo the user's choice
+  const applyTheme = useEffectEvent((next: AppTheme) => setTheme(next))
+
   useEffect(() => {
-    if (theme && theme !== appliedTheme.current) {
-      appliedTheme.current = theme
-      setTheme(theme)
+    if (theme) {
+      applyTheme(theme)
     }
-  }, [theme, setTheme])
+  }, [theme])
 
   // the device's «hide amounts» choice lives in localStorage, which the server cannot read
   useEffect(() => {

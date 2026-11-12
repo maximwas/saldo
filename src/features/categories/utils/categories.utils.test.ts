@@ -10,6 +10,7 @@ const category = (patch: Partial<CategoryView> & Pick<CategoryView, 'id'>): Cate
   sortOrder: 1,
   archivedAt: null,
   version: 1,
+  systemKey: null,
   ...patch,
 })
 
@@ -49,6 +50,28 @@ describe('buildCategoryTree', () => {
     expect(tree.expense.map((node) => node.id)).toEqual(['food', 'cafe'])
     expect(tree.expense[0].children.map((child) => child.id)).toEqual(['shops', 'market'])
     expect(tree.income.map((node) => node.id)).toEqual(['salary'])
+  })
+
+  it('keeps «Інше» last in every space, even before categories added after it (QA D14)', () => {
+    const tree = buildCategoryTree([
+      category({
+        id: 'other',
+        name: 'Інше',
+        sortOrder: 12,
+      }),
+      category({
+        id: 'fun',
+        name: 'Розваги',
+        sortOrder: 13,
+      }),
+      category({
+        id: 'home',
+        name: 'Житло',
+        sortOrder: 1,
+      }),
+    ])
+
+    expect(tree.expense.map((node) => node.name)).toEqual(['Житло', 'Розваги', 'Інше'])
   })
 
   it('keeps archived categories out of the trees', () => {
@@ -135,6 +158,7 @@ describe('toCategory', () => {
         sort_order: 3,
         archived_at: null,
         version: 2,
+        system_key: null,
       }),
     ).toEqual({
       id: 'c1',
@@ -146,6 +170,7 @@ describe('toCategory', () => {
       sortOrder: 3,
       archivedAt: null,
       version: 2,
+      systemKey: null,
     })
   })
 })

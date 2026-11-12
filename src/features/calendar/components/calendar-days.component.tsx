@@ -1,142 +1,58 @@
 'use client'
 
-import { useFormatter, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
-import { useLedger } from '@/contexts/ledger.context'
-import type { CalendarEntry } from '../api/calendar.api'
-import { useCalendarData, useCalendarOptions } from '../hooks/calendar.hook'
+import { useTranslations } from 'next-intl'
+import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText, useMonthOf } from '@/lib/dates/day-text.hook'
+import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { capitalize, type DayTotals, dayDate, groupByDay, weekDays } from '../utils/calendar.utils'
-import { EntryLine, PressButton } from './calendar-entry.component'
+import { useDayTitle } from '../hooks/entry-labels.hook'
+import { groupByDay } from '../utils/calendar.utils'
+import { DaySums } from './day-sums.component'
+import { EntryRow } from './entry-row.component'
 
-type DaySectionProps = {
-  day: string
-  entries: CalendarEntry[]
-  totals: DayTotals | undefined
-}
-
-/** «Fact −924,70 ₴», «Plan −199,00 ₴» or «No expenses» on the right of a day; a day without entries says so (Figma 2:72249) */
-function DaySums({ entries, totals }: Omit<DaySectionProps, 'day'>) {
-  const translate = useTranslations('calendar')
-  const { baseCurrency } = useLedger()
-  const hasFact = entries.some((entry) => entry.entry === 'fact')
-  const hasPlan = entries.some((entry) => entry.entry === 'plan')
-
-  if (!totals) {
-    return <span className="text-caption text-text-secondary">{translate('day.noEntries')}</span>
-  }
-
-  const amount = (minor: number) => () => (
-    <Amount minor={minor} currency={baseCurrency} kind="plan" className="text-caption font-normal" />
-  )
-  const factMinor = totals.factIncomeMinor - totals.factExpenseMinor
-
-  return (
-    <span className="flex flex-wrap items-center justify-end gap-x-2 text-caption text-text-secondary">
-      {hasFact &&
-        (factMinor === 0 ? (
-          <span>{translate('day.noExpenses')}</span>
-        ) : (
-          <span>{translate.rich('day.factSum', { amount: amount(factMinor) })}</span>
-        ))}
-      {hasPlan && (
-        <span>{translate.rich('day.planSum', { amount: amount(totals.planInMinor - totals.planOutMinor) })}</span>
-      )}
-    </span>
-  )
-}
-
-function DaySection({ day, entries, totals }: DaySectionProps) {
-  const translate = useTranslations('calendar')
-  const format = useFormatter()
-  const { today, setUrl } = useCalendarParams()
-  const accounts = useCalendarOptions().data?.accounts
-  const label =
-    day === today
-      ? translate('day.today', {
-          weekday: format.dateTime(dayDate(day), {
-            timeZone: 'UTC',
-            weekday: 'long',
-          }),
-          date: format.dateTime(dayDate(day), {
-            timeZone: 'UTC',
-            day: 'numeric',
-            month: 'long',
-          }),
-        })
-      : capitalize(
-          format.dateTime(dayDate(day), {
-            timeZone: 'UTC',
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          }),
-        )
-  const open = (item: string | null) =>
-    void setUrl({
-      view: 'day',
-      date: day,
-      item,
-    })
-  const typeOf = (entry: CalendarEntry) => {
-    if (entry.sourceType) {
-      return translate(`source.${entry.sourceType as 'manual'}`)
-    }
-
-    return entry.kind === 'expense' || entry.kind === 'income'
-      ? null
-      : translate(`kind.${entry.kind as 'transfer_out'}`)
-  }
-  // «Megogo · subscription · Main card»: the name, what it is (a source or a kind other than a plain expense) and the account
-  const nameOf = (entry: CalendarEntry) =>
-    [entry.title, typeOf(entry), accounts?.find((account) => account.id === entry.accountId)?.name]
-      .filter(Boolean)
-      .join(' · ')
-
-  return (
-    <li data-day={day} className="flex flex-col gap-2 border-b border-border py-3 last:border-b-0">
-      <PressButton onPressAction={() => open(null)} className="-mx-3 flex items-center gap-3 rounded-md px-3 py-1">
-        <span className="flex-1 text-label font-semibold text-text-primary">{label}</span>
-        <DaySums entries={entries} totals={totals} />
-      </PressButton>
-      {entries.map((entry) => (
-        <PressButton key={entry.id} onPressAction={() => open(entry.id)} className="-mx-3 block rounded-md px-3 py-1">
-          <EntryLine entry={entry} name={nameOf(entry)} withAmount />
-        </PressButton>
-      ))}
-    </li>
-  )
-}
-
-// Figma «Saldo» → Calendar · List 2:71087: one card (padding 24, gap 20) titled «October · newest first»; a day is a
-// 12-padded block with a hairline (label-semibold, the fact / plan line on the right, then entry lines as «title · type ·
-// account» with the amount). Week (no frame) is the same card over Monday to Sunday, oldest first, days without entries
-// included. A day or an entry opens the day view with the filters kept.
+// Figma «Saldo» → Calendar · List 59:128733: one card «All entries of November», a block per day with entries (in date
+// order) with the day's title and its labelled sums, or «Paid 03.11» when its plans were all paid on another day, then
+// the same rows as the day view, those marks included, and «Tap an entry…». Every row opens the entry's popup.
 export function CalendarDays() {
   const translate = useTranslations('calendar')
-  const format = useFormatter()
-  const { view, date } = useCalendarParams()
-  const { entries, totals } = useCalendarData()
+  const canWrite = useCanWrite()
+  const dayTitle = useDayTitle()
+  const monthOf = useMonthOf()
+  const dayText = useDayText()
+  const { date } = useCalendarParams()
+  const { entries, totals, marks } = useCalendarData()
   const byDay = groupByDay(entries.data ?? [])
   const totalsByDay = new Map((totals.data ?? []).map((row) => [row.day, row]))
-  const days = view === 'week' ? weekDays(date) : [...byDay.keys()].reverse()
-  const month = capitalize(
-    format.dateTime(dayDate(date), {
-      timeZone: 'UTC',
-      month: 'long',
-    }),
-  )
+  const days = [...new Set([...byDay.keys(), ...marks.keys()])].sort()
+  const paidOn = (day: string) =>
+    [...new Set((marks.get(day) ?? []).map((entry) => dayText(entry.day, 'short')))].join(', ')
 
   return (
     <section className="flex flex-col gap-5 rounded-card bg-card p-6 shadow-card">
-      {view === 'list' && (
-        <h2 className="text-card-title text-text-primary">{translate('listTitle', { period: month })}</h2>
-      )}
-      <ol className="flex flex-col gap-4">
+      <h2 className="text-card-title text-text-primary">{translate('listTitle', { month: monthOf(date) })}</h2>
+      <ol className="flex flex-col divide-y divide-border">
         {days.map((day) => (
-          <DaySection key={day} day={day} entries={byDay.get(day) ?? []} totals={totalsByDay.get(day)} />
+          <li key={day} data-day={day} className="flex flex-col gap-1 py-4 first:pt-0 last:pb-0">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h3 className="text-label font-semibold text-text-primary">{dayTitle(day)}</h3>
+              {byDay.has(day) ? (
+                <DaySums totals={totalsByDay.get(day)} layout="inline" />
+              ) : (
+                <span className="text-caption text-text-tertiary">{translate('paidOn', { date: paidOn(day) })}</span>
+              )}
+            </div>
+            <ul className="flex flex-col">
+              {(byDay.get(day) ?? []).map((entry) => (
+                <EntryRow key={entry.id} entry={entry} />
+              ))}
+              {(marks.get(day) ?? []).map((entry) => (
+                <EntryRow key={`mark-${entry.id}`} entry={entry} mark />
+              ))}
+            </ul>
+          </li>
         ))}
       </ol>
+      {canWrite && <p className="text-caption text-text-tertiary">{translate('day.hint')}</p>}
     </section>
   )
 }

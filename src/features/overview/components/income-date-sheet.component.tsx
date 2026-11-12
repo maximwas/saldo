@@ -5,10 +5,10 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { Field } from '@/components/ui/field.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { useSetIncomeDate } from '../hooks/overview.hook'
 
 type IncomeDateSheetProps = {
@@ -21,7 +21,7 @@ type IncomeDateSheetProps = {
 // The expected income amount has no column in the schema, so only the date is edited here.
 export function IncomeDateSheet({ untilOn, ledgerVersion, onClose }: IncomeDateSheetProps) {
   const translate = useTranslations('overview')
-  const translateErrors = useTranslations('errors')
+  const dbErrorText = useDbErrorText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const save = useSetIncomeDate()
   const [value, setValue] = useState<string | null>(untilOn)
@@ -33,9 +33,7 @@ export function IncomeDateSheet({ untilOn, ledgerVersion, onClose }: IncomeDateS
       title={translate('incomeDate.title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onClose}>
-            {translate('incomeDate.cancel')}
-          </Button>
+          <SheetClose>{translate('incomeDate.cancel')}</SheetClose>
           <Button
             disabled={save.isPending}
             onClick={() =>
@@ -50,7 +48,7 @@ export function IncomeDateSheet({ untilOn, ledgerVersion, onClose }: IncomeDateS
                     notify.success(translate('incomeDate.saved'))
                     onClose()
                   },
-                  onError: (error) => notify.error(translateErrors(`db.${toPgError(error as { code?: string }).kind}`)),
+                  onError: (error) => notify.error(dbErrorText(error)),
                 },
               )
             }

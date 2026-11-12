@@ -2,28 +2,10 @@ import { Dialog } from '@base-ui/react/dialog'
 import { Drawer } from '@base-ui/react/drawer'
 import { X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useSyncExternalStore } from 'react'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button.component'
 import { cn } from '@/lib/utils/cn.utils'
-
-// Tailwind's md breakpoint: below it the sheet is a bottom drawer, from it a centred dialog
-const DESKTOP_QUERY = '(min-width: 48rem)'
-
-const subscribe = (notify: () => void) => {
-  const query = window.matchMedia(DESKTOP_QUERY)
-
-  query.addEventListener('change', notify)
-
-  return () => query.removeEventListener('change', notify)
-}
-
-/** true from Tailwind's md up; the server snapshot is desktop */
-export function useIsDesktop() {
-  return useSyncExternalStore(
-    subscribe,
-    () => window.matchMedia(DESKTOP_QUERY).matches,
-    () => true,
-  )
-}
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 
 type SheetProps = {
   open: boolean
@@ -34,14 +16,15 @@ type SheetProps = {
   footer?: React.ReactNode
   /** the element focused on open; by default the first tabbable one, which is the close button */
   initialFocus?: React.RefObject<HTMLElement | null>
-  /** desktop width: md 480 (Dialog 2:10240), lg 640 (the operation form, 2:16567) */
-  size?: 'md' | 'lg'
+  /** desktop width: md 480 (Dialog 2:10240), list 560 (the rates, 50:122579), lg 640 (the operation form, 2:16567) */
+  size?: 'md' | 'list' | 'lg'
   /** Figma Dialog / BottomSheet «More» (33:101623, 33:101738): a «···» menu left of ✕ */
   headerAction?: React.ReactNode
 }
 
 const DIALOG_WIDTH = {
   md: 'w-120',
+  list: 'w-140',
   lg: 'w-160',
 } as const
 
@@ -49,7 +32,7 @@ const CLOSE_CLASS =
   'flex shrink-0 cursor-pointer items-center justify-center rounded-md text-text-secondary outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary'
 const TITLE_CLASS = 'flex-1 text-card-title text-text-primary'
 const BACKDROP_CLASS =
-  'fixed inset-0 z-40 bg-scrim transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0'
+  'fixed inset-0 z-40 bg-scrim transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0 starting:opacity-0'
 
 // Figma «Saldo» → BottomSheet 2:10281 (mobile: radius card on top, handle 36x4, header with 44 close, scrolling body
 // padding 8/20/20, sticky footer with top border and full-width buttons) and Dialog 2:10240 (desktop: 480 wide, 640 for the operation form,
@@ -66,19 +49,35 @@ export function Sheet({
 }: SheetProps) {
   const translate = useTranslations('common')
   // a sheet is opened by a click, so it never renders during hydration
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
+  // Screens mount a sheet already open (a row, a URL id) and unmount it on close, while Base UI plays the enter and exit
+  // transitions only for an open that changes after mount. So the enter comes from CSS @starting-style (`starting:`),
+  // and a close (✕, backdrop, swipe, Escape, SheetClose) first plays the exit and only then reaches the caller.
+  const [closing, setClosing] = useState(false)
+  const shown = open && !closing
+  const root = {
+    open: shown,
+    onOpenChange: (next: boolean) => (next ? onOpenChange(true) : setClosing(true)),
+    onOpenChangeComplete: (next: boolean) => {
+      if (!next && closing) {
+        setClosing(false)
+        onOpenChange(false)
+      }
+    },
+  }
 
   if (desktop) {
     return (
-      <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Root {...root}>
         <Dialog.Portal>
           <Dialog.Backdrop className={BACKDROP_CLASS} />
-          {/* centred, as tall as its content up to spacing-4 from the edges: Figma 5:101464 draws a 850 dialog in 900 */}
-          <Dialog.Viewport className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center p-4">
+          {/* anchored at the top, not centred (Maxim, 3.11): a dialog whose height changes with its content (operation kinds)
+              grows downward and its header stays still; as tall as its content up to spacing-4 from the bottom */}
+          <Dialog.Viewport className="pointer-events-none fixed inset-0 z-40 flex items-start justify-center px-4 pt-16 pb-4">
             <Dialog.Popup
               initialFocus={initialFocus}
               className={cn(
-                'pointer-events-auto flex max-h-full max-w-full flex-col gap-5 rounded-card bg-raised p-6 shadow-float outline-none transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0',
+                'pointer-events-auto flex max-h-full max-w-full flex-col gap-5 rounded-card bg-raised p-6 shadow-float outline-none transition-opacity duration-(--duration-slow) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0 starting:opacity-0',
                 DIALOG_WIDTH[size],
               )}
             >
@@ -89,8 +88,15 @@ export function Sheet({
                   <X className="size-5" aria-hidden />
                 </Dialog.Close>
               </div>
-              <div className="-m-1 flex min-h-0 flex-col gap-4 overflow-y-auto p-1 scrollbar-none">{children}</div>
-              {footer ? <div className="flex items-center gap-3 *:flex-1">{footer}</div> : null}
+              {/* the body runs down to the footer border (-mb-5 takes back the gap) and ends with 20 px, so a long form
+                  scrolls under the border instead of being cut 20 px above it, and its last control (the receipt) stops
+                  fully visible above the buttons (QA D14); a short dialog keeps the same 20 px above the border */}
+              <div className="-m-1 -mb-5 flex min-h-0 flex-col gap-4 overflow-y-auto p-1 pb-5 scrollbar-none">
+                {children}
+              </div>
+              {footer ? (
+                <div className="flex items-center gap-3 border-t border-border pt-5 *:flex-1">{footer}</div>
+              ) : null}
             </Dialog.Popup>
           </Dialog.Viewport>
         </Dialog.Portal>
@@ -99,36 +105,55 @@ export function Sheet({
   }
 
   return (
-    <Drawer.Root open={open} onOpenChange={onOpenChange} swipeDirection="down">
-      <Drawer.Portal>
-        <Drawer.Backdrop className={BACKDROP_CLASS} />
-        {/* Figma draws every sheet whole, up to 19 px below the top (33:101738): the sheet may grow to spacing-4 from it */}
-        <Drawer.Viewport className="pointer-events-none fixed inset-x-0 top-4 bottom-0 z-40 flex flex-col justify-end">
-          <Drawer.Popup
-            initialFocus={initialFocus}
-            className="pointer-events-auto flex max-h-full translate-y-(--drawer-swipe-movement-y) flex-col rounded-t-card bg-raised shadow-float outline-none transition-transform duration-(--duration-slow) ease-(--ease-emphasized) data-ending-style:translate-y-full data-starting-style:translate-y-full data-swiping:transition-none"
-          >
-            <div className="flex justify-center pt-2 pb-1" aria-hidden>
-              <div className="h-1 w-9 rounded-full bg-border-strong" />
-            </div>
-            <div className="flex items-center gap-3 py-2 pr-4 pl-5">
-              <Drawer.Title className={TITLE_CLASS}>{title}</Drawer.Title>
-              {headerAction}
-              <Drawer.Close aria-label={translate('close')} className={cn(CLOSE_CLASS, 'size-11')}>
-                <X className="size-5" aria-hidden />
-              </Drawer.Close>
-            </div>
-            <Drawer.Content className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-2 pb-5 scrollbar-none">
-              {children}
-            </Drawer.Content>
-            {footer ? (
-              <div className="flex items-center gap-3 border-t border-border bg-raised px-5 pt-4 pb-8 *:flex-1">
-                {footer}
+    <Drawer.Root {...root} swipeDirection="down">
+      {/* measures the on-screen keyboard into --drawer-keyboard-inset and scrolls the body to the focused field */}
+      <Drawer.VirtualKeyboardProvider>
+        <Drawer.Portal>
+          <Drawer.Backdrop className={BACKDROP_CLASS} />
+          {/* Figma draws every sheet whole, up to 19 px below the top (33:101738): the sheet may grow to spacing-4 from it;
+              the keyboard lifts the bottom edge, so the body and the footer buttons stay above it */}
+          <Drawer.Viewport className="pointer-events-none fixed inset-x-0 top-4 bottom-(--drawer-keyboard-inset,0px) z-40 flex flex-col justify-end">
+            <Drawer.Popup
+              initialFocus={initialFocus}
+              className="pointer-events-auto flex max-h-full translate-y-(--drawer-swipe-movement-y) flex-col rounded-t-card bg-raised shadow-float outline-none transition-transform duration-(--duration-slow) ease-(--ease-emphasized) data-ending-style:translate-y-full data-starting-style:translate-y-full starting:translate-y-full data-swiping:transition-none"
+            >
+              <div className="flex justify-center pt-2 pb-1" aria-hidden>
+                <div className="h-1 w-9 rounded-full bg-border-strong" />
               </div>
-            ) : null}
-          </Drawer.Popup>
-        </Drawer.Viewport>
-      </Drawer.Portal>
+              <div className="flex items-center gap-3 py-2 pr-4 pl-5">
+                <Drawer.Title className={TITLE_CLASS}>{title}</Drawer.Title>
+                {headerAction}
+                <Drawer.Close aria-label={translate('close')} className={cn(CLOSE_CLASS, 'size-11')}>
+                  <X className="size-5" aria-hidden />
+                </Drawer.Close>
+              </div>
+              <Drawer.Content className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-2 pb-5 scrollbar-none">
+                {children}
+              </Drawer.Content>
+              {footer ? (
+                <div className="flex items-center gap-3 border-t border-border bg-raised px-5 pt-4 pb-8 *:flex-1">
+                  {footer}
+                </div>
+              ) : null}
+            </Drawer.Popup>
+          </Drawer.Viewport>
+        </Drawer.Portal>
+      </Drawer.VirtualKeyboardProvider>
     </Drawer.Root>
+  )
+}
+
+type SheetCloseProps = {
+  children: React.ReactNode
+  /** e.g. max-md:flex-none: the button hugs its label instead of sharing the footer equally */
+  className?: string
+  /** secondary «Cancel» by default; primary for a «Done» that only closes */
+  variant?: 'primary' | 'secondary'
+}
+
+/** a footer button that closes the sheet through its exit transition (Drawer.Close is Dialog.Close) */
+export function SheetClose({ children, className, variant = 'secondary' }: SheetCloseProps) {
+  return (
+    <Dialog.Close render={<Button variant={variant} type="button" className={className} />}>{children}</Dialog.Close>
   )
 }

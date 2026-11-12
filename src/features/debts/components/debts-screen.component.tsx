@@ -2,18 +2,22 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { HandCoins, Plus } from 'lucide-react'
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { resumeWrites } from '@/lib/query/ledger-writes.mutations'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import type { DebtRow } from '../api/debts.api'
 import { useDebts, useQueuedRepayments } from '../hooks/debts.hook'
 import { type CurrencyTotal, nearestDue, openCount, owedTotals, partlyRepaid } from '../utils/debt-groups.utils'
@@ -91,28 +95,32 @@ function sheetFor(debt: DebtRow, action: DebtAction): Sheet {
 // repayment), view-only Desktop 2:65522 (no action buttons).
 export function DebtsScreen() {
   const translate = useTranslations('debts')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const canWrite = useCanWrite()
   const queryClient = useQueryClient()
   const { online } = useSyncQueue()
   const queued = useQueuedRepayments()
-  const { data, isPending, isError } = useDebts()
+  const query = useDebts()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const [sheet, setSheet] = useState<Sheet>(null)
 
-  if (isPending) {
+  if (failedLoad) {
+    return (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <PaymentsTabs />
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+      </div>
+    )
+  }
+
+  if (!hydrated || data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <PaymentsTabs />
         <DebtsSkeleton />
       </div>
-    )
-  }
-
-  if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
     )
   }
 
@@ -140,7 +148,7 @@ export function DebtsScreen() {
         >
           {translate('offline', {
             person: waiting.person,
-            amount: formatMinor(queued[0]?.movement.amount_minor ?? 0, waiting.currency, locale),
+            amount: moneyText(queued[0]?.movement.amount_minor ?? 0, waiting.currency),
           })}
         </Banner>
       )}
@@ -153,22 +161,16 @@ export function DebtsScreen() {
         </div>
       )}
       {data.length === 0 ? (
-        <section className="flex flex-col items-center rounded-card bg-card px-5 py-10 shadow-card">
-          <div className="flex w-full max-w-100 flex-col items-center gap-3 p-2 text-center">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-cat-green-soft text-cat-green-text"
-            >
-              <HandCoins className="size-5" />
-            </span>
-            <h2 className="w-full text-body font-semibold text-text-primary">{translate('empty')}</h2>
-            <p className="w-full text-label text-text-secondary">{translate('emptyHint')}</p>
-            {canWrite && <Button onClick={addDebt}>{translate('add')}</Button>}
-          </div>
-        </section>
+        <EmptyState
+          icon={HandCoins}
+          tone="green"
+          title={translate('empty')}
+          hint={translate('emptyHint')}
+          action={canWrite && <Button onClick={addDebt}>{translate('add')}</Button>}
+        />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:gap-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:gap-6">
             {GROUPS.map((group) => (
               <DebtTotal
                 key={group.key}
@@ -232,26 +234,22 @@ type DebtTotalProps = {
 // the first partly repaid debt (owed to me) or the nearest due date (I owe), on mobile only the count
 function DebtTotal({ debts, direction, label }: DebtTotalProps) {
   const translate = useTranslations('debts')
-  const format = useFormatter()
-  const locale = useLocale()
+  const dayText = useDayText()
+  const moneyText = useMoneyText()
   const totals = owedTotals(debts, direction)
   const count = openCount(debts, direction)
   const lead = partlyRepaid(debts, direction)
   const due = nearestDue(debts, direction)
   const dueText = due
     ? translate('summary.nearestDue', {
-        date: format.dateTime(new Date(`${due}T12:00:00Z`), {
-          timeZone: 'UTC',
-          day: '2-digit',
-          month: '2-digit',
-        }),
+        date: dayText(due, 'short'),
       })
     : null
   const leadText = lead
     ? translate('summary.repaidLead', {
         person: lead.person,
-        repaid: formatMinor(lead.repaidMinor, lead.currency, locale),
-        principal: formatMinor(lead.principalMinor, lead.currency, locale),
+        repaid: moneyText(lead.repaidMinor, lead.currency),
+        principal: moneyText(lead.principalMinor, lead.currency),
       })
     : null
   const extra = leadText ?? dueText
@@ -295,7 +293,7 @@ function TotalAmounts({ totals }: { totals: CurrencyTotal[] }) {
 function DebtsSkeleton() {
   return (
     <div aria-busy className="flex flex-col gap-4 lg:gap-6">
-      <div className="grid grid-cols-2 gap-4 lg:gap-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:gap-6">
         {[0, 1].map((key) => (
           <SkeletonCard key={key} className="gap-3 p-6">
             <Bone className="h-3 w-30 rounded-sm" />

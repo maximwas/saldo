@@ -205,3 +205,24 @@ export async function closeDebt(supabase: SaldoClient, params: CloseDebtParams) 
 
   await saveDebt(supabase, params.status)
 }
+
+/** principal and repayments of one debt, oldest first; operationId null = recorded without money moving */
+export async function listDebtMovements(supabase: SaldoClient, debtId: string) {
+  const { data, error } = await supabase
+    .from('debt_movements')
+    .select('id, kind, amount_minor, occurred_on, operation_id')
+    .eq('debt_id', debtId)
+    .order('occurred_on')
+
+  if (error) {
+    throw error
+  }
+
+  return data.map((row) => ({
+    id: row.id,
+    kind: row.kind as DebtMovement['kind'],
+    amountMinor: row.amount_minor,
+    occurredOn: row.occurred_on,
+    operationId: row.operation_id,
+  }))
+}

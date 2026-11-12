@@ -6,8 +6,10 @@ import { categoriesWrites } from '@/features/categories/hooks/categories.hook'
 import { creditsWrites } from '@/features/credits/hooks/credits.hook'
 import { currenciesWrites } from '@/features/currencies/hooks/currencies.hook'
 import { debtsWrites } from '@/features/debts/hooks/debts.hook'
+import { ledgersWrites } from '@/features/ledgers/hooks/ledgers.hook'
+import { notificationsWrites } from '@/features/notifications/hooks/notifications.hook'
 import { obligationsWrites } from '@/features/obligations/hooks/obligations.hook'
-import { operationsWrites } from '@/features/operations/api/operations.mutations'
+import { operationsWrites } from '@/features/operations/hooks/operations.hook'
 import { overviewWrites } from '@/features/overview/hooks/overview.hook'
 import { subscriptionsWrites } from '@/features/subscriptions/hooks/subscriptions.hook'
 import { createDevicePersister } from '@/lib/offline/device-storage'
@@ -24,6 +26,8 @@ const APP_WRITES = [
   creditsWrites,
   currenciesWrites,
   debtsWrites,
+  ledgersWrites,
+  notificationsWrites,
   obligationsWrites,
   operationsWrites,
   overviewWrites,

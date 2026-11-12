@@ -1,4 +1,6 @@
 {
+  "loadFailed": "Could not load statistics",
+  "refreshFailed": "Could not refresh the statistics",
   "filters": { "period": "Period", "bucket": "Group by", "who": "Who", "allMembers": "Everyone", "view": "View" },
   "periods": { "3m": "Last 3 months", "6m": "Last 6 months", "12m": "Last 12 months" },
   "buckets": { "day": "By day", "week": "By week", "month": "By month", "year": "By year" },
@@ -7,10 +9,19 @@
     "income": "Income",
     "expense": "Expenses",
     "result": "Result",
-    "note": "{count, plural, one {# operation} other {# operations}} in the period. Transfers, loans and adjustments are not included; a refund reduces expenses.",
+    "incomeCaption": "{operations, plural, one {# inflow} other {# inflows}} · {names}",
+    "expenseCaption": "{operations, plural, one {# operation} other {# operations}} · {categories, plural, one {# category} other {# categories}}",
+    "excluded": "Transfers, reserves, loans and adjustments are not included; a refund reduces expenses.",
     "unknown": "Not counted, no known rate: {count}."
   },
   "noData": "no data",
+  "others": "Others ({count})",
+  "emptyPeriod": {
+    "title": "No data for {month}",
+    "titleOther": "No data for this period",
+    "text": "Choose another period or add operations for this period.",
+    "show": "Show {month}"
+  },
   "noCategory": "No category",
   "total": "Total",
   "unknownBadge": "no rate: {count}",
@@ -19,7 +30,7 @@
   "state": {
     "offline": "No network. The statistics will appear as soon as the connection is back.",
     "error": "Could not load.",
-    "stale": "No network. Showing data as of {time}: new operations appear after sync."
+    "stale": "No network. Showing data as of {time} — new operations appear after sync."
   },
   "empty": {
     "operations": "No operations in this period.",
@@ -38,6 +49,7 @@
     "title": "Expenses by category",
     "category": "Category",
     "share": "Share",
+    "percent": "{value}%",
     "amount": "Amount",
     "summary": "Donut chart of expenses by category, categories: {count}; the same sums are in the table"
   },

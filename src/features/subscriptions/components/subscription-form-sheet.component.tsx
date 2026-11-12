@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
@@ -44,9 +45,7 @@ export function SubscriptionFormSheet({ onCloseAction }: SubscriptionFormSheetPr
       title={translate('createTitle')}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('cancel')}
-          </Button>
+          <SheetClose>{translate('cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={create.isPending || !options.data}>
             {translate('create')}
           </Button>
@@ -63,7 +62,7 @@ export function SubscriptionFormSheet({ onCloseAction }: SubscriptionFormSheetPr
           onSavedAction={onCloseAction}
         />
       ) : (
-        <div aria-busy className="h-96 rounded-md bg-subtle" />
+        <Bone className="h-96 rounded-md" />
       )}
     </Sheet>
   )

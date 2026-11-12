@@ -6,9 +6,12 @@ import { useTranslations } from 'next-intl'
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Chip } from '@/components/ui/chip.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import {
   useCategories,
   useCategoryOperationCounts,
@@ -55,13 +58,16 @@ const HOW = [
 export function CategoriesScreen() {
   const translate = useTranslations('categories')
   const canWrite = useCanWrite()
-  const { data, isPending, isError } = useCategories()
+  const query = useCategories()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const reorder = useReorderCategories()
   const update = useUpdateCategory()
   const [kind, setKind] = useState<CategoryKind>('expense')
   const [form, setForm] = useState<CategoryFormTarget | null>(null)
   const [archiving, setArchiving] = useState<CategoryView | null>(null)
-  const desktop = useIsDesktop()
+  const desktop = useIsWideLayout()
   const counts = useCategoryOperationCounts().data
   const [reordering, setReordering] = useState(false)
   // the order being dragged; it belongs to one kind and one snapshot of the list, a refetch drops it
@@ -72,7 +78,11 @@ export function CategoriesScreen() {
   } | null>(null)
   const latestIds = useRef<string[]>([])
 
-  if (isPending) {
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+  }
+
+  if (!hydrated || data === undefined) {
     // Figma categories loading frame 2:56714: a card (padding 20, gap 20), a 120×20 title, four rows (gap 12) of a
     // 40 circle and two lines (16 and 12 high, radius xs)
     return (
@@ -88,14 +98,6 @@ export function CategoriesScreen() {
           </div>
         ))}
       </SkeletonCard>
-    )
-  }
-
-  if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
     )
   }
 

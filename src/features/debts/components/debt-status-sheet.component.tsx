@@ -1,11 +1,12 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { DebtRow } from '../api/debts.api'
 import { useSaveDebt } from '../hooks/debts.hook'
 import { toStatusInput } from '../schemas/debt-edit-form.schema'
@@ -21,16 +22,12 @@ type DebtStatusSheetProps = {
 // moves, so no account changes. A fully repaid debt is closed through the same confirmation.
 export function DebtStatusSheet({ debt, status, onCloseAction }: DebtStatusSheetProps) {
   const translate = useTranslations('debts')
-  const locale = useLocale()
-  const format = useFormatter()
+  const moneyText = useMoneyText()
+  const dayText = useDayText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const save = useSaveDebt()
   const writeOff = status === 'written_off'
-  const arisenDay = format.dateTime(new Date(`${debt.arisenOn}T12:00:00Z`), {
-    timeZone: 'UTC',
-    day: '2-digit',
-    month: '2-digit',
-  })
+  const arisenDay = dayText(debt.arisenOn, 'short')
 
   const confirm = () =>
     save.mutate(toStatusInput(debt, status, ledgerId), {
@@ -47,9 +44,7 @@ export function DebtStatusSheet({ debt, status, onCloseAction }: DebtStatusSheet
       title={translate(writeOff ? 'status.writeOffTitle' : 'status.closeTitle')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate(writeOff ? 'status.writeOffCancel' : 'status.cancel')}
-          </Button>
+          <SheetClose>{translate(writeOff ? 'status.writeOffCancel' : 'status.cancel')}</SheetClose>
           <Button type="button" variant={writeOff ? 'danger' : 'primary'} onClick={confirm} disabled={save.isPending}>
             {translate(writeOff ? 'status.writeOffConfirm' : 'status.closeConfirm')}
           </Button>
@@ -59,7 +54,7 @@ export function DebtStatusSheet({ debt, status, onCloseAction }: DebtStatusSheet
       {writeOff ? (
         <>
           <p className="text-body text-text-primary">
-            {translate('status.writeOffBody', { remaining: formatMinor(debt.remainingMinor, debt.currency, locale) })}
+            {translate('status.writeOffBody', { remaining: moneyText(debt.remainingMinor, debt.currency) })}
           </p>
           <p className="text-label text-text-secondary">
             {debt.direction === 'owed_to_me'

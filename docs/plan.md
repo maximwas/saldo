@@ -1,7 +1,7 @@
 # Saldo: план робіт
 
 Порядок — §27: фундамент операцій/рахунків і плану → підписки/кредити/борги → бюджет/резерви/податки →
-авто/аналітика → інтеграції й офлайн. Кожна фаза закінчується робочою задеплоєною частиною на Vercel.
+авто/аналітика → інтеграції й офлайн. Кожна фаза закінчується робочою задеплоєною частиною на Cloudflare Workers.
 Позначай `- [x]` по ходу; «Готово, коли» — перевірки з §26, які мають бути показані живцем або тестом.
 Архітектура — `docs/architecture.md`, правила коду — `docs/conventions.md`.
 
@@ -45,7 +45,7 @@ PWA-маніфест, нічний бекап.
 - [x] 0.15 Провайдери: QueryClient (без persist поки), NuqsAdapter, ClockProvider, `LedgerProvider` (`src/contexts/ledger.context.tsx`: `ledgerId`, `role` з cookie `saldo-ledger` → `user_settings.last_ledger_id` → власний простір), Toaster; `src/lib/supabase/pg-error.utils.ts` (з `42501`) + тест.
 - [x] 0.16 PWA: `src/app/manifest.ts`, іконки; спайк Serwist `@serwist/turbopack` на Next 16.4 (оболонка офлайн) — результат записати.
 - [x] 0.17 Vercel: проєкт, `vercel.json` `regions: ["fra1"]`, env, `CRON_SECRET`; `api/cron/daily` (поки лише `select 1` з БД — тримає проєкт активним). Зроблено 30.10.2026: проєкт `saldo` (maximwas-projects), Git — `maximwas/saldo`, production branch `main`, Node 26.x (з 30.10.2026, було 24.x), функції `fra1`; env Production → прод Supabase, Preview → preview Supabase, `NEXT_PUBLIC_SITE_URL`, `CRON_SECRET` (sensitive, згенерований без виводу); крон `0 3 * * *` → `api/cron/daily` (Bearer, `timingSafeEqual`, `head`-запит до `ledgers`). Міграції застосовані `supabase db push` спершу в preview, потім у прод (пароль не потрібен: CLI створює тимчасову login role через Management API); advisors security — 0, performance — лише INFO «unused index» на порожній БД. `SUPABASE_SECRET_KEY` для обох середовищ вносить Максим.
-- [ ] 0.17a Домен `saldo.maksymvasianin.com` (ADR 24): додати у Vercel-проєкт (додано й verified 30.10.2026; Vercel радить CNAME `saldo` → `4fefc47411429e7f.vercel-dns-017.com`, чекає запису в Cloudflare); у Cloudflare CNAME `saldo` на значення з Vercel, **DNS only**; сертифікат виданий; env `NEXT_PUBLIC_SITE_URL`; Supabase Auth → Site URL і Redirect URLs (домен + `localhost:3000`, `architecture.md` §7).
+- [ ] 0.17a Домен `saldo.maksymvasianin.com` (ADR 24): Custom Domain Worker `saldo` у Cloudflare замість CNAME на Vercel (11.11.2026, `architecture.md` §7 «Хостинг»); env `NEXT_PUBLIC_SITE_URL`; Supabase Auth → Site URL і Redirect URLs (домен + `localhost:3000`, `architecture.md` §7).
 - [ ] 0.18 `.github/workflows/backup.yml`: лише `schedule` + `workflow_dispatch`; dump roles/schema/data → `tar` → `age -r $AGE_RECIPIENT` (ADR 23, ключ `age-keygen` — у Максима офлайн, публічний — repo variable) → artifact 30 днів; у лог нічого з даних; ручний запуск зелений. Workflow є (secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROD_DB_PASSWORD`, variable `AGE_RECIPIENT` — вносить Максим), ручний запуск — після них.
 - [ ] 0.18a `.github/workflows/ci.yml` на `pull_request` у `develop` і `main` та `push` у `develop`: без secrets, jobs `check`, `gitleaks`, `e2e`; окремо `preview-db.yml` (`supabase db push` у preview на push у `develop` з міграціями + щотижня, щоб Free не заснув); `supabase start` + `supabase test db` + `pnpm check` + gitleaks по діапазону комітів; `permissions: contents: read`.
 - [x] 0.19 Спайк `PT409`: функція з `raise exception using errcode = 'PT409'` → supabase-js отримує HTTP 409 (підтверджено: `status 409`, `error.code 'PT409'`, `docs/research/platform.md`).
@@ -71,7 +71,7 @@ PWA-маніфест, нічний бекап.
   пропустив — GitHub ловить лише справжні формати, тому головний захист — gitleaks локально й у CI)
 - [x] `https://saldo.maksymvasianin.com` відкривається з валідним сертифікатом; регіон Supabase — Frankfurt.
 
-Питання: акаунт GitHub/Vercel для проєкту; де Максим зберігає приватний ключ age (менеджер паролів + друга копія).
+Питання: акаунт GitHub/Cloudflare для проєкту; де Максим зберігає приватний ключ age (менеджер паролів + друга копія).
 
 ---
 
@@ -87,6 +87,8 @@ PWA-маніфест, нічний бекап.
 - [x] 1.5 Фіча `accounts`: список, створення (початковий залишок + дата), архів, картка рахунку.
 - [x] 1.6 Фіча `categories`: дерево доходів/витрат, підкатегорії, колір (`--color-c-*`), порядок, архів із перенесенням.
 - [x] 1.7 Фіча `currencies`: базова валюта, ручний курс із датою; знімок курсу в операції; `null` при невідомому.
+  - [x] курси НБУ автоматично (Максим, 3.11.2026): `api/cron/daily` щоранку пише курси НБУ як довідкові в кожен простір; ручний курс того ж дня перемагає.
+  - [x] курси на екрані (Максим, 3.11.2026, Figma 50:120346): усі валюти НБУ; картка «Курси» на Огляді (десктоп) і смужка над героєм (телефон), обидві відкривають «Курси валют»; до 3 позначених валют на учасника в просторі (`ledger_members.pinned_currencies`); зміна за день; «вручну» замість «Ручний».
 - [x] 1.8 Фіча `operations`: форма (MoneyInput, рахунок, категорія, дата, контрагент, коментар), список (таблиця desktop / картки по днях mobile), фільтри в URL, дублювати, видалити, перехід до джерела.
 - [ ] 1.9 Переказ між рахунками з різними валютами й окремою комісією.
 - [ ] 1.10 Вкладення чека: стиснення, приватний бакет `attachments`, політика Storage, signed URL. Видалення операції чи простору має видаляти й об'єкти Storage (рядки `attachments` ідуть каскадом, файли — ні).
@@ -106,7 +108,8 @@ PWA-маніфест, нічний бекап.
 - [x] 1.18 Налаштування → «Доступ»: учасники з роллю, «Запросити» (email, роль; токен у браузері, у БД — SHA-256; «Копіювати посилання»), зміна ролі, «Відкликати», «Вийти з простору»; налаштування простору (назва, базова валюта, часовий пояс).
 - [x] 1.19 Прийняття запрошення: `(auth)/invite/[token]`, вхід з `?next=`, після прийняття — перемикання на простір. (31.10.2026: запрошення лише для наявних акаунтів, `api/invites/accept` з `auth.admin.createUser` прибрано.)
 - [x] 1.20 Перемикач простору в Sidebar і mobile Topbar; ключі запитів `[root, ledgerId, …]`; кожна мутація несе `ledger_id`; viewer не бачить кнопок запису.
-- [x] 1.21 Автор і підтвердження: аватар-ініціал `created_by` у рядках операцій і платежів, «Підтвердив(ла) … · дата» в оплаченому зобов'язанні, фільтр «Хто» в операціях (URL), `pay_obligation` з `p_expected_version` і `PT409`, коли оплату вже позначила інша людина.
+- [x] 1.21 Автор і підтвердження: аватар-ініціал `created_by` у рядках операцій і платежів (з 04.11 — фото або літера
+  20 px праворуч, у рядку дати чи перед сумою, лише в просторах із 2+ учасниками; «Додав(ла): …» у деталях), «Підтвердив(ла) … · дата» в оплаченому зобов'язанні, фільтр «Хто» в операціях (URL), `pay_obligation` з `p_expected_version` і `PT409`, коли оплату вже позначила інша людина.
 - [x] 1.22 pgTAP RLS для кожної таблиці фази 1 (owner / editor / viewer / чужий) і складених FK (операція не посилається на рахунок іншого простору).
 - [x] 1.23 E2E операцій (`e2e/operations/`): витрата змінює залишок рахунку й «Доступно» на Огляді рівно один раз, подвійний клік «Зберегти» — один рядок, а переказ між рахунками в тому самому тесті не додає витрат місяця; «Оплачено» на плановому платежі створює одну операцію, видалення оплати повертає план у «Найближчі».
 - [x] 1.24 E2E шарингу (`e2e/sharing/`, фікстура `pageAs`): owner створює запрошення, нова людина відкриває посилання, стає editor і бачить ту саму цифру «Доступно»; editor вносить витрату — owner бачить її з ініціалом автора; viewer не бачить «Додати», а `?add=expense` не зберігає (`42501` → повідомлення); після «Відкликати» простір зникає з перемикача editor після перезавантаження.
@@ -217,7 +220,8 @@ PWA-маніфест, нічний бекап.
 
 ## Фаза 5. Податки
 
-> **Відкладено Максимом, 30.10.2026.** Не робиться, доки він не поверне фазу в план.
+Повернуто в план Максимом 03.11.2026: сервер над тим, що вже є (фази 1–3, бюджет, статистика). Як підключити
+кожен клієнт — `docs/mcp-connectors.md`.
 
 **Передумова:** відповіді на питання §27 (нижче). Без них — лише профіль із ручними сумами.
 
@@ -253,7 +257,8 @@ PWA-маніфест, нічний бекап.
 
 ## Фаза 6. Автомобіль
 
-> **Відкладено Максимом, 30.10.2026.** Не робиться, доки він не поверне фазу в план.
+Повернуто в план Максимом 03.11.2026: сервер над тим, що вже є (фази 1–3, бюджет, статистика). Як підключити
+кожен клієнт — `docs/mcp-connectors.md`.
 
 **Мета:** авто, заправки, сервіси, план робіт — кожна подія = одна операція.
 
@@ -318,7 +323,8 @@ PWA-маніфест, нічний бекап.
 
 ## Фаза 9. Календарні інтеграції Google та iCloud
 
-> **Відкладено Максимом, 30.10.2026.** Не робиться, доки він не поверне фазу в план.
+Повернуто в план Максимом 03.11.2026: сервер над тим, що вже є (фази 1–3, бюджет, статистика). Як підключити
+кожен клієнт — `docs/mcp-connectors.md`.
 
 **Мета:** двостороння серверна синхронізація прив'язаних подій і міграція наявних серій §25.
 
@@ -350,29 +356,32 @@ PWA-маніфест, нічний бекап.
 
 ## Фаза 10. MCP
 
-> **Відкладено Максимом, 30.10.2026.** Не робиться, доки він не поверне фазу в план.
+Повернуто в план Максимом 03.11.2026: сервер над тим, що вже є (фази 1–3, бюджет, статистика). Як підключити
+кожен клієнт — `docs/mcp-connectors.md`.
 
-**Мета:** Claude Code і Perplexity читають дані Saldo через один remote MCP-сервер з OAuth від імені власника під
+**Мета:** Claude, ChatGPT, Perplexity, Gemini та інші MCP-клієнти читають дані Saldo через один remote MCP-сервер з OAuth від імені власника під
 RLS; запис — лише з підтвердженням (`docs/architecture.md` §12, `docs/research/mcp.md`).
 
-- [ ] 10.1 Supabase: увімкнути OAuth 2.1 Server і Dynamic Client Registration, шлях авторизації → `https://saldo.maksymvasianin.com/oauth/consent`; записати, чи є CIMD (`/.well-known/oauth-authorization-server/auth/v1`).
-- [ ] 10.2 `mcp-handler@2.3.0`, `@modelcontextprotocol/server@2.4.0`; `src/app/api/mcp/route.ts` (`withMcpAuth`, `required: true`), `src/lib/supabase/token-client.server.ts`, `verifySupabaseToken` (`getClaims`, є `client_id`).
-- [ ] 10.3 `/.well-known/oauth-protected-resource` (`protectedResourceHandler`) і `/.well-known/oauth-authorization-server` (копія метаданих Supabase з кешем) + `OPTIONS` для CORS.
-- [ ] 10.4 Сторінка `(auth)/oauth/consent`: клієнт, scope, «Дозволити» / «Відмовити»; список виданих доступів і відкликання в Налаштування → Безпека.
-- [ ] 10.5 Міграція `mcp_audit_log` (RLS) + restrictive-політики для OAuth-клієнтів (`auth.jwt() ->> 'client_id' is not null` → без `delete`).
-- [ ] 10.6 Read-tools у `src/mcp/tools/*.tools.server.ts`: баланси, «Доступно до дати», найближчі, пошук операцій, підписки, кредити, бюджет місяця, календар, пошук; resources `saldo://accounts`, `saldo://categories`, `saldo://settings`.
-- [ ] 10.7 Перевірка клієнтів живцем: MCP Inspector (`npx @modelcontextprotocol/inspector`), Claude Code (`claude mcp add --transport http saldo https://saldo.maksymvasianin.com/api/mcp`, `/mcp`), Perplexity (Plugins → Add MCP connector → Remote, OAuth).
-- [ ] 10.8 Write-tools за `MCP_WRITE_ENABLED`: `add_operation`, `mark_paid`, `create_planned_payment` — ті самі input-схеми й `*.api.ts`, що й UI; без `confirm: true` лише попередній перегляд.
-- [ ] 10.9 `import_statement_preview` поверх модуля імпорту виписок (після того, як модуль з'явиться в плані).
-- [ ] 10.10 Вільний текст із даних — у полях `untrusted_text`; ліміт рядків і розміру відповіді.
-- [ ] 10.11 Учасники: tool `list_ledgers`, необов'язковий `ledger_id` у tools (за замовчуванням `last_ledger_id`), `mcp_audit_log` з `user_id` і `ledger_id`; перевірка: токен viewer не пише.
-- [ ] 10.12 E2E (Playwright `request`, без браузера, крім згоди): `/api/mcp` без токена → 401 з `resource_metadata`; сторінка `/oauth/consent` — «Дозволити» видає доступ, він є в Налаштування → Безпека, «Відкликати» прибирає; `tools/call` «Доступно до дати» з токеном owner дає те саме число, що Огляд; write-tool із токеном viewer відмовляє. Claude Code і Perplexity — вручну (10.7).
+- [ ] 10.1 Supabase: увімкнути OAuth 2.1 Server і Dynamic Client Registration, шлях авторизації → `https://saldo.maksymvasianin.com/oauth/consent`; записати, чи є CIMD (`/.well-known/oauth-authorization-server/auth/v1`). Локально — `supabase/config.toml` (діє після перезапуску стеку); прод — кроки в `docs/mcp-connectors.md`. CIMD Supabase не публікує (supabase/auth#2850).
+- [x] 10.2 `mcp-handler@2.3.0`, `@modelcontextprotocol/server@2.4.0`; `src/app/api/mcp/route.ts` (`withMcpAuth`, `required: true`), `src/lib/supabase/token-client.server.ts`, `verifySupabaseToken` (`getClaims`, є `client_id`).
+- [x] 10.3 `/.well-known/oauth-protected-resource` (`protectedResourceHandler`, `resource` = URL `/api/mcp`, також за `/.well-known/oauth-protected-resource/api/mcp`) і `/.well-known/oauth-authorization-server` (копія метаданих Supabase з кешем) + `OPTIONS` для CORS.
+- [x] 10.4 Сторінка `(auth)/oauth/consent`: клієнт, scope, «Дозволити» / «Відмовити»; список виданих доступів і відкликання в Налаштування → Безпека. «Дозволити» — лише для callback відомих клієнтів (DCR у Supabase не має allow-list). Фрейму у Figma для картки згоди й «AI-доступ» немає.
+- [x] 10.5 Міграція `mcp_audit_log` (RLS) + заборона `delete` для OAuth-клієнтів (`auth.jwt() ->> 'client_id' is not null`): тригер `<table>_oauth_no_delete` на кожній таблиці з RLS, бо restrictive-політика не діє в `security definer` RPC видалення.
+- [x] 10.6 Read-tools у `src/mcp/tools/*.tools.server.ts`: баланси, «Доступно до дати», найближчі, пошук операцій, підписки, кредити, борги, бюджет місяця, статистика місяця, категорії, валюти, пошук. Resources `saldo://…` не зроблено: ті самі дані дають `get_balances`, `list_categories`, `list_ledgers` (resources більшість клієнтів не читає, а їм потрібна окрема обгортка з токеном і журналом).
+- [ ] 10.7 Перевірка клієнтів живцем (потрібен прод з 10.1; локально перевірено лише MCP Inspector CLI з токеном): MCP Inspector (`npx @modelcontextprotocol/inspector`), Claude Code (`claude mcp add --transport http saldo https://saldo.maksymvasianin.com/api/mcp`, `/mcp`), Perplexity (Plugins → Add MCP connector → Remote, OAuth).
+- [x] 10.8 Write-tools за `MCP_WRITE_ENABLED`: `add_operation`, `mark_paid`, `create_planned_payment` — ті самі input-схеми й `*.api.ts`, що й UI; без `confirm: true` лише попередній перегляд.
+- [ ] 10.9 `import_statement_preview` поверх модуля імпорту виписок (після того, як модуль з'явиться в плані). Модуля ще немає — пропущено 03.11.2026.
+- [x] 10.10 Вільний текст із даних — у полях `untrusted_text`; ліміт рядків і розміру відповіді.
+- [x] 10.11 Учасники: tool `list_ledgers`, необов'язковий `ledger_id` у tools (за замовчуванням `last_ledger_id`), `mcp_audit_log` з `user_id` і `ledger_id`; перевірка: токен viewer не пише.
+- [x] 10.12 E2E (Playwright `request`, без браузера, крім згоди; `e2e/mcp/mcp-server.e2e.ts`, OAuth-частина пропускається, доки локальний OAuth-сервер не запущено; 03.11.2026 з увімкненим OAuth-сервером пройшли всі): `/api/mcp` без токена → 401 з `resource_metadata`; сторінка `/oauth/consent` — «Дозволити» видає доступ, він є в Налаштування → Безпека, «Відкликати» прибирає; `tools/call` «Доступно до дати» з токеном owner дає те саме число, що Огляд; write-tool із токеном viewer відмовляє. Claude Code і Perplexity — вручну (10.7).
+- [x] 10.13 Читання всього, що показує застосунок (Максим, 03.11.2026): `get_subscription`, `get_credit`, `get_debt`, `get_account`, `get_operation`, `list_calendar` (фільтр Календаря — `calendar-filter.schema.ts`), `get_statistics` (місяць, рік, 3/6/12 місяців, «Хто»), `list_notifications`, `list_reminders`, `list_members` (без email: їх читає лише секретний ключ, а MCP працює токеном користувача).
+- [x] 10.14 Запис усього, що застосунок дає створити чи змінити (Максим, 03.11.2026: «а підписки створювати та інше це теж вона повинна вміти робити»), за `MCP_WRITE_ENABLED`, через ті самі `*.api.ts`, схеми й побудовники форм: підписки (`create_subscription`, `update_subscription`, `set_subscription_price`, `set_subscription_status`), кредити (`create_credit`, `early_repay_credit`, `close_credit`), борги (`create_debt`, `add_debt_repayment`, `set_debt_status`), рахунки (`create_account`, `update_account`, `archive_account`, `adjust_balance`), операції (`update_operation`, `add_transfer`, `add_refund`), категорії (`create_category`, `update_category`, `archive_category`, `reorder_categories`; системну «Підписки» не перейменовує й не архівує), бюджет (`set_budget_limit`, `set_income_plan`, `copy_budget_month`), планові (`update_planned_payment`, `cancel_planned_payment`), курс (`save_rate`). Без `confirm: true` — прев'ю; повтор тих самих аргументів відповідає з `mcp_audit_log` і нічого не пише. Поза межами: видалення, учасники й запрошення, видалення всіх даних і експорт, налаштування сповіщень. E2E: `e2e/mcp/mcp-write-tools.e2e.ts`.
 
 Тести: `verifySupabaseToken` (без `client_id`, прострочений, чужий `sub`), побудова попереднього перегляду write-tool,
 обгортка `untrusted_text`, мапінг `PT409` і помилок обмежень у результат tool.
 
 Готово, коли:
-- [ ] без токена `/api/mcp` повертає 401 з `resource_metadata`; Claude Code і Perplexity проходять OAuth і бачать tools;
+- [ ] без токена `/api/mcp` повертає 401 з `resource_metadata` (так, e2e); Claude Code і Perplexity проходять OAuth і бачать tools (потрібен прод);
 - [ ] «Доступно до дати» через MCP дорівнює числу на Огляді, складові ті самі;
 - [ ] `add_operation` двічі з тим самим `id` дає один запис; без `confirm` нічого не записано;
 - [ ] MCP-клієнт не може видалити операцію (restrictive-політика), а UI може;

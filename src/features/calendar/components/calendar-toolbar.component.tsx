@@ -1,46 +1,29 @@
 'use client'
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { CALENDAR_VIEWS, capitalize, dayDate, periodRange, shiftDay } from '../utils/calendar.utils'
+import { CALENDAR_VIEWS, capitalize, periodRange, shiftDay } from '../utils/calendar.utils'
 
 function usePeriodTitle() {
-  const format = useFormatter()
+  const dayText = useDayText()
   const { view, date } = useCalendarParams()
-  const anchor = dayDate(date)
 
   if (view === 'week') {
     const { from, to } = periodRange('week', date)
 
     // two plain dates, not dateTimeRange: Node and the browser put different spaces around its dash (hydration mismatch)
-    const short = (day: string) =>
-      format.dateTime(dayDate(day), {
-        timeZone: 'UTC',
-        day: 'numeric',
-        month: 'short',
-      })
-
-    return `${short(from)} – ${short(to)} ${to.slice(0, 4)}`
+    return `${dayText(from, 'dayMonthShort')} – ${dayText(to, 'dayMonthShort')} ${to.slice(0, 4)}`
   }
 
   if (view === 'day') {
-    return capitalize(
-      format.dateTime(anchor, {
-        timeZone: 'UTC',
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      }),
-    )
+    return capitalize(dayText(date, 'weekdayDayMonth'))
   }
 
-  const month = format.dateTime(anchor, {
-    timeZone: 'UTC',
-    month: 'long',
-  })
+  const month = dayText(date, 'month')
 
   return `${capitalize(month)} ${date.slice(0, 4)}`
 }
@@ -79,7 +62,10 @@ export function CalendarToolbar() {
         >
           <ChevronRight aria-hidden size={20} />
         </Button>
-        <h2 className="min-w-0 flex-1 truncate font-display text-number-sm text-text-primary lg:flex-none">{title}</h2>
+        {/* phones: a smaller title that wraps instead of being cut by «Today» (QA2 #7) */}
+        <h2 className="min-w-0 flex-1 text-balance font-display text-card-title text-text-primary lg:flex-none lg:truncate lg:text-number-sm">
+          {title}
+        </h2>
         <Button
           variant="secondary"
           size="s"

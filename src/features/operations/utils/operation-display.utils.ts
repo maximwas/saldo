@@ -26,7 +26,17 @@ const TONES: Partial<Record<OperationItemKind, DisplayAmount['tone']>> = {
  * The amount a row shows. A foreign-currency operation shows its base amount when the rate is known (Figma: «−124,38 ₴»,
  * the original goes to the subtitle); without a rate the original amount stays, never a 0.
  */
-export function displayAmount({ row, kind }: OperationItem): DisplayAmount {
+export function displayAmount({ row, kind, transfer }: OperationItem): DisplayAmount {
+  // a transfer shows the money that left; a leg's base value is the reference rate's snapshot, not what was exchanged
+  if (transfer) {
+    return {
+      minor: transfer.fromAmountMinor,
+      currency: transfer.fromCurrency,
+      plus: false,
+      tone: 'transfer',
+    }
+  }
+
   const useBase = row.currency !== row.baseCurrency && row.baseAmountMinor !== null
   const minor = useBase ? (row.baseAmountMinor as number) : row.amountMinor
   const inflow = row.direction === 'in'

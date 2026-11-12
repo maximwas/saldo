@@ -1,3 +1,4 @@
+import { versionConflict } from '@/lib/supabase/version-conflict.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 
 export type ReminderSourceType = 'subscription' | 'credit' | 'debt'
@@ -94,10 +95,7 @@ export async function saveReminderRule(supabase: SaldoClient, input: SaveInput) 
   }
 
   if (data.length === 0) {
-    throw {
-      code: 'PT409',
-      message: 'stale reminder rule',
-    }
+    throw versionConflict()
   }
 }
 

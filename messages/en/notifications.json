@@ -7,7 +7,8 @@
   "markAll": "Mark all as read",
   "new": "New",
   "read": "Read",
-  "loadFailed": "Could not load notifications. Try refreshing the page.",
+  "loadFailed": "Could not load notifications",
+  "refreshFailed": "Could not refresh notifications",
   "item": {
     "open": "Open payment",
     "markRead": "Mark read",

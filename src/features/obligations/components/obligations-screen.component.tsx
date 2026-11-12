@@ -4,20 +4,24 @@ import { CircleCheck, Plus } from 'lucide-react'
 import type { Route } from 'next'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { parseAsString, useQueryState } from 'nuqs'
+import { parseAsString, useQueryState, useQueryStates } from 'nuqs'
 import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { useSyncQueue } from '@/lib/query/sync-queue.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import type { ObligationRow } from '../api/obligations.api'
 import { useObligationOptions, useObligations } from '../hooks/obligations.hook'
 import { useQueuedPayments } from '../hooks/queued-payments.hook'
-import { BUCKETS, groupByBucket } from '../utils/obligation-groups.utils'
-import { CancelPaymentSheet } from './cancel-payment-sheet.component'
+import { BUCKETS, groupByBucket, laterByMonth } from '../utils/obligation-groups.utils'
 import { ObligationFormSheet } from './obligation-form-sheet.component'
 import { ObligationRowItem } from './obligation-row.component'
 import { ObligationSheetsHost } from './obligation-sheets-host.component'
@@ -30,21 +34,39 @@ const CARD = 'flex flex-col gap-5 rounded-card bg-card p-6 shadow-card'
 // Figma «Saldo» → Upcoming payments 2:12142 / 2:13276 (Tabs, Summary, a white Card per group, amber note under «date
 // passed»), Empty 5:86122, Loading 5:86923, Offline 5:88395, View only 5:94297. The Paid sheet is the ?pay=<obligation id>
 // state of the page (plan 1.11); a debt's date is paid by a repayment on the debt (add_debt_movement), so its row leads
-// to the debts screen instead.
+// to the debts screen instead. After the next 7 days the plan goes by month: the months within 30 days are open, the
+// rest come one by one under «Show the next month» (a 13-month plan was one endless list on the phone).
 export function ObligationsScreen() {
   const translate = useTranslations('obligations')
   const canWrite = useCanWrite()
   const today = useToday()
-  const { data, isPending, isError } = useObligations()
+  const query = useObligations()
+  const { data } = query
   const options = useObligationOptions()
+  const { failedLoad, retry } = useScreenQueryState([query, options], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const router = useRouter()
   const queuedPayments = useQueuedPayments()
   const { online } = useSyncQueue()
-  const [, setPayId] = useQueryState('pay', parseAsString)
+  const [, setSheet] = useQueryStates({
+    pay: parseAsString,
+    unpay: parseAsString,
+  })
   const [form, setForm] = useState<FormState>(null)
-  const [cancelId, setCancelId] = useState<string | null>(null)
+  const [extraMonths, setExtraMonths] = useState(0)
+  const [linkedId] = useQueryState('obligation', parseAsString)
+  const dayText = useDayText()
 
-  if (isPending || options.isPending) {
+  if (failedLoad) {
+    return (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <PaymentsTabs />
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+      </div>
+    )
+  }
+
+  if (!hydrated || data === undefined || options.data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <PaymentsTabs />
@@ -76,28 +98,25 @@ export function ObligationsScreen() {
     )
   }
 
-  if (isError || options.isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
-  }
-
   const groups = groupByBucket(data.open, today)
-  const everything = [...data.open, ...data.paid]
-  const cancelling = everything.find((row) => row.id === cancelId)
+  const later = laterByMonth(groups.later, today)
+  // a search result links to its row (?obligation=): its month opens too
+  const linkedMonth = later.months.findIndex((group) => group.rows.some((row) => row.id === linkedId))
+  const shownMonths = later.months.slice(0, Math.max(later.shown + extraMonths, linkedMonth + 1))
   const waiting = data.open.filter((row) => queuedPayments.has(row.id))
   const addPayment = () => setForm({ obligation: null })
 
-  const renderRow = (row: ObligationRow) => (
+  const renderRow = (row: ObligationRow, overdue = false) => (
     <ObligationRowItem
       key={row.id}
       obligation={row}
+      overdue={overdue}
       awaitingSync={queuedPayments.has(row.id)}
-      onPay={() => (row.sourceType === 'debt' ? router.push('/payments/debts' as Route) : void setPayId(row.id))}
+      onPay={() =>
+        row.sourceType === 'debt' ? router.push('/payments/debts' as Route) : void setSheet({ pay: row.id })
+      }
       onEdit={() => setForm({ obligation: row })}
-      onCancelPayment={() => setCancelId(row.id)}
+      onCancelPayment={() => void setSheet({ unpay: row.id })}
     />
   )
 
@@ -121,29 +140,27 @@ export function ObligationsScreen() {
       )}
       <ObligationSummary open={data.open} />
       {data.open.length === 0 && (
-        <section className="flex flex-col items-center rounded-card bg-card px-5 py-10 shadow-card">
-          <div className="flex w-full max-w-88 flex-col items-center gap-3 p-2 text-center">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-cat-green-soft text-cat-green-text"
-            >
-              <CircleCheck className="size-5" />
-            </span>
-            <h2 className="w-full text-body font-semibold text-text-primary">{translate('empty.title')}</h2>
-            <p className="w-full text-label text-text-secondary">
+        <EmptyState
+          icon={CircleCheck}
+          tone="green"
+          title={translate('empty.title')}
+          hint={
+            <>
               <span className="lg:hidden">{translate('empty.textShort')}</span>
               <span className="max-lg:hidden">{translate('empty.text')}</span>
-            </p>
-            {canWrite && (
+            </>
+          }
+          action={
+            canWrite && (
               <Button variant="secondary" onClick={addPayment}>
                 <span className="lg:hidden">{translate('empty.addShort')}</span>
                 <span className="max-lg:hidden">{translate('empty.add')}</span>
               </Button>
-            )}
-          </div>
-        </section>
+            )
+          }
+        />
       )}
-      {BUCKETS.filter((bucket) => groups[bucket].length > 0).map((bucket) => (
+      {BUCKETS.filter((bucket) => bucket !== 'later' && groups[bucket].length > 0).map((bucket) => (
         <section key={bucket} className={CARD}>
           <h2 className="text-card-title text-text-primary">{translate(`groups.${bucket}`)}</h2>
           <div className="flex flex-col">
@@ -152,19 +169,35 @@ export function ObligationsScreen() {
                 {translate(canWrite ? 'overdueHint' : 'overdueHintViewer')}
               </p>
             )}
-            <ul className="flex flex-col">{groups[bucket].map(renderRow)}</ul>
+            <ul className="flex flex-col">{groups[bucket].map((row) => renderRow(row, bucket === 'overdue'))}</ul>
           </div>
         </section>
       ))}
+      {shownMonths.map((group) => (
+        <section key={group.month} className={CARD}>
+          <h2 className="text-card-title text-text-primary first-letter:uppercase">
+            {dayText(group.month, 'monthYear')}
+          </h2>
+          <ul className="flex flex-col">{group.rows.map((row) => renderRow(row))}</ul>
+        </section>
+      ))}
+      {shownMonths.length < later.months.length && (
+        <Button
+          variant="secondary"
+          className="self-center"
+          onClick={() => setExtraMonths(shownMonths.length - later.shown + 1)}
+        >
+          {translate('showMore')}
+        </Button>
+      )}
       {data.paid.length > 0 && (
         <section className={CARD}>
           <h2 className="text-card-title text-text-primary">{translate('groups.paid')}</h2>
-          <ul className="flex flex-col">{data.paid.map(renderRow)}</ul>
+          <ul className="flex flex-col">{data.paid.map((row) => renderRow(row))}</ul>
         </section>
       )}
       <ObligationSheetsHost />
       {form && <ObligationFormSheet obligation={form.obligation} onClose={() => setForm(null)} />}
-      {cancelling && <CancelPaymentSheet obligation={cancelling} onClose={() => setCancelId(null)} />}
     </div>
   )
 }

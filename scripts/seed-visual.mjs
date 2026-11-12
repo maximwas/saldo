@@ -1,5 +1,6 @@
 // Fills demo@example.com (made by supabase/seed.sql) with the rest of docs/design/demo-data.md for the visual tests:
-// October operations, the EUR → card transfer, the October budget and the two categories seed.sql lacks.
+// the story's October operations, this month's household bills already due (paid), the EUR → card transfer and budget
+// in the current Kyiv month, the subscriptions' charges paid on their own day, and the category seed.sql lacks. DEMO_TODAY=YYYY-MM-DD pins today (2026-10-30 for the visual specs, as in seed.sql).
 // Local stack only; run after `supabase db reset`. Writes go through the app's RPCs as the demo user (RLS applies).
 import { execSync } from 'node:child_process'
 import { createClient } from '@supabase/supabase-js'
@@ -59,12 +60,6 @@ const NEW_CATEGORIES = [
     id: id(901),
     name: 'Розваги',
     color: 'plum',
-    sort_order: 12,
-  },
-  {
-    id: id(902),
-    name: "Зв'язок",
-    color: 'teal',
     sort_order: 13,
   },
 ]
@@ -135,10 +130,33 @@ const TRANSFER = {
   eurMinor: 80_000,
   uahMinor: 3_320_000,
 }
-const day = (dayNo) => `2026-10-${String(dayNo).padStart(2, '0')}`
+const today = process.env.DEMO_TODAY ?? new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(new Date())
 
-// balances of 30.10 stay those of demo-data.md: the opening balance on 01.10 is what October's movements leave out
-const expensesMinor = EXPENSES.reduce((sum, [, , , minor]) => sum + minor, 0)
+if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) {
+  throw new Error(`seed-visual: DEMO_TODAY must be YYYY-MM-DD, got ${today}`)
+}
+
+const monthStart = `${today.slice(0, 7)}-01`
+const todayNo = Number(today.slice(8))
+const onDay = (dayNo) => `${today.slice(0, 8)}${String(dayNo).padStart(2, '0')}`
+// October's days 1..29 squeezed into 1..today, so every month screen is full and no operation is in the future;
+// from the 30th on they are the story's own days
+const day = (dayNo) => onDay(Math.min(dayNo, Math.ceil((dayNo * todayNo) / 30)))
+
+// this month's bills (seed.sql has them from today on), paid by their operations below the way the app's «Paid» links
+// an existing operation: [title = the operation's counterparty, planned amount]
+const PAID_BILLS = [
+  ['Оренда квартири', 1_400_000],
+  ['Kyivstar', 25_000],
+  ['Комунальні платежі', 230_000],
+  ['Фітнес-клуб', 110_000],
+]
+const isBill = (recipient) => PAID_BILLS.some(([title]) => title === recipient)
+// a bill's operation is on the bill's own day: one before today is paid, a bill still to come has none yet
+const written = ([dayNo, recipient]) => !isBill(recipient) || dayNo < todayNo
+
+// balances stay those of demo-data.md: the opening balance on the 1st is what the month's movements leave out
+const expensesMinor = EXPENSES.filter(written).reduce((sum, [, , , minor]) => sum + minor, 0)
 const incomesMinor = INCOMES.reduce((sum, [, , minor]) => sum + minor, 0)
 
 must(
@@ -146,7 +164,7 @@ must(
     .from('accounts')
     .update({
       opening_balance_minor: 4_621_580 - incomesMinor - TRANSFER.uahMinor + expensesMinor,
-      opening_balance_on: '2026-10-01',
+      opening_balance_on: monthStart,
     })
     .eq('id', CARD),
   'card opening',
@@ -156,7 +174,7 @@ must(
     .from('accounts')
     .update({
       opening_balance_minor: 120_000 + TRANSFER.eurMinor,
-      opening_balance_on: '2026-10-01',
+      opening_balance_on: monthStart,
     })
     .eq('id', EUR),
   'EUR opening',
@@ -180,14 +198,122 @@ const operation = (seq, kind, date, minor, category, counterparty) => ({
 })
 const operations = [
   ...INCOMES.map(([dayNo, title, minor], index) => operation(index, 'income', day(dayNo), minor, 'Фриланс', title)),
-  ...EXPENSES.map(([dayNo, recipient, category, minor], index) =>
-    operation(10 + index, 'expense', day(dayNo), minor, category, recipient),
+  ...EXPENSES.flatMap(([dayNo, recipient, category, minor], index) =>
+    written(EXPENSES[index])
+      ? [operation(10 + index, 'expense', isBill(recipient) ? onDay(dayNo) : day(dayNo), minor, category, recipient)]
+      : [],
   ),
 ]
 
 // create_operation is idempotent on the id, so a second run changes nothing
 for (const row of operations) {
   must(await client.rpc('create_operation', { p_operation: row }), `operation ${row.counterparty}`)
+}
+
+let paidBills = 0
+
+for (const [index, [title, plannedMinor]] of PAID_BILLS.entries()) {
+  const paidBy = operations.find((row) => row.counterparty === title)
+  const obligationId = id(300 + index)
+
+  if (paidBy === undefined) {
+    continue
+  }
+
+  paidBills += 1
+
+  must(
+    await client.from('obligations').upsert(
+      {
+        id: obligationId,
+        ledger_id: ledgerId,
+        source_type: 'manual',
+        direction: 'out',
+        title,
+        occurrence_on: paidBy.occurred_on,
+        due_on: paidBy.occurred_on,
+        planned_amount_minor: plannedMinor,
+        currency: 'UAH',
+        account_id: CARD,
+        category_id: paidBy.category_id,
+      },
+      {
+        onConflict: 'id',
+        ignoreDuplicates: true,
+      },
+    ),
+    `bill ${title}`,
+  )
+
+  const { version } = must(
+    await client.from('obligations').select('version').eq('id', obligationId).single(),
+    `bill ${title} version`,
+  )
+
+  // pay_obligation writes nothing for a payment id it already has
+  must(
+    await client.rpc('pay_obligation', {
+      p_payment_id: id(400 + index),
+      p_obligation_id: obligationId,
+      p_expected_version: version,
+      p_amount_minor: paidBy.amount_minor,
+      p_existing_operation_id: paidBy.id,
+      p_settle: false,
+    }),
+    `pay ${title}`,
+  )
+}
+
+// seed.sql's subscriptions (fixed ids) and the operation names of their charges
+const SUBSCRIPTIONS = [
+  ['Netflix', 'de000000-0000-4000-8000-0000000000b1'],
+  ['Spotify', 'de000000-0000-4000-8000-0000000000b2'],
+  ['Google One', 'de000000-0000-4000-8000-0000000000b3'],
+]
+let paidSubscriptions = 0
+
+for (const [index, [name, subscriptionId]] of SUBSCRIPTIONS.entries()) {
+  const paidBy = operations.find((row) => row.counterparty === name)
+  const obligationId = id(500 + index)
+
+  if (paidBy === undefined) {
+    continue
+  }
+
+  paidSubscriptions += 1
+
+  // the server prices the date from the subscription; a date it already has is skipped, so a rerun writes nothing
+  must(
+    await client.rpc('upsert_series_obligations', {
+      p_source_type: 'subscription',
+      p_source_id: subscriptionId,
+      p_rows: [
+        {
+          id: obligationId,
+          occurrence_on: paidBy.occurred_on,
+          due_on: paidBy.occurred_on,
+        },
+      ],
+    }),
+    `${name} date`,
+  )
+
+  const { version } = must(
+    await client.from('obligations').select('version').eq('id', obligationId).single(),
+    `${name} version`,
+  )
+
+  must(
+    await client.rpc('pay_obligation', {
+      p_payment_id: id(600 + index),
+      p_obligation_id: obligationId,
+      p_expected_version: version,
+      p_amount_minor: paidBy.amount_minor,
+      p_existing_operation_id: paidBy.id,
+      p_settle: false,
+    }),
+    `pay ${name}`,
+  )
 }
 
 must(
@@ -228,7 +354,7 @@ const month = must(
     .upsert(
       {
         ledger_id: ledgerId,
-        month: '2026-10-01',
+        month: monthStart,
       },
       { onConflict: 'ledger_id,month' },
     )
@@ -252,5 +378,7 @@ must(
 
 const balances = must(await client.from('account_balances').select('account_id, balance_minor'), 'balances')
 
-console.log(`seed-visual: ${operations.length} operations, 1 transfer, ${Object.keys(LIMITS).length} limits`)
+console.log(
+  `seed-visual: ${operations.length} operations, ${paidBills} paid bills, ${paidSubscriptions} paid subscriptions, 1 transfer, ${Object.keys(LIMITS).length} limits`,
+)
 console.log(balances.map((row) => `${row.account_id.slice(-2)}=${row.balance_minor}`).join(' '))

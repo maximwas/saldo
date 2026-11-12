@@ -1,15 +1,19 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
+import { Bone, SkeletonLine } from '@/components/ui/skeleton.component'
 import { Switch } from '@/components/ui/switch.component'
 import { notify } from '@/components/ui/toaster.component'
+import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { useMemberNames } from '@/lib/members/member-names.hook'
-import { formatMinor } from '@/lib/money/money.utils'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { yearAware } from '@/lib/dates/day.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { useMemberNames } from '@/lib/members/members.hook'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import type { ObligationRow } from '../api/obligations.api'
 import { useDeleteObligationPayment, useObligationOptions, useObligationPayments } from '../hooks/obligations.hook'
 import { OperationLine } from './operation-line.component'
@@ -24,9 +28,11 @@ type CancelPaymentSheetProps = {
 // Several partial payments: the newest goes first, the person repeats it for the next one.
 export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetProps) {
   const translate = useTranslations('obligations')
-  const translateErrors = useTranslations('errors')
+  const dbErrorText = useDbErrorText()
   const format = useFormatter()
-  const locale = useLocale()
+  const dayText = useDayText()
+  const today = useToday()
+  const moneyText = useMoneyText()
   const names = useMemberNames()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const options = useObligationOptions()
@@ -36,12 +42,6 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
   const payment = payments.data?.[0]
   const operation = payment?.operation ?? null
   const accountName = options.data?.accounts.find((item) => item.id === operation?.accountId)?.name ?? ''
-  const shortDate = (isoDate: string) =>
-    format.dateTime(new Date(`${isoDate}T12:00:00Z`), {
-      timeZone: 'UTC',
-      day: '2-digit',
-      month: '2-digit',
-    })
   const confirmer = obligation.confirmedBy ? names[obligation.confirmedBy] : null
   const confirmedAt = obligation.confirmedAt
     ? format.dateTime(new Date(obligation.confirmedAt), {
@@ -70,7 +70,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
           notify.success(translate('cancelPayment.done'))
           onClose()
         },
-        onError: (error) => notify.error(translateErrors(`db.${toPgError(error as { code?: string }).kind}`)),
+        onError: (error) => notify.error(dbErrorText(error)),
       },
     )
   }
@@ -82,26 +82,31 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
       title={translate('cancelPayment.title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onClose}>
-            {translate('cancelPayment.keep')}
-          </Button>
+          <SheetClose>{translate('cancelPayment.keep')}</SheetClose>
           <Button variant="danger" type="button" disabled={!payment || remove.isPending} onClick={cancel}>
             {translate('cancelPayment.confirm')}
           </Button>
         </>
       }
     >
-      <p className="text-label text-text-secondary">
-        {translate(textKey, {
-          title: obligation.title,
-          number: obligation.sequenceNo ?? 0,
-          total: obligation.installmentTotal ?? obligation.sequenceNo ?? 0,
-          date: shortDate(obligation.dueOn),
-          account: accountName,
-          direction: obligation.direction,
-          amount: payment ? formatMinor(payment.amountMinor, obligation.currency, locale) : '',
-        })}
-      </p>
+      {payments.isPending ? (
+        <div aria-busy className="flex flex-col gap-2">
+          <Bone className="h-4 rounded-sm" />
+          <Bone className="h-4 w-2/3 rounded-sm" />
+        </div>
+      ) : (
+        <p className="text-label text-text-secondary">
+          {translate(textKey, {
+            title: obligation.title,
+            number: obligation.sequenceNo ?? 0,
+            total: obligation.installmentTotal ?? obligation.sequenceNo ?? 0,
+            date: dayText(obligation.dueOn, yearAware('short', obligation.dueOn, today)),
+            account: accountName,
+            direction: obligation.direction,
+            amount: payment ? moneyText(payment.amountMinor, obligation.currency) : '',
+          })}
+        </p>
+      )}
       {payments.data?.length === 0 && (
         <p className="text-caption text-text-tertiary">{translate('cancelPayment.empty')}</p>
       )}
@@ -110,6 +115,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
         checked={deleteOperation}
         onCheckedChange={setDeleteOperation}
       />
+      {payments.isPending && <SkeletonLine end="w-20" />}
       {payment && operation && (
         <section className="flex flex-col gap-1">
           <h3 className="text-label font-medium text-text-secondary">{translate('cancelPayment.operation')}</h3>
@@ -125,7 +131,7 @@ export function CancelPaymentSheet({ obligation, onClose }: CancelPaymentSheetPr
           <ul>
             <OperationLine
               title={obligation.title}
-              subtitle={`${shortDate(operation.occurredOn)} · ${accountName}`}
+              subtitle={`${dayText(operation.occurredOn, 'short')} · ${accountName}`}
               minor={obligation.direction === 'out' ? -operation.amountMinor : operation.amountMinor}
               currency={operation.currency}
             />

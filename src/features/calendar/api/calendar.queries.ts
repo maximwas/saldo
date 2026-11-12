@@ -1,4 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
+import { listCreditInstallments } from '@/lib/finance/credit-installments.api'
+import { getPlannedToMonthEnd } from '@/lib/finance/planned-to-month-end.api'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import {
@@ -6,10 +8,27 @@ import {
   listCalendarDayTotals,
   listCalendarEntries,
   listCalendarOptions,
+  listPaidElsewhereDays,
   listSavedFilters,
 } from './calendar.api'
 
+type PlannedLedger = {
+  ledgerId: string
+  baseCurrency: string
+  timeZone: string
+}
+
 export const calendarQueries = {
+  /** «with plan to the month end» of the current month: keyed by the ledger-local day, so a new day reads the plans again */
+  planned: (ledger: PlannedLedger, today: string) =>
+    queryOptions({
+      queryKey: ledgerQueryKey('calendar', ledger.ledgerId, 'planned', today),
+      queryFn: () =>
+        getPlannedToMonthEnd(getBrowserSupabase(), {
+          ...ledger,
+          now: new Date(),
+        }),
+    }),
   entries: (params: CalendarParams) =>
     queryOptions({
       queryKey: ledgerQueryKey('calendar', params.ledgerId, 'entries', params.from, params.to, params.filter),
@@ -19,6 +38,16 @@ export const calendarQueries = {
     queryOptions({
       queryKey: ledgerQueryKey('calendar', params.ledgerId, 'totals', params.from, params.to, params.filter),
       queryFn: () => listCalendarDayTotals(getBrowserSupabase(), params),
+    }),
+  paidElsewhereDays: (params: CalendarParams) =>
+    queryOptions({
+      queryKey: ledgerQueryKey('calendar', params.ledgerId, 'paid-elsewhere-days', params.from, params.to),
+      queryFn: () => listPaidElsewhereDays(getBrowserSupabase(), params),
+    }),
+  installments: (ledgerId: string) =>
+    queryOptions({
+      queryKey: ledgerQueryKey('calendar', ledgerId, 'installments'),
+      queryFn: () => listCreditInstallments(getBrowserSupabase(), ledgerId),
     }),
   saved: (ledgerId: string) =>
     queryOptions({

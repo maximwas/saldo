@@ -1,18 +1,4 @@
-import { currencySymbol, formatMinor } from '@/lib/money/money.utils'
 import type { Credit, CreditInstallment } from '../api/credits.api'
-
-/** money inside a sentence: an unknown sum reads «? ₴», never 0 */
-export const moneyText = (minor: number | null, currency: string, locale: string) =>
-  minor === null ? `? ${currencySymbol(currency, locale)}` : formatMinor(minor, currency, locale)
-
-/** YYYY-MM-DD → 05.11 (or 05.11.2026); noon UTC, so no time zone moves the day */
-export const dayText = (iso: string, locale: string, withYear = false) =>
-  new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    ...(withYear && { year: 'numeric' }),
-    timeZone: 'UTC',
-  }).format(new Date(`${iso}T12:00:00Z`))
 
 /** a segment of InstallmentSteps (Figma 2:10383): paid green, the next one blue, date passed amber, the rest grey */
 export type StepState = 'paid' | 'current' | 'unconfirmed' | 'plan'
@@ -50,6 +36,27 @@ function stepOf(installment: CreditInstallment, next: CreditInstallment | null):
   }
 
   return installment === next ? 'current' : 'plan'
+}
+
+export type InstallmentParts = {
+  regularMinor: number | null
+  /** how many installments are of the regular amount */
+  count: number
+  /** a last installment that differs from the regular one (the rounding rest); null = all are equal */
+  lastMinor: number | null
+}
+
+/** «1 249,92 × 11 + 1 249,88»: a last installment unlike the others is named apart, so the parts add up to the schedule
+ * and to what remains (12 × 1 249,92 would claim 4 kopiykas nobody owes) */
+export function installmentParts(credit: Credit): InstallmentParts {
+  const last = credit.lastInstallmentMinor
+  const apart = last !== null && last !== credit.regularInstallmentMinor && credit.installmentsCount > 1
+
+  return {
+    regularMinor: credit.regularInstallmentMinor,
+    count: apart ? credit.installmentsCount - 1 : credit.installmentsCount,
+    lastMinor: apart ? last : null,
+  }
 }
 
 export type CreditProgress = {

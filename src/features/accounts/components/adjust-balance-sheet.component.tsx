@@ -1,21 +1,21 @@
 'use client'
 
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { Amount } from '@/components/ui/amount.component'
+import { useForm, useWatch } from 'react-hook-form'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { Textarea } from '@/components/ui/textarea.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock, useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { useAdjustBalance } from '../hooks/accounts.hook'
 import { type AdjustmentFormValues, adjustmentFormSchema, toAdjustmentInput } from '../schemas/adjustment-form.schema'
 import type { AccountView } from '../utils/accounts.utils'
@@ -33,7 +33,7 @@ type AdjustBalanceSheetProps = {
 // shortcut: the actual balance is 0 or more (MoneyInput has no minus); a negative one is entered as an operation.
 export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceSheetProps) {
   const translate = useTranslations('accounts.adjust')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const clock = useClock()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -51,7 +51,11 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
       note: '',
     },
   })
-  const actualMinor = toMinor(form.watch('actual'), currency)
+  const actual = useWatch({
+    control: form.control,
+    name: 'actual',
+  })
+  const actualMinor = toMinor(actual, currency)
   // Figma 16:86454: a balance equal to Saldo's reads 0,00, an empty field «—»
   const differenceMinor = actualMinor === null ? null : actualMinor - account.balanceMinor
 
@@ -77,9 +81,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
       title={translate('title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate('cancel')}
-          </Button>
+          <SheetClose>{translate('cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={adjust.isPending}>
             {translate('submit')}
           </Button>
@@ -89,7 +91,7 @@ export function AdjustBalanceSheet({ account, onCloseAction }: AdjustBalanceShee
       <p className="text-label text-text-secondary">
         {translate('now', {
           account: account.name,
-          amount: formatMinor(account.balanceMinor, currency, locale),
+          amount: moneyText(account.balanceMinor, currency),
         })}
       </p>
       <form id={FORM_ID} noValidate onSubmit={form.handleSubmit(submit)} className="flex flex-col gap-4">

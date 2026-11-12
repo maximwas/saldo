@@ -1,17 +1,19 @@
 'use client'
 
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { dayToDate } from '@/lib/dates/day.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import type { Credit, CreditInstallment, InstallmentState } from '../api/credits.api'
 import { usePayInstallment } from '../hooks/credits.hook'
-import { activeInstallments, creditProgress, dayText, moneyText } from '../utils/credits.utils'
+import { activeInstallments, creditProgress } from '../utils/credits.utils'
 
 type CreditScheduleProps = {
   credit: Credit
@@ -84,12 +86,9 @@ function ScheduleRow({
 
   return (
     <li
-      className={cn(
-        'flex items-center gap-4 border-b border-border py-3 last:border-b-0',
-        collapsed && 'max-lg:hidden',
-      )}
+      className={cn('flex items-start gap-4 border-b border-border py-3 last:border-b-0', collapsed && 'max-lg:hidden')}
     >
-      <span className="w-6 shrink-0 text-label font-medium text-text-tertiary tabular-nums">{number}</span>
+      <span className="w-6 shrink-0 py-0.5 text-label font-medium text-text-tertiary tabular-nums">{number}</span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 max-lg:items-start">
         <span
           className={cn(
@@ -130,9 +129,9 @@ function ScheduleRow({
 
 const COLLAPSED_ROWS = 5
 
-/** whole days from today to an ISO date; noon UTC, so no time zone moves the day */
+/** whole days from today to an ISO date */
 const daysUntil = (iso: string, today: string) =>
-  Math.round((Date.parse(`${iso}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000)
+  Math.round((dayToDate(iso).getTime() - dayToDate(today).getTime()) / 86_400_000)
 
 // Figma «Saldo» → Credit card 2:49412, Instalment schedule: number, date and a note, the state pill, the amount, «Paid»
 // on the next one. The installments paid before tracking have no rows in the database: «date unknown». Replaced and
@@ -140,7 +139,8 @@ const daysUntil = (iso: string, today: string) =>
 // into «N more · until date».
 export function CreditSchedule({ credit, className }: CreditScheduleProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
+  const moneyText = useMoneyText()
   const today = useToday()
   const canWrite = useCanWrite()
   const pay = usePayInstallment()
@@ -153,7 +153,7 @@ export function CreditSchedule({ credit, className }: CreditScheduleProps) {
   const hidden = expanded ? 0 : Math.max(total - COLLAPSED_ROWS, 0)
   const lastDue = credit.installments.at(-1)?.dueOn
   const amountOf = credit.totalPayableMinor ?? credit.purchasePriceMinor
-  const money = amountOf === null ? '' : moneyText(amountOf, credit.currency, locale).replace(/[,.]00(?!\d)/, '')
+  const money = amountOf === null ? '' : moneyText(amountOf, credit.currency).replace(/[,.]00(?!\d)/, '')
 
   return (
     <Card title={translate('schedule.title')} className={className}>
@@ -177,7 +177,7 @@ export function CreditSchedule({ credit, className }: CreditScheduleProps) {
             <ScheduleRow
               key={installment.id}
               number={installment.sequenceNo}
-              title={dayText(installment.dueOn, locale, true)}
+              title={dayText(installment.dueOn, 'shortYear')}
               note={note}
               noteText={
                 note === 'next'
@@ -203,7 +203,7 @@ export function CreditSchedule({ credit, className }: CreditScheduleProps) {
             ? translate('schedule.less')
             : translate('schedule.more', {
                 count: hidden,
-                date: dayText(lastDue, locale, true),
+                date: dayText(lastDue, 'shortYear'),
               })}
         </button>
       )}

@@ -5,7 +5,6 @@
   "add": "Add",
   "currentSpace": "Current",
   "synced": "Synced",
-  "stub": "The “{title}” section is coming soon.",
   "roles": {
     "owner": "Owner",
     "editor": "Editor",
@@ -15,7 +14,6 @@
     "switch": "Switch space",
     "invite": "Invite",
     "sections": "Sections",
-    "signedInAs": "Saldo · signed in as {email}",
     "tiles": {
       "accounts": "Accounts",
       "budget": "Budget",
@@ -56,5 +54,22 @@
       "operation": "Operations"
     }
   },
-  "notificationsUnread": "Notifications, {count} new"
+  "notificationsUnread": "Notifications, {count} new",
+  "account": {
+    "menu": "My account",
+    "settings": "Account settings",
+    "signOut": "Sign out"
+  },
+  "soon": {
+    "badge": "soon",
+    "title": "“{title}” is coming soon",
+    "note": "This section is still being built: nothing can be added here yet.",
+    "back": "Back to “{title}”",
+    "sections": {
+      "goals": "Here you will save towards a goal (a holiday, repairs, a rainy-day fund) and split the month’s money into envelopes.",
+      "bigExpenses": "Here you will plan big purchases ahead and see how they affect the month’s budget.",
+      "auto": "Here you will track car costs: fuel, repairs and servicing, and a work plan.",
+      "taxes": "Here you will track taxes: what to pay and by when, the payment history and your own settings."
+    }
+  }
 }

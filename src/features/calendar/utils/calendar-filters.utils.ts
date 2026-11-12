@@ -1,5 +1,5 @@
 import { type inferParserType, parseAsArrayOf, parseAsInteger, parseAsString, parseAsStringLiteral } from 'nuqs'
-import { z } from 'zod'
+import type { CalendarFilter } from '../schemas/calendar-filter.schema'
 
 /**
  * The calendar filter in the URL uses the keys of calendar_entries' p_filter one to one (?entry=fact&kinds=expense),
@@ -23,26 +23,6 @@ export const filterParsers = {
 export type UrlFilter = inferParserType<typeof filterParsers>
 
 const FILTER_KEYS = Object.keys(filterParsers) as (keyof UrlFilter)[]
-
-/** a saved set comes from the database: anything else than this shape is dropped, never sent to the RPC */
-export const calendarFilterSchema = z
-  .object({
-    entry: z.enum(['fact', 'plan']),
-    kinds: z.array(z.string()),
-    direction: z.enum(['in', 'out']),
-    states: z.array(z.string()),
-    source_types: z.array(z.string()),
-    source_id: z.string(),
-    category_ids: z.array(z.string()),
-    account_ids: z.array(z.string()),
-    currencies: z.array(z.string()),
-    min_amount_minor: z.int(),
-    max_amount_minor: z.int(),
-    q: z.string(),
-  })
-  .partial()
-
-export type CalendarFilter = z.infer<typeof calendarFilterSchema>
 
 /** what the type chips set; the rest (search, category, account, currency, amount, source) refines any of them */
 const TYPE_KEYS = ['entry', 'kinds', 'direction', 'states', 'source_types'] as const

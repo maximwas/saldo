@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { enUS, uk } from 'react-day-picker/locale'
 import { useClock } from '@/contexts/clock.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { localDate } from '@/lib/utils/clock.utils'
 import { cn } from '@/lib/utils/cn.utils'
 import { Button } from './button.component'
@@ -19,6 +20,8 @@ type DatePickerProps = FieldControlProps & {
   onValueChange: (value: string | null) => void
   /** shows «Clear» in the footer; leave off for a required date */
   clearable?: boolean
+  /** today reads «Today, 03.11» (the pay step, Figma 55:127451), any other day dd.mm.yyyy */
+  todayLabel?: boolean
   disabled?: boolean
   name?: string
   onBlur?: () => void
@@ -34,6 +37,7 @@ export function DatePicker({
   value,
   onValueChange,
   clearable = false,
+  todayLabel = false,
   disabled,
   name,
   onBlur,
@@ -43,18 +47,14 @@ export function DatePicker({
   'aria-invalid': invalid,
 }: DatePickerProps) {
   const locale = useLocale()
+  const dayText = useDayText()
   const translate = useTranslations('common')
   const clock = useClock()
   const [open, setOpen] = useState(false)
   const todayValue = localDate(clock.now(), clock.timeZone)
   const selected = value ? toDate(value) : undefined
-  const display = selected
-    ? new Intl.DateTimeFormat(locale, {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }).format(selected)
-    : null
+  const showToday = todayLabel && value === todayValue
+  const display = value ? dayText(value, showToday ? 'short' : 'shortYear') : null
 
   const commit = (next: string | null) => {
     onValueChange(next)
@@ -75,7 +75,11 @@ export function DatePicker({
           className,
         )}
       >
-        <span className="flex-1">{display ?? translate('datePicker.placeholder')}</span>
+        <span className="flex-1">
+          {showToday
+            ? translate('datePicker.todayValue', { date: display ?? '' })
+            : (display ?? translate('datePicker.placeholder'))}
+        </span>
         <Calendar className="size-5 shrink-0 text-text-secondary" aria-hidden />
       </Popover.Trigger>
       {name ? <input type="hidden" name={name} value={value ?? ''} /> : null}

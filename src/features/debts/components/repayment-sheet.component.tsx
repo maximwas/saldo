@@ -1,22 +1,26 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useWatch } from 'react-hook-form'
+import { useMoneyText } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock, useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import type { DebtRow } from '../api/debts.api'
-import { useAddDebtMovement, useCloseDebt } from '../hooks/debts.hook'
+import { useAddDebtMovement, useCloseDebt, useDebtAccounts } from '../hooks/debts.hook'
 import { toStatusInput } from '../schemas/debt-edit-form.schema'
 import { type RepaymentFormValues, repaymentFormSchema, toRepaymentInput } from '../schemas/repayment-form.schema'
+import { repaymentAccountId } from '../utils/debts.utils'
 import { DebtAccountField } from './debt-fields.component'
 
 const FORM_ID = 'repayment-form'
@@ -28,11 +32,29 @@ type RepaymentSheetProps = {
   onCloseAction: () => void
 }
 
+// the form starts on an account (QA 12.11: with none picked a repayment moved no money), so it opens once they are in
+export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetProps) {
+  const accounts = useDebtAccounts()
+
+  return accounts.data ? (
+    <RepaymentForm
+      debt={debt}
+      closing={closing}
+      onCloseAction={onCloseAction}
+      accountId={repaymentAccountId(debt, accounts.data)}
+    />
+  ) : null
+}
+
+type RepaymentFormProps = RepaymentSheetProps & {
+  accountId: string | null
+}
+
 // Figma «Saldo» → Personal debts, partial repayment state, Desktop 2:63002 and close state, Desktop 2:63360: debt
 // line, Amount, Date, Account (hint), result line «after the repayment …», footer Cancel + Repay.
-export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetProps) {
+function RepaymentForm({ debt, closing, onCloseAction, accountId }: RepaymentFormProps) {
   const translate = useTranslations('debts')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const clock = useClock()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -48,20 +70,27 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
     defaultValues: {
       amount: closing ? fromMinor(debt.remainingMinor, debt.currency) : '',
       currency: debt.currency,
-      accountId: debt.accountId,
+      accountId,
       occurredOn: today,
     },
   })
-  const amount = toMinor(methods.watch('amount'), debt.currency)
+  const amountText = useWatch({
+    control: methods.control,
+    name: 'amount',
+  })
+  const amount = toMinor(amountText, debt.currency)
   const left = amount === null ? null : debt.remainingMinor - amount
   const pending = repay.isPending || close.isPending
-  const format = useFormatter()
-  const dayText = (iso: string) =>
-    format.dateTime(new Date(`${iso}T12:00:00Z`), {
-      timeZone: 'UTC',
-      day: '2-digit',
-      month: '2-digit',
-    })
+  // an overpayment stays possible (debts.utils debtBalance) but is explicit: a warning and the button says it
+  let confirmKey: 'repay.confirmClose' | 'repay.confirmOver' | 'repay.confirm' = 'repay.confirm'
+
+  if (closing) {
+    confirmKey = 'repay.confirmClose'
+  } else if (left !== null && left < 0) {
+    confirmKey = 'repay.confirmOver'
+  }
+
+  const dayText = useDayText()
 
   const submit = (values: RepaymentFormValues) => {
     const repayment = toRepaymentInput(values, clock, {
@@ -96,24 +125,22 @@ export function RepaymentSheet({ debt, closing, onCloseAction }: RepaymentSheetP
       title={translate(closing ? 'repay.titleClose' : 'repay.title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate('form.cancel')}
-          </Button>
+          <SheetClose>{translate('form.cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={pending}>
-            {translate(closing ? 'repay.confirmClose' : 'repay.confirm')}
+            {translate(confirmKey)}
           </Button>
         </>
       }
     >
       <p className={closing ? 'text-body text-text-primary' : 'text-label text-text-secondary'}>
         {closing
-          ? translate('repay.closeText', { remaining: formatMinor(debt.remainingMinor, debt.currency, locale) })
+          ? translate('repay.closeText', { remaining: moneyText(debt.remainingMinor, debt.currency) })
           : translate('repay.summary', {
               reason: debt.reason ?? '',
-              date: dayText(debt.arisenOn),
-              principal: formatMinor(debt.principalMinor, debt.currency, locale),
-              repaid: formatMinor(debt.repaidMinor, debt.currency, locale),
-              remaining: formatMinor(debt.remainingMinor, debt.currency, locale),
+              date: dayText(debt.arisenOn, 'short'),
+              principal: moneyText(debt.principalMinor, debt.currency),
+              repaid: moneyText(debt.repaidMinor, debt.currency),
+              remaining: moneyText(debt.remainingMinor, debt.currency),
             })}
       </p>
       <FormProvider {...methods}>
@@ -168,18 +195,14 @@ type RepaymentResultProps = {
 
 function RepaymentResult({ left, currency }: RepaymentResultProps) {
   const translate = useTranslations('debts')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
 
   if (left === null) {
     return null
   }
 
   if (left < 0) {
-    return (
-      <p className="text-label text-text-secondary">
-        {translate('repay.resultOver', { amount: formatMinor(-left, currency, locale) })}
-      </p>
-    )
+    return <Banner kind="warning">{translate('repay.resultOver', { amount: moneyText(-left, currency) })}</Banner>
   }
 
   if (left === 0) {
@@ -188,7 +211,7 @@ function RepaymentResult({ left, currency }: RepaymentResultProps) {
 
   return (
     <p className="text-label font-medium text-text-primary">
-      {translate('repay.result', { amount: formatMinor(left, currency, locale) })}
+      {translate('repay.result', { amount: moneyText(left, currency) })}
     </p>
   )
 }

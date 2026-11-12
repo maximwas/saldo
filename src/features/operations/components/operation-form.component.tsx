@@ -1,9 +1,10 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useLocale, useTranslations } from 'next-intl'
-import { useEffect, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useTranslations } from 'next-intl'
+import { useEffect } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -11,13 +12,13 @@ import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { Select } from '@/components/ui/select.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Textarea } from '@/components/ui/textarea.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useFormDraft } from '@/lib/forms/form-draft.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { operationQueries } from '../api/operations.queries'
 import { factFormSchema, type OperationFormValues } from '../schemas/operation-form.schema'
 import { accountOptions } from '../utils/operation-display.utils'
@@ -55,7 +56,7 @@ export function OperationForm({
 }: OperationFormProps) {
   const translate = useTranslations('operations.form')
   const translateDraft = useTranslations('sync.draft')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   // the editor mounts the form after the options are loaded; the query cache hands the same data over
@@ -63,7 +64,7 @@ export function OperationForm({
   const accounts = options.data?.accounts ?? []
   const categories = options.data?.categories ?? []
   const balances = options.data?.balances ?? {}
-  const resolver = useZodResolver(useMemo(() => factFormSchema(today), [today]))
+  const resolver = useZodResolver(factFormSchema(today))
   const firstAccount = accounts.find((account) => !account.archived)
   const form = useForm<OperationFormValues>({
     resolver,
@@ -82,14 +83,15 @@ export function OperationForm({
     },
   })
   const draft = useFormDraft(draftKey ?? null, form)
-  const currency = form.watch('currency')
-  const accountId = form.watch('accountId')
+  const [currency, accountId, editedKind] = useWatch({
+    control: form.control,
+    name: ['currency', 'accountId', 'kind'],
+  })
   const balance = balances[accountId]
-  const editedKind = form.watch('kind')
   const categoryKind = editedKind === 'income' ? 'income' : 'expense'
   const expense = editedKind === 'expense'
   // the hints show in the desktop dialog only (2:16567 vs 2:18677) and never for an income (2:17848)
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const hints = expense && desktop
 
   // the sheet's Expense / Income switch: a category of the other kind no longer fits
@@ -135,9 +137,7 @@ export function OperationForm({
           label={translate('account')}
           required
           hint={
-            !hints || balance === undefined
-              ? undefined
-              : translate('balance', { amount: formatMinor(balance, currency, locale) })
+            !hints || balance === undefined ? undefined : translate('balance', { amount: moneyText(balance, currency) })
           }
           render={(field) => (
             <Select
@@ -162,7 +162,7 @@ export function OperationForm({
             <CategorySelect
               categories={categories}
               kind={categoryKind}
-              noneLabel={translate('noCategory')}
+              placeholder={translate('categoryPlaceholder')}
               value={field.value}
               onValueChange={field.onChange}
               disabled={disabled}
@@ -192,7 +192,14 @@ export function OperationForm({
           name="occurredTime"
           label={translate('time')}
           render={(field) => (
-            <Input {...field} disabled={disabled} inputMode="numeric" maxLength={5} autoComplete="off" />
+            <Input
+              {...field}
+              disabled={disabled}
+              inputMode="numeric"
+              maxLength={5}
+              autoComplete="off"
+              placeholder={translate('timePlaceholder')}
+            />
           )}
         />
       </div>

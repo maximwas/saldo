@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { notify } from '@/components/ui/toaster.component'
 import { env } from '@/lib/env'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
@@ -73,6 +73,11 @@ async function subscribe(key: string) {
   })
 }
 
+// the answer itself decides «denied»: the stored permission can lag behind it
+async function stateAfter(permission: NotificationPermission): Promise<PushState> {
+  return permission === 'denied' ? 'denied' : detectState()
+}
+
 /** Web Push on this device: the permission prompt only ever comes from `enable`, which a click calls (plan 3.6) */
 export function usePush(failedMessage: string) {
   const [state, setState] = useState<PushState>('checking')
@@ -81,7 +86,7 @@ export function usePush(failedMessage: string) {
     void detectState().then(setState)
   }, [])
 
-  const enable = useCallback(async () => {
+  async function enable() {
     if (!VAPID_KEY) {
       return
     }
@@ -93,14 +98,13 @@ export function usePush(failedMessage: string) {
         await subscribe(VAPID_KEY)
       }
 
-      // the answer itself decides «denied»: the stored permission can lag behind it
-      setState(permission === 'denied' ? 'denied' : await detectState())
+      setState(await stateAfter(permission))
     } catch {
       notify.error(failedMessage)
     }
-  }, [failedMessage])
+  }
 
-  const disable = useCallback(async () => {
+  async function disable() {
     try {
       const subscription = await currentSubscription()
 
@@ -113,7 +117,7 @@ export function usePush(failedMessage: string) {
     } catch {
       notify.error(failedMessage)
     }
-  }, [failedMessage])
+  }
 
   return {
     state,

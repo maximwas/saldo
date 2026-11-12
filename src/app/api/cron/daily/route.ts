@@ -1,4 +1,5 @@
 import type { Logger } from 'pino'
+import { refreshReferenceRates } from '@/features/currencies/api/reference-rates.server'
 import {
   extendSubscriptionHorizons,
   type HorizonResult,
@@ -57,7 +58,7 @@ async function extendHorizons(admin: SaldoClient, jobLog: Logger): Promise<Horiz
   }
 }
 
-// Daily jobs (architecture §7), each on its own so one failing does not skip the other. The orphan lookup is also the
+// Daily jobs (architecture §7), each on its own so one failing does not skip the others. The orphan lookup is also the
 // one query a day that keeps the Free project from pausing.
 export async function GET(request: Request) {
   if (!isCronAuthorized(request.headers.get('authorization'), env.CRON_SECRET)) {
@@ -69,13 +70,18 @@ export async function GET(request: Request) {
 
   log.info('cron/daily started')
 
-  const [orphansRemoved, horizon] = await Promise.all([removeOrphanAttachments(admin, log), extendHorizons(admin, log)])
-  const succeeded = orphansRemoved !== null && horizon !== null && horizon.failed === 0
+  const [orphansRemoved, horizon, ratesStored] = await Promise.all([
+    removeOrphanAttachments(admin, log),
+    extendHorizons(admin, log),
+    refreshReferenceRates(admin, log),
+  ])
+  const succeeded = orphansRemoved !== null && horizon !== null && horizon.failed === 0 && ratesStored !== null
 
   log[succeeded ? 'info' : 'error'](
     {
       orphansRemoved,
       horizon,
+      ratesStored,
       durationMs: Math.round(performance.now() - startedAt),
     },
     succeeded ? 'cron/daily finished' : 'cron/daily finished with failures',

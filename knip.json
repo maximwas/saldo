@@ -8,7 +8,8 @@
     "src/lib/auth/dal.server.ts",
     "src/contexts/*.context.tsx",
     "pwa-assets.config.ts",
-    "scripts/seed-visual.mjs"
+    "scripts/seed-visual.mjs",
+    "open-next.config.ts"
   ],
   "ignore": [
     "src/types/database.types.ts",

@@ -41,7 +41,8 @@ test('часткове повернення зменшує залишок бор
 
   // lending moves money out of the account, and it is neither income nor an expense
   await page.goto('/')
-  expect(await accountBalanceMinor(page, DEMO.cardName)).toBe(balanceBefore - LENT_MINOR)
+  // polled: the overview paints the cached figures first and refetches them; the others come in the same refetch
+  await expect.poll(() => accountBalanceMinor(page, DEMO.cardName)).toBe(balanceBefore - LENT_MINOR)
   expect(await monthIncomeMinor(page)).toBe(incomeBefore)
   expect(await monthExpenseMinor(page)).toBe(expenseBefore)
 
@@ -58,7 +59,7 @@ test('часткове повернення зменшує залишок бор
   await expect(row).toContainText('Частково')
 
   await page.goto('/')
-  expect(await accountBalanceMinor(page, DEMO.cardName)).toBe(balanceBefore - LENT_MINOR + REPAID_MINOR)
+  await expect.poll(() => accountBalanceMinor(page, DEMO.cardName)).toBe(balanceBefore - LENT_MINOR + REPAID_MINOR)
   expect(await monthIncomeMinor(page)).toBe(incomeBefore)
   expect(await monthExpenseMinor(page)).toBe(expenseBefore)
 })

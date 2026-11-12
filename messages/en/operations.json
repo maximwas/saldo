@@ -79,6 +79,7 @@
     "allTime": "all time"
   },
   "loadFailed": "Could not load operations",
+  "refreshFailed": "Could not refresh operations",
   "truncated": "Showing the latest {count} operations. Narrow the period or the filter.",
   "form": {
     "newTitle": "New operation",
@@ -91,6 +92,7 @@
     "amount": "Amount",
     "account": "Account",
     "category": "Category",
+    "categoryPlaceholder": "Choose a category",
     "noCategory": "No category",
     "date": "Date",
     "counterparty": "Payee",
@@ -139,10 +141,10 @@
       "to": "To",
       "fee": "Fee",
       "rate": "Rate",
-      "purchase": "Purchase",
-      "author": "Added by"
+      "purchase": "Purchase"
     },
     "time": "Time",
+    "timePlaceholder": "E.g. 18:40",
     "balance": "Balance {amount}",
     "editingTitle": "Edit operation",
     "saveChanges": "Save changes"
@@ -156,6 +158,7 @@
     "created": "Operation saved",
     "updated": "Changes saved",
     "deleted": "Operation deleted",
+    "transferDeleted": "Transfer deleted",
     "transferCreated": "Transfer saved"
   },
   "conflict": "Someone else changed this operation. Refresh and open it again.",

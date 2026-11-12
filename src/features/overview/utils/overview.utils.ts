@@ -3,13 +3,6 @@ import type { AvailableMoneyInput } from '@/lib/finance/available-money.utils'
 import { accountBaseMinor, accountRate } from '@/lib/finance/base-balance.utils'
 import type { FxRate } from '@/lib/money/fx.utils'
 
-/** YYYY-MM-DD as noon UTC: formatted with timeZone «UTC» it is the same calendar day in any browser zone */
-export function isoToDate(isoDate: string): Date {
-  const [year, month, day] = isoDate.split('-').map(Number)
-
-  return new Date(Date.UTC(year, month - 1, day, 12))
-}
-
 /** first and last day of the month of a ledger-local date, YYYY-MM-DD */
 export function monthRange(today: string): {
   from: string

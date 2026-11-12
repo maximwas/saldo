@@ -1,19 +1,24 @@
 'use client'
 
 import { CreditCard as CreditCardIcon, Plus } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { PaymentsTabs } from '@/components/layout/payments-tabs.component'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import type { Credit } from '../api/credits.api'
 import { useCredits } from '../hooks/credits.hook'
-import { type CreditTotals, creditTotals, dayText, moneyText, monthNotes, nextMonthOf } from '../utils/credits.utils'
+import { type CreditTotals, creditTotals, monthNotes, nextMonthOf } from '../utils/credits.utils'
 import { CreditFormSheet } from './credit-form-sheet.component'
 import { CreditRow } from './credit-row.component'
 
@@ -24,20 +29,21 @@ type TotalsStripProps = {
 
 function useNoteText(credits: readonly Credit[], totals: CreditTotals) {
   const translate = useTranslations('credits.totals')
-  const locale = useLocale()
+  const dayText = useDayText()
+  const moneyText = useMoneyText()
   const today = useToday()
   const notes = monthNotes(credits, today)
   const nextMonth = Number(nextMonthOf(today.slice(0, 7)).slice(5))
   const nextAmount = totals.byCurrency
     .filter((total) => total.nextMonthMinor !== 0)
-    .map((total) => moneyText(total.nextMonthMinor, total.currency, locale))
+    .map((total) => moneyText(total.nextMonthMinor, total.currency))
     .join(' + ')
   const head = [
     notes.dueToday.length > 0 ? translate('noteToday', { names: notes.dueToday.join(', ') }) : null,
     ...notes.unconfirmed.map((note) =>
       translate('noteUnconfirmed', {
         name: note.name,
-        date: dayText(note.dueOn, locale),
+        date: dayText(note.dueOn, 'short'),
       }),
     ),
   ].filter(Boolean)
@@ -62,7 +68,7 @@ function useNoteText(credits: readonly Credit[], totals: CreditTotals) {
 // tertiary), side by side on desktop, stacked on mobile (the caption there stops before «next month»)
 function TotalsStrip({ credits, totals }: TotalsStripProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
   const today = useToday()
   const note = useNoteText(credits, totals)
 
@@ -88,7 +94,7 @@ function TotalsStrip({ credits, totals }: TotalsStripProps) {
             credits: totals.activeCount,
             installments: totals.openCount,
           })}
-          {totals.endOn && ` · ${translate('totals.until', { date: dayText(totals.endOn, locale, true) })}`}
+          {totals.endOn && ` · ${translate('totals.until', { date: dayText(totals.endOn, 'shortYear') })}`}
         </p>
       </section>
     </div>
@@ -128,23 +134,27 @@ export function CreditsScreen() {
   const translate = useTranslations('credits')
   const canWrite = useCanWrite()
   const today = useToday()
-  const { data, isPending, isError } = useCredits()
+  const query = useCredits()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const [creating, setCreating] = useState(false)
 
-  if (isPending) {
+  if (failedLoad) {
+    return (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <PaymentsTabs />
+        <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+      </div>
+    )
+  }
+
+  if (!hydrated || data === undefined) {
     return (
       <div className="flex flex-col gap-4 lg:gap-6">
         <PaymentsTabs />
         <CreditsSkeleton />
       </div>
-    )
-  }
-
-  if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
     )
   }
 
@@ -155,19 +165,13 @@ export function CreditsScreen() {
       <PaymentsTabs />
       {!canWrite && data.credits.length > 0 && <Banner>{translate('viewOnly')}</Banner>}
       {data.credits.length === 0 ? (
-        <section className="flex flex-col items-center rounded-card bg-card px-5 py-18 shadow-card">
-          <div className="flex w-full max-w-100 flex-col items-center gap-3 p-2 text-center">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary-text"
-            >
-              <CreditCardIcon className="size-5" />
-            </span>
-            <h2 className="w-full text-body font-semibold text-text-primary">{translate('empty')}</h2>
-            <p className="w-full text-label text-text-secondary">{translate('emptyHint')}</p>
-            {canWrite && <Button onClick={() => setCreating(true)}>{translate('add')}</Button>}
-          </div>
-        </section>
+        <EmptyState
+          icon={CreditCardIcon}
+          tone="blue"
+          title={translate('empty')}
+          hint={translate('emptyHint')}
+          action={canWrite && <Button onClick={() => setCreating(true)}>{translate('add')}</Button>}
+        />
       ) : (
         <>
           {canWrite && (

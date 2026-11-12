@@ -24,6 +24,8 @@
   запрошення) або писати таблиці, що клієнтам лише для читання (`operations`, `transfers`, `obligation_payments`,
   architecture §5.10). Такий RPC до будь-якого читання знаходить простір цілі й кличе `private.assert_writable(ledger_id)`
   (чи явно перевіряє `auth.uid()`), має `set search_path = ''`, повні імена й `revoke execute … from public, anon`.
+- **Нова таблиця з RLS** отримує тригер `create trigger <table>_oauth_no_delete before delete on public.<table> for each
+  row execute function private.forbid_oauth_delete()`: MCP-клієнт нічого не видаляє (фаза 10, pgTAP `mcp-audit-log`).
 - **Тести RLS на двох людях**: кожна міграція з новою таблицею має pgTAP у `supabase/tests/<table>.test.sql`:
   owner і editor пишуть, viewer читає й отримує `42501` на запис, чужий бачить 0 рядків і не вставляє рядок у чужий
   `ledger_id`; складений FK не дає послатися на рядок іншого простору. pgTAP запускає `pnpm test:db` той, хто зараз
@@ -38,7 +40,8 @@
 ```
 saldo/
   CLAUDE.md
-  biome.json  .dependency-cruiser.cjs  knip.json  lefthook.yml  vitest.config.ts  playwright.config.ts  vercel.json
+  biome.json  .dependency-cruiser.cjs  knip.json  lefthook.yml  vitest.config.ts  playwright.config.ts
+  wrangler.jsonc  open-next.config.ts  worker.ts   (Cloudflare Worker: architecture §7 «Хостинг»)
   next.config.ts  tsconfig.json  package.json  .env.example
   .github/workflows/backup.yml  .github/workflows/ci.yml   (ci.yml: jobs check і gitleaks)
   docs/                                  spec, research, design, architecture, plan, stack, conventions
@@ -129,9 +132,11 @@ saldo/
       env.ts
       auth/dal.server.ts
       supabase/browser-client.ts  server-client.ts  admin-client.server.ts  pg-error.utils.ts
-      query/query-client.ts  idb-persister.ts
+      query/query-client.ts  ledger-writes.mutations.ts  ledger-write.hook.ts
+      offline/device-storage.ts
       money/money.utils.ts  fx.utils.ts
       recurrence/recurrence.utils.ts
+      dates/day.utils.ts  day-text.hook.ts
       finance/available-money.utils.ts  reserve-allocation.utils.ts
       utils/cn.utils.ts
     hooks/                               media-query.hook.ts, online-status.hook.ts
@@ -148,7 +153,7 @@ src/features/subscriptions/
   subscriptions.constants.ts
   api/subscriptions.api.ts               supabase-js: select, upsert, rpc
   api/subscriptions.queries.ts           ключі + queryOptions
-  api/subscriptions.mutations.ts         registerSubscriptionMutations + useXxx хуки
+  hooks/subscriptions.hook.ts            subscriptionsWrites (defineWrites) + useXxx хуки читання й запису
   components/subscription-list.component.tsx
   components/subscription-form.component.tsx
   hooks/subscription-filters.hook.ts     useSubscriptionFilters (nuqs)
@@ -162,12 +167,12 @@ src/features/subscriptions/
 | Суфікс | Призначення | Приклад |
 |---|---|---|
 | `.component.tsx` | React-компонент | `src/features/operations/components/operation-row.component.tsx` |
-| `.hook.ts` | хук; файл `x-y.hook.ts` експортує `useXY` | `src/features/subscriptions/hooks/subscription-filters.hook.ts` → `useSubscriptionFilters` |
+| `.hook.ts` | хук; файл `x-y.hook.ts` експортує `useXY`, без префікса `use-` в імені файлу; `<f>.hook.ts` фічі збирає її читання й записи: `<f>Writes = defineWrites(…)` + `useLedgerWrite`-хуки. Записи живуть тут, а не в `api/`, бо так уже роблять усі фічі, а `api/` лишається без React (його імпортує `src/mcp`) | `src/features/subscriptions/hooks/subscription-filters.hook.ts` → `useSubscriptionFilters`, `src/lib/query/ledger-write.hook.ts` → `useLedgerWrite` |
 | `.context.tsx` | контекст + провайдер + хук, лише DI | `src/contexts/clock.context.tsx` |
 | `.store.ts` | zustand-store UI-стану | `src/store/ui.store.ts` |
 | `.api.ts` | виклики supabase-js (select, upsert, rpc) | `src/features/obligations/api/obligations.api.ts` |
 | `.queries.ts` | фабрика ключів + `queryOptions` | `src/features/operations/api/operations.queries.ts` |
-| `.mutations.ts` | `defineWrites` / `registerWrites` (`setMutationDefaults`) + `useLedgerWrite`-хуки; композиція всіх фіч — `src/components/providers/app-writes.mutations.ts` | `src/features/operations/api/operations.mutations.ts` |
+| `.mutations.ts` | інфраструктура черги записів: `defineWrites` / `registerWrites` (`setMutationDefaults`) і композиція всіх `<f>Writes` | `src/lib/query/ledger-writes.mutations.ts`, `src/components/providers/app-writes.mutations.ts` |
 | `.schema.ts` | zod-схема | `src/features/operations/schemas/operation-form.schema.ts` |
 | `.types.ts` | типи фічі або спільні | `src/features/taxes/taxes.types.ts`, `src/types/money.types.ts` |
 | `.constants.ts` | константи | `src/constants/navigation.constants.ts` |
@@ -180,8 +185,10 @@ src/features/subscriptions/
 | `.fixture.ts` | фікстури й дані e2e | `e2e/fixtures/roles.fixture.ts` |
 | `.setup.ts` | setup-проєкт Playwright | `e2e/auth.setup.ts` |
 
-Без суфіксів: reserved-файли Next (`page`, `layout`, `loading`, `error`, `not-found`, `route`, `proxy`, `manifest`),
-а також `src/lib/env.ts`, клієнти supabase, `database.types.ts` (згенерований). `"use client"` пишеться у файлі.
+Без суфіксів: reserved-файли Next (`page`, `layout`, `loading`, `error`, `not-found`, `route`, `proxy`, `manifest`,
+`instrumentation`), `src/i18n/request.ts` (шлях next-intl), а також `src/lib/env.ts`, клієнти supabase і TanStack Query
+(`src/lib/query/query-client.ts`), сховище пристрою `src/lib/offline/device-storage.ts`, `database.types.ts` (згенерований), `worker.ts` у корені (вхід Cloudflare Worker, як `next.config.ts`):
+жоден суфікс із таблиці їм не пасує. `"use client"` пишеться у файлі.
 
 ## 3. Імпорти
 
@@ -197,7 +204,7 @@ src/features/subscriptions/
 
 Правила під MCP — з першого рядка коду (`docs/architecture.md` §12):
 - `*.api.ts` не імпортує React, TanStack, `next/*` і не створює клієнт сам: перший параметр — `supabase: SaldoClient`
-  (`SupabaseClient<Database>` з `src/types/supabase.types.ts`). Браузерний клієнт передає `*.mutations.ts`/`*.queries.ts`.
+  (`SupabaseClient<Database>` з `src/types/supabase.types.ts`). Браузерний клієнт підставляють `registerWrites` і `*.queries.ts`.
 - Ввід кожної дії запису — окрема zod-схема `<action>-input.schema.ts` у грошах мінорних одиниць (`amountMinor: z.int()`,
   `currency`, `id: z.uuid()`), без `transform`; `*.api.ts` робить `parse` перед `rpc()`. Форма має свою схему
   (рядок суми тощо) і чисту функцію `to<Action>Input(values, clock)` → input-схема. MCP бере input-схему як `inputSchema`.
@@ -335,8 +342,14 @@ return {
   `generateMetadata`, Server Actions). Функція перекладу зветься `translate` (`translateNav`, `translateError` для
   другого namespace). Константи й утиліти тримають ключі (`NavLink.key`, `PgError.kind` → `errors.db.<kind>`), а не
   тексти. Назва бренду — теж ключ (`common.brand`).
-- Дати — `useFormatter().dateTime(…, { timeZone })` з поясом простору; суми — `Amount` з `minor` і `currency`
-  (`formatMinor` у `src/lib/money/money.utils.ts`, рядок десяткового числа в `Intl.NumberFormat`, без float). Сирого
+- Календарний день (`YYYY-MM-DD`, місяць `YYYY-MM`) → текст лише через `useDayText()` / `useMonthOf()`
+  (`src/lib/dates/day-text.hook.ts`) або `formatDay` / `dayToDate` (`src/lib/dates/day.utils.ts`): один якір — полудень
+  UTC, формат у UTC, тож день не зсувається в жодному поясі. Новий формат — ключ у `DAY_FORMATS`, а не свої опції в
+  компоненті; шаблон `${day}T12:00:00Z` у `src` відхиляє ESLint.
+- Моменти (`occurred_at`, `confirmed_at`) — `useFormatter().dateTime(…, { timeZone })` з поясом простору; суми — `Amount` з `minor` і `currency`, сума в
+  тексті (підпис, tooltip, aria-label, toast) — `useMoneyText()` з того ж модуля: обидва ховають суми за «Приховати
+  суми». `formatMinor` (`src/lib/money/money.utils.ts`, рядок десяткового числа в `Intl.NumberFormat`, без float) — лише
+  для CSV, MCP і сервера. Курс — `formatRate` у `src/lib/money/fx.utils.ts`. Сирого
   `new Intl.DateTimeFormat('uk')` у компонентах немає.
 - `<html lang>` рендериться поза Suspense, де читається локаль (cacheComponents), тому його оновлює `AppProviders`.
 
@@ -356,7 +369,7 @@ return {
   `PgError` для UI (`errors.db.<kind>`). Необроблені помилки сторінок, Route Handlers і Server Actions пише
   `onRequestError` у `src/instrumentation.ts` — ловити їх, щоб лише залогувати, не треба.
 - Рівень — env `LOG_LEVEL` (`.env.example`), за замовчуванням `debug` у dev і `info` у проді. Прод — JSON-рядки,
-  які показують Vercel Runtime Logs; dev — `pino-pretty`. Транспорти pino (worker thread) не використовуємо.
+  які показують Workers Logs; dev — `pino-pretty`. Транспорти pino (worker thread) не використовуємо.
 
 ```ts
 const log = logger.child({
@@ -429,48 +442,35 @@ export const isMoneyQuery = (query: { queryKey: readonly unknown[] }) =>
   (MONEY_QUERY_ROOTS as readonly unknown[]).includes(query.queryKey[0])
 ```
 
-### 4.2 Мутація з `setMutationDefaults` і UUID клієнта
+### 4.2 Запис: `defineWrites` + `useLedgerWrite` і UUID клієнта
+
+Кожен запис у БД з UI — лише так, без сирого `useMutation`: тоді він стає в чергу пристрою, переживає reload і
+показується в черзі синхронізації (фаза 8).
 
 ```ts
-// src/features/operations/api/operations.mutations.ts
-import type { PostgrestError } from '@supabase/supabase-js'
-import { type QueryClient, useMutation } from '@tanstack/react-query'
-import { isMoneyQuery } from '@/constants/query-roots.constants'
-import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import type { Operation, OperationInsert } from '../operations.types'
-import { createOperation } from './operations.api'
-import { operationKeys } from './operations.queries'
+// src/features/operations/hooks/operations.hook.ts
+import { useLedgerWrite } from '@/lib/query/ledger-write.hook'
+import { defineWrites } from '@/lib/query/ledger-writes.mutations'
+import { createOperation, updateOperation } from '../api/operations.api'
 
-export const createOperationKey = ['operations', 'create'] as const
+// записи фічі в черзі пристрою; app-writes.mutations.ts реєструє їх ДО гідрації persist (registerWrites: mutationFn,
+// scope 'writes', offlineFirst, повтор лише мережевих помилок, інвалідація грошових запитів)
+export const operationsWrites = defineWrites('operations', {
+  createOperation,
+  updateOperation,
+})
 
-// викликається в app-providers ДО гідрації persist, щоб відновлена черга знала mutationFn
-export function registerOperationMutations(queryClient: QueryClient) {
-  queryClient.setMutationDefaults(createOperationKey, {
-    mutationFn: (input: OperationInsert) => createOperation(getBrowserSupabase(), input),
-    scope: { id: 'writes' },
-    networkMode: 'offlineFirst',
-    retry: 3,
-    onMutate: async (input: OperationInsert) => {
-      await queryClient.cancelQueries({ queryKey: operationKeys.lists() })
-      queryClient.setQueriesData<Operation[]>({ queryKey: operationKeys.lists() }, (rows = []) => [
-        {
-          ...input,
-          syncState: 'pending',
-        } as Operation,
-        ...rows,
-      ])
-    },
-    onSettled: () => queryClient.invalidateQueries({ predicate: isMoneyQuery }),
-  })
-}
-
-export function useCreateOperation() {
-  return useMutation<Operation, PostgrestError, OperationInsert>({ mutationKey: createOperationKey })
-}
+// редактор сам показує помилку (блок конфлікту, рядок помилки), тож без тосту
+export const useCreateOperation = () => useLedgerWrite(operationsWrites.createOperation, { quiet: true })
 
 // виклик: id створюється ДО mutate, тож повтор після reload несе той самий ключ ідемпотентності
 // createOperation.mutate({ ...toOperationInsert(values), id: crypto.randomUUID() })
 ```
+
+Ввід запису зберігається як JSON: лише рядки, числа, масиви (дата — ISO-рядок, не `Date`). Запис, що не змінює гроші
+(нагадування, сповіщення), сам оновлює свої запити в `onSettled` виклику: `registerWrites` інвалідує лише грошові.
+Застарілий `version` в оновленні таблиці — `throw versionConflict()` (`src/lib/supabase/version-conflict.utils.ts`), як PT409
+з RPC.
 
 ```ts
 // src/features/operations/api/operations.api.ts
@@ -493,7 +493,7 @@ export async function createOperation(supabase: SaldoClient, input: OperationIns
 
 ```ts
 // src/features/obligations/api/obligations.api.ts
-// supabase — браузерний клієнт із mutations.ts або клієнт із JWT власника з src/mcp (фаза 10)
+// supabase — браузерний клієнт із registerWrites або клієнт із JWT власника з src/mcp (фаза 10)
 export async function payObligation(supabase: SaldoClient, raw: PayObligationInput) {
   const input = payObligationInputSchema.parse(raw) // schemas/pay-obligation-input.schema.ts
   const { data, error } = await supabase.rpc('pay_obligation', {
@@ -706,6 +706,33 @@ export function RateForm() {
   const today = useToday()
 ```
 
+### 4.6b Стани екрана (Максим, 03.11.2026)
+
+Один шлях на всіх екранах:
+
+1. **Помилка й оновлення** — `useScreenQueryState([query, …], translate('refreshFailed'))` із `src/lib/query`. `ErrorState`
+   лише на `failedLoad` (перше завантаження впало, показати нічого); оновлення, що впало над кешем, лишає дані й показує
+   один тост із «Спробувати ще». Порядок: спершу `failedLoad` → `ErrorState`, потім `data === undefined` → скелетон, тож
+   TypeScript звужує `data`. Голий `isError` на екрані не перевіряємо. Тексти `loadFailed` / `refreshFailed` — поруч.
+2. **Порожньо** — `EmptyState` (`src/components/ui`, Figma 2:10027): `icon`, `tone`, `title`, `hint`, `action`; `bare` —
+   коли він уже в картці. Свою розмітку порожнього стану не пишемо; `ErrorState` побудований на ньому.
+3. **Офлайн** — сторінка, що малює своє попередження на десктопі, бере `PageOfflineBanner` (`src/components/layout`) і
+   додає свій шлях в `OWN_WARNING_PATHS` шелового `OfflineBanner`, щоб на десктопі не було двох банерів.
+4. **Гідратація** — кеш пристрою (`PersistQueryClientProvider`) відновлюється раніше, ніж гідратуються стрімінгові
+   `<Suspense>`, а сервер цього кешу не має. Тож компонент, що малює дані запиту (екран, шел, підпис у налаштуваннях),
+   до кінця гідратації показує те саме, що сервер: `useHydrated()` із `src/lib/utils/hydrated.hook.ts`, умова
+   `!hydrated || data === undefined` → скелетон. Свою копію `useSyncExternalStore(subscribeNever, …)` не пишемо.
+   Охороняє e2e `e2e/shell/navigation.e2e.ts` («hydrates over the device cache without a mismatch»).
+
+### 4.6c Іконка в рядку — зверху (Максим, 03.11.2026)
+
+Рядок, картка, банер, тост чи нотатка, де текст займає 2+ рядки (назва + статус чи підказка, текст, що
+переноситься): іконка чи плитка стоїть на першому рядку тексту, а не по вертикальному центру. У коді — `items-start`
+на рядку; іконку 20 біля рядка 24 обгортаємо `<span className="flex shrink-0 py-0.5">` (як `Banner`, `Toaster`), плитка
+40 просто стоїть угорі разом із назвою. Сповіщення пишемо через `Banner`, а не власною розміткою. `items-center` з
+іконкою лишається лише там, де текст справді один рядок (фіксована висота, `truncate`): пункт меню, опція `Select`.
+Охороняють e2e `e2e/operations/planned-payment.e2e.ts` і `e2e/shell/icon-alignment.e2e.ts` (рядки на 390 px).
+
 ### 4.7 Чиста функція + тест
 
 ```ts
@@ -829,6 +856,28 @@ describe('computeAvailable', () => {
   })
 })
 ```
+
+### 4.8 React 19 і React Compiler (Максим, 11.11.2026)
+
+- **Компілятор увімкнений**: `reactCompiler: true` у `next.config.ts` (`babel-plugin-react-compiler`), правила
+  `eslint-plugin-react-hooks` (`recommended`) — в `eslint.config.mjs`. Те, що вони показують, виправляємо в коді, правило не
+  вимикаємо. Компонент із `try … finally` або з тернарником, `&&` чи `?.` усередині `try` компілятор мовчки пропускає:
+  скидання стану ставимо після `try/catch`, вибір значення робимо до `try`.
+- **Мемоїзація руками не пишеться**: без `useMemo`, `useCallback`, `memo`. Виняток — коли від ідентичності значення залежить
+  коректність (екземпляр стора в `LedgerProvider`); тоді поруч один рядок «чому».
+- **RHF у рендері — `useWatch({ control, name })` і `useFormState({ control, name })`**: через `form.watch(...)` у рендері
+  компілятор пропускає весь компонент (`incompatible-library`). `watch` чи `formState` з `useFormContext()` лінт не бачить,
+  але після компіляції дочірнє поле не рендериться разом із батьком і показує застаріле значення.
+- **Ефект — лише для зовнішнього світу**: DOM і браузерні API, підписки, URL, сторонні стори (next-themes, RHF, тости).
+  Похідне значення рахуємо в рендері; стан, що йде за новим пропом чи URL, — у рендері під умовою (`operations-screen`) або
+  через `key`. Колбек, що змінюється, ефект читає через `useEffectEvent`, а не через залежність чи `biome-ignore`.
+- **Оптимістичний стан**: запис у БД іде лише через `defineWrites` + `useLedgerWrite` (§4.2), бо черга пристрою переживає
+  офлайн і reload, а `useOptimistic` живе лише до кінця transition. `useOptimistic` — для миттєвого локального відгуку без
+  запису в чергу (мова інтерфейсу в `locale-switcher`).
+- **`<Activity>`** — лише там, де прихований вміст тримає введене чи прокручене: відкриті панелі house `Tabs` (форма
+  налаштувань підписки).
+- Форми — RHF + zod (§4.4); `useActionState` — лише для форми, що надсилає справжню Server Action. Контекст читаємо
+  через `use(Context)`.
 
 ## 5. Конфіги (ескізи, конфіг не запускався)
 
@@ -1069,7 +1118,9 @@ RPC-інваріанти без UI — pgTAP або ручна перевірк�
 
 **Середовище.** Лише локальний стек: `supabase start`, потім `pnpm test:e2e`. Конфіг (§5.6) бере ключі з
 `supabase status` і падає, якщо URL не `127.0.0.1`/`localhost`. Застосунок — `next build && next start` на порту 3100
-через `webServer` (локально перевикористовується вже запущений). Лише Chromium: проєкт `desktop` і `mobile`
+через `webServer` (локально перевикористовується вже запущений); `E2E_RUNTIME=workerd` — той самий набір проти збірки
+Cloudflare Worker (`opennextjs-cloudflare build` + `preview`), `--env-file /dev/null` обходить `.dev.vars`, і Worker
+отримує env e2e через `CLOUDFLARE_INCLUDE_PROCESS_ENV`. Лише Chromium: проєкт `desktop` і `mobile`
 (Pixel 7, лише тести з тегом `@mobile`).
 
 **База.** `e2e/global-setup.ts` раз на прогін робить `supabase db reset` (міграції + `seed.sql`), створює чотирьох
@@ -1161,8 +1212,11 @@ worker). У WebKit `setOffline` ламає навігацію під service wor
 `matchFrame(page, { frameId, width, height })` ставить viewport розміром фрейму й порівнює його з PNG фрейму,
 експортованим Pixelwright `screenshot` (scale 1) у `e2e/visual/figma/<frameId з «-» замість «:»>.png`; без PNG тест
 падає, сайт ніколи не стає еталоном. Годинник — 31.10.2026, як у фреймах. Запуск (лише локальний стек):
-1. `pnpm exec supabase start`; 2. `pnpm exec supabase db reset` (seed.sql: demo@example.com);
-3. `node scripts/seed-visual.mjs` (операції, переказ і бюджет жовтня з `docs/design/demo-data.md`); 4. `pnpm test:visual`.
+1. `pnpm exec supabase start`; 2. `pnpm exec supabase db reset` (seed.sql: demo@example.com, дати від сьогодні);
+3. демо на день фреймів: `docker exec -i supabase_db_saldo psql -U postgres -1 -v ON_ERROR_STOP=1 -c "delete from
+auth.users where email = 'demo@example.com'" -c "set saldo.demo_today = '2026-10-30'" -f - < supabase/seed.sql`;
+4. `DEMO_TODAY=2026-10-30 node scripts/seed-visual.mjs` (операції, переказ і бюджет жовтня з `docs/design/demo-data.md`;
+без `DEMO_TODAY` — у поточному місяці); 5. `pnpm test:visual`.
 Тест упав — дивіться лише `test-results/**/*-diff.png`, не обидва скріншоти.
 
 **Сценарії.** По 2–6 на фазу, лише головні потоки (`docs/plan.md`, пункти «E2E» кожної фази). Новий баг, який
@@ -1189,7 +1243,7 @@ worker). У WebKit `setOffline` ламає навігацію під service wor
 
 ### Гілки й релізи
 
-- `main` — гілка за замовчуванням на GitHub і продакшн (Vercel). `develop` — інтеграційна гілка, preview. Vercel деплоїть лише `main` і `develop` (`git.deploymentEnabled` у `vercel.json`): гілки фіч не збирає, бо Hobby дає 100 деплоїв на добу, і пуші агентів вичерпали їх за вечір 30.10.2026.
+- `main` — гілка за замовчуванням на GitHub і продакшн (Cloudflare Workers, Workers Builds). `develop` — інтеграційна гілка. Non-production builds вимкнені: версія з гілки взяла б прод-секрети й прод Supabase (architecture §7 «Хостинг»). На Vercel до 11.2026 збирались лише `main` і `develop`: Hobby дає 100 деплоїв на добу, і пуші агентів вичерпали їх за вечір 30.10.2026.
 - Кожен пункт або група пунктів — своя гілка від `develop` → PR у `develop` (`gh pr create --base develop`: база за
   замовчуванням тепер `main`). Агенти працюють у worktree від `develop` (`.claude/settings.local.json`:
   `worktree.baseRef: "head"`).

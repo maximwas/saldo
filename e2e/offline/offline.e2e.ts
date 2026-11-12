@@ -61,13 +61,13 @@ test('офлайн-витрата чекає в черзі, переживає r
   await pickCategory(page, sheet)
   await sheet.getByRole('button', { name: 'Зберегти' }).click()
   await expect(sheet).toBeHidden()
-  await expect(status(page, /очікує \(1\)/i)).toBeVisible()
+  await expect(status(page, /Офлайн · 1 зміна/)).toBeVisible()
   await expect(row).toContainText('Очікує')
 
   // offline reload: the worker serves the shell, IndexedDB the cached list and the queue
   await page.reload()
   await expect(page.getByRole('alert').filter({ hasText: 'Немає мережі' })).toBeVisible()
-  await expect(status(page, /очікує \(1\)/i)).toBeVisible()
+  await expect(status(page, /Офлайн · 1 зміна/)).toBeVisible()
   await expect(row).toHaveCount(1)
 
   await page.context().setOffline(false)
@@ -78,14 +78,17 @@ test('офлайн-витрата чекає в черзі, переживає r
   await expect(row).not.toContainText('Очікує')
 })
 
-test('editor офлайн і owner онлайн оплачують один платіж: одна оплата, в editor конфлікт', async ({ pageAs }) => {
+test('editor офлайн і owner онлайн оплачують один платіж: одна оплата, в editor конфлікт; «Взяти їхню» закриває його', async ({
+  pageAs,
+}) => {
   test.setTimeout(60_000)
   const owner = await pageAs('owner')
   const editor = await pageAs('editor')
   const mark = `e2e-${crypto.randomUUID().slice(0, 8)}`
 
   await owner.goto('/payments')
-  await owner.getByRole('button', { name: 'Додати платіж' }).click()
+  // an empty list names the button «add a planned payment»: run alone, no other spec has added payments yet
+  await owner.getByRole('button', { name: /^Додати (плановий )?платіж$/ }).click()
 
   const form = owner.getByRole('dialog')
 
@@ -98,7 +101,7 @@ test('editor офлайн і owner онлайн оплачують один пл
 
   const editorItem = editor.getByRole('listitem').filter({ hasText: mark })
 
-  await editorItem.getByRole('button', { name: 'Оплачено' }).click()
+  await editorItem.getByRole('button', { name: 'Оплатити' }).click()
 
   const editorPay = editor.getByRole('dialog')
 
@@ -107,9 +110,9 @@ test('editor офлайн і owner онлайн оплачують один пл
   await goOffline(editor)
   await editorPay.getByRole('button', { name: 'Оплачено' }).click()
   await expect(editorPay).toBeHidden()
-  await expect(status(editor, /очікує \(1\)/i)).toBeVisible()
+  await expect(status(editor, /Офлайн · 1 зміна/)).toBeVisible()
 
-  await owner.getByRole('listitem').filter({ hasText: mark }).getByRole('button', { name: 'Оплачено' }).click()
+  await owner.getByRole('listitem').filter({ hasText: mark }).getByRole('button', { name: 'Оплатити' }).click()
 
   const ownerPay = owner.getByRole('dialog')
 
@@ -119,9 +122,9 @@ test('editor офлайн і owner онлайн оплачують один пл
 
   // back online the editor's payment carries a stale version: PT409, kept for the person to decide
   await editor.context().setOffline(false)
-  await status(editor, /Конфлікт \(1\)/).click({ timeout: 30_000 })
+  await status(editor, /Конфлікт · 1/).click({ timeout: 30_000 })
   await editor.getByRole('button', { name: "Розв'язати" }).click()
-  await expect(editor.getByRole('dialog')).toContainText(`Підтвердив(ла) ${DEMO.ownerName}`)
+  await expect(editor.getByRole('dialog', { name: /Конфлікт змін/ })).toContainText(`${DEMO.ownerName} змінив(ла)`)
 
   const database = admin()
   const { data: obligation } = await database.from('obligations').select('id').eq('title', mark).single()
@@ -134,6 +137,14 @@ test('editor офлайн і owner онлайн оплачують один пл
     .eq('obligation_id', obligation?.id ?? '')
 
   expect(count).toBe(1)
+
+  // Figma 41:106725: after a choice the dialog closes with a success toast and the queue is empty
+  const conflict = editor.getByRole('dialog', { name: /Конфлікт змін/ })
+
+  await conflict.getByRole('button', { name: 'Взяти їхню' }).click()
+  await expect(conflict).toBeHidden()
+  await expect(editor.getByText('Залишено їхню версію')).toBeVisible()
+  await expect(status(editor, /Синхронізовано/)).toBeVisible()
 })
 
 test('вихід очищає IndexedDB і кеші пристрою', async ({ browser, baseURL, locale, timezoneId }) => {

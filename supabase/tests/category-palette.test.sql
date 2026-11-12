@@ -7,10 +7,10 @@ insert into auth.users (id, email) values ('00000000-0000-4000-8000-000000000301
 create temp table palette_space as
   select id as ledger_id from public.ledgers where created_by = '00000000-0000-4000-8000-000000000301';
 
-select is((select count(*)::int from public.categories where ledger_id = (select ledger_id from palette_space)), 15,
-  'a new space gets 15 standard categories');
+select is((select count(*)::int from public.categories where ledger_id = (select ledger_id from palette_space)), 16,
+  'a new space gets 16 standard categories');
 select is((select count(distinct color)::int from public.categories where ledger_id = (select ledger_id from palette_space)),
-  15, 'all 15 have a different colour');
+  16, 'all 16 have a different colour');
 select is((select count(*)::int from public.categories
   where ledger_id = (select ledger_id from palette_space) and icon is null), 0, 'every standard category has an icon');
 

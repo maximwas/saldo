@@ -5,12 +5,17 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
+import { ErrorState } from '@/components/ui/error-state.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { Tabs } from '@/components/ui/tabs.component'
 import { useCanWrite } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { formatRate } from '@/lib/money/fx.utils'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useAccounts } from '../hooks/accounts.hook'
 import { type AccountView, totalInBase } from '../utils/accounts.utils'
 import { AccountFormSheet } from './account-form-sheet.component'
@@ -30,24 +35,24 @@ type FormTarget = { account: AccountView | null }
 export function AccountsScreen() {
   const translate = useTranslations('accounts')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const canWrite = useCanWrite()
-  const desktop = useIsDesktop()
-  const { data, isPending, isError } = useAccounts()
+  const desktop = useIsWideLayout()
+  const query = useAccounts()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const [tab, setTab] = useState<Tab>('active')
   const [form, setForm] = useState<FormTarget | null>(null)
   const [archiving, setArchiving] = useState<AccountView | null>(null)
   const [adjusting, setAdjusting] = useState<AccountView | null>(null)
 
-  if (isPending) {
-    return <div aria-busy className="h-72 rounded-card bg-subtle" />
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
+  if (!hydrated || data === undefined) {
+    return <Bone className="h-72 rounded-card" />
   }
 
   const active = data.accounts.filter((account) => account.archivedAt === null)
@@ -59,16 +64,14 @@ export function AccountsScreen() {
     type: 'conjunction',
   })
   const currencies = list.format(total.unknownCurrencies)
-  // Figma 2:21073: «Total in hryvnia» is the base-currency accounts; the note adds the foreign ones at their rate
+  // «Total in hryvnia» is every counted account in the base currency (totalInBase), the sum the note names too; the note
+  // lists the base-currency accounts and the foreign ones with their rate. Figma 2:21073 showed the base-only sum, which
+  // contradicted its own sentence (QA 12.11)
   const counted = active.filter((account) => account.includeInTotal)
   const inBase = counted.filter((account) => account.currency === data.baseCurrency)
   const converted = counted.filter((account) => account.currency !== data.baseCurrency && account.baseMinor !== null)
-  const baseMinor = inBase.reduce((sum, account) => sum + account.balanceMinor, 0)
-  const rateOf = (account: AccountView) =>
-    new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    }).format(Number(account.rate))
+  // a converted account has a base value, so it has a rate
+  const rateOf = (account: AccountView) => formatRate(account.rate ?? 0, locale)
   const totalLabel = translate('total', { currency: data.baseCurrency })
   const totalNote = [
     inBase.length > 0 ? `${list.format(inBase.map((account) => account.name))}.` : null,
@@ -83,7 +86,7 @@ export function AccountsScreen() {
               }),
             ),
           ),
-          amount: formatMinor(total.totalMinor, data.baseCurrency, locale),
+          amount: moneyText(total.totalMinor, data.baseCurrency),
         })
       : null,
     total.unknownCurrencies.length > 0 ? translate('totalUnknown', { currencies }) : null,
@@ -94,17 +97,15 @@ export function AccountsScreen() {
   return (
     <>
       {data.accounts.length === 0 ? (
-        <section className="flex flex-col items-center gap-3 rounded-card bg-card px-5 py-12 text-center shadow-card">
-          <span
-            aria-hidden
-            className="flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary-text"
-          >
-            <Wallet className="size-5" />
-          </span>
-          <h2 className="text-card-title text-text-primary">{translate('empty.title')}</h2>
-          <p className="max-w-sm text-label text-text-secondary">{translate('empty.hint')}</p>
-          {canWrite ? <Button onClick={() => setForm({ account: null })}>{translate('empty.action')}</Button> : null}
-        </section>
+        <EmptyState
+          icon={Wallet}
+          tone="blue"
+          title={translate('empty.title')}
+          hint={translate('empty.hint')}
+          action={
+            canWrite ? <Button onClick={() => setForm({ account: null })}>{translate('empty.action')}</Button> : null
+          }
+        />
       ) : (
         <>
           {/* Figma 2:21073: tabs, then the buttons, bottom-aligned; 2:21278: the buttons (Transfer stretches) above the tabs */}
@@ -165,14 +166,14 @@ export function AccountsScreen() {
                   <span className="text-body font-semibold text-text-primary">{totalLabel}</span>
                   <span className="text-label text-text-secondary">{totalNote}</span>
                 </div>
-                <Amount minor={baseMinor} currency={data.baseCurrency} size="l" />
+                <Amount minor={total.totalMinor} currency={data.baseCurrency} size="l" />
               </div>
             ) : null}
             {tab === 'active' && !desktop ? (
               <div className="flex flex-col gap-1 pt-4">
                 <div className="flex items-center gap-3">
                   <span className="flex-1 text-body font-semibold text-text-primary">{totalLabel}</span>
-                  <Amount minor={baseMinor} currency={data.baseCurrency} size="m" />
+                  <Amount minor={total.totalMinor} currency={data.baseCurrency} size="m" />
                 </div>
                 <span className="text-caption text-text-secondary">{totalNote}</span>
               </div>

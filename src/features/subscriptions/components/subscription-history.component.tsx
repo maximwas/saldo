@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
-import { useDateLabel } from '../hooks/date-label.hook'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useSubscription } from '../hooks/subscriptions.hook'
 import { SubscriptionPayments } from './subscription-payments.component'
 
@@ -10,17 +10,18 @@ type SubscriptionHistoryProps = {
   subscriptionId: string
 }
 
-// History: every payment of the series (paid at the amount paid, planned at the price in force on its date) and the
-// prices with their effective dates. Figma has no own frame for the tab; it reuses the card's payment rows.
+// History: the payments already paid or due (newest first), the planned ones ahead under their own heading (soonest
+// first, at the price in force on their date) and the prices with their effective dates. Figma has no own frame for the tab; it reuses the card's payment rows.
 export function SubscriptionHistory({ subscriptionId }: SubscriptionHistoryProps) {
   const translate = useTranslations('subscriptions.price')
-  const dateLabel = useDateLabel()
+  const dayText = useDayText()
   const { data: subscription } = useSubscription(subscriptionId)
   const prices = [...(subscription?.prices ?? [])].reverse()
 
   return (
     <>
-      <SubscriptionPayments subscriptionId={subscriptionId} view="all" />
+      <SubscriptionPayments subscriptionId={subscriptionId} view="past" />
+      <SubscriptionPayments subscriptionId={subscriptionId} view="upcoming" />
       <section className="flex flex-col gap-3 rounded-card bg-card p-5 shadow-card lg:p-6">
         <h2 className="text-card-title text-text-primary">{translate('history')}</h2>
         <ul className="flex flex-col">
@@ -30,7 +31,7 @@ export function SubscriptionHistory({ subscriptionId }: SubscriptionHistoryProps
               className="flex items-center justify-between gap-3 border-border border-b py-3 last:border-b-0"
             >
               <span className="text-body text-text-primary">
-                {translate('from', { date: dateLabel(price.effectiveOn, true) })}
+                {translate('from', { date: dayText(price.effectiveOn, 'shortYear') })}
               </span>
               <Amount minor={price.amountMinor} currency={price.currency} />
             </li>

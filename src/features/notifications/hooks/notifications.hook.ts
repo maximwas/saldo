@@ -1,11 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTranslations } from 'next-intl'
-import { notify } from '@/components/ui/toaster.component'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useClock } from '@/contexts/clock.context'
-import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useLedgerWrite, type WriteCallbacks } from '@/lib/query/ledger-write.hook'
+import { defineWrites, type LedgerWrite } from '@/lib/query/ledger-writes.mutations'
 import { clearReadNotifications, markNotificationsRead } from '../api/notifications.api'
 import { notificationQueries } from '../api/notifications.queries'
+
+/** this feature's writes in the device's queue; AppProviders registers them before the cache is restored */
+export const notificationsWrites = defineWrites('notifications', {
+  markNotificationsRead,
+  clearReadNotifications,
+})
 
 export const useNotifications = () => useQuery(notificationQueries.list())
 
@@ -17,25 +21,38 @@ export function useUnreadCount() {
   }).data
 }
 
-function useNotificationWrite<Input>(write: (input: Input, now: Date) => Promise<void>) {
+// the queue refetches money views only: a notification write refetches the list itself
+function useNotificationWrite<Input>(write: LedgerWrite<Input>) {
   const queryClient = useQueryClient()
-  const { now } = useClock()
-  const translate = useTranslations('errors')
+  const ledgerWrite = useLedgerWrite(write)
+  const mutate = (input: Input, callbacks: WriteCallbacks = {}) =>
+    ledgerWrite.mutate(input, {
+      ...callbacks,
+      onSettled: () => {
+        void queryClient.invalidateQueries({ queryKey: notificationQueries.all })
+        callbacks.onSettled?.()
+      },
+    })
 
-  return useMutation({
-    mutationFn: (input: Input) => write(input, now()),
-    onError: (error) => notify.error(translate(`db.${toPgError(error as { code?: string }).kind}`)),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: notificationQueries.all }),
-  })
+  return {
+    ...ledgerWrite,
+    mutate,
+  }
 }
 
 /** ids = undefined marks all unread ones */
-export const useMarkRead = () =>
-  useNotificationWrite((ids: string[] | undefined, now) =>
-    markNotificationsRead(getBrowserSupabase(), {
-      ids,
-      now,
-    }),
-  )
+export function useMarkRead() {
+  const { now } = useClock()
+  const write = useNotificationWrite(notificationsWrites.markNotificationsRead)
 
-export const useClearRead = () => useNotificationWrite((_: undefined) => clearReadNotifications(getBrowserSupabase()))
+  return {
+    ...write,
+    mutate: (ids: string[] | undefined) =>
+      write.mutate({
+        ids,
+        readAt: now().toISOString(),
+      }),
+  }
+}
+
+export const useClearRead = () => useNotificationWrite(notificationsWrites.clearReadNotifications)

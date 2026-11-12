@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { localDate } from '@/lib/utils/clock.utils'
-import { addDaysIso, bucketOf, groupByBucket } from './obligation-groups.utils'
+import { addDaysIso, bucketOf, groupByBucket, laterByMonth } from './obligation-groups.utils'
 
 const due = (dueOn: string) => ({ dueOn })
 
@@ -41,5 +41,32 @@ describe('bucketOf', () => {
     ['2026-11-07', 'later'],
   ])('puts %s into %s', (dueOn, bucket) => {
     expect(bucketOf(dueOn, '2026-10-30', '2026-11-06')).toBe(bucket)
+  })
+})
+
+describe('laterByMonth', () => {
+  const rows = ['2026-11-25', '2026-12-03', '2026-12-20', '2027-01-05', '2027-02-05'].map((dueOn) => ({ dueOn }))
+
+  it('groups the later payments by month and opens the months that start within 30 days', () => {
+    const { months, shown } = laterByMonth(rows, '2026-11-12')
+
+    expect(months.map((group) => [group.month, group.rows.length])).toEqual([
+      ['2026-11', 1],
+      ['2026-12', 2],
+      ['2027-01', 1],
+      ['2027-02', 1],
+    ])
+    expect(shown).toBe(2)
+  })
+
+  it('always opens the first month, however far it is', () => {
+    expect(laterByMonth([{ dueOn: '2027-06-01' }], '2026-11-12').shown).toBe(1)
+  })
+
+  it('has nothing to open without payments', () => {
+    expect(laterByMonth([], '2026-11-12')).toEqual({
+      months: [],
+      shown: 0,
+    })
   })
 })

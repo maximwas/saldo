@@ -2,7 +2,7 @@
 
 Особистий фінансовий PWA для двох і більше людей: у кожного свій простір, який можна розшарити (editor / viewer):
 рахунки, операції, планові платежі, підписки, кредити, борги, бюджет, резерви, авто, податки, календар,
-нагадування. Next.js 16 + Supabase (Frankfurt) + TanStack Query, деплой на Vercel (fra1),
+нагадування. Next.js 16 + Supabase (Frankfurt) + TanStack Query, деплой на Cloudflare Workers (OpenNext, Workers Builds),
 `saldo.maksymvasianin.com`. Репозиторій публічний. Мова інтерфейсу й документації — українська, код — англійська.
 
 ## Документи

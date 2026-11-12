@@ -1,14 +1,17 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useLedger } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
+import { calendarQueries } from '../api/calendar.queries'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
-import { dayDate, sumTotals } from '../utils/calendar.utils'
+import { sumTotals } from '../utils/calendar.utils'
 
 // Figma «Saldo» → Calendar 2:66942 totals (SummaryStrip 2:10082): a card, padding 20, three tiles on subtle (padding
 // 12 / 16, radius md, label over the amount; the Result tile adds «with the plan to the end of the month»); on phones
@@ -16,14 +19,39 @@ import { dayDate, sumTotals } from '../utils/calendar.utils'
 // are the period's day totals for the active filter.
 export function CalendarSummary() {
   const translate = useTranslations('calendar')
-  const format = useFormatter()
-  const locale = useLocale()
-  const { baseCurrency } = useLedger()
-  const { view } = useCalendarParams()
+  const dayText = useDayText()
+  const moneyText = useMoneyText()
+  const { ledgerId, baseCurrency, timeZone } = useLedger()
+  const { view, today, filter } = useCalendarParams()
   const { params, totals } = useCalendarData()
   const sum = sumTotals(totals.data ?? [])
+  // the whole current month without a filter reads the plans the way Overview, Operations and Budget do (overdue ones
+  // included); another period or a filter keeps its own outgoing plans of the days on screen
+  const currentMonth =
+    (view === 'month' || view === 'list') &&
+    params.from.slice(0, 7) === today.slice(0, 7) &&
+    Object.keys(filter).length === 0
+  const planned = useQuery({
+    ...calendarQueries.planned(
+      {
+        ledgerId,
+        baseCurrency,
+        timeZone,
+      },
+      today,
+    ),
+    enabled: currentMonth,
+  })
+  // signed like sum.planMinor (what goes out is negative); null = an amount or a rate is unknown, never 0
+  let planMinor: number | null = sum.planMinor
 
-  if (totals.isPending) {
+  if (currentMonth) {
+    planMinor = planned.data == null ? null : -planned.data
+  }
+
+  const hydrated = useHydrated()
+
+  if (!hydrated || totals.isPending) {
     return (
       <SkeletonCard aria-busy className="flex-row flex-wrap gap-3 p-4 lg:p-5">
         {[0, 1, 2, 3].map((cell) => (
@@ -50,17 +78,19 @@ export function CalendarSummary() {
       kind: sum.resultMinor < 0 ? ('shortfall' as const) : ('income' as const),
     },
   ]
-  const withPlan = format.dateTime(dayDate(params.to), {
-    timeZone: 'UTC',
-    day: '2-digit',
-    month: '2-digit',
-  })
+
+  // a day with plans only: three «0,00» tiles say nothing, the day's list below says it all (QA2 #7)
+  if (view === 'day' && sum.incomeMinor === 0 && sum.expenseMinor === 0) {
+    return null
+  }
+
+  const withPlanMinor = planMinor === null || planMinor === 0 ? null : sum.resultMinor + planMinor
   const planCaption =
-    sum.planMinor === 0
+    withPlanMinor === null
       ? null
       : translate(view === 'month' || view === 'list' ? 'summary.planMonth' : 'summary.planUntil', {
-          date: withPlan,
-          amount: formatMinor(sum.resultMinor + sum.planMinor, baseCurrency, locale),
+          date: dayText(params.to, 'short'),
+          amount: `${withPlanMinor > 0 ? '+' : ''}${moneyText(withPlanMinor, baseCurrency)}`,
         })
 
   return (

@@ -1,7 +1,6 @@
 'use client'
 
 import { strToU8, type Zippable, zipSync } from 'fflate'
-import { Download } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
@@ -59,8 +58,8 @@ async function exportArchive(ledgerId: string, day: string) {
   saveFile(new Blob([zipSync(files)], { type: 'application/zip' }), `saldo-${day}.zip`)
 }
 
-// Settings → Data (Figma "Saldo" Settings tabs 2:30898 list a Data tab; no frame of it: the house Card). Any member
-// exports the active space: operations as CSV, or everything as JSON with the receipt files in one zip.
+// Settings → Data (Figma «Saldo» section 43:116905: idle 43:116906 / 43:117209, exporting 43:117394, error 43:117766):
+// a Card with the hint and two Secondary buttons, gap 16, both disabled while a file is prepared. Any member exports the active space: operations as CSV, or everything as JSON with the receipt files in one zip.
 export function DataExportCard() {
   const translate = useTranslations('settings.data')
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -68,39 +67,41 @@ export function DataExportCard() {
   const [pending, setPending] = useState<ExportKind | null>(null)
 
   async function run(kind: ExportKind) {
+    const exportFile = kind === 'csv' ? exportCsv : exportArchive
+
     setPending(kind)
 
     try {
-      await (kind === 'csv' ? exportCsv : exportArchive)(ledgerId, today)
+      await exportFile(ledgerId, today)
     } catch {
-      notify.error(translate('exportFailed'), { onRetry: () => void run(kind) })
-    } finally {
-      setPending(null)
+      notify.error(translate('exportFailed'))
     }
+
+    setPending(null)
   }
 
   return (
     <Card title={translate('exportTitle')}>
-      <p className="text-label text-text-secondary">{translate('exportHint')}</p>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Button
-          variant="secondary"
-          disabled={pending !== null}
-          aria-busy={pending === 'csv'}
-          onClick={() => run('csv')}
-        >
-          <Download aria-hidden size={20} />
-          {translate('csv')}
-        </Button>
-        <Button
-          variant="secondary"
-          disabled={pending !== null}
-          aria-busy={pending === 'archive'}
-          onClick={() => run('archive')}
-        >
-          <Download aria-hidden size={20} />
-          {translate('archive')}
-        </Button>
+      <div className="flex flex-col gap-4">
+        <p className="text-label text-text-secondary">{translate('exportHint')}</p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button
+            variant="secondary"
+            disabled={pending !== null}
+            aria-busy={pending === 'csv'}
+            onClick={() => run('csv')}
+          >
+            {translate('csv')}
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={pending !== null}
+            aria-busy={pending === 'archive'}
+            onClick={() => run('archive')}
+          >
+            {translate('archive')}
+          </Button>
+        </div>
       </div>
     </Card>
   )

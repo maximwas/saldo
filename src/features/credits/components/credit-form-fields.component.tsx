@@ -3,7 +3,7 @@
 import { addMonths, format, parseISO } from 'date-fns'
 import { Plus, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useFieldArray, useFormContext } from 'react-hook-form'
+import { useFieldArray, useFormContext, useFormState, useWatch } from 'react-hook-form'
 import type { z } from 'zod'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -26,8 +26,11 @@ type MoneyFieldProps = {
 }
 
 export function MoneyField({ name, label, hint, required }: MoneyFieldProps) {
-  const { control, watch } = useCreditForm()
-  const currency = watch('currency')
+  const { control } = useCreditForm()
+  const currency = useWatch({
+    control,
+    name: 'currency',
+  })
 
   return (
     <FormField
@@ -138,12 +141,16 @@ const nextRowDate = (last: string | undefined, today: string) =>
 export function ScheduleFields() {
   const translate = useTranslations('credits')
   const today = useToday()
-  const { control, getValues, formState } = useCreditForm()
+  const { control, getValues } = useCreditForm()
   const rows = useFieldArray({
     control,
     name: 'rows',
   })
-  const rowsError = formState.errors.rows?.message ?? formState.errors.rows?.root?.message
+  const { errors } = useFormState({
+    control,
+    name: 'rows',
+  })
+  const rowsError = errors.rows?.message ?? errors.rows?.root?.message
 
   const addRow = () =>
     rows.append({

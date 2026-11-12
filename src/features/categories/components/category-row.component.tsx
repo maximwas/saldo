@@ -7,8 +7,8 @@ import { type ReactNode, useState } from 'react'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Menu, type MenuItem } from '@/components/ui/menu.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import type { CategoryView } from '../utils/categories.utils'
 
 type CategoryRowProps = {
@@ -35,7 +35,7 @@ type CategoryRowProps = {
 
 // Figma «Saldo» → CategoryRow 2:49893 (desktop 2:49639, mobile 2:50386): 64 high, gap 12, a 32×44 grip (when it can be
 // dragged), badge 40, the name body-medium over a caption with the operation count in text-tertiary, the archive pill, «···» 44,
-// border-bottom. The dragged row is raised (color-raised, radius-md, shadow-float, side padding 12: 35:104589).
+// border-bottom. The system «Subscriptions» row carries a muted «System» pill (43:119575 / 43:119960). The dragged row is raised (color-raised, radius-md, shadow-float, side padding 12: 35:104589).
 export function CategoryRow({
   category,
   operations,
@@ -53,7 +53,7 @@ export function CategoryRow({
   subrows,
 }: CategoryRowProps) {
   const translate = useTranslations('categories')
-  const desktop = useIsDesktop()
+  const desktop = useIsWideLayout()
   const canWrite = useCanWrite()
   const controls = useDragControls()
   const [dragging, setDragging] = useState(false)
@@ -67,25 +67,36 @@ export function CategoryRow({
         },
       ]
     : [
-        {
-          label: translate('menu.up'),
-          onSelect: () => onMoveAction?.('up'),
-          disabled: !canMoveUp,
-        },
-        {
-          label: translate('menu.down'),
-          onSelect: () => onMoveAction?.('down'),
-          disabled: !canMoveDown,
-        },
-        {
-          label: translate('menu.edit'),
-          onSelect: () => onEditAction?.(),
-        },
-        {
-          label: translate('menu.delete'),
-          onSelect: () => onArchiveAction?.(),
-          danger: true,
-        },
+        ...(canMoveUp
+          ? [
+              {
+                label: translate('menu.up'),
+                onSelect: () => onMoveAction?.('up'),
+              },
+            ]
+          : []),
+        ...(canMoveDown
+          ? [
+              {
+                label: translate('menu.down'),
+                onSelect: () => onMoveAction?.('down'),
+              },
+            ]
+          : []),
+        // a system category («Subscriptions», «Credits») is never renamed or deleted (system_*_category.sql)
+        ...(category.systemKey
+          ? []
+          : [
+              {
+                label: translate('menu.edit'),
+                onSelect: () => onEditAction?.(),
+              },
+              {
+                label: translate('menu.delete'),
+                onSelect: () => onArchiveAction?.(),
+                danger: true,
+              },
+            ]),
       ]
 
   function metaOf() {
@@ -104,7 +115,7 @@ export function CategoryRow({
 
   const meta = metaOf()
   const body = (
-    <div className="flex min-h-16 items-center gap-3">
+    <div className="flex min-h-16 items-start gap-3 py-2.5">
       {sortable ? (
         <button
           type="button"
@@ -116,11 +127,12 @@ export function CategoryRow({
         </button>
       ) : null}
       <CategoryBadge icon={category.icon} color={category.color} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
         <span className="truncate text-body font-medium text-text-primary">{category.name}</span>
         {meta ? <span className="text-caption text-text-tertiary">{meta}</span> : null}
       </div>
       {archived ? <Badge tone="muted">{translate('archivedBadge')}</Badge> : null}
+      {category.systemKey && !archived ? <Badge tone="muted">{translate('systemBadge')}</Badge> : null}
       {canWrite && !menuHidden ? <Menu label={translate('menu.label')} items={items} /> : null}
     </div>
   )

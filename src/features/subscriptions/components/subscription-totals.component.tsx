@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useSubscriptionRates, useSubscriptions } from '../hooks/subscriptions.hook'
@@ -40,7 +41,7 @@ export function SubscriptionTotals() {
   const rates = useSubscriptionRates()
 
   if (!subscriptions.data || !rates.data) {
-    return <div aria-busy className="h-32 rounded-card bg-subtle" />
+    return <Bone className="h-32 rounded-card" />
   }
 
   const totals = subscriptionTotals({

@@ -1,5 +1,6 @@
 {
-  "loadFailed": "Could not load categories. Refresh the page.",
+  "loadFailed": "Could not load categories",
+  "refreshFailed": "Could not refresh categories",
   "kindLabel": "Category kind",
   "tabs": {
     "expense": "Expenses · {count}",
@@ -17,6 +18,7 @@
   "empty": "No categories yet",
   "archiveTitle": "Archive · {count}",
   "archivedBadge": "Archived",
+  "systemBadge": "System",
   "menu": {
     "label": "Category actions",
     "up": "Move up",

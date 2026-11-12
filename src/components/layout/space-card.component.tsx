@@ -35,7 +35,7 @@ export function SpaceCard() {
           {/* shortcut: Figma adds "only you"; the member count is not loaded yet, so the role only */}
           <p className="text-caption text-text-tertiary">{translate(`roles.${current.role}`)}</p>
           <span className="w-fit">
-            <SyncIndicator className="h-7 rounded-full bg-subtle" />
+            <SyncIndicator platform="topbar" />
           </span>
         </div>
       </div>
@@ -46,11 +46,11 @@ export function SpaceCard() {
           platform="button"
           onSelectAction={switchLedger}
         />
-        {/* shortcut: Invite opens Settings until the access tab (plan 1.18) exists */}
+        {/* Invite opens Access with the invite sheet already open (?invite=true) */}
         {canInvite && (
           <Button
             variant="ghost"
-            render={<Link href="/settings" />}
+            render={<Link href="/settings/access?invite=true" />}
             nativeButton={false}
             className="cursor-pointer gap-1.5 px-3 bg-primary-soft text-label font-semibold"
           >

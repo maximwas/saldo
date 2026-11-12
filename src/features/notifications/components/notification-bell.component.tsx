@@ -4,7 +4,8 @@ import { Popover } from '@base-ui/react/popover'
 import { Bell } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet } from '@/components/ui/sheet.component'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useUnreadCount } from '../hooks/notifications.hook'
 import { NotificationsPanel, useBellTitle } from './notifications-panel.component'
 
@@ -13,7 +14,7 @@ import { NotificationsPanel, useBellTitle } from './notifications-panel.componen
 export function NotificationBell() {
   const translate = useTranslations('shell')
   const unread = useUnreadCount() ?? 0
-  const desktop = useIsDesktop()
+  const desktop = useIsWideLayout()
   const sheetTitle = useBellTitle()
   const [open, setOpen] = useState(false)
 
@@ -22,7 +23,7 @@ export function NotificationBell() {
       <Popover.Root open={open && desktop} onOpenChange={setOpen}>
         <Popover.Trigger
           aria-label={unread > 0 ? translate('notificationsUnread', { count: unread }) : translate('notifications')}
-          className="relative flex size-10 cursor-pointer items-center justify-center rounded-md border border-border bg-card text-text-secondary outline-none after:absolute after:-inset-0.5 focus-visible:ring-2 focus-visible:ring-primary lg:size-11 lg:after:inset-0"
+          className="relative flex size-10 cursor-pointer items-center after:absolute after:-inset-0.5 justify-center rounded-md border border-border bg-card text-text-secondary outline-none after:absolute after:-inset-0.5 focus-visible:ring-2 focus-visible:ring-primary lg:size-11 lg:after:inset-0"
         >
           <Bell aria-hidden size={20} />
           {unread > 0 ? <span aria-hidden className="absolute top-2 right-2 size-2 rounded-full bg-primary" /> : null}

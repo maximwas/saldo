@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currencySymbol, formatMinor, fromMinor, toMinor } from './money.utils'
+import { amountText, currencyName, currencySymbol, formatMinor, fromMinor, toMinor } from './money.utils'
 
 // Intl puts no-break spaces between groups and before the sign; compare with plain spaces
 const plain = (text: string) => text.replace(/\s/g, ' ')
@@ -25,6 +25,12 @@ describe('currencySymbol', () => {
   it('gives the narrow sign', () => {
     expect(currencySymbol('UAH', 'uk')).toBe('₴')
     expect(currencySymbol('EUR', 'en')).toBe('€')
+  })
+
+  it('keeps «$» for the US dollar only: another dollar shows its own sign', () => {
+    expect(currencySymbol('USD', 'uk')).toBe('$')
+    expect(currencySymbol('CAD', 'uk')).toBe('CAD')
+    expect(currencySymbol('CAD', 'en')).toBe('CA$')
   })
 })
 
@@ -53,5 +59,26 @@ describe('fromMinor', () => {
     expect(fromMinor(123_456, 'UAH')).toBe('1234.56')
     expect(fromMinor(-5, 'EUR')).toBe('-0.05')
     expect(fromMinor(500, 'JPY')).toBe('500')
+  })
+})
+
+describe('amountText', () => {
+  it('masks a known, an unknown and a zero sum alike when amounts are hidden', () => {
+    expect(amountText(123_456, 'UAH', 'uk', true)).toBe('•••• ₴')
+    expect(amountText(null, 'EUR', 'uk', true)).toBe('•••• €')
+    expect(amountText(0, 'USD', 'uk', true)).toBe('•••• $')
+  })
+
+  it('shows «? ₴» for an unknown sum and the formatted sum otherwise', () => {
+    expect(amountText(null, 'UAH', 'uk', false)).toBe('? ₴')
+    expect(plain(amountText(-80_000, 'EUR', 'uk', false))).toBe(plain(formatMinor(-80_000, 'EUR', 'uk')))
+  })
+})
+
+describe('currencyName', () => {
+  it('takes the name from Intl and capitalises it as a row title', () => {
+    expect(currencyName('USD', 'uk')).toBe('Долар США')
+    expect(currencyName('PLN', 'uk')).toBe('Польський злотий')
+    expect(currencyName('EUR', 'en')).toBe('Euro')
   })
 })

@@ -15,6 +15,8 @@ export const limitFormSchema = z.object({
     .nullable()
     .refine((minor) => minor !== null, 'limitInvalid'),
   carryMode: z.enum(CARRY_MODES),
+  /** over the limit: the category whose limit gives up the raise; null = raise without moving */
+  sourceId: z.uuid().nullable(),
 })
 
 export type LimitFormInput = z.input<typeof limitFormSchema>

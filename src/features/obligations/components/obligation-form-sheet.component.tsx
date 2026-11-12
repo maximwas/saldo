@@ -1,8 +1,9 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import type { z } from 'zod'
+import { AddedBy } from '@/components/ui/author.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -10,14 +11,14 @@ import { Input } from '@/components/ui/input.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { fromMinor, toMinor } from '@/lib/money/money.utils'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import type { ObligationOptions, ObligationRow } from '../api/obligations.api'
 import { useCreateObligation, useObligationOptions, useUpdateObligation } from '../hooks/obligations.hook'
 import {
@@ -44,7 +45,7 @@ const NO_OPTIONS: ObligationOptions = {
 // No Figma frame for create / edit yet ( has Confirm payment only): built from the form primitives.
 export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheetProps) {
   const translate = useTranslations('obligations')
-  const translateErrors = useTranslations('errors')
+  const dbErrorText = useDbErrorText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const today = useToday()
   const options = useObligationOptions().data ?? NO_OPTIONS
@@ -62,8 +63,10 @@ export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheet
       categoryId: obligation?.categoryId ?? null,
     },
   })
-  const direction = form.watch('direction')
-  const currency = form.watch('currency')
+  const [direction, currency] = useWatch({
+    control: form.control,
+    name: ['direction', 'currency'],
+  })
   const pending = create.isPending || update.isPending
   const kind = direction === 'in' ? 'income' : 'expense'
   const none = {
@@ -77,7 +80,7 @@ export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheet
         notify.success(translate('form.saved'))
         onClose()
       },
-      onError: (error: unknown) => notify.error(translateErrors(`db.${toPgError(error as { code?: string }).kind}`)),
+      onError: (error: unknown) => notify.error(dbErrorText(error)),
     }
 
     if (obligation) {
@@ -107,9 +110,7 @@ export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheet
       title={translate(obligation ? 'form.editTitle' : 'form.createTitle')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onClose}>
-            {translate('form.cancel')}
-          </Button>
+          <SheetClose>{translate('form.cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={pending}>
             {translate('form.save')}
           </Button>
@@ -117,10 +118,13 @@ export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheet
       }
     >
       <form id={FORM_ID} onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+        {/* Figma 33:101623 / 33:101738: who added it, at the top of the details */}
+        {obligation ? <AddedBy userId={obligation.createdBy} /> : null}
         <FormField
           control={form.control}
           name="title"
           label={translate('form.title')}
+          required
           render={(field) => <Input {...field} autoFocus />}
         />
         <SegmentedControl

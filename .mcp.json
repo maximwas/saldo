@@ -7,6 +7,14 @@
     "supabase-preview": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=kwzskdqswlqnbsboqqbl&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"
+    },
+    "saldo": {
+      "type": "http",
+      "url": "https://saldo.maksymvasianin.com/api/mcp"
+    },
+    "saldo-local": {
+      "type": "http",
+      "url": "http://localhost:3000/api/mcp"
     }
   }
 }

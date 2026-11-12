@@ -34,6 +34,9 @@
   --color-primary-hover: #1f55e0;
   --color-primary-soft: #eaf0ff;
   --color-primary-text: #1f55e0;   /* links on white or primary-soft */
+  --color-hero-card: #2b66f6;      /* Overview «Available» card = primary in light; not --color-hero: text-hero is a size */
+  --color-hero-panel: #1f55e0;     /* its «how we count» panel */
+  --color-on-hero: #ffffff;        /* text on hero and its panel: 4.85 / 6.12 */
 
   /* status: default = fill/icon, soft = pill background, text = text on white or soft */
   --color-positive: #12b76a;       /* income, paid */
@@ -178,6 +181,10 @@
   --color-primary-hover: #8db1ff;
   --color-primary-soft: #1d2b4d;
   --color-primary-text: #8db1ff;
+  /* the hero keeps white text on a deeper blue: the light dark-primary glared on the dark app (QA 12.11.2026) */
+  --color-hero-card: #2a5ad8;      /* white 5.91, vs app 3.0 */
+  --color-hero-panel: #2149b8;
+  --color-on-hero: #ffffff;
 
   --color-positive: #34c77e;  --color-positive-soft: #15302a;  --color-positive-text: #5fd59a;
   --color-negative: #f26b60;  --color-negative-soft: #3a1e24;  --color-negative-text: #ff928a;

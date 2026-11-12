@@ -1,5 +1,6 @@
 {
-  "loadFailed": "Could not load the calendar. Reload the page.",
+  "loadFailed": "Could not load the calendar",
+  "refreshFailed": "Could not refresh the calendar",
   "views": {
     "label": "Calendar view",
     "month": "Month",
@@ -103,35 +104,31 @@
   },
   "more": "{count} more",
   "day": {
-    "fact": "Fact",
-    "plan": "Plan",
-    "noEntries": "No entries",
-    "noExpenses": "No expenses",
-    "factSum": "Fact <amount></amount>",
-    "planSum": "Plan <amount></amount>",
-    "hint": "The calendar does not confirm a payment: the fact appears after «Paid».",
     "add": "Add an entry on {date}",
-    "plannedOn": "Planned date {date}",
-    "paidOf": "Paid <paid></paid> of <planned></planned>",
     "open": "Open the day {date}",
-    "openHint": "Tap an entry to open its details — the filters are kept.",
-    "emptyTitle": "No entries on this day",
-    "emptyText": "No actual operations and no planned payments.",
-    "title": "{date} · {count}",
-    "today": "Today, {weekday} {date}"
+    "today": "Today, {weekday} {date}",
+    "hint": "Tap an entry to pay it, move it or remove it.",
+    "empty": "No operations on this day yet",
+    "groups": {
+      "done": "Already happened",
+      "planned": "Planned",
+      "paidElsewhere": "Paid on another day"
+    }
   },
   "actions": {
-    "pay": "Paid",
+    "pay": "Pay",
     "move": "Change the date",
     "source": {
-      "subscription": "To the subscription",
-      "credit": "To the credit",
-      "debt": "To the debt",
-      "other": "To payments"
+      "subscription": "Open the subscription",
+      "credit": "Open the credit",
+      "debt": "Open the debt",
+      "other": "Open the payment"
     },
-    "remove": "Remove entry"
+    "remove": "Remove from the calendar",
+    "unpay": "Cancel the payment",
+    "operation": "Open the operation"
   },
-  "listTitle": "{period} · newest first",
+  "listTitle": "All entries of {month}",
   "empty": {
     "title": "Nothing matches the filter",
     "text": "Nothing was found in this period. Change or reset the filters.",
@@ -140,12 +137,47 @@
   },
   "viewOnly": "View only: the space owner pays, moves dates and adds entries.",
   "remove": {
-    "title": "Remove the entry {name} {date}?",
+    "title": "Remove {name} {date} from the calendar?",
     "consequences": "The planned payment of {amount} for {date} disappears from the calendar, Upcoming and the «Available» figure.",
     "consequencesNoAmount": "The planned payment for {date} disappears from the calendar, Upcoming and the «Available» figure.",
     "details": "{source, select, subscription {The {name} subscription and its next payments stay. To remove the whole subscription, cancel it in the subscription card. This entry has no actual operations.} other {Other payments stay. This entry has no actual operations.}}",
     "keep": "Cancel",
-    "confirm": "Remove entry",
-    "done": "Entry removed"
-  }
+    "confirm": "Remove from the calendar",
+    "done": "Entry removed from the calendar"
+  },
+  "totals": {
+    "spent": "Spent",
+    "received": "Received",
+    "planned": "Planned",
+    "expected": "Expected"
+  },
+  "paidOn": "Paid {date}",
+  "howTo": {
+    "planned": "planned, not paid yet",
+    "paid": "paid, the sum is on the payment day",
+    "totals": "At the bottom of a cell: «Spent» has already happened, «Planned» is still to pay",
+    "colours": "Colour is the kind of entry:",
+    "totalsDay": "At the bottom of a day: «Spent» already happened, «Planned» is still to pay",
+    "marks": {
+      "paid": "paid",
+      "planned": "planned, not paid yet",
+      "paidEarlier": "paid earlier, on another day"
+    }
+  },
+  "status": {
+    "planned": "not paid yet",
+    "partial": "paid {paid} of {planned}",
+    "overdue": "the date has passed, not paid yet",
+    "paid": "{today, select, yes {paid today} other {paid {date}}}",
+    "paidElsewhere": "{today, select, yes {paid today} other {paid {date}}}, the plan was for {planned}",
+    "line": "{type} · {status}"
+  },
+  "popup": {
+    "source": "Where this entry comes from",
+    "planned": "Planned for {date} · {status}",
+    "paid": "Paid {date}",
+    "paidElsewhere": "Paid {date} · the plan was for {planned}",
+    "fact": "{type} · {date}"
+  },
+  "installment": "{type} · installment {number} of {total}"
 }

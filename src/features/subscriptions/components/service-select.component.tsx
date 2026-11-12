@@ -10,8 +10,9 @@ import { useRipple } from '@/components/ui/ripple.hook'
 import { FIELD_CLASS } from '@/components/ui/select.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { SERVICE_CHOICES } from '@/components/ui/service-logo.utils'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet } from '@/components/ui/sheet.component'
 import { cn } from '@/lib/utils/cn.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 
 /** the picker value of the custom subscription row; a catalog service is its own name */
 export const CUSTOM_SERVICE = 'custom'
@@ -133,7 +134,7 @@ export function ServiceSelect({
   'aria-required': required,
 }: ServiceSelectProps) {
   const translate = useTranslations('subscriptions.form')
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const [open, setOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const label = value === CUSTOM_SERVICE ? translate('serviceCustom') : value

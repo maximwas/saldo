@@ -1,13 +1,13 @@
-import { AlertTriangle } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Card } from '@/components/ui/card.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { Overview } from '../api/overview.api'
-import { isoToDate } from '../utils/overview.utils'
 
 type UpcomingCardProps = {
   overview: Overview
@@ -25,7 +25,7 @@ const STATE_TONE = {
 // counts payments past their date.
 export function UpcomingCard({ overview }: UpcomingCardProps) {
   const translate = useTranslations('overview')
-  const format = useFormatter()
+  const dayText = useDayText()
   const accountName = (id: string | null) => overview.accounts.find((account) => account.id === id)?.name
 
   function subtitle(obligation: Overview['upcoming'][number]) {
@@ -56,7 +56,7 @@ export function UpcomingCard({ overview }: UpcomingCardProps) {
       ) : (
         <ul className="flex flex-col">
           {overview.upcoming.map((obligation) => (
-            <li key={obligation.id} className="flex items-center gap-4 py-3">
+            <li key={obligation.id} className="flex items-start gap-4 py-3">
               <ServiceLogo name={obligation.title} />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <p className="truncate text-body font-medium text-text-primary">{obligation.title}</p>
@@ -74,11 +74,7 @@ export function UpcomingCard({ overview }: UpcomingCardProps) {
                 <span className="text-label text-text-secondary">
                   {obligation.dueOn === overview.today
                     ? translate('upcoming.today')
-                    : format.dateTime(isoToDate(obligation.dueOn), {
-                        timeZone: 'UTC',
-                        day: '2-digit',
-                        month: '2-digit',
-                      })}
+                    : dayText(obligation.dueOn, 'short')}
                 </span>
               </div>
             </li>
@@ -86,16 +82,21 @@ export function UpcomingCard({ overview }: UpcomingCardProps) {
         </ul>
       )}
       {overview.overdueCount > 0 && (
-        <Link
-          href={'/payments' as Route}
-          className="flex cursor-pointer items-center gap-3 rounded-inner bg-warning-soft px-4 py-3 text-warning-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        <Banner
+          kind="warning"
+          className="relative"
+          action={
+            // stretched over the whole banner (after:inset-0), so a tap anywhere on it opens the payments
+            <Link
+              href={'/payments' as Route}
+              className="cursor-pointer rounded-xs outline-none after:absolute after:inset-0 after:rounded-inner focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {translate('upcoming.review')}
+            </Link>
+          }
         >
-          <AlertTriangle aria-hidden size={20} className="shrink-0" />
-          <span className="flex-1 text-body font-medium">
-            {translate('upcoming.overdue', { count: overview.overdueCount })}
-          </span>
-          <span className="shrink-0 text-label font-semibold">{translate('upcoming.review')}</span>
-        </Link>
+          {translate('upcoming.overdue', { count: overview.overdueCount })}
+        </Banner>
       )}
     </Card>
   )

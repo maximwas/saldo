@@ -9,7 +9,11 @@ test('витрата понад ліміт категорії показує «�
   const mark = `e2e-${crypto.randomUUID().slice(0, 8)}`
 
   await page.goto('/budget')
-  await page.getByRole('button', { name: 'Додати ліміт' }).first().click()
+  // an empty month offers «add a limit», a month with limits has «change limits» in the limits card
+  await page
+    .getByRole('button', { name: /^(Додати ліміт|Змінити ліміти)$/ })
+    .first()
+    .click()
 
   const limit = page.getByRole('dialog')
 

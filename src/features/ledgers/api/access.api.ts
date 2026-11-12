@@ -1,3 +1,4 @@
+import { versionConflict } from '@/lib/supabase/version-conflict.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import {
   type CreateInviteInput,
@@ -102,10 +103,7 @@ export async function updateLedgerSettings(supabase: SaldoClient, input: UpdateL
 
   // a stale version (or a non-owner, whom RLS hides the row from) matches nothing: same answer as the RPCs' PT409
   if (data.length === 0) {
-    throw {
-      code: 'PT409',
-      message: 'ledger changed elsewhere',
-    }
+    throw versionConflict()
   }
 }
 
@@ -125,10 +123,15 @@ export async function getMyNotifyChannels(supabase: SaldoClient, ledgerId: strin
   return data?.notify_channels ?? []
 }
 
-export async function setMyNotifyChannels(supabase: SaldoClient, ledgerId: string, channels: string[]) {
+type MyNotifyChannelsInput = {
+  ledgerId: string
+  channels: string[]
+}
+
+export async function setMyNotifyChannels(supabase: SaldoClient, input: MyNotifyChannelsInput) {
   const { error } = await supabase.rpc('set_my_notify_channels', {
-    p_ledger_id: ledgerId,
-    p_channels: channels,
+    p_ledger_id: input.ledgerId,
+    p_channels: input.channels,
   })
 
   if (error) {
@@ -171,4 +174,24 @@ export async function getMemberContributions(supabase: SaldoClient, ledgerId: st
     operations: operations.count ?? 0,
     payments: payments.count ?? 0,
   }
+}
+
+/** members of a space under RLS (only a member sees them), for clients without the secret key: no emails */
+export async function listMembers(supabase: SaldoClient, ledgerId: string) {
+  const { data, error } = await supabase
+    .from('ledger_members')
+    .select('user_id, role, display_name, joined_at')
+    .eq('ledger_id', ledgerId)
+    .order('joined_at')
+
+  if (error) {
+    throw error
+  }
+
+  return data.map((row) => ({
+    userId: row.user_id,
+    role: row.role,
+    displayName: row.display_name,
+    joinedAt: row.joined_at,
+  }))
 }

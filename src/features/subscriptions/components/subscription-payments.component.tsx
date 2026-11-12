@@ -3,12 +3,15 @@
 import { useTranslations } from 'next-intl'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useToday } from '@/contexts/clock.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import type { SubscriptionPayment } from '../api/subscriptions.api'
-import { useDateLabel } from '../hooks/date-label.hook'
 import { useSubscription, useSubscriptionPayments } from '../hooks/subscriptions.hook'
-import { newestFirst, recentPayments } from '../utils/subscription-payments.utils'
+import { historyPayments, recentPayments } from '../utils/subscription-payments.utils'
 
 const STATE_TONE = {
   plan: 'plan',
@@ -23,8 +26,8 @@ const shownMinor = (payment: SubscriptionPayment) =>
 
 type SubscriptionPaymentsProps = {
   subscriptionId: string
-  /** Overview shows the last paid and the next two; History shows all */
-  view: 'recent' | 'all'
+  /** Overview shows the last paid and the next two; History shows the past and the planned ones apart */
+  view: 'recent' | 'past' | 'upcoming'
   action?: React.ReactNode
 }
 
@@ -34,31 +37,35 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
   const translate = useTranslations('subscriptions.payments')
   const translateState = useTranslations('subscriptions.paymentState')
   const today = useToday()
-  const dateLabel = useDateLabel()
+  const dayText = useDayText()
   const { data: subscription } = useSubscription(subscriptionId)
-  const { data, isPending, isError } = useSubscriptionPayments(subscriptionId)
-  const shown = view === 'recent' ? recentPayments(data ?? [], today) : newestFirst(data ?? [])
+  const query = useSubscriptionPayments(subscriptionId)
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const shown = view === 'recent' ? recentPayments(data ?? [], today) : historyPayments(data ?? [], today)[view]
+
+  // the error card takes the section's place: a card inside the card would double the frame
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+  }
 
   return (
     <section className="flex flex-col gap-4 rounded-card bg-card p-5 shadow-card lg:p-6">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-card-title text-text-primary">{translate(view === 'recent' ? 'recent' : 'all')}</h2>
+        <h2 className="text-card-title text-text-primary">{translate(view)}</h2>
         {action}
       </div>
-      {isPending ? <div aria-busy className="h-32 rounded-md bg-subtle" /> : null}
-      {isError ? (
-        <p role="alert" className="text-body text-negative-text">
-          {translate('loadFailed')}
-        </p>
+      {data === undefined ? <Bone className="h-32 rounded-md" /> : null}
+      {data && shown.length === 0 ? (
+        <p className="text-label text-text-secondary">{translate(`empty.${view}`)}</p>
       ) : null}
-      {data && shown.length === 0 ? <p className="text-label text-text-secondary">{translate('empty')}</p> : null}
       <ul className="flex flex-col gap-4">
         {shown.map((payment) => (
-          <li key={payment.id} className="flex items-center gap-4">
+          <li key={payment.id} className="flex items-start gap-4">
             <ServiceLogo name={subscription?.name ?? ''} />
             <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="text-body font-medium text-text-primary">
-                {translate('payment', { date: dateLabel(payment.dueOn) })}
+                {translate('payment', { date: dayText(payment.dueOn, 'short') })}
               </span>
               <Badge tone={STATE_TONE[payment.state]}>{translateState(payment.state)}</Badge>
             </span>
@@ -68,7 +75,7 @@ export function SubscriptionPayments({ subscriptionId, view, action }: Subscript
                 currency={payment.currency}
                 kind={payment.state === 'paid' ? 'fact' : 'plan'}
               />
-              <span className="text-caption text-text-secondary">{dateLabel(payment.dueOn, true)}</span>
+              <span className="text-caption text-text-secondary">{dayText(payment.dueOn, 'shortYear')}</span>
             </span>
           </li>
         ))}

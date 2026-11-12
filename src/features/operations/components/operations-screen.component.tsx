@@ -1,16 +1,21 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { ArrowLeftRight, Search } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
+import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
-import { useSyncQueue } from '@/lib/query/sync-queue.hook'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { mergeQueued } from '@/lib/query/sync-queue.utils'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { operationQueries } from '../api/operations.queries'
 import { useOperationFilters } from '../hooks/operation-filters.hook'
 import { useQueuedOperations } from '../hooks/queued-operations.hook'
@@ -22,17 +27,14 @@ import { OperationFilters } from './operation-filters.component'
 import { OperationList } from './operation-list.component'
 import { OperationSummary } from './operation-summary.component'
 
-const subscribeNever = () => () => undefined
-
 // Figma Saldo file → Operations 2:11403 / 2:13681: type switch and chips, the totals of the filter, then the list by day.
 // Adding goes through the global «Add» (?add=), here only a row opens the sheet (edit / view) or a duplicate of it.
 export function OperationsScreen() {
   const translate = useTranslations('operations')
-  const formatter = useFormatter()
+  const dayText = useDayText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const space = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const canWrite = useCanWrite()
-  const { online, updatedAt } = useSyncQueue()
   const { url, filters, period, today, active, setUrl, reset } = useOperationFilters()
   const list = useQuery(operationQueries.list(ledgerId, filters))
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
@@ -56,13 +58,8 @@ export function OperationsScreen() {
     enabled: wholeMonth,
   })
   const options = useQuery(operationQueries.options(ledgerId))
-  // the screen is a streamed Suspense boundary: it hydrates after the device cache is restored, so the first client
-  // render repeats the server's skeleton and the data comes one render later (no hydration mismatch)
-  const hydrated = useSyncExternalStore(
-    subscribeNever,
-    () => true,
-    () => false,
-  )
+  const { failedLoad, retry } = useScreenQueryState([list, options], translate('refreshFailed'))
+  const hydrated = useHydrated()
   // `key` changes with every target, so a row, then its duplicate, each get a fresh form and fresh ids
   const [editor, setEditor] = useState<{
     open: boolean
@@ -71,32 +68,15 @@ export function OperationsScreen() {
   } | null>(null)
   const queued = useQueuedOperations()
   // a create still in the device's queue shows as a row with its state until the server has it (one row per id)
-  const items = useMemo(
-    () =>
-      list.data ? buildItems(mergeQueued(list.data.rows, queued.rows).sort(newestFirst), list.data.transfers) : [],
-    [list.data, queued.rows],
-  )
-  const receiptIds = useMemo(() => new Set(list.data?.receiptIds ?? []), [list.data])
-  const totals = useMemo(() => summarize(items), [items])
+  const items = list.data
+    ? buildItems(mergeQueued(list.data.rows, queued.rows).sort(newestFirst), list.data.transfers)
+    : []
+  const receiptIds = new Set(list.data?.receiptIds ?? [])
+  const totals = summarize(items)
+  // income, expenses and their result say nothing about moving money between own accounts
+  const transfers = url.type === 'transfer'
   const [linkedId, setLinkedId] = useQueryState('operation', parseAsString.withOptions({ history: 'replace' }))
   const linked = linkedId ? items.find((item) => item.row.id === linkedId) : undefined
-
-  // a search result links ?period=<month>&operation=<id>: open its sheet (edit, or view for a viewer), then drop the id
-  useEffect(() => {
-    if (!linked) {
-      return
-    }
-
-    setEditor((current) => ({
-      open: true,
-      target: {
-        mode: 'edit',
-        item: linked,
-      },
-      key: (current?.key ?? 0) + 1,
-    }))
-    void setLinkedId(null)
-  }, [linked, setLinkedId])
 
   const openEditor = (target: EditorTarget) =>
     setEditor((current) => ({
@@ -104,20 +84,30 @@ export function OperationsScreen() {
       target,
       key: (current?.key ?? 0) + 1,
     }))
+  const linkedOpen = editor?.open === true && editor.target.mode === 'edit' && editor.target.item.row.id === linkedId
+
+  // a search result links ?period=<month>&operation=<id>: its sheet (edit, or view for a viewer) opens in the same
+  // render as the list
+  if (linked && !linkedOpen) {
+    openEditor({
+      mode: 'edit',
+      item: linked,
+    })
+  }
+
+  // then the id leaves the URL (the outside world), so Back or a reload does not open it again
+  useEffect(() => {
+    if (linked) {
+      void setLinkedId(null)
+    }
+  }, [linked, setLinkedId])
 
   // Figma 5:102493: the empty filter names what it looked for (period, type, account, category, text)
   function filteredText() {
     const loaded = options.data
-    const month = new Date(`${period}-15T12:00:00Z`)
 
     return translate('empty.filteredText', {
-      period:
-        period === ALL_TIME
-          ? translate('empty.allTime')
-          : `${formatter.dateTime(month, {
-              month: 'long',
-              timeZone: 'UTC',
-            })} ${period.slice(0, 4)}`,
+      period: period === ALL_TIME ? translate('empty.allTime') : `${dayText(period, 'month')} ${period.slice(0, 4)}`,
       type: url.type,
       account: loaded?.accounts.find((account) => account.id === url.account)?.name ?? 'none',
       category: loaded?.categories.find((category) => category.id === url.category)?.name ?? 'none',
@@ -133,7 +123,10 @@ export function OperationsScreen() {
 
   let content: React.ReactNode
 
-  if (!hydrated || list.isPending || options.isPending) {
+  // Figma 39:106643: a failed first load shows only the error card under the header, without filters
+  if (failedLoad) {
+    content = <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+  } else if (!hydrated || list.data === undefined || options.data === undefined) {
     content = (
       // Figma operations loading frame 5:103704 (mobile; desktop has no frame and takes the same): the totals card
       // (padding 16, gap 12, two 56 bars) and day cards (padding 16, gap 16, a 140×14 title, lines with a 72 end bar)
@@ -153,47 +146,39 @@ export function OperationsScreen() {
         </SkeletonCard>
       </div>
     )
-  } else if (list.isError || options.isError) {
-    content = (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
   } else if (items.length === 0 && !active) {
     content = (
-      <div className="flex flex-col items-center gap-3 rounded-card bg-card px-5 py-12 text-center shadow-card">
-        <p className="text-card-title text-text-primary">{translate('empty.title')}</p>
-        <p className="text-body text-text-secondary">{translate('empty.hint')}</p>
-      </div>
+      <EmptyState icon={ArrowLeftRight} tone="blue" title={translate('empty.title')} hint={translate('empty.hint')} />
     )
   } else if (items.length === 0) {
     // Figma 5:102493: the totals stay (zeros), then the card (padding 64/32) with EmptyState (420 wide, padding 8,
     // gap 12): a neutral 40 search icon, body-semibold title, label text, Secondary «reset filters»
     content = (
       <>
-        <OperationSummary totals={totals} period={period} withPlanMinor={null} />
-        <div className="flex flex-col items-center rounded-card bg-card px-8 py-16 shadow-card">
-          <div className="flex w-full max-w-105 flex-col items-center gap-3 p-2 text-center">
-            <span className="flex size-10 items-center justify-center rounded-full bg-subtle text-text-secondary">
-              <Search aria-hidden size={20} />
-            </span>
-            <p className="text-body font-semibold text-text-primary">{translate('empty.filtered')}</p>
-            <p className="text-label text-text-secondary">{filteredText()}</p>
+        {transfers ? null : <OperationSummary totals={totals} period={period} withPlanMinor={null} />}
+        <EmptyState
+          icon={Search}
+          tone="neutral"
+          title={translate('empty.filtered')}
+          hint={filteredText()}
+          action={
             <Button variant="secondary" onClick={reset}>
               {translate('filters.reset')}
             </Button>
-          </div>
-        </div>
+          }
+        />
       </>
     )
   } else {
     content = (
       <>
-        <OperationSummary
-          totals={totals}
-          period={period}
-          withPlanMinor={wholeMonth && planned.data != null ? totals.resultMinor - planned.data : null}
-        />
+        {transfers ? null : (
+          <OperationSummary
+            totals={totals}
+            period={period}
+            withPlanMinor={wholeMonth && planned.data != null ? totals.resultMinor - planned.data : null}
+          />
+        )}
         {list.data.truncated ? (
           <p className="text-caption text-text-tertiary">{translate('truncated', { count: list.data.rows.length })}</p>
         ) : null}
@@ -213,26 +198,18 @@ export function OperationsScreen() {
       {/* Figma 5:104416: a viewer reads the page under an Info banner, without write actions */}
       {canWrite ? null : <Banner>{translate('viewOnly', { space })}</Banner>}
       {/* Figma 5:105115: offline, the page's own warning replaces the app one on desktop (OfflineBanner) */}
-      {online || updatedAt === null ? null : (
-        <Banner kind="warning" role="alert" className="hidden lg:flex">
-          {translate('offline', {
-            time: formatter.dateTime(new Date(updatedAt), {
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone,
-            }),
-          })}
-        </Banner>
+      <PageOfflineBanner text={(time) => translate('offline', { time })} />
+      {failedLoad ? null : (
+        <OperationFilters
+          period={period}
+          accountId={url.account}
+          categoryId={url.category}
+          createdBy={url.who}
+          type={url.type}
+          text={filters.text}
+          onChangeAction={(change) => void setUrl(change)}
+        />
       )}
-      <OperationFilters
-        period={period}
-        accountId={url.account}
-        categoryId={url.category}
-        createdBy={url.who}
-        type={url.type}
-        text={filters.text}
-        onChangeAction={(change) => void setUrl(change)}
-      />
       {content}
       {editor ? (
         <OperationEditor

@@ -3,18 +3,23 @@
 import { ChevronLeft } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { ReminderRuleCard } from '@/components/reminders/reminder-rule-card.component'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
-import { useCredits, usePayInstallment } from '../hooks/credits.hook'
-import { activeInstallments, creditProgress, dayText, moneyText, payoffOf } from '../utils/credits.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
+import { useCredits, useInstallmentsText, usePayInstallment } from '../hooks/credits.hook'
+import { activeInstallments, creditProgress, payoffOf } from '../utils/credits.utils'
 import { CloseCreditSheet } from './close-credit-sheet.component'
 import { CreditDetails } from './credit-details.component'
 import { CreditFormSheet } from './credit-form-sheet.component'
@@ -37,10 +42,10 @@ const STATUS_TONE = {
 function CardSkeleton() {
   return (
     <div aria-busy className="flex flex-col gap-4 lg:gap-6">
-      <div className="h-48 rounded-card bg-subtle" />
+      <Bone className="h-48 rounded-card" />
       <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
-        <div className="h-96 rounded-card bg-subtle lg:col-span-2" />
-        <div className="h-96 rounded-card bg-subtle" />
+        <Bone className="h-96 rounded-card lg:col-span-2" />
+        <Bone className="h-96 rounded-card" />
       </div>
     </div>
   )
@@ -51,22 +56,31 @@ function CardSkeleton() {
 // «Paid» opens the confirm sheet of Upcoming payments on the installment (?pay=<id>).
 export function CreditCard({ creditId }: CreditCardProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
+  const moneyText = useMoneyText()
+  const installmentsText = useInstallmentsText()
   const canWrite = useCanWrite()
   const pay = usePayInstallment()
-  const { data, isPending, isError } = useCredits()
+  const query = useCredits()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const [dialog, setDialog] = useState<Dialog>(null)
 
-  if (isPending) {
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
+  }
+
+  if (!hydrated || data === undefined) {
     return <CardSkeleton />
   }
 
-  const credit = data?.credits.find((candidate) => candidate.id === creditId)
+  const credit = data.credits.find((candidate) => candidate.id === creditId)
 
-  if (isError || !credit) {
+  if (!credit) {
     return (
       <p role="alert" className="text-body text-negative-text">
-        {translate(isError ? 'loadFailed' : 'card.notFound')}
+        {translate('card.notFound')}
       </p>
     )
   }
@@ -81,28 +95,18 @@ export function CreditCard({ creditId }: CreditCardProps) {
   const monthly = translate('card.monthly', {
     day: Number((next ?? activeInstallments(credit)[0])?.dueOn.slice(8, 10)),
   })
-  const meta = [
-    credit.lender,
-    translate('perInstallment', {
-      amount: moneyText(credit.regularInstallmentMinor, credit.currency, locale),
-      count: credit.installmentsCount,
-    }),
-    monthly,
-    account,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  const meta = [credit.lender, installmentsText(credit), monthly, account].filter(Boolean).join(' · ')
 
   const paidText = translate('card.paidSummary', {
     paid: progress.paidCount,
     total: progress.steps.length,
-    amount: moneyText(progress.paidMinor, credit.currency, locale),
+    amount: moneyText(progress.paidMinor, credit.currency),
   })
-  const nextAmount = next ? moneyText(next.remainingMinor, credit.currency, locale) : null
+  const nextAmount = next ? moneyText(next.remainingMinor, credit.currency) : null
   const unconfirmedNext = unconfirmed
     ? translate('card.unconfirmedNext', {
         number: unconfirmed.sequenceNo,
-        date: dayText(unconfirmed.dueOn, locale),
+        date: dayText(unconfirmed.dueOn, 'short'),
       })
     : null
   const archive = writable && (
@@ -127,7 +131,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
     <>
       <Link
         href={'/payments/credits' as Route}
-        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary"
       >
         <ChevronLeft className="size-4" aria-hidden />
         {translate('card.back')}
@@ -147,7 +151,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
         >
           {translate('card.unconfirmed', {
             number: unconfirmed.sequenceNo,
-            date: dayText(unconfirmed.dueOn, locale),
+            date: dayText(unconfirmed.dueOn, 'short'),
           })}
         </Banner>
       )}
@@ -164,7 +168,7 @@ export function CreditCard({ creditId }: CreditCardProps) {
         }
       >
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-4 pb-5">
+          <div className="flex items-start gap-4 pb-5">
             <ServiceLogo name={credit.lender ?? credit.name} />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-3">
@@ -197,12 +201,12 @@ export function CreditCard({ creditId }: CreditCardProps) {
                 <span className="text-label text-text-secondary">
                   <span className="max-lg:hidden">
                     {translate('card.remainingUntil', {
-                      amount: moneyText(progress.remainingMinor, credit.currency, locale),
-                      date: dayText(progress.endOn, locale, true),
+                      amount: moneyText(progress.remainingMinor, credit.currency),
+                      date: dayText(progress.endOn, 'shortYear'),
                     })}
                   </span>
                   <span className="lg:hidden">
-                    {translate('card.until', { date: dayText(progress.endOn, locale, true) })}
+                    {translate('card.until', { date: dayText(progress.endOn, 'shortYear') })}
                   </span>
                 </span>
               )}
@@ -224,11 +228,13 @@ export function CreditCard({ creditId }: CreditCardProps) {
                     <>
                       <span className="max-lg:hidden">
                         {translate('next', {
-                          date: dayText(next.dueOn, locale),
+                          date: dayText(next.dueOn, 'short'),
                           amount: nextAmount ?? '',
                         })}
                       </span>
-                      <span className="lg:hidden">{translate('nextShort', { date: dayText(next.dueOn, locale) })}</span>
+                      <span className="lg:hidden">
+                        {translate('nextShort', { date: dayText(next.dueOn, 'short') })}
+                      </span>
                     </>
                   )}
                 </span>

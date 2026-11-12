@@ -1,11 +1,13 @@
 {
   "title": "Settings",
   "tabsLabel": "Settings sections",
+  "back": "Back to settings",
   "tabs": {
     "general": "General",
     "access": "Access",
     "notifications": "Notifications",
     "currencies": "Currencies",
+    "security": "Security",
     "data": "Data"
   },
   "themeTitle": "Theme",
@@ -23,11 +25,16 @@
     "hideAmounts": "Hide amounts"
   },
   "myName": {
-    "title": "Your name",
+    "title": "Your name and photo",
     "label": "Name in this space",
     "hint": "Other members see it. Without a name, the start of your email is shown.",
-    "save": "Save",
-    "saved": "Name saved"
+    "save": "Save name",
+    "saved": "Name saved",
+    "photoHint": "One photo for all your spaces. Other members see it.",
+    "changePhoto": "Change photo",
+    "removePhoto": "Remove photo",
+    "photoRemoved": "Photo removed",
+    "removeFailed": "Could not remove the photo. Check the connection and try again."
   },
   "space": {
     "title": "Space",
@@ -35,6 +42,7 @@
     "name": "Name",
     "baseCurrency": "Base currency",
     "baseCurrencyHint": "Totals are counted in it. It can be changed only while the space has no operations.",
+    "baseCurrencyLockedHint": "It cannot change: the space already has operations, and totals would mix two currencies.",
     "baseCurrencyLocked": "The base currency can no longer change: the space's operations are already converted to it, and totals would mix two currencies.",
     "timeZone": "Time zone",
     "timeZoneHint": "It decides what «today», the end of the month and a payment date are.",
@@ -72,9 +80,9 @@
     "inviteSheet": {
       "title": "Invite someone to «{space}»",
       "email": "Email",
-      "emailHint": "The link is valid for 7 days and works once.",
+      "emailHint": "The person must already have a Saldo account with this email. The link is valid for 7 days and works once.",
       "emailInvalid": "Enter a valid address",
-      "noAccount": "There is no Saldo user with this email",
+      "noAccount": "There is no Saldo account with this email. Accounts are created by the owner of this Saldo: ask them, then invite the person again.",
       "alreadyMember": "This person is already in the space",
       "role": "Role",
       "roleNote": "You can change the role or revoke access at any time.",
@@ -168,6 +176,39 @@
     "notifications": "Push, email, reminders",
     "data": "Export, backups, deletion",
     "notice": "Your role in the space «{space}» is «{role}». Only the owner, {owner}, can change data.",
-    "signedInAs": "Saldo · you are signed in as {email}"
+    "signedInAs": "Saldo · you are signed in as {email}",
+    "security": "AI access through MCP"
+  },
+  "security": {
+    "aiTitle": "AI access (MCP)",
+    "aiHint": "Claude, ChatGPT, Perplexity, Gemini and other AI clients read Saldo on your behalf at the address below. Each client gets access only after your consent and never deletes anything.",
+    "address": "Address for the AI client",
+    "copy": "Copy",
+    "copied": "Address copied",
+    "copyFailed": "Could not copy: select the address and copy it by hand",
+    "empty": "No client has access yet.",
+    "grantedAt": "Access since {date}",
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke access for {name}?",
+    "revokeBody": "{name} can no longer read Saldo on your behalf: its sessions close at once. Everything already added through {name} stays.",
+    "revokeAgain": "You can connect {name} again at any time: start connecting in the client and give your consent.",
+    "revokeBodyShort": "{name} can no longer read Saldo on your behalf. You can connect it again at any time with a new consent.",
+    "keep": "Keep",
+    "revokeConfirm": "Revoke access",
+    "revoked": "Access revoked",
+    "revokeFailed": "Could not revoke the access. Try again."
+  },
+  "avatarEditor": {
+    "title": "Profile photo",
+    "dragHint": "Drag the photo so the circle shows what you want.",
+    "zoom": "Zoom",
+    "preview": "This is how others will see you",
+    "cancel": "Cancel",
+    "save": "Save",
+    "choose": "Choose a photo",
+    "tooBig": "The photo is too big ({size} MB). Choose a photo up to 10 MB.",
+    "notImage": "This is not a photo. Choose a JPG, PNG or WebP photo.",
+    "saved": "Photo saved",
+    "saveFailed": "Could not save the photo. Check the connection and try again."
   }
 }

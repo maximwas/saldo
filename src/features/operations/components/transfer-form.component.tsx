@@ -1,9 +1,10 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { Info } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
+import { useMoneyText } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
@@ -12,12 +13,11 @@ import { Textarea } from '@/components/ui/textarea.component'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
-import { findRate } from '@/lib/money/fx.utils'
-import { formatMinor, fromMinor, toMinor } from '@/lib/money/money.utils'
+import { exchangeRate, findRate, formatRate } from '@/lib/money/fx.utils'
+import { fromMinor, toMinor } from '@/lib/money/money.utils'
 import { operationQueries } from '../api/operations.queries'
 import { type TransferFormValues, transferFormSchema } from '../schemas/transfer-form.schema'
 import { accountOptions } from '../utils/operation-display.utils'
-import { formatRate, impliedRate } from '../utils/rate.utils'
 import { CategorySelect } from './category-select.component'
 
 type TransferFormProps = {
@@ -30,8 +30,10 @@ type TransferFormProps = {
 export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
   const translate = useTranslations('operations.form')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   // the editor mounts the form after the options are loaded; the query cache hands the same data over
   const options = useQuery(operationQueries.options(ledgerId))
   const accounts = options.data?.accounts ?? []
@@ -42,7 +44,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
   const balanceHint = (accountId: string, currency: string) =>
     balances[accountId] === undefined
       ? undefined
-      : translate('balance', { amount: formatMinor(balances[accountId], currency, locale) })
+      : translate('balance', { amount: moneyText(balances[accountId], currency) })
   const resolver = useZodResolver(transferFormSchema)
   const active = accounts.filter((account) => !account.archived)
   const [source, target] = [active[0], active[1] ?? active[0]]
@@ -61,22 +63,29 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
       note: '',
     },
   })
-  const [fromCurrency, toCurrency, fromAmount, toAmount, fee, occurredOn] = form.watch([
-    'fromCurrency',
-    'toCurrency',
-    'fromAmount',
-    'toAmount',
-    'fee',
-    'occurredOn',
-  ])
+  const [fromCurrency, toCurrency, fromAmount, toAmount, fee, occurredOn, fromAccountId, toAccountId] = useWatch({
+    control: form.control,
+    name: ['fromCurrency', 'toCurrency', 'fromAmount', 'toAmount', 'fee', 'occurredOn', 'fromAccountId', 'toAccountId'],
+  })
   const crossCurrency = fromCurrency !== toCurrency
   const fromMinorValue = toMinor(fromAmount, fromCurrency)
   const toMinorValue = toMinor(toAmount, toCurrency)
-  const rate =
-    crossCurrency && fromMinorValue && toMinorValue
-      ? impliedRate(fromMinorValue, fromCurrency, toMinorValue, toCurrency)
+  const exchange =
+    fromMinorValue && toMinorValue
+      ? exchangeRate(
+          {
+            fromAmountMinor: fromMinorValue,
+            fromCurrency,
+            toAmountMinor: toMinorValue,
+            toCurrency,
+          },
+          baseCurrency,
+        )
       : null
-  const reference = crossCurrency ? findRate(rates, fromCurrency, toCurrency, occurredOn) : null
+  // the reference rate in the same direction: the other currency per one unit of exchange.unit
+  const reference = exchange
+    ? findRate(rates, exchange.unit, exchange.unit === fromCurrency ? toCurrency : fromCurrency, occurredOn)
+    : null
 
   const accountField =
     (name: 'fromAccountId' | 'toAccountId', currencyName: 'fromCurrency' | 'toCurrency') =>
@@ -88,20 +97,15 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
 
   return (
     <form id={formId} noValidate onSubmit={form.handleSubmit(onSubmitAction)} className="flex flex-col gap-4">
-      {/* Figma Banner 2:10028: padding 12/16, gap 12, text body-medium; the icon box (20 + 2/2) sits on the first line */}
-      <p className="flex items-start gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body font-medium text-primary-text">
-        <span className="flex shrink-0 py-0.5">
-          <Info aria-hidden size={20} />
-        </span>
-        {translate('transferNote')}
-      </p>
+      {/* Figma Banner 2:10028 */}
+      <Banner>{translate('transferNote')}</Banner>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField
           control={form.control}
           name="fromAccountId"
           label={translate('from')}
           required
-          hint={balanceHint(form.watch('fromAccountId'), fromCurrency)}
+          hint={balanceHint(fromAccountId, fromCurrency)}
           render={(field) => (
             <Select
               options={accountOptions(accounts)}
@@ -132,7 +136,7 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           name="toAccountId"
           label={translate('to')}
           required
-          hint={balanceHint(form.watch('toAccountId'), toCurrency)}
+          hint={balanceHint(toAccountId, toCurrency)}
           render={(field) => (
             <Select
               options={accountOptions(accounts)}
@@ -161,11 +165,11 @@ export function TransferForm({ formId, onSubmitAction }: TransferFormProps) {
           />
         ) : null}
       </div>
-      {rate ? (
+      {exchange ? (
         <p className="text-caption text-text-secondary">
           {translate('rate', {
-            rate: formatRate(rate, locale),
-            currency: fromCurrency,
+            rate: formatRate(exchange.rate, locale),
+            currency: exchange.unit,
           })}
           {reference ? `, ${translate('rateReference', { rate: formatRate(reference, locale) })}` : null}.{' '}
           {translate('rateNote')}

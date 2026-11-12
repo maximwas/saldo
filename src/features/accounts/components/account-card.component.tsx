@@ -3,13 +3,18 @@
 import { ChevronLeft } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Amount } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
+import { ErrorState } from '@/components/ui/error-state.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useAccounts } from '../hooks/accounts.hook'
 import { ACCOUNT_KIND_STYLE } from '../utils/accounts.utils'
 import { AccountFormSheet } from './account-form-sheet.component'
@@ -25,44 +30,49 @@ type AccountCardProps = {
 export function AccountCard({ accountId }: AccountCardProps) {
   const translate = useTranslations('accounts')
   const translateCurrency = useTranslations('currencies')
-  const locale = useLocale()
+  const dayText = useDayText()
   const canWrite = useCanWrite()
-  const { data, isPending, isError } = useAccounts()
+  const query = useAccounts()
+  const { data } = query
+  const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const [editing, setEditing] = useState(false)
   const [archiving, setArchiving] = useState(false)
 
-  if (isPending) {
-    return <div aria-busy className="h-72 rounded-card bg-subtle" />
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  const account = data?.accounts.find((candidate) => candidate.id === accountId)
+  if (!hydrated || data === undefined) {
+    return <Bone className="h-72 rounded-card" />
+  }
 
-  if (isError || !account) {
+  const account = data.accounts.find((candidate) => candidate.id === accountId)
+
+  if (!account) {
     return (
       <p role="alert" className="text-body text-negative-text">
-        {translate(isError ? 'loadFailed' : 'card.notFound')}
+        {translate('card.notFound')}
       </p>
     )
   }
 
   const style = ACCOUNT_KIND_STYLE[account.kind]
   const archived = account.archivedAt !== null
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
-    new Date(`${account.openingBalanceOn}T12:00:00`),
-  )
+  const date = dayText(account.openingBalanceOn, 'dayMonthShortYear')
   const yesNo = (flag: boolean) => translate(flag ? 'card.yes' : 'card.no')
 
   return (
     <>
       <Link
         href={'/operations/accounts' as Route}
-        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex w-fit cursor-pointer items-center gap-1 rounded-xs text-label font-medium text-primary-text outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary"
       >
         <ChevronLeft className="size-4" aria-hidden />
         {translate('card.back')}
       </Link>
       <section className="flex flex-col gap-6 rounded-card bg-card p-5 shadow-card lg:p-6">
-        <header className="flex items-center gap-4">
+        <header className="flex items-start gap-4">
           <CategoryIcon icon={account.icon ?? style.icon} color={account.color ?? style.color} />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <h2 className="truncate text-card-title text-text-primary">{account.name}</h2>

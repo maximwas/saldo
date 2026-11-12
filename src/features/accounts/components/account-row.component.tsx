@@ -5,15 +5,15 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
 import { ActionSheet, Menu, type MenuItem } from '@/components/ui/menu.component'
 import { useRipple } from '@/components/ui/ripple.hook'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { Switch } from '@/components/ui/switch.component'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { formatRate } from '@/lib/money/fx.utils'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useUpdateAccount } from '../hooks/accounts.hook'
 import { ACCOUNT_KIND_STYLE, type AccountView } from '../utils/accounts.utils'
 
@@ -33,7 +33,8 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
   const translate = useTranslations('accounts')
   const translateCurrency = useTranslations('currencies')
   const locale = useLocale()
-  const desktop = useIsDesktop()
+  const moneyText = useMoneyText()
+  const desktop = useIsWideLayout()
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const canWrite = useCanWrite()
   const update = useUpdateAccount()
@@ -108,19 +109,16 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
     </>
   )
   const convertedText = () => {
-    if (account.baseMinor === null) {
+    if (account.baseMinor === null || account.rate === null) {
       return translate('noRate')
     }
 
-    const amount = formatMinor(account.baseMinor, baseCurrency, locale)
+    const amount = moneyText(account.baseMinor, baseCurrency)
 
     return desktop
       ? translate('converted', {
           amount,
-          rate: new Intl.NumberFormat(locale, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 4,
-          }).format(Number(account.rate)),
+          rate: formatRate(account.rate, locale),
         })
       : translate('convertedShort', { amount })
   }
@@ -128,7 +126,7 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
 
   if (desktop) {
     return (
-      <li className="relative flex items-center gap-4 overflow-hidden border-b border-border py-4 transition-colors hover:bg-subtle">
+      <li className="relative -mx-3 flex items-start gap-4 overflow-hidden rounded-md border-b border-border px-3 py-4 transition-colors hover:bg-subtle">
         <CategoryIcon icon={account.icon ?? style.icon} color={account.color ?? style.color} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <Link
@@ -183,14 +181,14 @@ export function AccountRow({ account, onEditAction, onArchiveAction, onAdjustAct
           type="button"
           aria-label={`${account.name}: ${translate('menu.label')}`}
           onClick={() => setSheetOpen(true)}
-          className="relative -mx-3 -my-1 flex cursor-pointer items-center gap-3 overflow-hidden rounded-md px-3 py-1 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
+          className="relative -mx-3 -my-1 flex cursor-pointer items-start gap-3 overflow-hidden rounded-md px-3 py-1 text-left outline-none transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-primary"
           {...pressProps}
         >
           {head}
           {ripple}
         </button>
       ) : (
-        <div className="flex items-center gap-3">{head}</div>
+        <div className="flex items-start gap-3">{head}</div>
       )}
       {switches ? <div className="flex flex-col pl-12">{switches}</div> : null}
       {canWrite ? (

@@ -4,6 +4,7 @@ import {
   indexTransfers,
   kindsOfType,
   type OperationDbRow,
+  textFilter,
   toOperationRow,
   transferIdsOf,
 } from './operation-rows.utils'
@@ -101,5 +102,14 @@ describe('chunks', () => {
 
   it('gives no slices for no items', () => {
     expect(chunks([], 50)).toEqual([])
+  })
+})
+
+describe('textFilter', () => {
+  it('matches the payee or the note, with LIKE wildcards and PostgREST quotes taken literally', () => {
+    expect(textFilter('піца')).toBe('counterparty.ilike."%піца%",note.ilike."%піца%"')
+    expect(textFilter('50%_off, "a"')).toBe(
+      String.raw`counterparty.ilike."%50\\%\\_off, \"a\"%",note.ilike."%50\\%\\_off, \"a\"%"`,
+    )
   })
 })

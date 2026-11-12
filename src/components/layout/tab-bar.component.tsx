@@ -34,7 +34,7 @@ export function TabBar() {
             aria-current={active ? 'page' : undefined}
             className={cn(
               'flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-micro outline-none focus-visible:ring-2 focus-visible:ring-primary',
-              active ? 'text-primary-text' : 'text-text-tertiary',
+              active ? 'text-primary-text' : 'text-text-tertiary hover:text-text-primary',
             )}
           >
             <Icon aria-hidden size={24} className={cn(active && 'text-primary')} />

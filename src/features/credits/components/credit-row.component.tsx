@@ -2,17 +2,18 @@
 
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useLocale, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { useTranslations } from 'next-intl'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { Button } from '@/components/ui/button.component'
 import { useRipple } from '@/components/ui/ripple.hook'
 import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { Credit, CreditInstallment } from '../api/credits.api'
-import { useCredits, usePayInstallment } from '../hooks/credits.hook'
-import { type CreditProgress, creditProgress, dayText, moneyText } from '../utils/credits.utils'
+import { useCredits, useInstallmentsText, usePayInstallment } from '../hooks/credits.hook'
+import { type CreditProgress, creditProgress } from '../utils/credits.utils'
 import { InstallmentSteps } from './installment-steps.component'
 
 type CreditRowProps = {
@@ -30,15 +31,16 @@ type StepsBlockProps = {
 /** «today», «instalment N · date» (date passed) or «next date», with the amount for desktop */
 function useNextTexts(credit: Credit, next: CreditInstallment | null) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
+  const moneyText = useMoneyText()
   const today = useToday()
 
   if (!next) {
     return null
   }
 
-  const amount = moneyText(next.remainingMinor, credit.currency, locale)
-  const date = dayText(next.dueOn, locale)
+  const amount = moneyText(next.remainingMinor, credit.currency)
+  const date = dayText(next.dueOn, 'short')
 
   if (next.state === 'unconfirmed') {
     return {
@@ -73,18 +75,13 @@ function useNextTexts(credit: Credit, next: CreditInstallment | null) {
 // Figma «Saldo» → InstallmentSteps 2:10378: title + «amount × count», the segments, «N of M paid» + the next one
 function StepsBlock({ title, credit, progress, nextText }: StepsBlockProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const installmentsText = useInstallmentsText()
 
   return (
     <div className="flex min-w-0 flex-col gap-3 lg:flex-1">
       <div className="flex items-baseline justify-between gap-3">
         <span className="min-w-0 truncate text-body font-medium text-text-primary">{title}</span>
-        <span className="shrink-0 text-label text-text-secondary">
-          {translate('perInstallment', {
-            amount: moneyText(credit.regularInstallmentMinor, credit.currency, locale),
-            count: credit.installmentsCount,
-          })}
-        </span>
+        <span className="shrink-0 text-label text-text-secondary">{installmentsText(credit)}</span>
       </div>
       <InstallmentSteps steps={progress.steps} />
       <div className="flex items-center justify-between gap-3">
@@ -105,7 +102,7 @@ function StepsBlock({ title, credit, progress, nextText }: StepsBlockProps) {
 // the steps under the purpose).
 export function CreditRow({ credit }: CreditRowProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const dayText = useDayText()
   const canWrite = useCanWrite()
   const accounts = useCredits().data?.accounts ?? []
   const pay = usePayInstallment()
@@ -114,8 +111,9 @@ export function CreditRow({ credit }: CreditRowProps) {
   const progress = creditProgress(credit)
   const nextTexts = useNextTexts(credit, progress.next)
   const account = accounts.find((option) => option.id === credit.accountId)?.name
-  const title = credit.lender ?? credit.name
-  const purpose = [credit.lender ? credit.name : null, account].filter(Boolean).join(' · ')
+  // a name that already starts with the lender («Comfy — laptop») is the title itself, so the lender is not said twice
+  const title = credit.lender && !credit.name.startsWith(credit.lender) ? credit.lender : credit.name
+  const purpose = [title === credit.name ? null : credit.name, account].filter(Boolean).join(' · ')
   const next = progress.next
   const payButton = canWrite && next && credit.status === 'active' && (
     <Button size="s" variant="secondary" className="relative shrink-0" onClick={() => pay(next.id)}>
@@ -141,15 +139,15 @@ export function CreditRow({ credit }: CreditRowProps) {
   )
 
   return (
-    <li className="relative flex flex-col gap-3 overflow-hidden border-b border-border py-4 transition-colors last:border-b-0 hover:bg-subtle lg:flex-row lg:items-center lg:gap-5">
-      <div className="flex items-center gap-3 lg:hidden">
+    <li className="relative -mx-3 flex flex-col gap-3 overflow-hidden rounded-md border-b border-border px-3 py-4 transition-colors last:border-b-0 hover:bg-subtle lg:flex-row lg:items-start lg:gap-5">
+      <div className="flex items-start gap-3 lg:hidden">
         <ServiceLogo name={title} />
         <div className="flex min-w-0 flex-1 flex-col items-start">
           {linkFor(mobilePress)}
           <Amount minor={progress.remainingMinor} currency={credit.currency} kind="plan" />
           {progress.endOn && (
             <span className="text-caption text-text-tertiary">
-              {translate('until', { date: dayText(progress.endOn, locale, true) })}
+              {translate('until', { date: dayText(progress.endOn, 'shortYear') })}
             </span>
           )}
         </div>
@@ -157,7 +155,12 @@ export function CreditRow({ credit }: CreditRowProps) {
       </div>
       <div className="flex flex-col items-start gap-3 empty:hidden lg:hidden">{badges}</div>
       <div className="lg:hidden">
-        <StepsBlock title={credit.name} credit={credit} progress={progress} nextText={nextTexts?.short ?? null} />
+        <StepsBlock
+          title={title === credit.name ? translate('installments') : credit.name}
+          credit={credit}
+          progress={progress}
+          nextText={nextTexts?.short ?? null}
+        />
       </div>
       <ServiceLogo name={title} className="max-lg:hidden" />
       <div className="flex w-50 shrink-0 flex-col items-start gap-1 max-lg:hidden">
@@ -178,7 +181,7 @@ export function CreditRow({ credit }: CreditRowProps) {
         <Amount minor={progress.remainingMinor} currency={credit.currency} kind="plan" />
         {progress.endOn && (
           <span className="text-caption text-text-secondary">
-            {translate('endsOn', { date: dayText(progress.endOn, locale, true) })}
+            {translate('endsOn', { date: dayText(progress.endOn, 'shortYear') })}
           </span>
         )}
       </div>

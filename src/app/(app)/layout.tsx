@@ -4,6 +4,7 @@ import { LedgerLinkSwitch } from '@/components/layout/ledger-link-switch.compone
 import { OfflineBanner } from '@/components/layout/offline-banner.component'
 import { PageTransition } from '@/components/layout/page-transition.component'
 import { Sidebar } from '@/components/layout/sidebar.component'
+import { SignedIn } from '@/components/layout/signed-in.component'
 import { TabBar } from '@/components/layout/tab-bar.component'
 import { Topbar } from '@/components/layout/topbar.component'
 import { AddOperationHost } from '@/features/operations/components/add-operation-host.component'
@@ -14,22 +15,25 @@ import { AddOperationHost } from '@/features/operations/components/add-operation
 // content inside PageTransition animates; the shell stays still.
 export default function AppLayout({ children }: LayoutProps<'/'>) {
   return (
-    <div className="flex min-h-dvh">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) lg:pb-0">
-        <Topbar />
-        <main className="px-5 pt-1 pb-8 lg:px-8 lg:pt-0 lg:pb-12">
-          <OfflineBanner />
-          <PageTransition className="flex flex-col gap-4 lg:gap-6">{children}</PageTransition>
-        </main>
+    <SignedIn>
+      <div className="flex min-h-dvh">
+        <Sidebar />
+        <div className="flex min-w-0 flex-1 flex-col pb-(--tabbar-h) lg:pb-0">
+          <Topbar />
+          {/* phones: pb-20 ends the page above the FAB (56 high, 100 over the bottom, the tab bar is 91) */}
+          <main className="px-5 pt-1 pb-20 lg:px-8 lg:pt-0 lg:pb-12">
+            <OfflineBanner />
+            <PageTransition className="flex flex-col gap-4 lg:gap-6">{children}</PageTransition>
+          </main>
+        </div>
+        <TabBar />
+        {/* ?add= is read from the URL: both wait in Suspense so the shell stays static (cacheComponents) */}
+        <Suspense fallback={null}>
+          <Fab />
+          <AddOperationHost />
+          <LedgerLinkSwitch />
+        </Suspense>
       </div>
-      <TabBar />
-      {/* ?add= is read from the URL: both wait in Suspense so the shell stays static (cacheComponents) */}
-      <Suspense fallback={null}>
-        <Fab />
-        <AddOperationHost />
-        <LedgerLinkSwitch />
-      </Suspense>
-    </div>
+    </SignedIn>
   )
 }

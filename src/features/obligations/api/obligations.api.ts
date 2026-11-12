@@ -1,4 +1,7 @@
+import { listCreditInstallments } from '@/lib/finance/credit-installments.api'
+import { lastInstallments } from '@/lib/finance/credit-installments.utils'
 import { listAccountOptions, listCategoryOptions } from '@/lib/finance/ledger-options.api'
+import { versionConflict } from '@/lib/supabase/version-conflict.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import {
   type CreateObligationInput,
@@ -30,6 +33,8 @@ export type ObligationRow = {
   sequenceNo: number | null
   /** credit installments only: the last number of the schedule, «installment 5 of 10» */
   installmentTotal: number | null
+  /** who added it: the author in rows of a shared space; null when the server made it (a series) */
+  createdBy: string | null
   /** who confirmed the latest payment and when; null while nothing is paid */
   confirmedBy: string | null
   confirmedAt: string | null
@@ -87,9 +92,10 @@ type DeletePaymentParams = {
 
 const OPEN_STATES = ['plan', 'partial', 'unconfirmed']
 const PAID_LIMIT = 10
-const CANDIDATE_LIMIT = 10
+// the newest operations the pay sheet ranks for linking (operation-candidates.utils) and shows the best 10 of
+const CANDIDATE_POOL = 50
 const STATE_COLUMNS =
-  'obligation_id, title, source_type, direction, due_on, planned_amount_minor, paid_minor, remaining_minor, currency, account_id, category_id, state, version, source_id, sequence_no'
+  'obligation_id, title, source_type, direction, due_on, planned_amount_minor, paid_minor, remaining_minor, currency, account_id, category_id, state, version, source_id, sequence_no, created_by'
 
 type StateRow = {
   obligation_id: string
@@ -107,6 +113,7 @@ type StateRow = {
   version: number
   source_id: string | null
   sequence_no: number | null
+  created_by: string | null
 }
 
 function toObligationRow(row: StateRow): ObligationRow {
@@ -127,6 +134,7 @@ function toObligationRow(row: StateRow): ObligationRow {
     sourceId: row.source_id,
     sequenceNo: row.sequence_no,
     installmentTotal: null,
+    createdBy: row.created_by,
     confirmedBy: null,
     confirmedAt: null,
   }
@@ -174,35 +182,13 @@ async function withLatestPayments(supabase: SaldoClient, rows: ObligationRow[]):
   }))
 }
 
-/** the last installment number of each credit on screen: a credit schedule is one obligation per installment
- * (shortcut: a schedule shortened by an early repayment counts up to its last remaining number) */
+/** the last installment number of each credit on screen */
 async function installmentTotals(supabase: SaldoClient, ledgerId: string, rows: ObligationRow[]) {
   const ids = [...new Set(rows.flatMap((row) => (row.sourceType === 'credit' && row.sourceId ? [row.sourceId] : [])))]
-  const totals = new Map<string, number>()
 
-  if (ids.length === 0) {
-    return totals
-  }
-
-  const { data, error } = await supabase
-    .from('obligations')
-    .select('source_id, sequence_no')
-    .eq('ledger_id', ledgerId)
-    .eq('source_type', 'credit')
-    .eq('lifecycle', 'active')
-    .in('source_id', ids)
-
-  if (error) {
-    throw error
-  }
-
-  for (const { source_id: id, sequence_no: number } of data) {
-    if (id && number !== null) {
-      totals.set(id, Math.max(totals.get(id) ?? 0, number))
-    }
-  }
-
-  return totals
+  return ids.length === 0
+    ? new Map<string, number>()
+    : lastInstallments(await listCreditInstallments(supabase, ledgerId, ids))
 }
 
 /** open obligations of every source, within the range when one is given */
@@ -309,7 +295,7 @@ export async function listCandidateOperations(
     .in('kind', ['income', 'expense'])
     .order('occurred_on', { ascending: false })
     .order('occurred_at', { ascending: false })
-    .limit(CANDIDATE_LIMIT)
+    .limit(CANDIDATE_POOL)
 
   if (error) {
     throw error
@@ -393,10 +379,7 @@ export async function updateObligation(supabase: SaldoClient, input: UpdateOblig
   }
 
   if (data.length === 0) {
-    throw {
-      code: 'PT409',
-      message: 'obligation was changed by someone else',
-    }
+    throw versionConflict()
   }
 }
 

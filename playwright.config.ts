@@ -16,12 +16,21 @@ const env = {
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: localStack.PUBLISHABLE_KEY,
   SUPABASE_SECRET_KEY: localStack.SECRET_KEY,
   CRON_SECRET: 'e2e-local-cron-secret-0123456789abcdef',
+  // MCP write tools (plan 10.8) are off by default; the MCP e2e covers them
+  MCP_WRITE_ENABLED: 'true',
   // a public key made for tests only (its private half is not kept): it just turns the «Enable push» button on
   NEXT_PUBLIC_VAPID_PUBLIC_KEY:
     'BBmLRIpb4CoqxU_xQg2VJ9VCIhKgro4i1pLJGxlMmCqRuSv7VwjmDou5MMC70TIAU5pyH9imDfDC8J45WL0vfxM',
 }
 
 Object.assign(process.env, env) // global setup and fixtures read the same values
+
+// E2E_RUNTIME=workerd: the same suite against the Cloudflare Worker build in workerd (`opennextjs-cloudflare preview`);
+// --env-file /dev/null skips .dev.vars, so the Worker gets the env above through CLOUDFLARE_INCLUDE_PROCESS_ENV
+const serverCommand =
+  process.env.E2E_RUNTIME === 'workerd'
+    ? `pnpm exec opennextjs-cloudflare build && pnpm exec opennextjs-cloudflare preview --port ${PORT} --env-file /dev/null`
+    : `pnpm build && pnpm start -p ${PORT}`
 
 export default defineConfig({
   testDir: 'e2e',
@@ -77,9 +86,12 @@ export default defineConfig({
   ],
   webServer: {
     // production build: the service worker exists only there, and there is no cold dev compilation
-    command: `pnpm build && pnpm start -p ${PORT}`,
+    command: serverCommand,
     url: env.NEXT_PUBLIC_SITE_URL,
-    env,
+    env: {
+      ...env,
+      CLOUDFLARE_INCLUDE_PROCESS_ENV: 'true',
+    },
     timeout: 240_000,
     reuseExistingServer: !process.env.CI,
   },

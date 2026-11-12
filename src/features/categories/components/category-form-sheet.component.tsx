@@ -2,12 +2,12 @@
 
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CATEGORY_COLORS } from '@/constants/category-colors.constants'
 import { useLedgerStore } from '@/contexts/ledger.context'
@@ -100,9 +100,7 @@ export function CategoryFormSheet({ target, onCloseAction }: CategoryFormSheetPr
       title={translate(editing ? 'form.editTitle' : 'form.createTitle')}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('form.cancel')}
-          </Button>
+          <SheetClose>{translate('form.cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={pending}>
             {translate('form.save')}
           </Button>
@@ -134,7 +132,10 @@ function CategoryForm({ target, onSubmitAction }: CategoryFormProps) {
       icon: category?.icon ?? 'tag',
     },
   })
-  const color = form.watch('color')
+  const color = useWatch({
+    control: form.control,
+    name: 'color',
+  })
 
   return (
     <form

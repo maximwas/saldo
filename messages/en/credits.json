@@ -1,6 +1,7 @@
 {
   "add": "Add credit",
-  "loadFailed": "Could not load credits. Refresh the page.",
+  "loadFailed": "Could not load credits",
+  "refreshFailed": "Could not refresh credits",
   "empty": "No credits or instalment plans yet",
   "emptyHint": "Add a purchase in instalments: a full schedule, equal instalments or an existing credit by its next date and balance.",
   "count": "{count, plural, one {# credit} other {# credits}}",
@@ -16,6 +17,7 @@
   "estimatedNote": "Estimated schedule, not the bank's: the sums are split evenly. Check the last instalments and the date rules with the lender.",
   "installments": "Instalments",
   "perInstallment": "{amount} × {count}",
+  "perInstallmentLast": "{amount} × {count} + {last}",
   "paidOf": "{paid} of {total} paid",
   "next": "Next {date} · {amount}",
   "today": "Today · {amount}",
@@ -36,8 +38,8 @@
     "cancelled": "Cancelled"
   },
   "actions": {
-    "paid": "Paid",
-    "payNumber": "Paid · instalment {number}",
+    "paid": "Pay",
+    "payNumber": "Pay instalment {number}",
     "payoff": "Early repayment",
     "edit": "Edit",
     "close": "Archive"
@@ -55,7 +57,7 @@
     "until": "until {date}",
     "paidShort": "{paid} of {total} paid",
     "unconfirmedNext": "Instalment {number} · {date} · not confirmed",
-    "unconfirmedAction": "Paid",
+    "unconfirmedAction": "Pay",
     "viewOnly": "View only: payments, the schedule and the settings of a credit are changed by the owner of the space."
   },
   "schedule": {

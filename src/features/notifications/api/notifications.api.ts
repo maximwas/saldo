@@ -38,11 +38,11 @@ export async function listNotifications(supabase: SaldoClient): Promise<AppNotif
 // ids = undefined marks every unread one
 type MarkReadInput = {
   ids?: string[]
-  now: Date
+  readAt: string
 }
 
 export async function markNotificationsRead(supabase: SaldoClient, input: MarkReadInput) {
-  const query = supabase.from('notifications').update({ read_at: input.now.toISOString() }).is('read_at', null)
+  const query = supabase.from('notifications').update({ read_at: input.readAt }).is('read_at', null)
   const { error } = await (input.ids ? query.in('id', input.ids) : query)
 
   if (error) {

@@ -7,6 +7,7 @@ import { Brand } from '@/components/layout/brand.component'
 import { Button } from '@/components/ui/button.component'
 import { Field } from '@/components/ui/field.component'
 import { Input } from '@/components/ui/input.component'
+import { PasswordInput } from '@/components/ui/password-input.component'
 import { issueKey } from '@/lib/forms/issue-key.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { loginFormSchema } from '../schemas/login-form.schema'
@@ -170,19 +171,19 @@ export function LoginForm() {
             <Input name="email" type="email" autoComplete="email" />
           </Field>
           <Field label={translate('password')} required error={invalid.password ?? error ?? undefined}>
-            <Input name="password" type="password" autoComplete="current-password" />
+            <PasswordInput name="password" autoComplete="current-password" />
           </Field>
           <Button type="submit" className="w-full" disabled={isPending}>
             {translate('submit')}
           </Button>
+          {/* no self-service reset: the owner of the instance creates the accounts and resets passwords (QA D18) */}
+          <p className="text-center text-caption text-text-secondary">{translate('forgotPassword')}</p>
           <div className="hidden gap-2 border-t border-border pt-4 text-caption md:flex">
             {/* icon box = one text line (h-lh), so the icon is centred on the first line, however many lines follow */}
             <span className="flex h-lh items-center">
               <InfoIcon />
             </span>
-            <p className="flex-1 text-text-secondary">
-              {translate('inviteOnly')} {translate('twoStepNote')}
-            </p>
+            <p className="flex-1 text-text-secondary">{translate('inviteOnly')}</p>
           </div>
         </form>
       </div>

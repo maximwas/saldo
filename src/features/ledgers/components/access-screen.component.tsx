@@ -4,22 +4,25 @@ import { useQuery } from '@tanstack/react-query'
 import { UserPlus, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
+import { parseAsBoolean, useQueryState } from 'nuqs'
 import { useState } from 'react'
+import { Avatar } from '@/components/ui/avatar.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
 import { Select } from '@/components/ui/select.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { useMembers } from '@/lib/members/members.hook'
+import { memberName } from '@/lib/members/members.utils'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
-import { cn } from '@/lib/utils/cn.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { cancelLedgerInvite, getMemberContributions, removeMember, setMemberRole } from '../api/access.api'
 import type { Member, PendingInvite } from '../api/access.server'
 import { INVITE_ROLES } from '../schemas/access.schema'
-import { memberName } from '../utils/members.utils'
 import { ConfirmSheet } from './confirm-sheet.component'
 import { InviteSheet } from './invite-sheet.component'
 import { LeaveSpaceButton } from './leave-space-button.component'
@@ -41,33 +44,6 @@ type Dialog =
     }
   | null
 
-// Figma LetterAvatar Size=40 colours: tones differ per person, text/body-semibold on a soft fill
-const AVATAR_TONES = [
-  'bg-cat-blue-soft text-cat-blue-text',
-  'bg-cat-pink-soft text-cat-pink-text',
-  'bg-cat-orange-soft text-cat-orange-text',
-  'bg-cat-green-soft text-cat-green-text',
-]
-
-type AvatarProps = {
-  name: string
-  index: number
-}
-
-function Avatar({ name, index }: AvatarProps) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'flex size-10 shrink-0 items-center justify-center rounded-md text-body font-semibold',
-        AVATAR_TONES[index % AVATAR_TONES.length],
-      )}
-    >
-      {name.charAt(0).toUpperCase()}
-    </span>
-  )
-}
-
 // Figma «Saldo» → Settings, Access tab 2:30818: Card Members (body gap 16: intro with 8 below + Invite, rows padding 16
 // with a divider: avatar, name + email, role 200, action 180) and Card Pending invites; to the right Card Roles (400,
 // as tall as the row). Read only 2:46979: Info Banner on top, Leave space in place of Invite, the own role a disabled
@@ -77,15 +53,17 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
   const role = useLedgerStore((ledger) => ledger.role)
   const ledgerName = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const router = useRouter()
-  const isDesktop = useIsDesktop()
+  const isDesktop = useIsSheetDialog()
   const translate = useTranslations('settings.access')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const formatter = useFormatter()
-  const [inviteOpen, setInviteOpen] = useState(false)
+  // ?invite=true: the Space page's «Invite» lands here with the sheet open
+  const [inviteOpen, setInviteOpen] = useQueryState('invite', parseAsBoolean.withDefault(false))
   const [dialog, setDialog] = useState<Dialog>(null)
   const [isPending, setIsPending] = useState(false)
   const [dialogError, setDialogError] = useState<string | null>(null)
   const isOwner = role === 'owner'
+  const profiles = useMembers()
   const owner = members.find((member) => member.role === 'owner')
   const ownerName = owner ? memberName(owner) : '—'
   const revokeMember = dialog?.kind === 'revoke' ? dialog.member : null
@@ -122,13 +100,13 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
       onDone()
       router.refresh()
     } catch (caught) {
-      const message = translateError(toPgError(caught as { code?: string }).kind)
+      const message = dbErrorText(caught)
 
       setDialogError(message)
       notify.error(message)
-    } finally {
-      setIsPending(false)
     }
+
+    setIsPending(false)
   }
 
   const changeRole = (member: Member, nextRole: string | null) => {
@@ -192,17 +170,14 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
       )}
       {isAlone ? (
         <Card title={translate('membersTitle')}>
-          <div className="flex flex-col items-center gap-3 p-2 text-center">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-cat-blue-soft text-cat-blue-text"
-            >
-              <Users className="size-5" />
-            </span>
-            <p className="self-stretch text-body font-semibold text-text-primary">{translate('empty.title')}</p>
-            <p className="self-stretch text-label text-text-secondary">{translate('empty.text')}</p>
-            {inviteButton}
-          </div>
+          <EmptyState
+            bare
+            icon={Users}
+            tone="blue"
+            title={translate('empty.title')}
+            hint={translate('empty.text')}
+            action={inviteButton}
+          />
         </Card>
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
@@ -216,16 +191,16 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
                   {isOwner ? inviteButton : <LeaveSpaceButton currentUserId={currentUserId} ownerName={ownerName} />}
                 </div>
                 <ul className="flex flex-col gap-4">
-                  {members.map((member, index) => {
+                  {members.map((member) => {
                     const name = memberName(member)
                     const isMemberOwner = member.role === 'owner'
 
                     return (
                       <li
                         key={member.userId}
-                        className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border py-4 last:border-b-0"
+                        className="flex flex-wrap items-start gap-x-4 gap-y-3 border-b border-border py-4 last:border-b-0"
                       >
-                        <Avatar name={name} index={index} />
+                        <Avatar name={name} src={profiles[member.userId]?.avatarUrl} />
                         <div className="flex min-w-0 flex-1 basis-40 flex-col">
                           <span className="truncate text-body font-semibold text-text-primary">
                             {member.userId === currentUserId ? translate('you', { name }) : name}
@@ -282,9 +257,9 @@ export function AccessScreen({ currentUserId, members, invites }: AccessScreenPr
             {isOwner && invites.length > 0 ? (
               <Card title={translate('pendingTitle')}>
                 <ul className="flex flex-col gap-4">
-                  {invites.map((invite, index) => (
-                    <li key={invite.id} className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                      <Avatar name={invite.email} index={index + 2} />
+                  {invites.map((invite) => (
+                    <li key={invite.id} className="flex flex-wrap items-start gap-x-4 gap-y-3">
+                      <Avatar name={invite.email} />
                       <div className="flex min-w-0 flex-1 basis-40 flex-col">
                         <span className="truncate text-body font-semibold text-text-primary">{invite.email}</span>
                         <span className="text-caption text-text-tertiary">

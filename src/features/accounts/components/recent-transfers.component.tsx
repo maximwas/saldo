@@ -2,15 +2,14 @@
 
 import { ArrowLeftRight } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
 import { Card } from '@/components/ui/card.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { NEUTRAL_TONE } from '@/constants/category-colors.constants'
 import { useLedger } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
-import { useUiStore } from '@/store/ui.store'
+import { exchangeRate, formatRate } from '@/lib/money/fx.utils'
+import { useIsWideLayout } from '@/lib/utils/media-query.hook'
 import { useRecentTransfers } from '../hooks/accounts.hook'
-import { type AccountView, type RecentTransfer, transferRate } from '../utils/accounts.utils'
+import type { AccountView, RecentTransfer } from '../utils/accounts.utils'
 
 const ALL_TRANSFERS_HREF = '/operations?type=transfer&period=all'
 
@@ -25,9 +24,9 @@ type RecentTransfersProps = {
 export function RecentTransfers({ accounts }: RecentTransfersProps) {
   const translate = useTranslations('accounts.recent')
   const locale = useLocale()
-  const desktop = useIsDesktop()
-  const { timeZone } = useLedger()
-  const hideAmounts = useUiStore((state) => state.hideAmounts)
+  const moneyText = useMoneyText()
+  const desktop = useIsWideLayout()
+  const { timeZone, baseCurrency } = useLedger()
   const { data } = useRecentTransfers()
 
   if (!data || data.length === 0) {
@@ -44,26 +43,20 @@ export function RecentTransfers({ accounts }: RecentTransfersProps) {
     }).format(new Date(transfer.occurredAt))
 
   function meta(transfer: RecentTransfer) {
-    const rate = transferRate(transfer)
+    const exchange = exchangeRate(transfer, baseCurrency)
     const fee =
       transfer.feeMinor === null
         ? translate('noFee')
-        : translate('fee', { amount: formatMinor(transfer.feeMinor, transfer.fromCurrency, locale) })
+        : translate('fee', { amount: moneyText(transfer.feeMinor, transfer.fromCurrency) })
 
-    if (rate === null) {
+    if (exchange === null) {
       return fee
     }
 
-    const formatted = new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    }).format(rate)
-
-    return `${translate('rate', { rate: formatted })} · ${fee}`
+    return `${translate('rate', { rate: formatRate(exchange.rate, locale) })} · ${fee}`
   }
 
-  const received = (transfer: RecentTransfer) =>
-    hideAmounts ? '→ ••••' : `→ +${formatMinor(transfer.toAmountMinor, transfer.toCurrency, locale)}`
+  const received = (transfer: RecentTransfer) => `→ +${moneyText(transfer.toAmountMinor, transfer.toCurrency)}`
 
   const sent = (transfer: RecentTransfer) => (
     <Amount minor={-transfer.fromAmountMinor} currency={transfer.fromCurrency} kind="transfer" />
@@ -90,7 +83,7 @@ export function RecentTransfers({ accounts }: RecentTransfersProps) {
             desktop ? (
               <li key={transfer.id} className="flex h-16 items-center gap-4 border-b border-border bg-card px-4">
                 <span className="w-18 shrink-0 text-label text-text-secondary">{dayOf(transfer)}</span>
-                <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
                   {icon('size-8')}
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="truncate text-body font-medium text-text-primary">
@@ -109,7 +102,7 @@ export function RecentTransfers({ accounts }: RecentTransfersProps) {
                 </span>
               </li>
             ) : (
-              <li key={transfer.id} className="flex items-center gap-4 py-3">
+              <li key={transfer.id} className="flex items-start gap-4 py-3">
                 {icon('size-10')}
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="truncate text-body font-medium text-text-primary">

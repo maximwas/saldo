@@ -1,7 +1,7 @@
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Badge } from '@/components/ui/badge.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
 import { cn } from '@/lib/utils/cn.utils'
 import type { BudgetFact, LimitProgress } from '../utils/budget.utils'
 
@@ -21,14 +21,14 @@ type LimitNotesProps = {
 // the line under the bar: the remainder (or the overspend) on the left, «of limit · N %» on the right
 export function LimitNotes({ fact, progress }: LimitNotesProps) {
   const translate = useTranslations('budget.limits')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
-  const money = (minor: number) => formatMinor(minor, currency, locale)
+  const money = (minor: number) => moneyText(minor, currency)
   const { state } = progress
 
   if (state === 'none' || fact.limitMinor === null) {
     return (
-      <p className="flex flex-wrap items-center gap-2 text-caption text-text-secondary">
+      <p className="flex flex-wrap items-center gap-2 text-label text-text-secondary">
         {translate('noLimit')}
         {fact.unknownCount > 0 ? (
           <Badge tone="unknown">{translate('unknown', { count: fact.unknownCount })}</Badge>
@@ -66,8 +66,17 @@ export function LimitNotes({ fact, progress }: LimitNotesProps) {
   }[state]
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-caption">
-      <span className={cn(state === 'ok' ? 'text-text-secondary' : 'text-warning-text')}>{left ?? text}</span>
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-label">
+      {/* orange means over the limit only, as the bar and the legend; nearly spent is a darker, plain note */}
+      <span
+        className={cn(
+          state === 'ok' && 'text-text-secondary',
+          state === 'warning' && 'font-medium text-text-primary',
+          state === 'over' && 'font-medium text-warning-text',
+        )}
+      >
+        {left ?? text}
+      </span>
       <span className="flex items-center gap-2 text-text-secondary">
         {fact.unknownCount > 0 ? (
           <Badge tone="unknown">{translate('unknown', { count: fact.unknownCount })}</Badge>

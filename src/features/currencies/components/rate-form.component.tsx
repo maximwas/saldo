@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
@@ -32,7 +32,10 @@ export function RateForm() {
       rateOn: today,
     },
   })
-  const currency = form.watch('currency')
+  const currency = useWatch({
+    control: form.control,
+    name: 'currency',
+  })
 
   return (
     <form

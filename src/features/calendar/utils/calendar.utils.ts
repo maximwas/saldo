@@ -20,9 +20,6 @@ const WEEK = { weekStartsOn: 1 } as const
 // local midnight in and out: a date-only value never meets a time zone
 const iso = (date: Date) => format(date, 'yyyy-MM-dd')
 
-/** noon UTC of a YYYY-MM-DD: format it with timeZone 'UTC' and no zone moves the day */
-export const dayDate = (day: string) => new Date(`${day}T12:00:00Z`)
-
 export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
 
 /** rows by their day, in the order they came (calendar_entries returns them by day) */
@@ -122,10 +119,50 @@ export function sumTotals(days: DayTotals[]) {
     incomeMinor,
     expenseMinor,
     resultMinor: incomeMinor - expenseMinor,
-    planMinor: sum((day) => day.planInMinor - day.planOutMinor),
+    // decision 31.10: «with plan» subtracts the open outgoing plans only; expected income is not added (§3)
+    planMinor: -sum((day) => day.planOutMinor),
     unknownCount: sum((day) => day.unknownCount),
     entriesCount: sum((day) => day.entriesCount),
   }
+}
+
+export type TotalLine = {
+  key: 'spent' | 'received' | 'planned' | 'expected'
+  minor: number
+  kind: 'fact' | 'income' | 'plan'
+}
+
+/** the labelled sums of a day (Figma 51:126307, 57:128491): «Spent» and «Received» already happened, «Planned» and
+ * «Expected» are still to come; a sum of zero is left out, so an empty day says nothing */
+export function dayTotalLines(totals: DayTotals | undefined): TotalLine[] {
+  if (!totals) {
+    return []
+  }
+
+  const lines: TotalLine[] = [
+    {
+      key: 'spent',
+      minor: -totals.factExpenseMinor,
+      kind: 'fact',
+    },
+    {
+      key: 'received',
+      minor: totals.factIncomeMinor,
+      kind: 'income',
+    },
+    {
+      key: 'planned',
+      minor: -totals.planOutMinor,
+      kind: 'plan',
+    },
+    {
+      key: 'expected',
+      minor: totals.planInMinor,
+      kind: 'plan',
+    },
+  ]
+
+  return lines.filter((line) => line.minor !== 0)
 }
 
 type ToneFields = {
@@ -133,22 +170,23 @@ type ToneFields = {
   sourceType: string | null
 }
 
-/** legend colour of an entry (Figma «Calendar» legend 2:67113): its source first, otherwise its kind; a plan draws the
- * marker as an outline (border class), a fact fills it (bg class) */
+/** the mark colour of an entry (Figma «Calendar» 51:126598 «Colour is the kind of entry»): its source first, otherwise
+ * its kind, as a text colour so a mark paints it filled (bg-current) or outlined (border-current). A plain expense
+ * (a manual plan without a category too) takes the primary mark: grey is «paid earlier» on phones (Figma 59:129601). */
 export const LEGEND = [
-  ['expense', 'bg-neutral', 'border-neutral'],
-  ['income', 'bg-positive', 'border-positive'],
-  ['transfer', 'bg-border-strong', 'border-border-strong'],
-  ['subscription', 'bg-primary', 'border-primary'],
-  ['credit', 'bg-cat-orange', 'border-cat-orange'],
-  ['debt', 'bg-cat-pink', 'border-cat-pink'],
-  ['big_expense', 'bg-cat-cyan', 'border-cat-cyan'],
-  ['auto_plan', 'bg-cat-teal', 'border-cat-teal'],
-  ['tax', 'bg-cat-yellow', 'border-cat-yellow'],
+  ['expense', 'text-primary'],
+  ['income', 'text-positive'],
+  // not grey: grey marks a plan paid on another day
+  ['transfer', 'text-cat-indigo'],
+  ['subscription', 'text-primary'],
+  ['credit', 'text-cat-orange'],
+  ['debt', 'text-cat-pink'],
+  ['big_expense', 'text-cat-cyan'],
+  ['auto_plan', 'text-cat-teal'],
+  ['tax', 'text-cat-yellow'],
 ] as const
 
-const TONE: Record<string, string> = Object.fromEntries(LEGEND.map(([key, fill]) => [key, fill]))
-const OUTLINE: Record<string, string> = Object.fromEntries(LEGEND.map(([key, , outline]) => [key, outline]))
+const TONE: Record<string, string> = Object.fromEntries(LEGEND)
 const KIND_GROUP: Record<string, string> = {
   income: 'income',
   transfer_out: 'transfer',
@@ -160,8 +198,6 @@ const toneKey = ({ kind, sourceType }: ToneFields) =>
   sourceType && sourceType in TONE ? sourceType : (KIND_GROUP[kind] ?? 'expense')
 
 export const entryTone = (entry: ToneFields) => TONE[toneKey(entry)] ?? TONE.expense
-
-export const entryOutline = (entry: ToneFields) => OUTLINE[toneKey(entry)] ?? OUTLINE.expense
 
 const SOURCE_HREF: Record<string, (sourceId: string) => string> = {
   subscription: (sourceId) => `/payments/subscriptions?sub=${sourceId}`,
@@ -178,4 +214,70 @@ export function sourceHref(sourceType: string | null, sourceId: string | null) {
   const href = sourceId ? SOURCE_HREF[sourceType] : undefined
 
   return href && sourceId ? href(sourceId) : '/payments'
+}
+
+/** a month cell lists this many entries; the rest is one quiet «more N» line that opens the day (Figma 55:127515) */
+const CELL_LINES = 3
+
+export function cellLines<Item>(items: Item[], max = CELL_LINES) {
+  return {
+    shown: items.slice(0, max),
+    more: Math.max(items.length - max, 0),
+  }
+}
+
+/** the dates a view reads, as periodRange gives them */
+type Period = ReturnType<typeof periodRange>
+
+type StatusFields = {
+  entry: 'fact' | 'plan'
+  day: string
+  state: string
+  obligationId: string | null
+  plannedOn: string | null
+}
+
+const paidElsewhere = (entry: StatusFields) =>
+  entry.entry === 'fact' && entry.obligationId !== null && entry.plannedOn !== null && entry.plannedOn !== entry.day
+
+/** a plan paid on another day leaves a greyed «Paid DD.MM» mark on its own day (Figma 55:127515): the facts that paid
+ * a plan of another day, by that plan's day, for the plan days of the period only. The money still counts on the pay
+ * day only. */
+export function paidMarks<Entry extends StatusFields>(entries: Entry[], period: Period) {
+  const byPlanDay = new Map<string, Entry[]>()
+
+  for (const entry of entries.filter(paidElsewhere)) {
+    const day = entry.plannedOn ?? entry.day
+
+    if (day >= period.from && day <= period.to) {
+      byPlanDay.set(day, [...(byPlanDay.get(day) ?? []), entry])
+    }
+  }
+
+  return byPlanDay
+}
+
+/** the days outside [from, to] that a read of the period still needs, once each and in order */
+export const outsideDays = (days: string[], period: Period) =>
+  [...new Set(days.filter((day) => day < period.from || day > period.to))].sort()
+
+export type EntryStatus = 'planned' | 'partial' | 'overdue' | 'paid' | 'paidElsewhere' | 'fact'
+
+const PLAN_STATUS: Record<string, EntryStatus> = {
+  partial: 'partial',
+  unconfirmed: 'overdue',
+}
+
+/** what a row's second line and the popup say: a plan still waits (partly paid, its date passed), a fact paid a plan
+ * on the plan's day or on another one, or it is a plain operation */
+export function entryStatus(entry: StatusFields): EntryStatus {
+  if (entry.entry === 'plan') {
+    return PLAN_STATUS[entry.state] ?? 'planned'
+  }
+
+  if (entry.obligationId === null) {
+    return 'fact'
+  }
+
+  return paidElsewhere(entry) ? 'paidElsewhere' : 'paid'
 }

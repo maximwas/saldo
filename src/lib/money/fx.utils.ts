@@ -54,8 +54,8 @@ function beats(candidate: FxRate, best: FxRate | null) {
   return candidate.rateOn === best.rateOn && candidate.source === 'manual'
 }
 
-/** the newest rate of the exact pair on or before `on`; manual beats reference on the same day */
-function directRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
+/** the newest row of the exact pair on or before `date`; manual beats reference on the same day (rule A) */
+export function findRateRow(rates: readonly FxRate[], from: string, target: string, date: string): FxRate | null {
   let best: FxRate | null = null
 
   for (const row of rates) {
@@ -64,10 +64,16 @@ function directRate(rates: FxRate[], from: string, target: string, date: string)
     }
   }
 
+  return best
+}
+
+function directRate(rates: readonly FxRate[], from: string, target: string, date: string): Decimal | null {
+  const best = findRateRow(rates, from, target, date)
+
   return best ? new Exact(best.rate) : null
 }
 
-function pairRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
+function pairRate(rates: readonly FxRate[], from: string, target: string, date: string): Decimal | null {
   const direct = directRate(rates, from, target, date)
 
   if (direct) {
@@ -80,7 +86,7 @@ function pairRate(rates: FxRate[], from: string, target: string, date: string): 
 }
 
 /** units of `target` per unit of `from` on the date: direct, inverted or crossed through one shared currency; null = unknown */
-export function findRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
+export function findRate(rates: readonly FxRate[], from: string, target: string, date: string): Decimal | null {
   if (from === target) {
     return new Exact(1)
   }
@@ -95,7 +101,7 @@ export function findRate(rates: FxRate[], from: string, target: string, date: st
 }
 
 /** from → bridge → target through the first currency both legs are known for */
-function crossRate(rates: FxRate[], from: string, target: string, date: string): Decimal | null {
+function crossRate(rates: readonly FxRate[], from: string, target: string, date: string): Decimal | null {
   const bridges = new Set(rates.flatMap((row) => [row.baseCurrency, row.quoteCurrency]))
 
   for (const bridge of bridges) {
@@ -160,3 +166,76 @@ export function convertAt(
 
   return rate ? convertMinor(amountMinor, from, target, rate, rounding) : null
 }
+
+/** units of `toCurrency` per 1 unit of `fromCurrency` that two real amounts imply (800 € → 33 200 ₴ is 41.5); null for zero */
+export function impliedRate(
+  fromMinor: number,
+  fromCurrency: string,
+  toMinor: number,
+  toCurrency: string,
+): Decimal | null {
+  if (fromMinor <= 0 || toMinor <= 0) {
+    return null
+  }
+
+  const fromUnits = new Decimal(fromMinor).dividedBy(Decimal.pow(10, minorDigits(fromCurrency)))
+  const toUnits = new Decimal(toMinor).dividedBy(Decimal.pow(10, minorDigits(toCurrency)))
+
+  return toUnits.dividedBy(fromUnits)
+}
+
+type Exchange = {
+  fromAmountMinor: number
+  fromCurrency: string
+  toAmountMinor: number
+  toCurrency: string
+}
+
+export type ExchangeRate = {
+  rate: Decimal
+  /** the currency of the «1» the rate is per */
+  unit: string
+}
+
+/**
+ * The rate an exchange implies, read the way every rate on screen reads: how much of the base currency one unit of the
+ * other costs (₴ per 1 €), whichever way the money went. Without the base currency on either side, the target per unit
+ * of the source. `unit` is the currency of that «1». null = one currency, or an amount is missing.
+ */
+export function exchangeRate(exchange: Exchange, baseCurrency: string): ExchangeRate | null {
+  if (exchange.fromCurrency === exchange.toCurrency) {
+    return null
+  }
+
+  const fromBase = exchange.fromCurrency === baseCurrency
+  const rate = fromBase
+    ? impliedRate(exchange.toAmountMinor, exchange.toCurrency, exchange.fromAmountMinor, exchange.fromCurrency)
+    : impliedRate(exchange.fromAmountMinor, exchange.fromCurrency, exchange.toAmountMinor, exchange.toCurrency)
+
+  return rate
+    ? {
+        rate,
+        unit: fromBase ? exchange.toCurrency : exchange.fromCurrency,
+      }
+    : null
+}
+
+/**
+ * «41,67»: at least two and at most `maxDigits` decimals, in the active locale; Intl gets a decimal string, no float.
+ * By default two, four below 1 («0,0241») where two would hide the rate (as the rates board, boardDigits).
+ */
+export const formatRate = (rate: Decimal.Value, locale: string, maxDigits = new Decimal(rate).abs().lt(1) ? 4 : 2) =>
+  new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: maxDigits,
+  }).format(new Decimal(rate).toFixed() as Intl.StringNumericLiteral)
+
+/** a day's change of a rate: «+0,12», «−0,03», «0,00» with the digits of formatRate and a real minus sign */
+export const formatRateChange = (change: Decimal.Value, locale: string, maxDigits = 4) =>
+  new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: maxDigits,
+    signDisplay: 'exceptZero',
+  })
+    .format(new Decimal(change).toFixed() as Intl.StringNumericLiteral)
+    .replace('-', '\u2212')

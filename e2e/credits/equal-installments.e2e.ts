@@ -49,7 +49,7 @@ test('кредит рівними внесками: графік із 12 вне�
   await expect(leftOf(page)).toHaveText(/^12 · 1\s200,00\s₴$/)
 
   // the first installment is due today
-  await page.getByRole('button', { name: 'Оплачено · внесок 1' }).click()
+  await page.getByRole('button', { name: 'Оплатити внесок 1' }).click()
   await confirmPayment(page)
 
   await page.goto(card)
@@ -57,7 +57,8 @@ test('кредит рівними внесками: графік із 12 вне�
 
   // the month's expenses grew by the paid installment only, not by the 1 200 purchase price
   await page.goto('/')
-  expect(await monthExpenseMinor(page)).toBe(expenseBefore + 10_000)
+  // the first paint can carry the figures from before the payment until the refetch brings the new ones
+  await expect.poll(() => monthExpenseMinor(page)).toBe(expenseBefore + 10_000)
 })
 
 test('дострокове погашення в день оплати внеску: неоплачені внески замінено одним на весь залишок, оплачений лишається', async ({
@@ -66,7 +67,7 @@ test('дострокове погашення в день оплати внес�
   const page = await pageAs('owner')
   const card = await addEqualCredit(page, `e2e-${crypto.randomUUID().slice(0, 8)}`)
 
-  await page.getByRole('button', { name: 'Оплачено · внесок 1' }).click()
+  await page.getByRole('button', { name: 'Оплатити внесок 1' }).click()
   await confirmPayment(page)
   await page.goto(card)
 

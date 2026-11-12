@@ -354,6 +354,7 @@ export type Database = {
           parent_depth: number | null
           parent_id: string | null
           sort_order: number
+          system_key: string | null
           updated_at: string
           version: number
         }
@@ -372,6 +373,7 @@ export type Database = {
           parent_depth?: never
           parent_id?: string | null
           sort_order?: number
+          system_key?: string | null
           updated_at?: string
           version?: number
         }
@@ -389,6 +391,7 @@ export type Database = {
           parent_depth?: never
           parent_id?: string | null
           sort_order?: number
+          system_key?: string | null
           updated_at?: string
           version?: number
         }
@@ -847,6 +850,7 @@ export type Database = {
           joined_at: string
           ledger_id: string
           notify_channels: string[]
+          pinned_currencies: string[]
           role: string
           user_id: string
         }
@@ -857,6 +861,7 @@ export type Database = {
           joined_at?: string
           ledger_id: string
           notify_channels?: string[]
+          pinned_currencies?: string[]
           role: string
           user_id: string
         }
@@ -866,6 +871,7 @@ export type Database = {
           joined_at?: string
           ledger_id?: string
           notify_channels?: string[]
+          pinned_currencies?: string[]
           role?: string
           user_id?: string
         }
@@ -928,6 +934,58 @@ export type Database = {
           week_starts_on?: number
         }
         Relationships: []
+      }
+      mcp_audit_log: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_ids: string[]
+          error_code: string | null
+          id: string
+          input_hash: string
+          ledger_id: string | null
+          outcome: string
+          tool: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          client_id?: string
+          created_at?: string
+          created_ids?: string[]
+          error_code?: string | null
+          id?: string
+          input_hash: string
+          ledger_id?: string | null
+          outcome: string
+          tool: string
+          user_id?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_ids?: string[]
+          error_code?: string | null
+          id?: string
+          input_hash?: string
+          ledger_id?: string | null
+          outcome?: string
+          tool?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'mcp_audit_log_ledger_id_fkey'
+            columns: [
+              'ledger_id',
+            ]
+            isOneToOne: false
+            referencedRelation: 'ledgers'
+            referencedColumns: [
+              'id',
+            ]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -1869,6 +1927,8 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          avatar_path: string | null
+          avatar_updated_at: string | null
           created_at: string
           last_ledger_id: string | null
           locale: string
@@ -1880,6 +1940,8 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          avatar_path?: string | null
+          avatar_updated_at?: string | null
           created_at?: string
           last_ledger_id?: string | null
           locale?: string
@@ -1890,6 +1952,8 @@ export type Database = {
           version?: number
         }
         Update: {
+          avatar_path?: string | null
+          avatar_updated_at?: string | null
           created_at?: string
           last_ledger_id?: string | null
           locale?: string
@@ -1962,6 +2026,7 @@ export type Database = {
         Row: {
           account_id: string | null
           category_id: string | null
+          created_by: string | null
           currency: string
           direction: string
           due_on: string
@@ -2281,6 +2346,7 @@ export type Database = {
         Returns: {
           account_id: string | null
           category_id: string | null
+          created_by: string | null
           currency: string
           direction: string
           due_on: string
@@ -2340,6 +2406,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string[]
       }
+      my_pinned_currencies: {
+        Args: {
+          p_ledger_id: string
+        }
+        Returns: string[]
+      }
       pay_obligation: {
         Args: {
           p_amount_minor: number
@@ -2353,6 +2425,7 @@ export type Database = {
         Returns: {
           account_id: string | null
           category_id: string | null
+          created_by: string | null
           currency: string
           direction: string
           due_on: string
@@ -2533,6 +2606,13 @@ export type Database = {
       set_my_notify_channels: {
         Args: {
           p_channels: string[]
+          p_ledger_id: string
+        }
+        Returns: undefined
+      }
+      set_my_pinned_currencies: {
+        Args: {
+          p_currencies: string[]
           p_ledger_id: string
         }
         Returns: undefined

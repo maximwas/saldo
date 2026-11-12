@@ -33,6 +33,8 @@ export type LedgerSettings = {
   timeZone: string
   weekStartsOn: number
   nextIncomeOn: string | null
+  /** a space with operations keeps its base currency (trigger ledgers_lock_base_currency) */
+  baseCurrencyLocked: boolean
 }
 
 type MemberRow = {
@@ -76,7 +78,8 @@ type LedgerSettingsRow = {
   next_income_on: string | null
 }
 
-const toLedgerSettings = (row: LedgerSettingsRow): LedgerSettings => ({
+const toLedgerSettings = (row: LedgerSettingsRow, baseCurrencyLocked: boolean): LedgerSettings => ({
+  baseCurrencyLocked,
   id: row.id,
   version: row.version,
   name: row.name,
@@ -150,11 +153,14 @@ export async function getMyDisplayName(ledgerId: string, userId: string): Promis
 
 export async function getLedgerSettings(ledgerId: string): Promise<LedgerSettings> {
   const supabase = await getServerSupabase()
-  const { data, error } = await supabase
-    .from('ledgers')
-    .select('id, version, name, base_currency, time_zone, week_starts_on, next_income_on')
-    .eq('id', ledgerId)
-    .single()
+  const [{ data, error }, operations] = await Promise.all([
+    supabase
+      .from('ledgers')
+      .select('id, version, name, base_currency, time_zone, week_starts_on, next_income_on')
+      .eq('id', ledgerId)
+      .single(),
+    supabase.from('operations').select('id').eq('ledger_id', ledgerId).limit(1),
+  ])
 
   if (error) {
     logPgError(log, error, 'ledger settings lookup failed')
@@ -162,5 +168,11 @@ export async function getLedgerSettings(ledgerId: string): Promise<LedgerSetting
     throw new Error('Ledger settings lookup failed')
   }
 
-  return toLedgerSettings(data)
+  if (operations.error) {
+    logPgError(log, operations.error, 'ledger operations lookup failed')
+
+    throw new Error('Ledger settings lookup failed')
+  }
+
+  return toLedgerSettings(data, operations.data.length > 0)
 }

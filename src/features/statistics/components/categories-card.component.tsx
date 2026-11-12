@@ -7,6 +7,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { Pie, PieChart, ResponsiveContainer } from 'recharts'
 import { Amount } from '@/components/ui/amount.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
+import { cn } from '@/lib/utils/cn.utils'
 import { statisticsQueries } from '../api/statistics.queries'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
 import { type CategoryShare, cardStatus, categoryShares } from '../utils/statistics.utils'
@@ -19,14 +20,14 @@ const LINK =
 
 type Shares = ReturnType<typeof categoryShares>
 
+const ROW_CLASS = 'flex h-10 items-center gap-3 border-b border-border text-label'
+
+// one percent format across the app: «50,1 %» with a space in Ukrainian (Intl's uk percent drops it)
 function useShareText() {
   const format = useFormatter()
+  const translate = useTranslations('statistics.categories')
 
-  return (share: number) =>
-    format.number(share / 100, {
-      style: 'percent',
-      maximumFractionDigits: 1,
-    })
+  return (share: number) => translate('percent', { value: format.number(share, { maximumFractionDigits: 1 }) })
 }
 
 /** the category name, a link to its operations of the period (none for «no category»: the list has no such filter) */
@@ -56,48 +57,90 @@ function CategoryName({ share }: { share: CategoryShare }) {
   )
 }
 
-// Figma «Saldo» → Statistics 2:73594 "Expenses by category": a donut with the total in the middle, the legend list beside
-function CategoriesChart({ data }: { data: Shares }) {
+const MOBILE_ROWS = 4
+
+/** below lg the legend keeps the biggest four and sums the rest into one «Others (N)» row (Figma 2:78090) */
+function OthersRow({ data }: { data: Shares }) {
+  const translate = useTranslations('statistics')
+  const currency = useLedgerStore((ledger) => ledger.baseCurrency)
+  const shareText = useShareText()
+  const rest = data.shares.slice(MOBILE_ROWS)
+
+  if (rest.length === 0) {
+    return null
+  }
+
+  return (
+    <li className={cn(ROW_CLASS, 'lg:hidden')}>
+      <span aria-hidden className="size-2.5 shrink-0 rounded-full bg-border-strong" />
+      <span className="min-w-0 flex-1 truncate">{translate('others', { count: rest.length })}</span>
+      <span className="w-14 text-right text-text-secondary tabular-nums">
+        {shareText(rest.reduce((sum, share) => sum + share.share, 0))}
+      </span>
+      <Amount
+        minor={rest.reduce((sum, share) => sum + share.factMinor, 0)}
+        currency={currency}
+        className="w-30 text-right text-label font-semibold"
+      />
+    </li>
+  )
+}
+
+// Figma «Saldo» → Statistics 2:73594 "Expenses by category": a 220 donut (180 on mobile) with the total in the middle,
+// the legend beside it (40 high rows, a 10 swatch, share 56 and amount 120 wide, both on the right)
+type CategoriesChartProps = {
+  data: Shares
+  /** the phone table shows the legend list alone */
+  donut?: boolean
+}
+
+function CategoriesChart({ data, donut = true }: CategoriesChartProps) {
   const translate = useTranslations('statistics')
   const currency = useLedgerStore((ledger) => ledger.baseCurrency)
   const shareText = useShareText()
   const drawn = data.shares.filter((share) => share.factMinor > 0)
 
   return (
-    <div className="flex flex-col items-center gap-6 lg:flex-row">
-      <div
-        role="img"
-        aria-label={translate('categories.summary', { count: drawn.length })}
-        className="relative size-56 shrink-0"
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              isAnimationActive={false}
-              data={drawn}
-              dataKey="factMinor"
-              nameKey="name"
-              innerRadius="62%"
-              stroke="var(--color-card)"
-            />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-caption text-text-secondary">{translate('summary.expense')}</span>
-          <Amount minor={data.totalMinor} currency={currency} size="s" />
+    <div className="flex flex-col items-center gap-4">
+      {/* not rendered at all without the donut: a hidden ResponsiveContainer measures 0×0 and recharts warns */}
+      {donut && (
+        <div
+          role="img"
+          aria-label={translate('categories.summary', { count: drawn.length })}
+          className="relative size-45 shrink-0 lg:size-55"
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                isAnimationActive={false}
+                data={drawn}
+                dataKey="factMinor"
+                nameKey="name"
+                innerRadius="64%"
+                stroke="none"
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span className="text-caption text-text-secondary">{translate('summary.expense')}</span>
+            <Amount minor={data.totalMinor} currency={currency} className="max-lg:text-label max-lg:font-semibold" />
+          </div>
         </div>
-      </div>
-      <ul className="w-full">
-        {data.shares.map((share) => (
-          <li key={share.id ?? 'none'} className="flex items-center gap-3 border-b border-border py-2 text-label">
+      )}
+      <ul className="w-full min-w-0 flex-1">
+        {data.shares.map((share, index) => (
+          <li key={share.id ?? 'none'} className={cn(ROW_CLASS, index >= MOBILE_ROWS && 'max-lg:hidden')}>
             <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: share.fill }} />
             <span className="min-w-0 flex-1 truncate">
               <CategoryName share={share} />
             </span>
-            <span className="text-text-secondary tabular-nums">{shareText(share.share)}</span>
-            <Amount minor={share.factMinor} currency={currency} />
+            <span className="w-14 text-right whitespace-nowrap text-text-secondary tabular-nums">
+              {shareText(share.share)}
+            </span>
+            <Amount minor={share.factMinor} currency={currency} className="w-30 text-right text-label font-semibold" />
           </li>
         ))}
+        <OthersRow data={data} />
       </ul>
     </div>
   )
@@ -125,12 +168,19 @@ function CategoriesTable({ data }: { data: Shares }) {
       rows={data.shares.map((share) => ({
         key: share.id ?? 'none',
         cells: [
-          <CategoryName key="name" share={share} />,
+          <span key="name" className="flex items-center gap-3">
+            <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: share.fill }} />
+            <CategoryName share={share} />
+          </span>,
           shareText(share.share),
           <Amount key="sum" minor={share.factMinor} currency={currency} />,
         ],
       }))}
-      footer={[translate('total'), '', <Amount key="total" minor={data.totalMinor} currency={currency} />]}
+      footer={[
+        translate('total'),
+        shareText(data.shares.some((share) => share.share > 0) ? 100 : 0),
+        <Amount key="total" minor={data.totalMinor} currency={currency} />,
+      ]}
     />
   )
 }
@@ -167,7 +217,19 @@ export function CategoriesCard() {
       emptyText={translate('empty.categories')}
       retryAction={query.refetch}
     >
-      {view === 'chart' ? <CategoriesChart data={data} /> : <CategoriesTable data={data} />}
+      {view === 'chart' ? (
+        <CategoriesChart data={data} />
+      ) : (
+        <>
+          {/* Figma 4:79439: the phone table is the legend list without the donut */}
+          <div className="lg:hidden">
+            <CategoriesChart data={data} donut={false} />
+          </div>
+          <div className="max-lg:hidden">
+            <CategoriesTable data={data} />
+          </div>
+        </>
+      )}
       {data.unknownCount > 0 && (
         <p className="text-caption text-warning-text">{translate('unknownNote', { count: data.unknownCount })}</p>
       )}

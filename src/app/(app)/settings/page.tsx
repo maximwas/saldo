@@ -1,4 +1,4 @@
-import { Banknote, Bell, Database, Settings, Users } from 'lucide-react'
+import { Banknote, Bell, Database, Settings, ShieldCheck, Users } from 'lucide-react'
 import type { Route } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
@@ -7,9 +7,9 @@ import { Card } from '@/components/ui/card.component'
 import { CurrenciesSummary } from '@/features/currencies/components/currencies-summary.component'
 import { getMembers, getPendingInvites } from '@/features/ledgers/api/access.server'
 import { LeaveSpaceButton } from '@/features/ledgers/components/leave-space-button.component'
-import { memberName } from '@/features/ledgers/utils/members.utils'
 import { SettingsLink } from '@/features/settings/components/settings-link.component'
 import { getActiveLedger, verifySession } from '@/lib/auth/dal.server'
+import { memberName } from '@/lib/members/members.utils'
 import GeneralSettingsPage from './general/page'
 
 // Phones: the section list (Figma 2:35769, read only 2:47206); desktop: the General tab (11:72807), as /settings/general
@@ -27,7 +27,7 @@ export default function SettingsPage() {
 }
 
 // Figma 2:35785: padding 4/20/32 (the shell's), gap 16: Info Banner for a viewer, Card «Space «…»» with the rows, Leave
-// space for a member who is not the owner, the signed-in line. Security has no feature yet, so its row is left out.
+// space for a member who is not the owner, the signed-in line.
 async function SettingsSections() {
   const [session, ledger, translate, translateTabs, translateRoles] = await Promise.all([
     verifySession(),
@@ -51,19 +51,19 @@ async function SettingsSections() {
   const ownerName = owner ? memberName(owner) : '—'
   const rows: {
     href: Route
-    icon: typeof Settings
+    icon: React.ReactNode
     title: string
     subtitle: React.ReactNode
   }[] = [
     {
       href: '/settings/general',
-      icon: Settings,
+      icon: <Settings className="size-5" />,
       title: translateTabs('general'),
       subtitle: translate('general'),
     },
     {
       href: '/settings/access',
-      icon: Users,
+      icon: <Users className="size-5" />,
       title: translateTabs('access'),
       subtitle: isOwner
         ? translate('accessOwner', {
@@ -77,19 +77,25 @@ async function SettingsSections() {
     },
     {
       href: '/settings/notifications',
-      icon: Bell,
+      icon: <Bell className="size-5" />,
       title: translateTabs('notifications'),
       subtitle: translate('notifications'),
     },
     {
       href: '/settings/currencies',
-      icon: Banknote,
+      icon: <Banknote className="size-5" />,
       title: translateTabs('currencies'),
       subtitle: <CurrenciesSummary />,
     },
     {
+      href: '/settings/security',
+      icon: <ShieldCheck className="size-5" />,
+      title: translateTabs('security'),
+      subtitle: translate('security'),
+    },
+    {
       href: '/settings/data',
-      icon: Database,
+      icon: <Database className="size-5" />,
       title: translateTabs('data'),
       subtitle: translate('data'),
     },

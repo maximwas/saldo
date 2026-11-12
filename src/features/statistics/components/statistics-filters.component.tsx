@@ -1,15 +1,16 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select, type SelectOption } from '@/components/ui/select.component'
-import { useMemberNames } from '@/lib/members/member-names.hook'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { useMemberNames } from '@/lib/members/members.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import { useStatisticsFilters } from '../hooks/statistics-filters.hook'
 import { BUCKETS, isRolling, periodOptions, VIEWS } from '../utils/statistics-period.utils'
 
 const ALL = 'all'
-const CHIP = 'h-9 w-auto min-w-0 gap-1.5 rounded-full px-3 text-label font-medium'
+const CHIP = 'h-9.5 w-auto min-w-0 gap-1.5 rounded-full px-3 text-label font-medium'
 const CHIP_ON = 'border-primary-soft bg-primary-soft text-primary-text'
 
 // a chip has no visible label, so a screen-reader label is attached to the Select
@@ -32,7 +33,7 @@ function Chip({
 
 function usePeriodLabel() {
   const translate = useTranslations('statistics')
-  const formatter = useFormatter()
+  const dayText = useDayText()
   const locale = useLocale()
 
   return (period: string): string => {
@@ -44,11 +45,7 @@ function usePeriodLabel() {
       return period
     }
 
-    const label = formatter.dateTime(new Date(`${period}-15T12:00:00Z`), {
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC',
-    })
+    const label = dayText(period, 'monthYear')
 
     return label.charAt(0).toLocaleUpperCase(locale) + label.slice(1)
   }
@@ -68,7 +65,7 @@ export function StatisticsFilters() {
   }))
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <Chip
           id="statistics-period"
@@ -116,6 +113,7 @@ export function StatisticsFilters() {
         )}
       </div>
       <SegmentedControl
+        stretch
         label={translate('filters.view')}
         options={VIEWS.map((value) => ({
           value,

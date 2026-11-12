@@ -2,23 +2,28 @@
   "status": {
     "synced": "Синхронізовано",
     "syncedAt": "Синхронізовано · {time}",
-    "pending": "Очікує ({count})",
+    "pending": "{count, plural, one {# зміна чекає} few {# зміни чекають} many {# змін чекають} other {# зміни чекають}}",
     "offline": "Офлайн",
-    "offlineWaiting": "Офлайн · очікує ({count})",
-    "error": "Помилка ({count})",
-    "conflict": "Конфлікт ({count})"
+    "offlineWaiting": "Офлайн · {count, plural, one {# зміна} few {# зміни} many {# змін} other {# зміни}}",
+    "error": "Помилка",
+    "conflict": "Конфлікт",
+    "conflictCount": "Конфлікт · {count}",
+    "retry": "Повторити",
+    "resolve": "Вирішити"
   },
   "banner": {
-    "offline": "Немає мережі. Працюйте далі: нові записи збережуться на пристрої і відправляться, щойно з'явиться зв'язок.",
+    "offline": "Немає мережі. Працюйте далі: нові записи збережуться на пристрої й відправляться, щойно з’явиться зв’язок.",
     "asOf": "Дані станом на {time}.",
     "offlineShort": "Немає мережі. Нові записи збережуться на пристрої."
   },
   "savedOffline": "Збережено на пристрої. Відправимо, щойно з'явиться зв'язок.",
+  "savedOfflineOperation": "{kind, select, expense {Витрату} income {Дохід} other {Операцію}} {amount} збережено на пристрої. Відправимо пізніше.",
+  "savedOfflineOperationShort": "{kind, select, expense {Витрату} income {Дохід} other {Операцію}} {amount} збережено на пристрої",
   "queue": {
     "title": "Черга синхронізації",
     "waiting": "{count, plural, one {# зміна чекає} few {# зміни чекають} many {# змін чекають} other {# зміни чекають}} на відправку",
     "empty": "Усі зміни вже на сервері.",
-    "hint": "Повторна відправка не створить дублікатів.",
+    "hint": "Якщо надіслати ще раз, нічого не задвоїться.",
     "updatedAt": "Останнє оновлення — {time}.",
     "syncNow": "Синхронізувати зараз",
     "retry": "Повторити",
@@ -30,6 +35,13 @@
       "synced": "синхронізовано",
       "error": "помилка",
       "conflict": "конфлікт"
+    },
+    "count": "{count, plural, one {# зміна} few {# зміни} many {# змін} other {# зміни}}",
+    "waitingTitle": "{count, plural, one {чекає} other {чекають}} на відправку",
+    "today": "сьогодні",
+    "newOperation": {
+      "expense": "Нова витрата",
+      "income": "Новий дохід"
     },
     "writes": {
       "other": "Зміна",
@@ -90,21 +102,37 @@
       },
       "reminder-rules": {
         "saveReminderRule": "Нагадування"
+      },
+      "notifications": {
+        "markNotificationsRead": "Прочитані сповіщення",
+        "clearReadNotifications": "Очищення сповіщень"
+      },
+      "ledgers": {
+        "setMyNotifyChannels": "Нагадування простору"
       }
     }
   },
   "conflict": {
     "title": "Конфлікт змін",
+    "titleOf": "Конфлікт змін: {what}",
     "lead": "Запис змінили, поки ваша зміна чекала на відправку. Нічого не перезаписано — оберіть, що лишити.",
+    "leadBy": "{name} змінив(ла) цей запис, поки ваша зміна чекала на відправку. Нічого не перезаписано — оберіть, що лишити.",
+    "intro": "{what}. {name} змінив(ла) запис, поки ваша зміна чекала.",
+    "introAnon": "{what}. Запис змінили, поки ваша зміна чекала.",
     "mine": "Ваша версія · {time}",
-    "theirs": "Версія на сервері · {time}",
-    "paidBy": "Підтвердив(ла) {name} · {time}",
-    "someone": "інший учасник",
-    "loading": "Завантажуємо версію з сервера…",
+    "mineShort": "Ваша · {time}",
+    "theirsBy": "Версія: {name} · {time}",
+    "theirsShort": "{name} · {time}",
+    "someone": "Інший учасник",
     "gone": "Цього запису вже немає на сервері.",
     "keepMine": "Залишити мою",
     "keepAsExpense": "Лишити як окрему витрату",
     "takeTheirs": "Взяти їхню",
+    "keptMine": "Збережено вашу версію",
+    "tookTheirs": "Залишено їхню версію",
+    "sameAmount": "Сума однакова:",
+    "noNote": "без коментаря",
+    "quoted": "«{note}»",
     "fields": {
       "amount": "Сума",
       "date": "Дата",

@@ -13,7 +13,6 @@ docs/design/screens/
 # build and tooling
 node_modules/
 .next/
-.vercel/
 coverage/
 *.tsbuildinfo
 supabase/.temp/
@@ -27,7 +26,12 @@ next-env.d.ts
 *.pem
 npm-debug.log*
 .pnpm-debug.log*
-.vercel
+
+# cloudflare / opennext
+/.open-next/
+/.wrangler/
+.dev.vars*
+cloudflare-env.d.ts
 
 # e2e output
 e2e/.auth/

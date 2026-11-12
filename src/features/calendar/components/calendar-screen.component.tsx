@@ -4,8 +4,12 @@ import { CalendarSearch } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { EmptyState } from '@/components/ui/empty-state.component'
+import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
 import { activeQuickSet, fromFilter } from '../utils/calendar-filters.utils'
@@ -15,6 +19,7 @@ import { CalendarSets } from './calendar-sets.component'
 import { CalendarSummary } from './calendar-summary.component'
 import { CalendarToolbar } from './calendar-toolbar.component'
 import { DayPanel } from './day-panel.component'
+import { EntryPopup } from './entry-popup.component'
 
 // Figma «Saldo» → Calendar · Empty by filter 2:77407 (Empty 2:77692: padding 64 / 24, EmptyState 420 wide): a 40 icon
 // circle, «Nothing matches «Taxes»», a line and «Reset filters»
@@ -30,25 +35,19 @@ function EmptyPeriod() {
   }
 
   return (
-    <div className="flex flex-col items-center rounded-card bg-card px-6 py-16 shadow-card">
-      <div className="flex w-full max-w-105 flex-col items-center gap-3 p-2 text-center">
-        <span
-          aria-hidden
-          className="flex size-10 items-center justify-center rounded-full bg-cat-yellow-soft text-cat-yellow-text"
-        >
-          <CalendarSearch size={20} />
-        </span>
-        <p className="self-stretch text-body font-semibold text-text-primary">{title}</p>
-        {filtered && (
-          <>
-            <p className="self-stretch text-label text-text-secondary">{translate('empty.text')}</p>
-            <Button variant="secondary" onClick={() => void setUrl(fromFilter({}))}>
-              {translate('filters.reset')}
-            </Button>
-          </>
-        )}
-      </div>
-    </div>
+    <EmptyState
+      icon={CalendarSearch}
+      tone="yellow"
+      title={title}
+      hint={filtered && translate('empty.text')}
+      action={
+        filtered && (
+          <Button variant="secondary" onClick={() => void setUrl(fromFilter({}))}>
+            {translate('filters.reset')}
+          </Button>
+        )
+      }
+    />
   )
 }
 
@@ -67,29 +66,36 @@ function CalendarBody() {
   const translate = useTranslations('calendar')
   const { view } = useCalendarParams()
   const { entries, totals } = useCalendarData()
+  const { failedLoad, retry } = useScreenQueryState([entries, totals], translate('refreshFailed'))
+  const hydrated = useHydrated()
 
-  if (entries.isPending || totals.isPending) {
-    return <GridSkeleton />
+  if (failedLoad) {
+    return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (entries.isError || totals.isError) {
-    return (
-      <p role="alert" className="text-body text-negative-text">
-        {translate('loadFailed')}
-      </p>
-    )
+  if (!hydrated || entries.data === undefined || totals.data === undefined) {
+    return <GridSkeleton />
   }
 
   if (view === 'day') {
     return <DayPanel />
   }
 
-  if (view === 'list' && entries.data.length === 0) {
-    return <EmptyPeriod />
+  if (view === 'list') {
+    return entries.data.length === 0 ? <EmptyPeriod /> : <CalendarDays />
   }
 
-  if (view !== 'month') {
-    return <CalendarDays />
+  // Figma 59:128610: the desktop week is seven tiles across the content and a click opens the day; phones keep the
+  // selected day's card under the row
+  if (view === 'week') {
+    return (
+      <div className="flex flex-col gap-4">
+        <CalendarMonth />
+        <div className="lg:hidden">
+          <DayPanel />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -100,9 +106,9 @@ function CalendarBody() {
   )
 }
 
-// Figma «Saldo» → Calendar 2:66941: the view-only banner, toolbar, quick sets, period totals, then the month grid with
-// the day panel (desktop side by side, 800 / 320 and a gap of 24; phones one under the other), the week / list card or
-// the day. Gaps 20 on desktop, 16 on phones. Everything the screen shows is in the URL.
+// Figma «Saldo» → Calendar 51:125110: the view-only banner, toolbar, quick sets, period totals, then the month (or the
+// week) grid with the day panel (desktop side by side, 800 / 320 and a gap of 24; phones one under the other), the list
+// card or the day. Gaps 20 on desktop, 16 on phones. Everything the screen shows is in the URL, the open entry too.
 export function CalendarScreen() {
   const translate = useTranslations('calendar')
   const canWrite = useCanWrite()
@@ -114,6 +120,7 @@ export function CalendarScreen() {
       <CalendarSets />
       <CalendarSummary />
       <CalendarBody />
+      <EntryPopup />
     </div>
   )
 }

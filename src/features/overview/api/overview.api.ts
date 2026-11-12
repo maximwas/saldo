@@ -6,6 +6,7 @@ import {
 } from '@/lib/finance/available-money.utils'
 import { getLedgerRates } from '@/lib/finance/ledger-fx.api'
 import { type LedgerCategoryOption, listCategoryOptions } from '@/lib/finance/ledger-options.api'
+import { versionConflict } from '@/lib/supabase/version-conflict.utils'
 import { localDate } from '@/lib/utils/clock.utils'
 import type { SaldoClient } from '@/types/supabase.types'
 import {
@@ -336,9 +337,6 @@ export async function setNextIncomeOn(supabase: SaldoClient, params: IncomeDateP
   }
 
   if (data.length === 0) {
-    throw {
-      code: 'PT409',
-      message: 'ledger was changed by someone else',
-    }
+    throw versionConflict()
   }
 }

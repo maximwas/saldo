@@ -1,7 +1,7 @@
 import Image from 'next/image'
-import { CATEGORY_COLORS, CATEGORY_LETTER_TONES } from '@/constants/category-colors.constants'
+import { CATEGORY_LETTER_TONES, type CategoryColor } from '@/constants/category-colors.constants'
 import { cn } from '@/lib/utils/cn.utils'
-import { serviceLogoIsInset, serviceLogoOf } from './service-logo.utils'
+import { letterColorOf, serviceLogoIsInset, serviceLogoOf } from './service-logo.utils'
 
 type ServiceLogoProps = {
   name: string
@@ -25,23 +25,20 @@ const SIZES = {
   },
 } as const
 
-// the first eight presets, the LetterAvatar colours of the Figma frames (the two credits are yellow and blue on Overview 2:8326)
-const LETTER_COLORS = CATEGORY_COLORS.slice(0, 8)
-
-/** the same name always gets the same colour, so a service is recognisable across lists */
-const colorOf = (name: string) =>
-  LETTER_COLORS[[...name].reduce((sum, char) => sum + (char.codePointAt(0) ?? 0), 0) % LETTER_COLORS.length]
-
 type LetterAvatarProps = {
   name: string
   size?: ServiceLogoProps['size']
+  /** shown instead of the first letter of the name: a currency symbol («$», «zł») */
+  letter?: string
+  /** instead of the colour of the name: the rate rows colour by their place (Figma 50:122598) */
+  color?: CategoryColor
   className?: string
 }
 
 // Figma «Saldo» → LetterAvatar 2:7963: the first letter in cat-<colour>-text on the soft fill; the colour follows the
 // name, so a person or a service looks the same everywhere
-export function LetterAvatar({ name, size = 40, className }: LetterAvatarProps) {
-  const { box, letter } = SIZES[size]
+export function LetterAvatar({ name, size = 40, letter, color, className }: LetterAvatarProps) {
+  const { box, letter: letterClass } = SIZES[size]
 
   return (
     <span
@@ -49,27 +46,27 @@ export function LetterAvatar({ name, size = 40, className }: LetterAvatarProps) 
       className={cn(
         'flex shrink-0 items-center justify-center',
         box,
-        letter,
-        CATEGORY_LETTER_TONES[colorOf(name.trim())],
+        letterClass,
+        CATEGORY_LETTER_TONES[color ?? letterColorOf(name.trim())],
         className,
       )}
     >
-      {name.trim().charAt(0).toUpperCase()}
+      {letter ?? name.trim().charAt(0).toUpperCase()}
     </span>
   )
 }
 
-// Figma «Saldo» → ServiceLogo 2:7882 (40/32/24, radius md/logo-md/sm, card fill, 1px border ring over the logo from
-// Service logos 1:167); a name without a logo gets LetterAvatar 2:7963: its first letter in cat-<colour>-text on the soft fill
+// Figma «Saldo» → ServiceLogo 2:7882 (40/32/24, radius md/logo-md/sm, white fill in both themes
+// (cat-on, Maxim 3.11: transparent logos like Spotify vanished on the dark card), the logo from Service logos 1:167, no
+// border ring: Maxim, 3.11); a name without a logo gets LetterAvatar 2:7963: its first letter in cat-<colour>-text on the soft fill
 export function ServiceLogo({ name, size = 40, className }: ServiceLogoProps) {
   const logo = serviceLogoOf(name)
   const { box } = SIZES[size]
 
   if (logo) {
     return (
-      <span aria-hidden className={cn('relative shrink-0 overflow-hidden bg-card', box, className)}>
+      <span aria-hidden className={cn('relative shrink-0 overflow-hidden bg-cat-on', box, className)}>
         <Image src={logo} alt="" fill unoptimized className={serviceLogoIsInset(name) ? 'p-1.5' : undefined} />
-        <span className={cn('absolute inset-0 border border-border', box)} />
       </span>
     )
   }

@@ -30,7 +30,7 @@ export function Banner({ kind = 'info', className, children, action, ...props }:
   const { Icon, tone } = KINDS[kind]
 
   return (
-    <div className={cn('flex gap-3 rounded-inner px-4 py-3', tone, className)} {...props}>
+    <div className={cn('flex items-start gap-3 rounded-inner px-4 py-3', tone, className)} {...props}>
       <span className="flex shrink-0 py-0.5">
         <Icon aria-hidden className="size-5" />
       </span>

@@ -13,11 +13,17 @@ type LedgerProviderProps = {
   children: React.ReactNode
 }
 
-// router.refresh() hands over a fresh server value: a new store keeps the first render after it in step with it
+// router.refresh() hands over a fresh server value: a new store keeps the first render after it in step with it.
+// useMemo stays under the compiler: subscribers hold this store instance, so its identity is a contract, not a speed-up
 export function LedgerProvider({ ledger, children }: LedgerProviderProps) {
   const store = useMemo(() => (ledger ? createLedgerStore(ledger) : null), [ledger])
 
   return <LedgerStoreContext value={store}>{children}</LedgerStoreContext>
+}
+
+/** false on /login and other signed-out pages, and when a token outlives its person's space */
+export function useHasLedger() {
+  return use(LedgerStoreContext) !== null
 }
 
 /** read one value of the active space; the component re-renders only when that value changes */

@@ -6,6 +6,15 @@
     "en": "English"
   },
   "close": "Close",
+  "notFound": {
+    "title": "This page does not exist",
+    "hint": "The link may be out of date, or the address has a typo.",
+    "home": "Go to Overview"
+  },
+  "password": {
+    "show": "Show characters",
+    "hide": "Hide characters"
+  },
   "select": {
     "placeholder": "Select a value"
   },
@@ -14,11 +23,16 @@
     "today": "Today",
     "clear": "Clear",
     "previousMonth": "Previous month",
-    "nextMonth": "Next month"
+    "nextMonth": "Next month",
+    "todayValue": "Today, {date}"
   },
   "toast": {
     "retry": "Retry",
     "undo": "Undo"
   },
-  "author": "Author: {name}"
+  "errorState": {
+    "hint": "Check your connection and try again.",
+    "retry": "Try again"
+  },
+  "addedBy": "Added by {name}"
 }

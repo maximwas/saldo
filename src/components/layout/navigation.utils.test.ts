@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { NavLink } from '@/constants/navigation.constants'
-import { activeHref, isSpaceActive, pageTitleKey } from './navigation.utils'
+import { activeHref, isSpaceActive, pageTitleKey, soonSection } from './navigation.utils'
 
 const OPERATIONS_LINKS: NavLink[] = [
   {
@@ -58,5 +58,19 @@ describe('isSpaceActive', () => {
     expect(isSpaceActive('/budget/goals')).toBe(true)
     expect(isSpaceActive('/space')).toBe(true)
     expect(isSpaceActive('/calendar')).toBe(false)
+  })
+})
+
+describe('soonSection', () => {
+  it('finds the unbuilt section of a page and of its sub-pages', () => {
+    expect(soonSection('/taxes')?.key).toBe('taxes')
+    expect(soonSection('/taxes/liabilities')?.key).toBe('taxes')
+    expect(soonSection('/budget/goals')?.backHref).toBe('/budget')
+  })
+
+  it('leaves built pages and look-alike paths alone', () => {
+    expect(soonSection('/budget')).toBeNull()
+    expect(soonSection('/autos')).toBeNull()
+    expect(soonSection('/')).toBeNull()
   })
 })

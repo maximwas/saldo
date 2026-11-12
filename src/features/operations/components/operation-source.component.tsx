@@ -4,11 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { CalendarClock, ChevronRight } from 'lucide-react'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
-import { useIsDesktop } from '@/components/ui/sheet.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationSource as Source } from '../operations.types'
 import { sourceHref } from '../utils/operation-display.utils'
@@ -24,18 +25,11 @@ type OperationSourceProps = {
 export function OperationSource({ operationId }: OperationSourceProps) {
   const translate = useTranslations('operations.source')
   const translateType = useTranslations('obligations.source')
-  const formatter = useFormatter()
-  const locale = useLocale()
+  const dayText = useDayText()
+  const moneyText = useMoneyText()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const sources = useQuery(operationQueries.sources(ledgerId, operationId))
-  const desktop = useIsDesktop()
-
-  const date = (value: string) =>
-    formatter.dateTime(new Date(`${value}T12:00:00Z`), {
-      day: '2-digit',
-      month: '2-digit',
-      timeZone: 'UTC',
-    })
+  const desktop = useIsSheetDialog()
 
   function meta(source: Source) {
     const type = translateType(source.sourceType as 'manual')
@@ -48,7 +42,7 @@ export function OperationSource({ operationId }: OperationSourceProps) {
         })
       : translate('meta', {
           type,
-          amount: formatMinor(source.plannedMinor, source.currency, locale),
+          amount: moneyText(source.plannedMinor, source.currency),
           section,
         })
   }
@@ -60,7 +54,7 @@ export function OperationSource({ operationId }: OperationSourceProps) {
         <span className="text-label font-medium text-text-primary">
           {translate('paid', {
             title: source.title,
-            date: date(source.dueOn),
+            date: dayText(source.dueOn, 'short'),
           })}
         </span>
         <span className="text-caption text-text-secondary">{meta(source)}</span>
@@ -70,7 +64,7 @@ export function OperationSource({ operationId }: OperationSourceProps) {
 
   return (sources.data ?? []).map((source) =>
     desktop ? (
-      <div key={source.obligationId} className="flex items-center gap-3 rounded-inner bg-primary-soft py-3 pr-2 pl-4">
+      <div key={source.obligationId} className="flex items-start gap-3 rounded-inner bg-primary-soft py-3 pr-2 pl-4">
         {text(source)}
         <Button variant="ghost" size="s" render={<Link href={sourceHref(source) as Route} />} nativeButton={false}>
           {translate('open')}
@@ -80,7 +74,7 @@ export function OperationSource({ operationId }: OperationSourceProps) {
       <Link
         key={source.obligationId}
         href={sourceHref(source) as Route}
-        className="flex min-h-11 items-center gap-3 rounded-inner bg-primary-soft py-3 pr-3 pl-4 outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex min-h-11 items-start gap-3 rounded-inner bg-primary-soft py-3 pr-3 pl-4 outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {text(source)}
         <ChevronRight aria-hidden size={20} className="shrink-0 text-text-primary" />

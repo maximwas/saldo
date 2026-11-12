@@ -6,8 +6,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useFormatter, useTranslations } from 'next-intl'
 import { type ReactNode, useState } from 'react'
+import { Avatar } from '@/components/ui/avatar.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
+import { LetterAvatar } from '@/components/ui/service-logo.component'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { cn } from '@/lib/utils/cn.utils'
@@ -20,26 +22,6 @@ type InviteCardProps = {
   status: InviteStatus
   invite: InviteView | null
   sessionEmail: string | null
-}
-
-type LetterAvatarProps = {
-  name: string
-  tone: 'blue' | 'green'
-}
-
-// Figma LetterAvatar Size=40: radius md, text/body-semibold
-function LetterAvatar({ name, tone }: LetterAvatarProps) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'flex size-10 items-center justify-center rounded-md text-body font-semibold',
-        tone === 'blue' ? 'bg-cat-blue-soft text-cat-blue-text' : 'bg-cat-green-soft text-cat-green-text',
-      )}
-    >
-      {name.charAt(0).toUpperCase()}
-    </span>
-  )
 }
 
 type StateIconProps = {
@@ -151,9 +133,9 @@ export function InviteCard({ token, status: initialStatus, invite, sessionEmail 
     body = (
       <>
         <div className="flex items-center gap-2">
-          <LetterAvatar name={inviter ?? invite.ledgerName} tone="blue" />
+          {inviter ? <Avatar name={inviter} /> : <LetterAvatar name={invite.ledgerName} />}
           <ArrowLeftRight aria-hidden size={20} className="text-text-primary" />
-          <LetterAvatar name={invite.ledgerName} tone="green" />
+          <LetterAvatar name={invite.ledgerName} />
         </div>
         <Heading
           title={

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useLedger } from '@/contexts/ledger.context'
+import { useLedgerWrite } from '@/lib/query/ledger-write.hook'
 import { defineWrites } from '@/lib/query/ledger-writes.mutations'
-import { useLedgerWrite } from '@/lib/query/use-ledger-write.hook'
 import {
   archiveCategory,
   createCategory,

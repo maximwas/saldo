@@ -1,8 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useFormContext } from 'react-hook-form'
-import { CategoryBadge } from '@/components/ui/category-badge.component'
+import { useFormContext, useWatch } from 'react-hook-form'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { Input } from '@/components/ui/input.component'
@@ -17,7 +16,6 @@ import { RECURRENCE_UNITS, SHORT_MONTH_RULES } from '../schemas/subscription-inp
 import type { SubscriptionStatus } from '../utils/subscription-series.utils'
 import { CUSTOM_SERVICE, ServiceSelect } from './service-select.component'
 
-const NO_CATEGORY = 'none'
 // cancellation states are set from the card (cancel sheet), the form offers them only to keep the current value
 const FORM_STATUSES: SubscriptionStatus[] = ['active', 'trial', 'paused']
 
@@ -27,16 +25,32 @@ type SubscriptionFieldsProps = {
 }
 
 // Figma «Saldo» → New subscription 36:104935 and Settings 29:94905: service picker, the name of a custom one, account,
-// category, currency, short-month rule; edit sets them in two columns. Reminder and Calendar selects of those frames
+// currency, short-month rule; edit sets them in two columns. No category: the DB gives every subscription the system
+// «Subscriptions» one (system_subscriptions_category.sql). Reminder and Calendar selects of those frames
 // wait for their columns (phase 3). The amount, recurrence, first date, state, link and note are not drawn there, but a
 // subscription cannot be saved without them, so they follow the drawn fields.
 export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
   const translate = useTranslations('subscriptions.form')
   const translateStatus = useTranslations('subscriptions.status')
+  const translateList = useTranslations('subscriptions')
   const translateCurrency = useTranslations('currencies')
-  const { control, watch, setValue } = useFormContext<SubscriptionFormInput>()
+  const { control, setValue } = useFormContext<SubscriptionFormInput>()
   const options = useSubscriptionOptions()
-  const [service, currency, unit, status] = watch(['service', 'currency', 'unit', 'status'])
+  const [service, currency, unit, status, count] = useWatch({
+    control,
+    name: ['service', 'currency', 'unit', 'status', 'count'],
+  })
+  // «every N units» read back in words (monthly, every 3 months), so the two fields need no explaining
+  const repeat = Number(count)
+  const repeatText =
+    Number.isInteger(repeat) && repeat > 0
+      ? translate('repeatSummary', {
+          summary: translateList('interval', {
+            unit,
+            count: repeat,
+          }),
+        })
+      : undefined
   const statuses = FORM_STATUSES.includes(status) ? FORM_STATUSES : [...FORM_STATUSES, status]
   const edit = mode === 'edit'
 
@@ -89,30 +103,6 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
             />
           )}
         />
-        <FormField
-          control={control}
-          name="categoryId"
-          label={translate('category')}
-          render={(field) => (
-            <Select
-              name={field.name}
-              value={field.value ?? NO_CATEGORY}
-              onValueChange={(value) => field.onChange(value === NO_CATEGORY ? null : value)}
-              onBlur={field.onBlur}
-              options={[
-                {
-                  value: NO_CATEGORY,
-                  label: translate('noCategory'),
-                },
-                ...(options.data?.categories ?? []).map((category) => ({
-                  value: category.id,
-                  label: category.name,
-                  leading: <CategoryBadge icon={category.icon} color={category.color} size={32} />,
-                })),
-              ]}
-            />
-          )}
-        />
         {edit ? null : (
           <FormField
             control={control}
@@ -141,6 +131,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
             control={control}
             name="shortMonthRule"
             label={translate('shortMonthRule')}
+            hint={translate('shortMonthRuleHint')}
             required
             render={(field) => (
               <Select
@@ -180,6 +171,7 @@ export function SubscriptionFields({ mode }: SubscriptionFieldsProps) {
             control={control}
             name="count"
             label={translate('count')}
+            hint={repeatText}
             render={(field) => <Input {...field} inputMode="numeric" autoComplete="off" />}
           />
           <FormField

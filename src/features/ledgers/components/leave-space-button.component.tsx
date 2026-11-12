@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { cn } from '@/lib/utils/cn.utils'
 import { removeMember } from '../api/access.api'
 import { ConfirmSheet } from './confirm-sheet.component'
@@ -26,7 +26,7 @@ export function LeaveSpaceButton({ currentUserId, ownerName, className }: LeaveS
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const ledgerName = useLedgerStore((ledger) => ledger.ledgers.find((item) => item.id === ledger.ledgerId)?.name ?? '')
   const translate = useTranslations('settings.access')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const [open, setOpen] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -50,13 +50,13 @@ export function LeaveSpaceButton({ currentUserId, ownerName, className }: LeaveS
       router.replace('/')
       router.refresh()
     } catch (caught) {
-      const message = translateError(toPgError(caught as { code?: string }).kind)
+      const message = dbErrorText(caught)
 
       setError(message)
       notify.error(message)
-    } finally {
-      setIsPending(false)
     }
+
+    setIsPending(false)
   }
 
   return (

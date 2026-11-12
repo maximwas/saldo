@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Link as LinkIcon, Paperclip } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
-import { Amount } from '@/components/ui/amount.component'
-import { AuthorAvatar } from '@/components/ui/author-avatar.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
+import { AuthorAvatar } from '@/components/ui/author.component'
 import { Badge } from '@/components/ui/badge.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { CategoryIcon } from '@/components/ui/category-icon.component'
@@ -14,14 +14,13 @@ import { ServiceLogo } from '@/components/ui/service-logo.component'
 import { serviceLogoOf } from '@/components/ui/service-logo.utils'
 import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
-import { useMemberNames } from '@/lib/members/member-names.hook'
-import { formatMinor } from '@/lib/money/money.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { exchangeRate, formatRate, impliedRate } from '@/lib/money/fx.utils'
 import type { RecordState } from '@/lib/query/sync-queue.utils'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationItem, PlannedRow } from '../operations.types'
 import { displayAmount, showsOriginal } from '../utils/operation-display.utils'
 import { dayLabelKind, groupByDay, summarize } from '../utils/operation-items.utils'
-import { formatRate, impliedRate } from '../utils/rate.utils'
 
 type OperationListProps = {
   items: OperationItem[]
@@ -82,7 +81,9 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   const translateObligation = useTranslations('obligations')
   const translateSync = useTranslations('sync.badge')
   const formatter = useFormatter()
+  const dayText = useDayText()
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
   const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
@@ -91,33 +92,15 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   const refunds = useQuery(operationQueries.refunds(ledgerId))
   const accounts = options.data?.accounts ?? []
   const categories = options.data?.categories ?? []
-  const names = useMemberNames()
   const groups = groupByDay(items)
   const accountName = (id: string) => accounts.find((account) => account.id === id)?.name ?? ''
   const category = (id: string | null) => categories.find((candidate) => candidate.id === id)
 
-  const dateOf = (date: string) => new Date(`${date}T12:00:00Z`)
-  const shortDate = (date: string) =>
-    formatter.dateTime(dateOf(date), {
-      day: '2-digit',
-      month: '2-digit',
-      timeZone: 'UTC',
-    })
-  const longDate = (date: string) =>
-    formatter.dateTime(dateOf(date), {
-      weekday: date === today ? undefined : 'long',
-      day: 'numeric',
-      month: 'long',
-      timeZone: 'UTC',
-    })
+  const longDate = (date: string) => dayText(date, date === today ? 'dayMonth' : 'weekdayDayMonth')
 
   function dayTitle(date: string) {
     const kind = dayLabelKind(date, today)
-    const label = formatter.dateTime(dateOf(date), {
-      day: 'numeric',
-      month: 'long',
-      timeZone: 'UTC',
-    })
+    const label = dayText(date, 'dayMonth')
 
     if (kind === 'today') {
       return translate('day.today', { date: label })
@@ -144,11 +127,17 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
 
   function subtitleOf(item: OperationItem) {
     const { row } = item
+    // a transfer's rate comes from its own two amounts (the amount cell shows both), never from a leg's base value
+    const exchange = item.transfer ? exchangeRate(item.transfer, baseCurrency) : null
 
-    if (showsOriginal(item)) {
+    if (exchange) {
+      return translate('row.rate', { rate: formatRate(exchange.rate, locale) })
+    }
+
+    if (!item.transfer && showsOriginal(item)) {
       const rate = impliedRate(row.amountMinor, row.currency, row.baseAmountMinor as number, row.baseCurrency)
 
-      return `${formatMinor(row.amountMinor, row.currency, locale)} · ${translate('row.rate', { rate: rate ? formatRate(rate, locale) : '' })}`
+      return `${moneyText(row.amountMinor, row.currency)} · ${translate('row.rate', { rate: rate ? formatRate(rate, locale) : '' })}`
     }
 
     // a transfer has no base amount by design: only an expense or income without a rate is «unknown»
@@ -164,7 +153,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
     const purchase = row.refundOfId ? refunds.data?.purchases[row.refundOfId] : undefined
 
     if (purchase) {
-      return translate('refund.subtitle', { date: shortDate(purchase.occurredOn) })
+      return translate('refund.subtitle', { date: dayText(purchase.occurredOn, 'short') })
     }
 
     if (item.kind === 'transfer') {
@@ -242,13 +231,9 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   const mobileSubtitle = (item: OperationItem) =>
     (!neutral(item) && category(item.row.categoryId)?.name) || subtitleOf(item)
 
-  const categoryCell = (item: OperationItem) => {
-    if (item.kind === 'transfer') {
-      return translate('kinds.transfer')
-    }
-
-    return neutral(item) ? '' : (category(item.row.categoryId)?.name ?? translate('row.noCategory'))
-  }
+  // a transfer says «Transfer» under its title already: its category cell stays empty, like an adjustment's
+  const categoryCell = (item: OperationItem) =>
+    neutral(item) ? '' : (category(item.row.categoryId)?.name ?? translate('row.noCategory'))
 
   const accountCell = (item: OperationItem) =>
     item.kind === 'transfer' && item.transfer
@@ -264,7 +249,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
       return (
         <span className="flex shrink-0 items-center gap-1 rounded-full bg-subtle px-2 py-0.5 text-micro whitespace-nowrap text-text-secondary">
           <LinkIcon aria-hidden size={12} />
-          {translate('refund.purchase', { date: shortDate(purchase.occurredOn) })}
+          {translate('refund.purchase', { date: dayText(purchase.occurredOn, 'short') })}
         </span>
       )
     }
@@ -273,7 +258,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
 
     return refunded ? (
       <span className="shrink-0 whitespace-nowrap">
-        · {translate('refund.refunded', { amount: formatMinor(refunded, item.row.currency, locale) })}
+        · {translate('refund.refunded', { amount: moneyText(refunded, item.row.currency) })}
       </span>
     ) : null
   }
@@ -299,8 +284,6 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   const planCategory = (plan: PlannedRow) =>
     category(plan.categoryId)?.name ??
     (plan.sourceType === 'credit' ? translatePlan('creditCategory') : translate('row.noCategory'))
-
-  const author = (item: OperationItem) => (item.row.createdBy ? names[item.row.createdBy] : null)
 
   const dayTotal = (group: (typeof groups)[number]) => {
     const totals = summarize(group.items)
@@ -359,16 +342,15 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                     <span className="flex-1 text-label text-text-secondary">
                       {translatePlan('count', { count: planned.length })} · {translatePlan('notFact')}
                     </span>
-                    <Badge tone="plan">{translatePlan('pill')}</Badge>
                     <Amount minor={planTotal} currency={baseCurrency} kind="plan" className="text-label" />
                   </span>
                 </th>
               </tr>
               {planned.map((plan) => (
                 <tr key={plan.id} className="h-16 border-b border-border">
-                  <td className="pr-2 pl-4 text-label text-text-secondary">{shortDate(plan.dueOn)}</td>
+                  <td className="pr-2 pl-4 text-label text-text-secondary">{dayText(plan.dueOn, 'short')}</td>
                   <td className="px-2">
-                    <span className="flex min-w-0 items-center gap-3">
+                    <span className="flex min-w-0 items-start gap-3">
                       <ServiceLogo name={plan.title} size={32} />
                       <span className="flex min-w-0 flex-col gap-0.5">
                         <span className="truncate text-body font-medium text-text-primary">{plan.title}</span>
@@ -384,6 +366,7 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   </td>
                   <td className="pr-4 pl-2">
                     <span className="flex items-center justify-end gap-2">
+                      <AuthorAvatar userId={plan.createdBy} />
                       <Badge tone="plan">{translatePlan('pill')}</Badge>
                       <Amount minor={planMinor(plan)} currency={plan.currency} kind="plan" />
                     </span>
@@ -412,9 +395,9 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   key={item.row.id}
                   className="relative h-16 border-b border-border transition-colors hover:bg-subtle"
                 >
-                  <td className="pr-2 pl-4 text-label text-text-secondary">{shortDate(item.row.occurredOn)}</td>
+                  <td className="pr-2 pl-4 text-label text-text-secondary">{dayText(item.row.occurredOn, 'short')}</td>
                   <td className="px-2">
-                    <span className="flex min-w-0 items-center gap-3">
+                    <span className="flex min-w-0 items-start gap-3">
                       {leadingOf(item, 32)}
                       <span className="flex min-w-0 flex-col gap-0.5">
                         <RowButton
@@ -424,7 +407,6 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                           {titleOf(item)}
                         </RowButton>
                         <span className="flex items-center gap-2 text-label text-text-secondary">
-                          <AuthorAvatar name={author(item)} />
                           <span className="truncate">{subtitleOf(item)}</span>
                           {paperclip(item)}
                           {refundNote(item)}
@@ -439,7 +421,12 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   <td className="hidden truncate px-2 text-label text-text-secondary xl:table-cell">
                     {accountCell(item)}
                   </td>
-                  <td className="pr-4 pl-2 text-right text-body font-medium">{amountOf(item)}</td>
+                  <td className="pr-4 pl-2 text-right text-body font-medium">
+                    <span className="flex items-center justify-end gap-2">
+                      <AuthorAvatar userId={item.row.createdBy} />
+                      {amountOf(item)}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -451,16 +438,13 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
           <section className="rounded-card bg-card px-4 py-1 shadow-card">
             <header className="flex items-center gap-3 pt-3 pb-2">
               <h3 className="flex-1 text-label font-semibold text-text-primary">{translatePlan('title')}</h3>
-              <span className="flex items-center gap-1.5">
-                <Badge tone="plan">{translatePlan('pill')}</Badge>
-                <span className="text-label font-medium text-text-secondary">
-                  {translatePlan('count', { count: planned.length })}
-                </span>
+              <span className="text-label font-medium text-text-secondary">
+                {translatePlan('count', { count: planned.length })}
               </span>
             </header>
             <ul>
               {planned.map((plan) => (
-                <li key={plan.id} className="flex min-h-18 items-center gap-4 py-3">
+                <li key={plan.id} className="flex min-h-18 items-start gap-4 py-3">
                   <ServiceLogo name={plan.title} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="truncate text-body font-medium text-text-primary">{plan.title}</span>
@@ -468,8 +452,9 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-0.5">
                     <Amount minor={planMinor(plan)} currency={plan.currency} kind="plan" />
-                    <span className="text-label text-text-secondary">
-                      {plan.dueOn === today ? translateObligation('todayLabel') : shortDate(plan.dueOn)}
+                    <span className="flex items-center gap-1.5 text-label text-text-secondary">
+                      <AuthorAvatar userId={plan.createdBy} />
+                      {plan.dueOn === today ? translateObligation('todayLabel') : dayText(plan.dueOn, 'short')}
                     </span>
                   </span>
                 </li>
@@ -491,13 +476,12 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                   <RowButton
                     onPressAction={() => onSelectAction(item)}
                     // a transfer shows two amounts: they drop to their own line instead of cutting the title
-                    className={`cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-primary relative -mx-3 flex min-h-18 flex-1 items-center gap-x-4 overflow-hidden rounded-md px-3 py-3 transition-colors hover:bg-subtle ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
+                    className={`cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-primary relative -mx-3 flex min-h-18 flex-1 items-start gap-x-4 overflow-hidden rounded-md px-3 py-3 transition-colors hover:bg-subtle ${item.kind === 'transfer' ? 'flex-wrap' : ''}`}
                   >
                     {leadingOf(item, 40)}
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="truncate text-body font-medium text-text-primary">{titleOf(item)}</span>
                       <span className="flex items-center gap-2 text-label text-text-secondary">
-                        <AuthorAvatar name={author(item)} />
                         <span className="truncate">{mobileSubtitle(item)}</span>
                         {paperclip(item)}
                         {refundNote(item)}
@@ -505,9 +489,10 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                       </span>
                     </span>
                     <span
-                      className={`text-body font-medium ${item.kind === 'transfer' ? 'basis-full text-right' : ''}`}
+                      className={`flex shrink-0 flex-col items-end gap-0.5 text-body font-medium ${item.kind === 'transfer' ? 'basis-full' : ''}`}
                     >
                       {amountOf(item)}
+                      <AuthorAvatar userId={item.row.createdBy} />
                     </span>
                   </RowButton>
                 </li>

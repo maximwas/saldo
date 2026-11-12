@@ -4,21 +4,22 @@ import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button.component'
 import { FormField } from '@/components/ui/form-field.component'
 import { MoneyInput } from '@/components/ui/money-input.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
 import { useBudgetSheetStore } from '@/store/budget-sheet.store'
 import { useCurrentBudget, useSetIncomePlan } from '../hooks/budget.hook'
-import { useMonthLabel } from '../hooks/month-label.hook'
 import { type IncomeFormInput, type IncomeFormValues, incomeFormSchema } from '../schemas/budget-form.schema'
 
 const FORM_ID = 'budget-income-form'
 
-// the expected income of the month; never summed into the fact (§12). Empty = no plan.
+// Figma frames 41:111493 (desktop) / 41:112030 (mobile): the expected income of the month; never summed into the fact
+// (§12). Empty = no plan.
 export function IncomePlanSheet() {
   const translate = useTranslations('budget.incomeSheet')
-  const monthLabel = useMonthLabel()
+  const dayText = useDayText()
   const { ledgerId, baseCurrency } = useLedger()
   const close = useBudgetSheetStore((state) => state.close)
   const { month, data } = useCurrentBudget()
@@ -54,12 +55,10 @@ export function IncomePlanSheet() {
           close()
         }
       }}
-      title={translate('title', { month: monthLabel(month, false) })}
+      title={translate('title', { month: dayText(month, 'month') })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={close}>
-            {translate('cancel')}
-          </Button>
+          <SheetClose>{translate('cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={save.isPending}>
             {translate('save')}
           </Button>

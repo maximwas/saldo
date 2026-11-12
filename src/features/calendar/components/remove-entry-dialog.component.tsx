@@ -1,14 +1,14 @@
 'use client'
 
-import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
+import { useMoneyText } from '@/components/ui/amount.component'
 import { Button } from '@/components/ui/button.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedger } from '@/contexts/ledger.context'
-import { formatMinor } from '@/lib/money/money.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import type { CalendarEntry } from '../api/calendar.api'
 import { useCancelPlanEntry } from '../hooks/calendar.hook'
-import { dayDate } from '../utils/calendar.utils'
 
 type RemoveEntryDialogProps = {
   entry: CalendarEntry
@@ -19,17 +19,13 @@ type RemoveEntryDialogProps = {
 // what stays, footer Cancel + Danger «Remove entry». Only a plan with no payment gets it.
 export function RemoveEntryDialog({ entry, onCloseAction }: RemoveEntryDialogProps) {
   const translate = useTranslations('calendar.remove')
-  const format = useFormatter()
-  const locale = useLocale()
+  const dayText = useDayText()
+  const moneyText = useMoneyText()
   const { ledgerId } = useLedger()
   const cancel = useCancelPlanEntry()
   const title = entry.title ?? ''
-  const date = format.dateTime(dayDate(entry.day), {
-    timeZone: 'UTC',
-    day: '2-digit',
-    month: '2-digit',
-  })
-  const amount = entry.amountMinor === null ? null : formatMinor(entry.amountMinor, entry.currency, locale)
+  const date = dayText(entry.day, 'short')
+  const amount = entry.amountMinor === null ? null : moneyText(entry.amountMinor, entry.currency)
 
   const remove = () => {
     if (!entry.obligationId) {
@@ -61,9 +57,7 @@ export function RemoveEntryDialog({ entry, onCloseAction }: RemoveEntryDialogPro
       })}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('keep')}
-          </Button>
+          <SheetClose>{translate('keep')}</SheetClose>
           <Button type="button" variant="danger" disabled={cancel.isPending} onClick={remove}>
             {translate('confirm')}
           </Button>

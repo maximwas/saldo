@@ -1,14 +1,14 @@
 'use client'
 
-import { Info } from 'lucide-react'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
 import { FormField } from '@/components/ui/form-field.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useToday } from '@/contexts/clock.context'
 import { useZodResolver } from '@/lib/forms/zod-resolver.hook'
@@ -19,7 +19,7 @@ import {
   earlyRepaymentFormSchema,
   toReplaceCreditScheduleInput,
 } from '../schemas/early-repayment-form.schema'
-import { moneyText, type Payoff } from '../utils/credits.utils'
+import type { Payoff } from '../utils/credits.utils'
 
 type EarlyRepaymentSheetProps = {
   credit: Credit
@@ -35,7 +35,7 @@ const FORM_ID = 'early-repayment-form'
 // new schedule, which Saldo never guesses (§9).
 export function EarlyRepaymentSheet({ credit, payoff, onCloseAction }: EarlyRepaymentSheetProps) {
   const translate = useTranslations('credits')
-  const locale = useLocale()
+  const moneyText = useMoneyText()
   const today = useToday()
   const replace = useReplaceCreditSchedule()
   const pay = usePayInstallment()
@@ -70,9 +70,7 @@ export function EarlyRepaymentSheet({ credit, payoff, onCloseAction }: EarlyRepa
       title={translate('payoff.title')}
       footer={
         <>
-          <Button variant="secondary" type="button" onClick={onCloseAction}>
-            {translate('payoff.cancel')}
-          </Button>
+          <SheetClose>{translate('payoff.cancel')}</SheetClose>
           <Button type="submit" form={FORM_ID} disabled={replace.isPending}>
             {translate('payoff.confirm')}
           </Button>
@@ -82,7 +80,7 @@ export function EarlyRepaymentSheet({ credit, payoff, onCloseAction }: EarlyRepa
       <form id={FORM_ID} onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <p className="text-label text-text-secondary">
           {translate('payoff.text', {
-            amount: moneyText(payoff.amountMinor, credit.currency, locale),
+            amount: moneyText(payoff.amountMinor, credit.currency),
             count: payoff.count,
           })}
         </p>
@@ -102,10 +100,7 @@ export function EarlyRepaymentSheet({ credit, payoff, onCloseAction }: EarlyRepa
             />
           )}
         />
-        <p className="flex gap-3 rounded-inner bg-primary-soft p-4 text-label font-medium text-primary-text">
-          <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
-          {translate('payoff.partialHint')}
-        </p>
+        <Banner>{translate('payoff.partialHint')}</Banner>
       </form>
     </Sheet>
   )

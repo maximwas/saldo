@@ -1,13 +1,14 @@
 'use client'
 
-import { Info } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { CategoryBadge } from '@/components/ui/category-badge.component'
 import { Field } from '@/components/ui/field.component'
 import { Select } from '@/components/ui/select.component'
 import { Sheet } from '@/components/ui/sheet.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import {
   useArchiveCategory,
@@ -100,9 +101,13 @@ export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategor
     >
       {category ? (
         <>
-          <p className="text-body text-text-secondary">
-            {translate('archive.summary', { count: operations.data ?? 0 })}
-          </p>
+          {operations.isPending ? (
+            <Bone className="h-5 w-3/4 rounded-sm" />
+          ) : (
+            <p className="text-body text-text-secondary">
+              {translate('archive.summary', { count: operations.data ?? 0 })}
+            </p>
+          )}
           {operations.data ? (
             <Field label={translate('archive.moveTo')}>
               <Select
@@ -116,12 +121,7 @@ export function ArchiveCategorySheet({ category, onCloseAction }: ArchiveCategor
               />
             </Field>
           ) : null}
-          <p className="flex gap-3 rounded-inner bg-primary-soft px-4 py-3 text-body-medium text-primary-text">
-            <span className="py-0.5">
-              <Info className="size-5 shrink-0" aria-hidden />
-            </span>
-            <span className="flex-1">{translate('archive.info')}</span>
-          </p>
+          <Banner>{translate('archive.info')}</Banner>
         </>
       ) : null}
     </Sheet>

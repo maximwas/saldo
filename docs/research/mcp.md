@@ -119,8 +119,8 @@ tool, хеш вводу, результат, id створених записі�
 5. **Сон Supabase Free** не впливає: MCP — додаткові запити, БД тримає активною щоденний cron.
 
 ## Не перевірено
-- Чи публікує Supabase Auth `client_id_metadata_document_supported` (CIMD); тест — `GET
-  https://<ref>.supabase.co/.well-known/oauth-authorization-server/auth/v1`.
+- ~~Чи публікує Supabase Auth CIMD~~ — ні (03.11.2026, supabase/auth#2850 відкрите): усі клієнти йдуть через DCR.
+  Вимоги кожного клієнта й обхід для Perplexity — `docs/mcp-connectors.md`.
 - Як Perplexity передає API Key (`Authorization: Bearer` чи інший заголовок) і чи читає він PRM, а не лише
   `/.well-known/oauth-authorization-server`.
 - План Б: чи можна на Supabase Free підписати власний короткий JWT для RLS (імпортований ключ підпису

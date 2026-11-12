@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hasActiveFilters, periodValue, recentMonths, resolveFilters, textFilter } from './operation-filters.utils'
+import { hasActiveFilters, periodValue, recentMonths, resolveFilters } from './operation-filters.utils'
 
 const URL_DEFAULTS = {
   period: null,
@@ -65,15 +65,6 @@ describe('resolveFilters', () => {
       type: 'expense',
       text: 'піца',
     })
-  })
-})
-
-describe('textFilter', () => {
-  it('matches the payee or the note, with LIKE wildcards and PostgREST quotes taken literally', () => {
-    expect(textFilter('піца')).toBe('counterparty.ilike."%піца%",note.ilike."%піца%"')
-    expect(textFilter('50%_off, "a"')).toBe(
-      String.raw`counterparty.ilike."%50\\%\\_off, \"a\"%",note.ilike."%50\\%\\_off, \"a\"%"`,
-    )
   })
 })
 

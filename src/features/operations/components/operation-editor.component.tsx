@@ -1,30 +1,36 @@
 'use client'
 
 import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Copy, Trash2, TriangleAlert, Undo2 } from 'lucide-react'
+import { Copy, Trash2, Undo2 } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Amount } from '@/components/ui/amount.component'
+import { Amount, useMoneyText } from '@/components/ui/amount.component'
+import { AddedBy } from '@/components/ui/author.component'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Menu } from '@/components/ui/menu.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
-import { Sheet, useIsDesktop } from '@/components/ui/sheet.component'
+import { Sheet } from '@/components/ui/sheet.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
-import { useMemberNames } from '@/lib/members/member-names.hook'
-import { formatMinor, fromMinor } from '@/lib/money/money.utils'
+import { useDayText } from '@/lib/dates/day-text.hook'
+import { exchangeRate, formatRate } from '@/lib/money/fx.utils'
+import { fromMinor } from '@/lib/money/money.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { localTime } from '@/lib/utils/clock.utils'
+import { useIsSheetDialog } from '@/lib/utils/media-query.hook'
 import { useDraftsStore } from '@/store/drafts.store'
+import { operationQueries } from '../api/operations.queries'
 import {
   useCreateOperation,
   useCreateTransfer,
   useDeleteOperation,
   useUpdateOperation,
   useUploadReceipt,
-} from '../api/operations.mutations'
-import { operationQueries } from '../api/operations.queries'
+} from '../hooks/operations.hook'
 import { ADD_KINDS, type AddKind, type OperationItem } from '../operations.types'
 import {
   type OperationFormValues,
@@ -33,7 +39,6 @@ import {
 } from '../schemas/operation-form.schema'
 import { type TransferFormValues, toCreateTransferInput } from '../schemas/transfer-form.schema'
 import { displayAmount, refundableMinor } from '../utils/operation-display.utils'
-import { formatRate, impliedRate } from '../utils/rate.utils'
 import { OperationForm } from './operation-form.component'
 import { OperationSource } from './operation-source.component'
 import { ReceiptField } from './receipt-field.component'
@@ -94,16 +99,18 @@ export function OperationEditor({
   onOpenAction,
 }: OperationEditorProps) {
   const translate = useTranslations('operations')
-  const translateErrors = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const translateKinds = useTranslations('operations.kinds')
   const translateSync = useTranslations('sync')
   const locale = useLocale()
+  const moneyText = useMoneyText()
   const formatter = useFormatter()
+  const dayText = useDayText()
   const clock = useClock()
   const ledgerId = useLedgerStore((ledger) => ledger.ledgerId)
   const timeZone = useLedgerStore((ledger) => ledger.timeZone)
+  const baseCurrency = useLedgerStore((ledger) => ledger.baseCurrency)
   const canWrite = useCanWrite()
-  const members = useMemberNames()
   const queryClient = useQueryClient()
   const options = useQuery(operationQueries.options(ledgerId))
   const [newId] = useState(() => crypto.randomUUID())
@@ -119,7 +126,7 @@ export function OperationEditor({
   })
   const [receipt, setReceipt] = useState<File | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const desktop = useIsDesktop()
+  const desktop = useIsSheetDialog()
   const [refunding, setRefunding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
@@ -176,11 +183,7 @@ export function OperationEditor({
       // Figma Calendar · New entry from a day 2:72362: the sheet opened from a calendar day names that day
       if (day && kind !== 'transfer') {
         return translate('form.newTitleOn', {
-          date: formatter.dateTime(new Date(`${day}T12:00:00Z`), {
-            timeZone: 'UTC',
-            day: 'numeric',
-            month: 'long',
-          }),
+          date: dayText(day, 'dayMonth'),
         })
       }
 
@@ -196,7 +199,7 @@ export function OperationEditor({
 
   function renderCreateForm() {
     if (options.isPending) {
-      return <div aria-busy className="h-64 rounded-md bg-subtle" />
+      return <Bone className="h-64 rounded-md" />
     }
 
     if (kind === 'transfer') {
@@ -221,12 +224,27 @@ export function OperationEditor({
   }
 
   // offline the write waits in the device's queue: the toast says it is kept here, not that it is saved
-  function done(message: string) {
+  function done(message: string, offlineMessage = translateSync('savedOffline')) {
     if (onlineManager.isOnline()) {
       notify.success(message)
     } else {
-      notify.info(translateSync('savedOffline'))
+      notify.info(offlineMessage)
     }
+  }
+
+  // Figma 4:80334 / 4:80531: the kind and the sum kept on the device; the phone drops the second sentence
+  function savedOffline({
+    kind: savedKind,
+    direction,
+    amount_minor,
+    currency,
+  }: ReturnType<typeof toCreateOperationInput>) {
+    const amount = moneyText(direction === 'out' ? -amount_minor : amount_minor, currency)
+
+    return translateSync(desktop ? 'savedOfflineOperation' : 'savedOfflineOperationShort', {
+      kind: savedKind,
+      amount,
+    })
   }
 
   function changeKind(next: AddKind) {
@@ -245,7 +263,7 @@ export function OperationEditor({
     if (pgError.kind === 'conflict') {
       setConflict(true)
     } else {
-      setError(translateErrors(pgError.kind))
+      setError(dbErrorText(caught))
     }
   }
 
@@ -277,9 +295,9 @@ export function OperationEditor({
       onOpenChangeAction(false)
     } catch (caught) {
       fail(caught)
-    } finally {
-      setSaving(false)
     }
+
+    setSaving(false)
   }
 
   const saveOperation = (values: OperationFormValues) =>
@@ -297,20 +315,20 @@ export function OperationEditor({
         return
       }
 
-      await createOperation.mutateAsync(
-        toCreateOperationInput(values, clock, {
-          id: newId,
-          ledgerId,
-          duplicatedFromId: target.mode === 'create' ? target.duplicatedFromId : undefined,
-        }),
-      )
+      const input = toCreateOperationInput(values, clock, {
+        id: newId,
+        ledgerId,
+        duplicatedFromId: target.mode === 'create' ? target.duplicatedFromId : undefined,
+      })
+
+      await createOperation.mutateAsync(input)
 
       if (draftKey) {
         useDraftsStore.getState().clear(draftKey)
       }
 
       await uploadPending(newId)
-      done(translate('toast.created'))
+      done(translate('toast.created'), savedOffline(input))
     })
 
   const saveRefund = (values: OperationFormValues) =>
@@ -360,7 +378,7 @@ export function OperationEditor({
         id: item.row.id,
         expectedVersion: item.row.version,
       })
-      done(translate('toast.deleted'))
+      done(translate(item.transfer ? 'toast.transferDeleted' : 'toast.deleted'))
     })
 
   function refresh() {
@@ -460,21 +478,6 @@ export function OperationEditor({
       />
     ) : null
 
-  const dateLabel = (date: string) =>
-    formatter.dateTime(new Date(`${date}T12:00:00Z`), {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC',
-    })
-
-  const shortDate = (date: string) =>
-    formatter.dateTime(new Date(`${date}T12:00:00Z`), {
-      day: '2-digit',
-      month: '2-digit',
-      timeZone: 'UTC',
-    })
-
   function summary(current: OperationItem) {
     const amount = displayAmount(current)
     const name = current.row.counterparty ?? categoryName(current.row.categoryId) ?? translateKinds(current.kind)
@@ -498,27 +501,26 @@ export function OperationEditor({
       ? translate('deleteConfirm.transfer')
       : translate(item.row.direction === 'out' ? 'deleteConfirm.balanceUp' : 'deleteConfirm.balanceDown', {
           account: accountName(item.row.accountId),
-          amount: formatMinor(item.row.amountMinor, item.row.currency, locale),
+          amount: moneyText(item.row.amountMinor, item.row.currency),
         })
 
     body = (
       <>
         <p className="text-body text-text-secondary">
-          {name} · {dateLabel(item.row.occurredOn)} · {accountName(item.row.accountId)}
+          {name} · {dayText(item.row.occurredOn, 'dayMonthYear')} ·{' '}
+          {transfer
+            ? `${accountName(transfer.fromAccountId)} → ${accountName(transfer.toAccountId)}`
+            : accountName(item.row.accountId)}
           {' · '}
-          {transfer ? null : <Amount minor={amount.minor} currency={amount.currency} />}
+          <Amount minor={amount.minor} currency={amount.currency} />
         </p>
-        <p className="flex items-start gap-3 rounded-inner bg-warning-soft px-4 py-3 text-body text-warning-text">
-          <TriangleAlert aria-hidden size={20} className="mt-0.5 shrink-0" />
-          {warning}
-        </p>
+        <Banner kind="warning">{warning}</Banner>
       </>
     )
   } else if (mode === 'create') {
     body = (
       <>
         <SegmentedControl
-          stretch="track"
           label={translate('add.typeLabel')}
           options={ADD_KINDS.map((value) => ({
             value,
@@ -532,14 +534,15 @@ export function OperationEditor({
     )
   } else if (mode === 'edit' && item) {
     body = options.isPending ? (
-      <div aria-busy className="h-64 rounded-md bg-subtle" />
+      <Bone className="h-64 rounded-md" />
     ) : (
       <>
+        {/* Figma 33:101623 / 33:101738: who added it, at the top of the details */}
+        <AddedBy userId={item.row.createdBy} />
         {/* Figma 17:89221 / 17:90017: the paid source sits above the type switch */}
         <OperationSource operationId={item.row.id} />
         {/* Figma 5:101464: the edit sheet keeps the type switch; a transfer is made anew, so only the two kinds flip */}
         <SegmentedControl
-          stretch="track"
           label={translate('add.typeLabel')}
           options={ADD_KINDS.map((value) => ({
             value,
@@ -558,7 +561,7 @@ export function OperationEditor({
         </OperationForm>
         {refundedMinor > 0 ? (
           <p className="text-label text-text-secondary">
-            {translate('refund.refunded', { amount: formatMinor(refundedMinor, item.row.currency, locale) })}
+            {translate('refund.refunded', { amount: moneyText(refundedMinor, item.row.currency) })}
           </p>
         ) : null}
         {/* Figma 15:76568 «Refund»: a top border, padding-top 12, a full-width Ghost «record refund», the limit
@@ -570,7 +573,7 @@ export function OperationEditor({
               {translate('refund.submit')}
             </Button>
             <span className="text-caption text-text-tertiary">
-              {translate('refund.limit', { amount: formatMinor(refundLeft, item.row.currency, locale) })}
+              {translate('refund.limit', { amount: moneyText(refundLeft, item.row.currency) })}
             </span>
           </div>
         ) : null}
@@ -579,10 +582,7 @@ export function OperationEditor({
   } else if (item) {
     const { amount } = summary(item)
     const transfer = item.transfer
-    const rate = transfer
-      ? impliedRate(transfer.fromAmountMinor, transfer.fromCurrency, transfer.toAmountMinor, transfer.toCurrency)
-      : null
-    const author = item.row.createdBy ? members[item.row.createdBy] : undefined
+    const exchange = transfer ? exchangeRate(transfer, baseCurrency) : null
     // Figma 15:81303: the payee and the category under the amount
     const payee =
       [item.row.counterparty, categoryName(item.row.categoryId)].filter(Boolean).join(' · ') ||
@@ -606,8 +606,8 @@ export function OperationEditor({
             ],
           ] as [string, React.ReactNode][])
         : ([[translate('form.details.account'), accountName(item.row.accountId)]] as [string, React.ReactNode][])),
-      ...(transfer && rate && transfer.fromCurrency !== transfer.toCurrency
-        ? ([[translate('form.details.rate'), formatRate(rate, locale)]] as [string, React.ReactNode][])
+      ...(exchange
+        ? ([[translate('form.details.rate'), formatRate(exchange.rate, locale)]] as [string, React.ReactNode][])
         : []),
       ...(transfer?.feeMinor
         ? ([
@@ -646,18 +646,18 @@ export function OperationEditor({
                   })
                 }
               >
-                {translate('refund.purchase', { date: shortDate(purchase.occurredOn) })}
+                {translate('refund.purchase', { date: dayText(purchase.occurredOn, 'short') })}
               </Button>,
             ],
           ] as [string, React.ReactNode][])
         : []),
-      ...(author ? ([[translate('form.details.author'), author]] as [string, React.ReactNode][]) : []),
     ]
 
     // Figma 15:81303 (read-only): the amount (display number), the payee line (label, secondary), then DetailRows
     // (padding 12/0, a hairline under each, label on the left, body-medium value on the right)
     body = (
       <>
+        <AddedBy userId={item.row.createdBy} />
         <OperationSource operationId={item.row.id} />
         <p className="font-display text-number text-text-primary">
           {amount.plus ? '+' : null}
@@ -689,15 +689,17 @@ export function OperationEditor({
     >
       {body}
       {conflict ? (
-        <p
+        <Banner
+          kind="warning"
           role="alert"
-          className="flex flex-wrap items-center gap-3 rounded-inner bg-warning-soft px-4 py-3 text-body text-warning-text"
+          action={
+            <Button type="button" size="s" variant="secondary" onClick={refresh}>
+              {translate('refresh')}
+            </Button>
+          }
         >
-          <span className="flex-1">{translate('conflict')}</span>
-          <Button type="button" size="s" variant="secondary" onClick={refresh}>
-            {translate('refresh')}
-          </Button>
-        </p>
+          {translate('conflict')}
+        </Banner>
       ) : null}
       {error ? (
         <p role="alert" className="text-body text-negative-text">

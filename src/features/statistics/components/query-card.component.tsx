@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
+import { Bone } from '@/components/ui/skeleton.component'
 import type { CardStatus } from '../utils/statistics.utils'
 
 type QueryCardProps = {
@@ -26,7 +27,7 @@ export function QueryCard({ title, action, status, emptyText, retryAction, child
 
   return (
     <Card title={title} action={action}>
-      {status === 'pending' && <div aria-busy className="h-40 animate-pulse rounded-inner bg-subtle" />}
+      {status === 'pending' && <Bone className="h-40 rounded-inner" />}
       {status === 'offline' && <p className="text-body text-text-secondary">{translate('state.offline')}</p>}
       {status === 'error' && (
         <div role="alert" className="flex flex-wrap items-center gap-3">

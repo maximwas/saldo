@@ -1,8 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useFormatter, useTranslations } from 'next-intl'
-import { type SubmitEvent, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { type SubmitEvent, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { DatePicker } from '@/components/ui/date-picker.component'
@@ -12,7 +12,9 @@ import { SegmentedControl } from '@/components/ui/segmented-control.component'
 import { Select } from '@/components/ui/select.component'
 import { notify } from '@/components/ui/toaster.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { toPgError } from '@/lib/supabase/pg-error.utils'
 import { updateLedgerSettings } from '../api/access.api'
 import type { LedgerSettings } from '../api/access.server'
@@ -25,8 +27,7 @@ type SpaceSettingsFormProps = {
 }
 
 const WEEK_DAYS = [0, 1, 2, 3, 4, 5, 6]
-// 2026-10-25 is a Sunday: index n is the weekday with week_starts_on = n
-const SUNDAY = new Date(2026, 9, 25)
+// 2026-10-25 is a Sunday: October 25 + n is the weekday with week_starts_on = n
 
 // ledgers_lock_base_currency: a space with operations keeps its base currency (migration storage_and_guards)
 const BASE_CURRENCY_LOCKED = 'ledgers_base_currency_locked'
@@ -39,9 +40,9 @@ const canonicalZone = (zone: string) => (zone === 'Europe/Kiev' ? 'Europe/Kyiv' 
 export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
   const router = useRouter()
   const translate = useTranslations('settings.space')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const translateField = useTranslations('errors')
-  const formatter = useFormatter()
+  const dayText = useDayText()
   const [name, setName] = useState(settings.name)
   const [currency, setCurrency] = useState(settings.baseCurrency as Currency)
   const [timeZone, setTimeZone] = useState(canonicalZone(settings.timeZone))
@@ -50,24 +51,15 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
   const [nameError, setNameError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
-  const zoneOptions = useMemo(() => {
-    const zones = new Set(Intl.supportedValuesOf('timeZone').map(canonicalZone))
-
-    zones.add(canonicalZone(settings.timeZone))
-
-    return [...zones].sort().map((value) => ({
-      value,
-      label: value.replaceAll('_', ' '),
-    }))
-  }, [settings.timeZone])
+  const zones = new Set(Intl.supportedValuesOf('timeZone').map(canonicalZone)).add(canonicalZone(settings.timeZone))
+  const zoneOptions = [...zones].sort().map((value) => ({
+    value,
+    label: value.replaceAll('_', ' '),
+  }))
   const weekOptions = WEEK_DAYS.map((value) => ({
     value: String(value),
     // Ukrainian weekday names are lowercase, a list label starts with a capital
-    label: formatter
-      .dateTime(new Date(SUNDAY.getFullYear(), SUNDAY.getMonth(), SUNDAY.getDate() + value), {
-        weekday: 'long',
-      })
-      .replace(/^./u, (char) => char.toUpperCase()),
+    label: dayText(`2026-10-${25 + value}`, 'weekday').replace(/^./u, (char) => char.toUpperCase()),
   }))
 
   async function submit(event: SubmitEvent<HTMLFormElement>) {
@@ -106,12 +98,10 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
         },
       )
 
-      setError(
-        pgError.constraint === BASE_CURRENCY_LOCKED ? translate('baseCurrencyLocked') : translateError(pgError.kind),
-      )
-    } finally {
-      setIsPending(false)
+      setError(pgError.constraint === BASE_CURRENCY_LOCKED ? translate('baseCurrencyLocked') : dbErrorText(caught))
     }
+
+    setIsPending(false)
   }
 
   return (
@@ -130,8 +120,11 @@ export function SpaceSettingsForm({ settings }: SpaceSettingsFormProps) {
             }))}
             value={currency}
             onValueChange={setCurrency}
+            disabled={settings.baseCurrencyLocked}
           />
-          <p className="text-caption text-text-tertiary">{translate('baseCurrencyHint')}</p>
+          <p className="text-caption text-text-tertiary">
+            {translate(settings.baseCurrencyLocked ? 'baseCurrencyLockedHint' : 'baseCurrencyHint')}
+          </p>
         </div>
         <Field label={translate('timeZone')} hint={translate('timeZoneHint')}>
           <Select options={zoneOptions} value={timeZone} onValueChange={(value) => setTimeZone(value ?? timeZone)} />

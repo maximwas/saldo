@@ -1,12 +1,12 @@
 'use client'
 
-import { Info } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
 import { Field } from '@/components/ui/field.component'
 import { Select } from '@/components/ui/select.component'
-import { Sheet } from '@/components/ui/sheet.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { notify } from '@/components/ui/toaster.component'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import {
@@ -64,9 +64,7 @@ export function DefaultsSheet({ onCloseAction }: DefaultsSheetProps) {
       title={translate('title')}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={onCloseAction}>
-            {translate('cancel')}
-          </Button>
+          <SheetClose>{translate('cancel')}</SheetClose>
           <Button type="button" onClick={submit} disabled={save.isPending || !defaults.data}>
             {translate('save')}
           </Button>
@@ -89,10 +87,7 @@ export function DefaultsSheet({ onCloseAction }: DefaultsSheetProps) {
           ]}
         />
       </Field>
-      <p className="flex gap-3 rounded-inner bg-primary-soft p-4 text-body-medium text-primary-text">
-        <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
-        {translate('hint')}
-      </p>
+      <Banner>{translate('hint')}</Banner>
     </Sheet>
   )
 }

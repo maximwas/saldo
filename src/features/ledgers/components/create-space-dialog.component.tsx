@@ -1,14 +1,14 @@
 'use client'
 
-import { Dialog } from '@base-ui/react/dialog'
 import { useTranslations } from 'next-intl'
-import { type SubmitEvent, useId, useState } from 'react'
+import { type SubmitEvent, useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Input } from '@/components/ui/input.component'
 import { SegmentedControl } from '@/components/ui/segmented-control.component'
+import { Sheet, SheetClose } from '@/components/ui/sheet.component'
 import { CURRENCIES } from '@/constants/currencies.constants'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
-import { toPgError } from '@/lib/supabase/pg-error.utils'
+import { useDbErrorText } from '@/lib/supabase/db-error-text.hook'
 import { switchLedger } from '../api/ledgers.actions'
 import { createLedger } from '../api/ledgers.api'
 import { createLedgerSchema } from '../schemas/ledger.schema'
@@ -25,15 +25,17 @@ const CURRENCY_OPTIONS = CURRENCIES.map((value) => ({
   label: value,
 }))
 
-// Plan 1.17b. Figma has the "Create space" menu item (Space menu 2:40453) but no dialog frame: this one takes the
-// card tokens of the invite dialog (radius card, shadow float, padding 24) and the login form's fields.
+// Plan 1.17b. Figma has the "Create space" menu item (Space menu 2:40453) but no dialog frame: the shared Sheet
+// (Dialog 2:10240 on desktop, BottomSheet 2:10281 on phones) with the login form's fields.
 export function CreateSpaceDialog({ open, onOpenChange }: CreateSpaceDialogProps) {
   const translate = useTranslations('shell.space.create')
-  const translateError = useTranslations('errors.db')
+  const dbErrorText = useDbErrorText()
   const ids = {
     name: useId(),
     error: useId(),
+    form: useId(),
   }
+  const nameRef = useRef<HTMLInputElement>(null)
   // one id per attempt: a double submit or a retry replays the same create_ledger instead of making two spaces
   const [ledgerId, setLedgerId] = useState(() => crypto.randomUUID())
   const [currency, setCurrency] = useState<Currency>('UAH')
@@ -63,58 +65,57 @@ export function CreateSpaceDialog({ open, onOpenChange }: CreateSpaceDialogProps
       onOpenChange(false)
       setLedgerId(crypto.randomUUID())
     } catch (caught) {
-      setError(translateError(toPgError(caught as { code?: string }).kind))
-    } finally {
-      setIsPending(false)
+      setError(dbErrorText(caught))
     }
+
+    setIsPending(false)
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-text-primary/40" />
-        <Dialog.Popup className="fixed inset-x-5 top-1/2 z-50 mx-auto flex max-w-110 -translate-y-1/2 flex-col gap-5 rounded-card bg-card p-6 shadow-float outline-none">
-          <Dialog.Title className="text-card-title text-text-primary">{translate('title')}</Dialog.Title>
-          <form onSubmit={submit} noValidate className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor={ids.name} className="text-label font-medium text-text-secondary">
-                {translate('name')}
-              </label>
-              <Input
-                id={ids.name}
-                name="name"
-                maxLength={60}
-                required
-                autoFocus
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? ids.error : undefined}
-              />
-              {error ? (
-                <p id={ids.error} className="text-caption text-negative-text">
-                  {error}
-                </p>
-              ) : null}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <span className="text-label font-medium text-text-secondary">{translate('currency')}</span>
-              <SegmentedControl
-                label={translate('currency')}
-                options={CURRENCY_OPTIONS}
-                value={currency}
-                onValueChange={setCurrency}
-              />
-            </div>
-            <div className="flex justify-end gap-3">
-              <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-                {translate('cancel')}
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {translate('submit')}
-              </Button>
-            </div>
-          </form>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={translate('title')}
+      initialFocus={nameRef}
+      footer={
+        <>
+          <SheetClose>{translate('cancel')}</SheetClose>
+          <Button type="submit" form={ids.form} disabled={isPending}>
+            {translate('submit')}
+          </Button>
+        </>
+      }
+    >
+      <form id={ids.form} onSubmit={submit} noValidate className="flex flex-col gap-5">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={ids.name} className="text-label font-medium text-text-secondary">
+            {translate('name')}
+          </label>
+          <Input
+            id={ids.name}
+            name="name"
+            maxLength={60}
+            ref={nameRef}
+            required
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? ids.error : undefined}
+          />
+          {error ? (
+            <p id={ids.error} className="text-caption text-negative-text">
+              {error}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-label font-medium text-text-secondary">{translate('currency')}</span>
+          <SegmentedControl
+            label={translate('currency')}
+            options={CURRENCY_OPTIONS}
+            value={currency}
+            onValueChange={setCurrency}
+          />
+        </div>
+      </form>
+    </Sheet>
   )
 }

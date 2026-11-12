@@ -32,7 +32,7 @@
 
 | # | Рішення | Причина | Відкинуто |
 |---|---|---|---|
-| 1 | Хостинг Vercel Hobby, регіон `fra1` | безкоштовно для особистого використання, близько до БД | iad1 за замовчуванням — зайва затримка до Франкфурта |
+| 1 | Хостинг Cloudflare Workers через OpenNext (`@opennextjs/cloudflare`), деплой — Workers Builds з GitHub (Максим 11.11.2026, як у partfolio і studio-lin; §7 «Хостинг») | той самий акаунт Cloudflare, що й DNS домену; static assets, Cron Trigger і логи без окремих сервісів | Vercel Hobby `fra1` (до 11.2026): лише некомерційне використання, 100 деплоїв на добу |
 | 2 | Supabase Free (Frankfurt): Postgres, Auth, Storage, pg_cron, pg_net, Vault | транзакції, CHECK/FK/UNIQUE, RLS, файли без картки | Firebase: транзакції падають офлайн, Storage і Functions лише на Blaze з карткою, немає FK/CHECK/join |
 | 3 | Доступ до даних із браузера: supabase-js + RLS + TanStack Query | працює з офлайн-чергою, RLS — справжня межа безпеки | Server Actions для даних: виконуються послідовно, не відтворюються після reload |
 | 4 | Кожен запис у кілька таблиць — одна Postgres-функція через `rpc()` | одна транзакція: операція + оплата + резерв не розходяться (§4) | кілька запитів із клієнта — частковий запис офлайн |
@@ -44,10 +44,10 @@
 | 10 | Одна таблиця `obligations` для всіх планових платежів | календар і «Найближчі» читають ті самі записи (§7, §18) | окремі таблиці платежів на модуль — дублювання логіки оплати |
 | 11 | Власний модуль повторень на date-fns + @date-fns/tz; зобов'язання матеріалізуються на ~13 міс. | правила короткого місяця й зміна ціни з дати (§8) | rrule: 3 роки без релізів, не вміє «наступного 1-го» |
 | 12 | Податки налаштовувані: профілі, типи, версії правил, знімок бази | юрисдикція не визначена (§14–17, §25) | зашиті ставки ФОП |
-| 13 | Нагадування: pg_cron → pg_net → `/api/cron/reminders` → Web Push (@pushforge/builder) | Vercel Hobby cron лише раз на добу | Vercel cron для нагадувань; `web-push` (MPL-2.0, 21 міс. без релізу) |
+| 13 | Нагадування: pg_cron → pg_net → `/api/cron/reminders` → Web Push (@pushforge/builder) | розклад живе поруч із даними й не залежить від хостингу | Cron Trigger Worker для нагадувань; `web-push` (MPL-2.0, 21 міс. без релізу) |
 | 14 | Google Calendar API + iCloud CalDAV, серверно, в останній фазі | двосторонній зв'язок за ID, не за назвою (§19) | ICS-підписка — лише читання, без зв'язків |
 | 15 | Офлайн: Serwist (`@serwist/turbopack`) + Query persist у IndexedDB + `resumePausedMutations` | офіційний шлях для Next 16 | next-pwa — не підтримує Turbopack |
-| 16 | Файли: приватний бакет Supabase Storage `attachments`, signed URL | 1 ГБ безкоштовно, RLS | Vercel Blob / R2 — запасні |
+| 16 | Файли: приватний бакет Supabase Storage `attachments`, signed URL | 1 ГБ безкоштовно, RLS | R2 — запасний |
 | 17 | Бекап: GitHub Actions щоночі `supabase db dump`, шифрований артефакт | на Free немає автоматичних бекапів | бекап у git — витік фінансових даних |
 | 18 | MCP (фаза 10): remote Streamable HTTP у тому самому Next (`mcp-handler` 2), OAuth 2.1 через Supabase Auth OAuth Server, RLS за токеном учасника | один деплой; Claude Code і Perplexity підтримують OAuth + DCR; tools використовують ті самі схеми, `*.api.ts` і RPC, що й UI (`docs/research/mcp.md`) | stdio — Perplexity лише в Mac App Store; service-role — обхід RLS; Edge Functions — другий рантайм |
 | 19 | **Спільний доступ: простори (ledgers) з учасниками й ролями.** Рішення Максима 30.10.2026 («можу розшарити свій з кимось»), розширює §1. У кожного користувача свій простір (створюється тригером при реєстрації), приватний за замовчуванням. Власник (owner) запрошує людину з роллю `editor` (вносить операції, позначає оплати) або `viewer` (лише бачить) і може відкликати доступ. Людина буває в кількох просторах і перемикається між ними. Усі дані, «Доступно», бюджет, нагадування, календарі й податки рахуються в межах одного простору. Межа — RLS: `ledger_id in (select private.my_ledger_ids(…))`, функція `security definer` у схемі `private` (§5.0). Шаринг — з фаз 0–1, не «на потім» | двоє людей ведуть спільний бюджет; приватність = окремий простір, тож не треба прапорця видимості на кожному рядку й окремої логіки «Доступно» для двох; модель YNAB shared budgets | одна «сім'я» з прапорцем `visibility` personal/shared на рахунках: кожна залежна таблиця (операції, оплати, резерви, податки) успадковує видимість — складні політики й «Доступно», що різниться між глядачами; шаринг окремих рахунків; `user_id` + список «друзів» |
@@ -55,9 +55,9 @@
 | 21 | Одночасні правки двох людей: та сама модель, що й між пристроями — UUID клієнта + `version` + `PT409`; `pay_obligation` бере `p_expected_version` зобов'язання й блокує рядок `for update` | дві оплати одного платежу офлайн з різних телефонів інакше дали б подвійну оплату (у кожної свій UUID, тож ідемпотентність не рятує) | last-write-wins; Realtime-блокування |
 | 22 | **Репозиторій GitHub публічний** (рішення Максима 30.10.2026). Особисті дані — лише поза git: `.gitignore` ховає `.private/`, `docs/spec/`, `docs/design/screens/`, `.env*` (крім `.env.example`); gitleaks у lefthook + GitHub secret scanning і push protection; workflow з секретами не запускаються з PR (§8) | відкритий код; у специфікації й демо-екранах — реальні доходи й кредити | приватний репозиторій — рішення Максима інше |
 | 23 | Нічний бекап шифрується **age** на публічний ключ (recipient); приватний ключ лише в Максима, поза GitHub (§9) | у публічному репозиторії артефакти Actions може завантажити будь-хто з акаунтом GitHub; CI не має чим розшифрувати — витік secrets не відкриває бекапи | `gpg --symmetric` з паролем у secrets (пароль і шифротекст в одному місці); приватне сховище (R2/S3) — ще один акаунт і ключі |
-| 24 | Домен `saldo.maksymvasianin.com`: DNS на Cloudflare, CNAME `saldo` → Vercel у режимі **DNS only** (сіра хмара), Vercel-проєкт у `fra1` (§7) | основний сайт уже на Vercel, DNS — на Cloudflare | проксі Cloudflare (помаранчева хмара) — Vercel не видасть сертифікат; `*.vercel.app` — URL зміниться при перейменуванні, OAuth і VAPID прив'язані до домену |
+| 24 | Домен `saldo.maksymvasianin.com`: зона на Cloudflare, Custom Domain Worker `saldo` (запис DNS і сертифікат створює Cloudflare, §7) | DNS уже на Cloudflare | CNAME на Vercel у режимі DNS only (до 11.2026); `*.workers.dev` — адреса залежить від акаунта, а OAuth і VAPID прив'язані до домену |
 | 25 | **Локалізація з фази 0** (рішення Максима 30.10.2026): next-intl 4.14.9 **без i18n-маршрутизації** — без префікса `/uk`, `/en` в URL; локалі `uk` (за замовчуванням) і `en`; мова: `user_settings.locale` → cookie `NEXT_LOCALE` → `Accept-Language` (negotiator) → `uk` (`src/i18n/locale.utils.ts`, `src/i18n/request.ts`); тексти — `messages/<locale>/<namespace>.json`, ключі типізовані (`src/types/next-intl.d.ts`); дати й суми — `Intl` з активною локаллю (`useFormatter`, `formatMinor`); перемикач у Налаштуваннях пише і БД, і cookie (Server Action `setLocale`) | застосунок приватний, SEO не потрібне, типізовані маршрути лишаються простими; друга людина в просторі може читати англійською | маршрутизація `[locale]` (зайвий сегмент у кожному URL), react-i18next (немає RSC-інтеграції), тексти в константах |
-| 26 | **Серверні логи — pino 10.4.0** (Максим 30.10.2026: «нормальні логи»): один `logger` у `src/lib/logger/logger.server.ts`, модулі беруть `logger.child({ module })`; прод — JSON-рядки в stdout (`error`/`fatal` — у stderr через `pino.multistream` з `dedupe`), dev — `pino-pretty` як потік у тому ж процесі; рівень `LOG_LEVEL` (дефолт `debug` у dev, `info` у проді); `redact` ховає суми, нотатки, email, токени, cookie й `authorization` на трьох рівнях вкладення; `src/instrumentation.ts` → `onRequestError` пише кожну необроблену помилку (шлях без query, метод, `routeType`, `routePath`, `err` зі стеком і `digest`); помилки Postgres — `logPgError` (`src/lib/supabase/pg-error.server.ts`): код і constraint у лог, без `message` (у ньому значення рядків) | Vercel Runtime Logs читають JSON зі stdout/stderr; pino і pino-pretty уже в `serverExternalPackages` Next за замовчуванням; найпоширеніший логер Node з вбудованою редакцією | transports pino (worker thread ламається в бандлі Next); LogTape 2.4.2 (редакція — окремий пакет, менша екосистема); consola 3.4.2 (без релізів з 03.2025, без редакції); next-logger 5.0.2 (патчить консоль Next, без child-логерів) |
+| 26 | **Серверні логи — pino 10.4.0** (Максим 30.10.2026: «нормальні логи»): один `logger` у `src/lib/logger/logger.server.ts`, модулі беруть `logger.child({ module })`; прод — JSON-рядки в stdout (`error`/`fatal` — у stderr через `pino.multistream` з `dedupe`), dev — `pino-pretty` як потік у тому ж процесі; рівень `LOG_LEVEL` (дефолт `debug` у dev, `info` у проді); `redact` ховає суми, нотатки, email, токени, cookie й `authorization` на трьох рівнях вкладення; `src/instrumentation.ts` → `onRequestError` пише кожну необроблену помилку (шлях без query, метод, `routeType`, `routePath`, `err` зі стеком і `digest`); помилки Postgres — `logPgError` (`src/lib/supabase/pg-error.server.ts`): код і constraint у лог, без `message` (у ньому значення рядків) | Workers Logs (`observability` у `wrangler.jsonc`) отримують ці JSON-рядки зі stdout/stderr (`nodejs_compat`, перевірено в workerd 11.2026); pino і pino-pretty уже в `serverExternalPackages` Next за замовчуванням; найпоширеніший логер Node з вбудованою редакцією | transports pino (worker thread ламається в бандлі Next); LogTape 2.4.2 (редакція — окремий пакет, менша екосистема); consola 3.4.2 (без релізів з 03.2025, без редакції); next-logger 5.0.2 (патчить консоль Next, без child-логерів) |
 | 27 | **Видалення акаунта** (баг 30.10.2026: «Database error deleting user» у Dashboard): простори, де користувач — `owner`, видаляються з усіма даними (тригер `before delete on auth.users` → `private.handle_deleted_user()`); його членство в чужих просторах зникає каскадом, самі простори лишаються; `ledgers.created_by` стає `null` (лише аудит, `on delete set null`). Учасники спільного простору власника, що видаляється, втрачають доступ до нього разом з даними. Кожна нова таблиця з `ledger_id` мусить мати `on delete cascade`, інакше видалення акаунта знову впаде | без `on delete` на `ledgers.created_by` жоден користувач не видалявся: у кожного є простір з тригера реєстрації; передачі власності ще немає, тому спільний простір без власника лишити не можна (`ledger_members_one_owner` дозволяє нуль власників, але ніхто не зміг би ним керувати) | заборонити видалення, доки є простори (Dashboard не видаляє взагалі); `on delete cascade` на `created_by` (видалив би простір, який автор уже передав іншому); автоматична передача власності editor-у — пізніша фіча |
 | 28 | **Рух — motion 14.3.0** (Максим 30.10.2026: «тут має бути анімація переходу, і між сторінками теж»). Токени `--duration-*` / `--ease-*` у `docs/design/theme.css` — джерело правди (у Figma руху немає), `src/constants/motion.constants.ts` дзеркалить їх для JS. SegmentedControl: виділена плашка — `motion.span` зі спільним `layoutId` (`useId` на екземпляр), ковзає за позицією й шириною. Сторінки: `PageTransition` навколо контенту в `(app)/layout.tsx` — лише поява (opacity 0→1, y 8→0, `useAnimate` у layout effect за зміною `pathname`), без ключа й без exit; оболонка (Sidebar, Topbar, TabBar, FAB) нерухома; при гідрації не анімує. `prefers-reduced-motion: reduce`: CSS-тривалості → 0, `MotionConfig reducedMotion="user"` прибирає зсув і layout-рух, лишає opacity | працює однаково в Safari / iOS PWA standalone (без View Transitions API), не чіпає роутер, cacheComponents/PPR і Suspense-стрімінг: анімується вже вставлений DOM | `AnimatePresence` з exit — у App Router потребує FrozenRouter (внутрішній `LayoutRouterContext`, ламається з оновленнями Next); React `<ViewTransition>` + `experimental.viewTransition` — експериментальні; Base UI Tabs.Indicator — семантика вкладок для перемикача налаштування хибна |
 
@@ -87,9 +87,9 @@ flowchart LR
     Rpc --> PG
   end
 
-  subgraph Vercel["Vercel Hobby, fra1"]
+  subgraph Workers["Cloudflare Workers (OpenNext)"]
     Routes["Route Handlers (Node)"]
-    VCron["Vercel cron, раз на добу"]
+    VCron["Cron Trigger, раз на добу (worker.ts)"]
     Mcp["/api/mcp (фаза 10): mcp-handler"]
   end
 
@@ -99,7 +99,7 @@ flowchart LR
     Google["Google Calendar API"]
     ICloud["iCloud CalDAV"]
     Push["Push-сервіси браузерів (APNs, FCM, Mozilla)"]
-    FX["Довідкові курси (джерело уточнити)"]
+    FX["Курси НБУ (bank.gov.ua, без ключа)"]
   end
 
   GHA["GitHub Actions: нічний db dump, age, артефакт 30 днів"]
@@ -336,6 +336,7 @@ erDiagram
     uuid user_id PK
     text role "owner / editor / viewer"
     text[] notify_channels
+    text[] pinned_currencies
   }
   OPERATIONS {
     uuid id PK
@@ -506,7 +507,8 @@ null`, змінити вручну не можна — тригер `keep_create
 
 **ledger_members** — PK `(ledger_id, user_id)`, `role text check in ('owner','editor','viewer')`,
 `display_name text` (ім'я в просторі, ініціал для аватара), `notify_channels text[] default '{in_app,push}'`
-(порожній масив = не надсилати цьому учаснику), `calendar_sync bool default true` (чи синхронізувати зобов'язання
+(порожній масив = не надсилати цьому учаснику), `pinned_currencies text[] default '{USD,EUR}'` (до 3 курсів на Огляді
+цього учасника; читає `my_pinned_currencies`, змінює `set_my_pinned_currencies`), `calendar_sync bool default true` (чи синхронізувати зобов'язання
 простору в календар цього учасника), `joined_at`. `ledger_members_one_owner unique (ledger_id) where role =
 'owner'`. Індекс `(user_id)` — його читає функція членства. Політики: читати — учасники простору; змінювати роль і
 видаляти — лише owner (`private.my_owned_ledger_ids()`); учасник може видалити свій рядок («Вийти»), крім owner. Своє `display_name` кожен учасник (owner теж) змінює лише через RPC `set_my_display_name`: RLS обирає рядки, а не колонки, а колонковий грант `update` містить `role`, тож політика «свій рядок» дала б учаснику підняти собі роль.
@@ -536,6 +538,9 @@ create function private.my_owned_ledger_ids() returns setof uuid ... -- role = '
 **user_settings** (PK `user_id`) — лише особисте: `locale text default 'uk-UA'` · `theme text check in
 ('light','dark','system')` · `overview_layout jsonb` (порядок і видимість блоків) · `last_ledger_id uuid null`
 (останній відкритий простір). Базова валюта, часовий пояс, наступний дохід і стандарти — у `ledgers` (§5.0).
+`avatar_path text null` (`<user_id>.webp` або `null` без фото, check `user_settings_avatar_path`) · `avatar_updated_at`
+(версія в URL фото `/api/avatars/<user_id>?v=…`): одне фото людини на всі простори; чужі рядки читає лише серверна
+дія `listMembers` (`src/lib/members/members.actions.ts`) secret-ключем для учасників простору, які RLS уже відібрав.
 
 **accounts**
 `name text not null` · `kind text check in ('bank','cash','savings')` · `currency` · `opening_balance_minor bigint not
@@ -555,12 +560,23 @@ parent_depth)` → `categories (ledger_id, id, kind, depth)`: підкатего
 Видалення з операціями заборонене FK (`no action`, не `restrict`: видалення простору каскадить батька й дитину
 одним оператором); rpc `archive_category(p_id, p_move_to uuid null)`
 переносить операції або архівує (§6). Оподатковуваність не виводиться з категорії (§6) — вона в `income_tax_details`.
+`system_key text null check in ('subscriptions', 'credits')`, унікальний у просторі: системні «Підписки» (рішення
+Максима 3.11.2026) і «Кредити» (12.11.2026) є в кожному просторі (сід і backfill), їх не перейменувати, не архівувати
+й не видалити (тригер `private.guard_system_category`, `42501`; видаляються лише з простором); колір, іконка й місце
+змінюються. Кожна підписка отримує «Підписки» тригером `private.subscription_system_category`, тож і кожна дата серії;
+поля категорії у формі підписки немає. Внесок кредиту без категорії отримує «Кредити» тригером
+`private.credit_system_category`, тож `pay_obligation` записує оплачений внесок у «Кредити», а не «Без категорії».
 
 **fx_rates**
 `base_currency`, `quote_currency`, `rate numeric(20,10) check (> 0)`, `rate_on date`, `source text check in
 ('manual','reference')`, `source_name text` (напр. назва банку-джерела). Unique
 `fx_rates_unique (ledger_id, base_currency, quote_currency, rate_on, source)`. `rate` — скільки `quote_currency` за 1
-`base_currency` (EUR→UAH 41.5). Курс для дати D (правило A, Максим 30.10.2026; `findRate` і `private.convert_minor`): береться курс із найпізнішою `rate_on <= D`, за однакової дати ручний перемагає довідковий, а старіший ручний ніколи не перемагає новіший довідковий; пряма пара — раніше за обернену.
+`base_currency` (EUR→UAH 41.5). Довідкові курси — НБУ (`source = 'reference'`, `source_name = 'nbu'`): щоденний
+`api/cron/daily` пише в кожен простір пари «гривня й кожна валюта НБУ → базова валюта простору» (той самий напрям, що
+й ручний курс, тому правило A порівнює їх як одну пару); для небазової гривні — крос через UAH (`findRate`), 10 знаків.
+`fx_rates` приймає будь-який код ISO 4217; валюти рахунків лишаються UAH / USD / EUR (`CURRENCIES`), і
+`getLedgerRates` за замовчуванням читає лише їхні пари, щоб щоденні рядки ~45 валют не витісняли старіші курси з вікна.
+Курс для дати D (правило A, Максим 30.10.2026; `findRate` і `private.convert_minor`): береться курс із найпізнішою `rate_on <= D`, за однакової дати ручний перемагає довідковий, а старіший ручний ніколи не перемагає новіший довідковий; пряма пара — раніше за обернену.
 
 ### 5.2 Операції й перекази
 
@@ -944,22 +960,22 @@ text)` (security definer, Vault). `revoke execute … from anon, authenticated`.
 |---|---|---|
 | `api/cron/reminders` | pg_cron + pg_net кожні 10 хв (POST), `Authorization: Bearer CRON_SECRET` | нагадування → notifications → Web Push |
 | `api/cron/calendar-sync` | pg_cron кожні 15 хв | `claim_sync_jobs`, push у Google/iCloud, опитування iCloud |
-| `api/cron/daily` | Vercel cron раз на добу, `Authorization: Bearer CRON_SECRET` | прибирання файлів `attachments` без рядка (фаза 1), матеріалізація зобов'язань до +13 міс. (той самий `recurrence.utils.ts`), довідкові курси, поновлення каналів `events.watch`, страховий sync; тримає БД активною |
+| `api/cron/daily` | Cron Trigger Worker `0 3 * * *` (`wrangler.jsonc` `triggers`): `scheduled` у `worker.ts` викликає маршрут у тому ж Worker, `Authorization: Bearer CRON_SECRET`; відповідь не 2xx — помилка в Cron Events | прибирання файлів `attachments` без рядка (фаза 1), матеріалізація зобов'язань до +13 міс. (той самий `recurrence.utils.ts`), курси НБУ на сьогодні в усі простори (`reference-rates.server.ts`: 3 спроби по 10 с; збій нічого не пише, діє вчорашній курс), поновлення каналів `events.watch`, страховий sync; тримає БД активною |
 | `api/integrations/google/start` | учасник простору | OAuth redirect зі `state` (cookie) |
 | `api/integrations/google/callback` | Google | обмін коду, refresh token → Vault, створення каналу |
 | `api/integrations/google/webhook` | Google push | перевірка `X-Goog-Channel-Token`, задача `incremental` |
 | `api/integrations/icloud/connect` | користувач | перевірка app-specific password через tsdav, збереження у Vault |
-| `serwist/[path]` | браузер | service worker (`createSerwistRoute`) |
+| `serwist/[path]` | браузер | service worker (`createSerwistRoute`); файли збирає `next build` (`use cache` + `cacheLife('max')`), Worker віддає готові: esbuild у workerd не запускається |
 
 Server Actions для даних не використовуються; вихід (`signOut`) — у браузерному клієнті.
 
 Домен (ADR 24) — `https://saldo.maksymvasianin.com`, у коді лише з env `NEXT_PUBLIC_SITE_URL`. Де він прописаний:
-- Cloudflare: CNAME `saldo` → значення, яке покаже Vercel для домену, proxy status «DNS only».
-- Vercel: домен у проєкті Saldo (`regions: ["fra1"]`); `*.vercel.app` лишається для preview.
+- Cloudflare: Worker `saldo` → Settings → Domains & Routes → Custom Domain `saldo.maksymvasianin.com` (запис DNS і
+  сертифікат створює Cloudflare; старий CNAME `saldo` на Vercel спершу видалити). `workers_dev: false`.
 - Supabase Auth → URL Configuration: Site URL = домен; Redirect URLs: `https://saldo.maksymvasianin.com/**` і
   `http://localhost:3000/**` (посилання запрошень `/invite/{token}`, `?next=` після входу, `/oauth/consent`).
-  Preview-проєкт: Site URL `https://saldo-git-develop-maximwas-projects.vercel.app`, Redirect URLs — він же,
-  `https://*-maximwas-projects.vercel.app/**` і `http://localhost:3000/**`.
+  Preview-проєкт: Site URL і Redirect URLs — адреса preview-Worker, коли він з'явиться («Хостинг» нижче), і
+  `http://localhost:3000/**`; адреси `*-maximwas-projects.vercel.app` прибрати разом із проєктом Vercel.
 - Google OAuth-клієнт: authorized JavaScript origin = домен, redirect URI
   `https://saldo.maksymvasianin.com/api/integrations/google/callback`; домен — у authorized domains екрана згоди.
 - Канал Google `events.watch`: `address` = `https://saldo.maksymvasianin.com/api/integrations/google/webhook`.
@@ -970,10 +986,40 @@ Server Actions для даних не використовуються; вихі
   Editor): `select vault.create_secret('https://saldo.maksymvasianin.com/api/cron/reminders', 'reminders_cron_url');`
   і `select vault.create_secret('<CRON_SECRET того ж середовища>', 'cron_secret');`. Задача `reminders` (міграція
   `reminders.sql`) без обох секретів нічого не шле, тож локальна й preview БД не викликають production.
-- VAPID: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` і `VAPID_PRIVATE_KEY` (JWK JSON, `npx @pushforge/builder vapid`) у Vercel;
+- VAPID: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` і `VAPID_PRIVATE_KEY` (JWK JSON, `npx @pushforge/builder vapid`): перший — build variable, другий — runtime secret Worker;
   без них нагадування лише в застосунку, push пропускається з попередженням у лозі.
 Секрети (`SUPABASE_SECRET_KEY`, `CRON_SECRET`, `VAPID_PRIVATE_KEY`, `GOOGLE_CLIENT_SECRET`) — лише в модулях
 `*.server.ts` з `import 'server-only'` і в `server`-частині `@t3-oss/env-nextjs`.
+
+### Хостинг: Cloudflare Workers (OpenNext)
+
+- `opennextjs-cloudflare build` запускає `pnpm build` і пакує `.open-next/worker.js` + `.open-next/assets`.
+  `wrangler.jsonc`: Worker `saldo`, `main: worker.ts` (fetch OpenNext + `scheduled` для `api/cron/daily`),
+  `nodejs_compat` + `global_fetch_strictly_public`, `ASSETS`, `observability`, Cron Trigger `0 3 * * *`.
+  `open-next.config.ts` — static-assets incremental cache: лише те, що зібрав build, без ревалідації під час роботи.
+  `@modelcontextprotocol/server` — у `serverExternalPackages`: так бандлер бере його збірку для workerd
+  (`@cfworker/json-schema`), бо Ajv компілює схеми через `new Function`, а workerd це забороняє.
+- Деплой — Workers Builds з GitHub `maximwas/saldo`: production branch `main`, build command
+  `pnpm exec opennextjs-cloudflare build`, deploy command `pnpm exec opennextjs-cloudflare deploy`. Інші гілки —
+  non-production builds з командою `pnpm exec opennextjs-cloudflare upload` (версія з preview URL). Версія бере
+  runtime-секрети й build-змінні production-Worker, тобто прод Supabase, тому non-production builds вимкнені, доки
+  preview не має свого Worker (`saldo-preview` з гілки `develop` і preview Supabase) — відкрите питання.
+- Локально: `pnpm preview` (workerd на :8787, runtime-змінні з `.dev.vars`); `E2E_RUNTIME=workerd pnpm test:e2e` —
+  той самий e2e у workerd. `opennextjs-cloudflare build` вшиває в Worker значення з `.env*` (ті, яких немає в env
+  Worker), тож `pnpm deploy` і `pnpm upload` з машини з `.env.local` не запускати: деплой — лише Workers Builds.
+
+| Змінна | Де в Cloudflare | Навіщо |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | build variable (Settings → Build) | Next вшиває `NEXT_PUBLIC_*` у бандл під час `next build`, у runtime не читаються |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `NEXT_PUBLIC_CF_BEACON_TOKEN` | build variable, необов'язкові | Web Push; Cloudflare Web Analytics (без токена скрипт не вантажиться) |
+| `SUPABASE_SECRET_KEY`, `CRON_SECRET` | runtime secret (Settings → Variables & Secrets) і build secret | t3-env перевіряє server-схему і в runtime, і під час `next build` |
+| `VAPID_PRIVATE_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | runtime secret, необов'язкові | Web Push; фаза 9 |
+| `MCP_WRITE_ENABLED`, `LOG_LEVEL` | runtime variable (text), необов'язкові | запис через MCP; рівень логів |
+| `WORKERS_CI_COMMIT_SHA` | ставить Workers Builds у build | ревізія `/~offline` у service worker |
+
+Ризик: `cacheComponents` + `partialPrefetching` у workerd працюють (e2e 11.2026), але Next попереджає «cannot guarantee
+Cache Components will run as expected due to … `setTimeout()`»; виправлення — opennextjs-cloudflare PR #1318, ще не
+в релізі. Якщо в production з'являться 1102 або «code had hung», найменший крок — `partialPrefetching: false`.
 
 Нагадування: `due_reminder_fires` повертає рядок на кожного учасника для трійки (правило, зобов'язання, offset),
 для якої локальний час `due_on − offset` + `at_time` у `ledgers.time_zone` ≤ `p_now` і не старший за добу
@@ -1012,6 +1058,9 @@ Server Actions для даних не використовуються; вихі
 - Storage: приватний бакет `attachments`, читання — `bucket_id = 'attachments' and
   ((storage.foldername(name))[1])::uuid in (select private.my_ledger_ids())`, запис — `my_writable_ledger_ids()`,
   signed URL на 5 хв.
+- Storage: приватний бакет `avatars` (фото профілю 512×512, WebP або JPEG, до 1 МБ), об'єкт `<user_id>.webp`; читає людина
+  й ті, з ким вона ділить простір (`private.my_co_member_ids()`), пише, замінює й видаляє лише своє; показ — через
+  `GET /api/avatars/[userId]` сесією того, хто дивиться (RLS вирішує, чужому 404), `Cache-Control: private` з версією в URL.
 - Відкликання доступу діє з наступного запиту (членство не в JWT), але кеш IndexedDB на пристрої колишнього
   учасника лишається до його виходу чи `maxAge` — UI попереджає власника; видалити дані з чужого пристрою не можна.
 - Локальний кеш IndexedDB не шифрується: вихід очищає IndexedDB, Cache Storage і `push_subscriptions` пристрою;
@@ -1070,7 +1119,7 @@ Server Actions для даних не використовуються; вихі
 2. **Google refresh token у production без верифікації** — довговічність не підтверджена (platform.md). Пом'якшення:
    стан `revoked` із кнопкою «перепідключити», зв'язки й історія лишаються.
 3. **Supabase Free:** пауза після 7 днів, pg_cron 1.6.4 і pg_net 0.20.4 на Free є (preview, 30.10.2026), немає PITR. Пом'якшення: щоденний
-   Vercel cron і нічний бекап, перевірка pg_net у фазі 0; якщо недоступний — нагадування рідше (Vercel cron 1/добу)
+   Cron Trigger Worker і нічний бекап, перевірка pg_net у фазі 0; якщо недоступний — нагадування рідше (Cron Trigger)
    або зовнішній планувальник.
 4. **Податки без визначеної юрисдикції.** Модуль може виявитися надлишковим або недостатнім. Пом'якшення: фаза
    податків стартує лише після відповідей на питання §27.
@@ -1091,7 +1140,7 @@ Server Actions для даних не використовуються; вихі
 - Базова валюта: UAH чи EUR (дохід у євро)? Валюта й стартовий баланс основної картки.
 - Дата наступного доходу (§3).
 - Короткі місяці: підписка 30-го — у лютому «останній день» чи «1 березня»?
-- Джерело довідкових курсів (НБУ чи ЄЦБ; не перевірено) і чи потрібні історичні курси для минулих дат.
+- Чи потрібні історичні курси НБУ для минулих дат (зараз — лише з дня першого запуску крону; джерело — НБУ, Максим 3.11.2026).
 - Канали нагадувань: лише push + центр сповіщень, чи також сигнал календаря (§19).
 - Часткові оплати кредитів і що робити з розбіжністю графіка банку.
 - Конфлікти календаря: для перенесеної в Google події підписки — приймати дату автоматично чи завжди питати.
@@ -1111,20 +1160,22 @@ Server Actions для даних не використовуються; вихі
 | Файл | Що робить |
 |---|---|
 | `src/app/api/mcp/route.ts` | `withMcpAuth(createMcpHandler(registerSaldoTools), verifySupabaseToken, { required: true })`, експорт `GET`/`POST`; `runtime = 'nodejs'` |
-| `src/app/.well-known/oauth-protected-resource/route.ts` | `protectedResourceHandler({ authServerUrls: [SUPABASE_AUTH_ISSUER] })` (RFC 9728) |
-| `src/app/.well-known/oauth-authorization-server/route.ts` | копія метаданих Supabase Auth з кешем — для клієнтів, що шукають їх на домені MCP (Perplexity) |
+| `src/app/.well-known/oauth-protected-resource/[[...resource]]/route.ts` | `protectedResourceHandler` (RFC 9728): `resource` = URL `/api/mcp`, за коренем і за `/api/mcp` (path insertion) |
+| `src/app/.well-known/oauth-authorization-server/[[...resource]]/route.ts` | метадані Supabase Auth без змін, кеш CDN — для клієнтів, що шукають їх на домені MCP (Perplexity) |
 | `src/app/(auth)/oauth/consent/page.tsx` | згода учасника (того, хто входить) для Supabase OAuth Server: клієнт, scope, «Дозволити» / «Відмовити» |
-| `src/mcp/server.server.ts` | `registerSaldoTools(server)`: збирає tools; лише тут MCP імпортує фічі |
+| `src/mcp/server.server.ts` | `registerSaldoTools(server)`: збирає tools; write-tools — лише при `MCP_WRITE_ENABLED=true` |
+| `src/mcp/tool-context.server.ts` | простір виклику (`ledger_id` або останній відкритий), клієнт із токеном, рядок `mcp_audit_log` на кожен виклик |
 | `src/mcp/tools/<feature>.tools.server.ts` | tools однієї фічі: `inputSchema` = zod-схема вводу фічі, тіло = функція `features/<f>/api/*.api.ts` |
 | `src/lib/supabase/token-client.server.ts` | `createTokenSupabase(accessToken)` — supabase-js з `Authorization: Bearer <JWT учасника>` |
-| міграція `mcp_audit_log` | журнал викликів: `user_id` (хто), `ledger_id`, tool, `client_id`; RLS `mcp_audit_log_self` + читання owner простору |
+| міграція `mcp_audit_log` | журнал викликів: `user_id` (хто), `ledger_id`, tool, `client_id`, хеш вводу, результат; RLS `mcp_audit_log_self` + `mcp_audit_log_owner_read`; тригер `<table>_oauth_no_delete` на кожній таблиці з RLS |
+| `src/app/(app)/settings/security/page.tsx` | видані доступи (`auth.oauth.listGrants`) і «Відкликати» (`revokeGrant`) |
 
 **Потік запиту.**
 
 ```mermaid
 sequenceDiagram
   participant C as MCP-клієнт
-  participant M as /api/mcp (Vercel fra1)
+  participant M as /api/mcp (Cloudflare Worker)
   participant A as Supabase Auth (OAuth 2.1)
   participant D as PostgREST + RLS / RPC
   C->>M: POST без токена
@@ -1141,8 +1192,11 @@ sequenceDiagram
 
 **Автентифікація.** Токен — Supabase JWT, тому RLS (членство в просторі через `auth.uid()`) і RPC (перевірка ролі через `auth.uid()`) працюють
 без змін; service-role у MCP не використовується. `verifySupabaseToken` перевіряє підпис через `getClaims`, а
-також що `client_id` є (токен саме OAuth-клієнта, а не сесії браузера). Обмеження клієнтів у БД — restrictive
--політики на `auth.jwt() ->> 'client_id'` (наприклад, без `delete`). План Б, якщо OAuth у клієнта не
+також що `client_id` є (токен саме OAuth-клієнта, а не сесії браузера), а `getUser` — що сесія ще жива: «Відкликати»
+у Налаштуваннях видаляє сесії клієнта, і він зупиняється з наступного виклику, а не через годину. Обмеження клієнтів
+у БД — тригер `before delete` на `auth.jwt() ->> 'client_id'` на кожній таблиці з RLS: restrictive-політика не діє
+в `security definer` RPC видалення (`delete_operation`, `delete_category`, …). Supabase DCR не має allow-list
+redirect URI, тому сторінка згоди дає «Дозволити» лише callback відомих клієнтів (`docs/mcp-connectors.md`). План Б, якщо OAuth у клієнта не
 запрацює, — персональний токен із хешем у таблиці (`docs/research/mcp.md`).
 
 **Учасники й простори.** Токен MCP належить людині, а не простору: кожен учасник підключає MCP своїм входом і

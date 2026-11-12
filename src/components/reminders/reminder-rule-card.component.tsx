@@ -1,12 +1,13 @@
 'use client'
 
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.component'
 import { Card } from '@/components/ui/card.component'
 import { Switch } from '@/components/ui/switch.component'
 import { useClock } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
+import { useDayText } from '@/lib/dates/day-text.hook'
 import { useReminderRule } from '@/lib/reminders/reminder-rule.hook'
 import type { ReminderRule, ReminderSourceType } from '@/lib/reminders/reminder-rules.api'
 import { nextReminder } from '@/lib/reminders/reminder-schedule.utils'
@@ -24,7 +25,7 @@ type ReminderRuleCardProps = {
 // dialog. §25 defaults are inserted by the database (subscriptions 3 and 2 days before, credits on the due day, debts none).
 export function ReminderRuleCard({ sourceType, sourceId }: ReminderRuleCardProps) {
   const translate = useTranslations('notifications.rules')
-  const formatter = useFormatter()
+  const dayText = useDayText()
   const { now, timeZone } = useClock()
   const { summary } = useReminderText()
   const canWrite = useCanWrite()
@@ -44,10 +45,7 @@ export function ReminderRuleCard({ sourceType, sourceId }: ReminderRuleCardProps
       : null
   const next = rule?.enabled ? nextOf(rule) : null
   const formatNext = (reminder: NonNullable<typeof next>) => ({
-    date: formatter.dateTime(new Date(`${reminder.date}T12:00:00`), {
-      day: '2-digit',
-      month: '2-digit',
-    }),
+    date: dayText(reminder.date, 'short'),
     time: reminder.time,
   })
 

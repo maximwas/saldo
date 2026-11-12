@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card.component'
 import { getLedgerSettings, getMyDisplayName } from '@/features/ledgers/api/access.server'
 import { DisplayNameForm } from '@/features/ledgers/components/display-name-form.component'
 import { SpaceSettingsForm } from '@/features/ledgers/components/space-settings-form.component'
+import { AvatarField } from '@/features/settings/components/avatar-field.component'
 import { HideAmountsSwitch } from '@/features/settings/components/hide-amounts-switch.component'
 import { LocaleSwitcher } from '@/features/settings/components/locale-switcher.component'
 import { ThemeSwitcher } from '@/features/settings/components/theme-switcher.component'
@@ -54,9 +55,13 @@ async function SettingsCards() {
   )
 }
 
-// every member names themselves in the active space, whatever their role
+// Figma 11:72807, the card of the name and photo: one photo for every space, then the name in the active space (any role)
 async function MyName() {
-  const [ledger, session] = await Promise.all([getActiveLedger(), verifySession()])
+  const [ledger, session, translate] = await Promise.all([
+    getActiveLedger(),
+    verifySession(),
+    getTranslations('settings.myName'),
+  ])
 
   if (!ledger) {
     return null
@@ -64,7 +69,12 @@ async function MyName() {
 
   const name = await getMyDisplayName(ledger.ledgerId, session.userId)
 
-  return <DisplayNameForm key={`${ledger.ledgerId}:${name}`} name={name} />
+  return (
+    <Card title={translate('title')}>
+      <AvatarField />
+      <DisplayNameForm key={`${ledger.ledgerId}:${name}`} name={name} />
+    </Card>
+  )
 }
 
 // the active space and its row are request data: read inside <Suspense> so the cards above stay instant
