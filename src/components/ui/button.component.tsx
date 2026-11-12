@@ -18,8 +18,9 @@ const buttonVariants = cva(
       },
       size: {
         m: 'h-11 px-5 text-body',
-        // 36 high: the invisible ::after makes the tap target 44
-        s: 'relative h-9 px-3 text-label after:absolute after:-inset-1',
+        // 36 high: the invisible ::after makes the tap target 44 or more. It is measured from inside the border, so a
+        // secondary (bordered) button needs 6 px, not 4 (QA P10: the Pay row button and the calendar arrows were 42)
+        s: 'relative h-9 px-3 text-label after:absolute after:-inset-1.5',
       },
     },
     defaultVariants: {

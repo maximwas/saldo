@@ -88,8 +88,12 @@ export function Sheet({
                   <X className="size-5" aria-hidden />
                 </Dialog.Close>
               </div>
-              <div className="-m-1 flex min-h-0 flex-col gap-4 overflow-y-auto p-1 scrollbar-none">{children}</div>
-              {/* the top border says the body scrolls under the buttons, so a half-hidden last field reads as more */}
+              {/* the body runs down to the footer border (-mb-5 takes back the gap) and ends with 20 px, so a long form
+                  scrolls under the border instead of being cut 20 px above it, and its last control (the receipt) stops
+                  fully visible above the buttons (QA D14); a short dialog keeps the same 20 px above the border */}
+              <div className="-m-1 -mb-5 flex min-h-0 flex-col gap-4 overflow-y-auto p-1 pb-5 scrollbar-none">
+                {children}
+              </div>
               {footer ? (
                 <div className="flex items-center gap-3 border-t border-border pt-5 *:flex-1">{footer}</div>
               ) : null}

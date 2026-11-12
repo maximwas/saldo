@@ -1,3 +1,5 @@
+import { otherLast } from '@/lib/finance/category-order.utils'
+
 export const CATEGORY_KINDS = ['expense', 'income'] as const
 
 export type CategoryKind = (typeof CATEGORY_KINDS)[number]
@@ -27,7 +29,7 @@ export type CategoryTree = Record<CategoryKind, CategoryNode[]> & {
 }
 
 const bySortOrder = (first: CategoryView, second: CategoryView) =>
-  first.sortOrder - second.sortOrder || first.name.localeCompare(second.name)
+  otherLast(first, second) || first.sortOrder - second.sortOrder || first.name.localeCompare(second.name)
 
 /** income and expense trees of active categories, plus the flat archive (Figma 2:49639) */
 export function buildCategoryTree(rows: readonly CategoryView[]): CategoryTree {

@@ -1,5 +1,6 @@
 import type { CURRENCIES } from '@/constants/currencies.constants'
 import type { SaldoClient } from '@/types/supabase.types'
+import { otherLast } from './category-order.utils'
 
 export type LedgerAccountOption = {
   id: string
@@ -80,5 +81,5 @@ export async function listCategoryOptions(supabase: SaldoClient, ledgerId: strin
     throw error
   }
 
-  return data.map(toCategoryOption)
+  return data.sort(otherLast).map(toCategoryOption)
 }

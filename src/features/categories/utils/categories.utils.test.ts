@@ -52,6 +52,28 @@ describe('buildCategoryTree', () => {
     expect(tree.income.map((node) => node.id)).toEqual(['salary'])
   })
 
+  it('keeps «Інше» last in every space, even before categories added after it (QA D14)', () => {
+    const tree = buildCategoryTree([
+      category({
+        id: 'other',
+        name: 'Інше',
+        sortOrder: 12,
+      }),
+      category({
+        id: 'fun',
+        name: 'Розваги',
+        sortOrder: 13,
+      }),
+      category({
+        id: 'home',
+        name: 'Житло',
+        sortOrder: 1,
+      }),
+    ])
+
+    expect(tree.expense.map((node) => node.name)).toEqual(['Житло', 'Розваги', 'Інше'])
+  })
+
   it('keeps archived categories out of the trees', () => {
     const tree = buildCategoryTree(rows)
 
