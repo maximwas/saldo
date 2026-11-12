@@ -15,6 +15,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useLedgerStore } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useMemberNames } from '@/lib/members/members.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { operationQueries } from '../api/operations.queries'
 import type { OperationType } from '../operations.types'
 import { OPERATION_TYPES } from '../operations.types'
@@ -80,8 +81,10 @@ export function OperationFilters({
   // the «Who» chip appears when the space has two or more members
   const members = useMemberNames()
   const options = useQuery(operationQueries.options(ledgerId))
-  const accounts = options.data?.accounts ?? []
-  const categories = options.data?.categories ?? []
+  // the filters stand above the screen's skeleton: a chip named from the device cache must wait for hydration too
+  const loaded = useHydrated() ? options.data : undefined
+  const accounts = loaded?.accounts ?? []
+  const categories = loaded?.categories ?? []
   // Figma Chip: the standalone month name, its first letter raised, and the year without the Intl year suffix
   const monthLabel = (month: string) => {
     const label = dayText(month, 'month')
@@ -108,7 +111,8 @@ export function OperationFilters({
         value={type}
         onValueChange={(next) => onChangeAction({ type: next })}
       />
-      <div className="-mr-5 flex items-center gap-2 overflow-x-auto pr-5 scrollbar-none lg:mr-0 lg:flex-wrap lg:overflow-visible lg:pr-0">
+      {/* phones: the row bleeds to both screen edges, so a scrolled chip slides under the edge, not cut at the padding */}
+      <div className="-mx-5 flex items-center gap-2 overflow-x-auto px-5 py-1 scrollbar-none lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0">
         <ChipSelect
           chip="on"
           options={[
@@ -192,7 +196,8 @@ export function OperationFilters({
             label={translate('filters.who')}
           />
         )}
-        <Chip selected={text !== null} onClick={() => setTextOpen(true)}>
+        {/* the text search first on phones: past the screen edge nobody found it */}
+        <Chip selected={text !== null} onClick={() => setTextOpen(true)} className="max-lg:order-first">
           {text === null ? translate('filters.text') : translate('filters.textChip', { query: text })}
         </Chip>
       </div>

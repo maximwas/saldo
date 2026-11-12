@@ -13,11 +13,13 @@ const buttonVariants = cva(
         primary: 'bg-primary text-on-primary not-disabled:hover:bg-primary-hover',
         secondary: 'border border-border-strong bg-card text-text-primary not-disabled:hover:bg-subtle',
         ghost: 'text-primary-text not-disabled:hover:bg-primary-soft',
-        danger: 'border border-transparent bg-negative-soft text-negative-text not-disabled:hover:border-negative',
+        // the confirming action of a delete: solid, white on dark red in light (6.5:1), dark on light red in dark
+        danger: 'bg-negative-text text-on-primary not-disabled:hover:bg-negative-text/90',
       },
       size: {
         m: 'h-11 px-5 text-body',
-        s: 'h-9 px-3 text-label',
+        // 36 high: the invisible ::after makes the tap target 44
+        s: 'relative h-9 px-3 text-label after:absolute after:-inset-1',
       },
     },
     defaultVariants: {

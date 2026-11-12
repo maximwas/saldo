@@ -49,6 +49,7 @@
     "title": "Expenses by category",
     "category": "Category",
     "share": "Share",
+    "percent": "{value}%",
     "amount": "Amount",
     "summary": "Donut chart of expenses by category, categories: {count}; the same sums are in the table"
   },

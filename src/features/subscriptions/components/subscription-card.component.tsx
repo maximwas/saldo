@@ -12,6 +12,7 @@ import { useToday } from '@/contexts/clock.context'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import type { SubscriptionView } from '../api/subscriptions.api'
 import { CARD_TABS, type CardTab, useSubscriptionParams } from '../hooks/subscription-params.hook'
 import { useSubscription } from '../hooks/subscriptions.hook'
@@ -87,6 +88,7 @@ export function SubscriptionCard({ subscriptionId }: SubscriptionCardProps) {
   const query = useSubscription(subscriptionId)
   const subscription = query.data
   const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const { tab, setParams, closeCard } = useSubscriptionParams()
   const tabs = CARD_TABS.filter((value) => canWrite || value !== 'settings')
   const current = tabs.includes(tab) ? tab : 'overview'
@@ -107,7 +109,7 @@ export function SubscriptionCard({ subscriptionId }: SubscriptionCardProps) {
     )
   }
 
-  if (subscription === undefined) {
+  if (!hydrated || subscription === undefined) {
     return <Bone className="h-96 rounded-card" />
   }
 

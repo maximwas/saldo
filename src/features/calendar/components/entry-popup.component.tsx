@@ -216,7 +216,8 @@ export function EntryPopup() {
 
           return entry ? (
             <Popover.Portal>
-              <Popover.Positioner align="start" sideOffset={8} collisionPadding={16} className="z-30">
+              {/* beside the entry, not above it: above, it covered the toolbar and the view switcher (QA 12.11) */}
+              <Popover.Positioner side="inline-end" align="start" sideOffset={8} collisionPadding={16} className="z-30">
                 <Popover.Popup className="flex max-h-(--available-height) w-96 max-w-(--available-width) flex-col gap-5 overflow-y-auto rounded-card bg-raised p-6 shadow-float outline-none transition-opacity duration-(--duration-base) ease-(--ease-standard) data-ending-style:opacity-0 data-starting-style:opacity-0">
                   <div className="flex items-center gap-3">
                     <Popover.Title className="flex-1 text-card-title text-text-primary">

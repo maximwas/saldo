@@ -11,6 +11,7 @@ import { Bone, SkeletonCard, SkeletonLine } from '@/components/ui/skeleton.compo
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { currencyName, currencySymbol } from '@/lib/money/money.utils'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useRateBoard } from '../hooks/currencies.hook'
 import { rateColor, splitBoard } from '../utils/currencies.utils'
 import { RateFigures } from './rate-figures.component'
@@ -27,13 +28,14 @@ export function RatesCard() {
   const dayText = useDayText()
   const { queries, data, save } = useRateBoard()
   const { failedLoad, retry } = useScreenQueryState(queries, translateCurrencies('refreshFailed'))
+  const hydrated = useHydrated()
   const [open, setOpen] = useState(false)
 
   if (failedLoad) {
     return <ErrorState title={translateCurrencies('loadFailed')} onRetryAction={retry} />
   }
 
-  if (data === undefined) {
+  if (!hydrated || data === undefined) {
     return (
       <SkeletonCard aria-busy className="gap-5 p-5 lg:p-6">
         <Bone className="h-5 w-30 rounded-sm" />
@@ -77,7 +79,7 @@ export function RatesCard() {
       <>
         <ul className="flex flex-col">
           {shown.map((row, index) => (
-            <li key={row.currency} className="flex items-center gap-4 py-3">
+            <li key={row.currency} className="flex items-start gap-4 py-3">
               <LetterAvatar
                 name={row.currency}
                 letter={currencySymbol(row.currency, locale)}

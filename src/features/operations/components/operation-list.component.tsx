@@ -231,13 +231,9 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
   const mobileSubtitle = (item: OperationItem) =>
     (!neutral(item) && category(item.row.categoryId)?.name) || subtitleOf(item)
 
-  const categoryCell = (item: OperationItem) => {
-    if (item.kind === 'transfer') {
-      return translate('kinds.transfer')
-    }
-
-    return neutral(item) ? '' : (category(item.row.categoryId)?.name ?? translate('row.noCategory'))
-  }
+  // a transfer says «Transfer» under its title already: its category cell stays empty, like an adjustment's
+  const categoryCell = (item: OperationItem) =>
+    neutral(item) ? '' : (category(item.row.categoryId)?.name ?? translate('row.noCategory'))
 
   const accountCell = (item: OperationItem) =>
     item.kind === 'transfer' && item.transfer
@@ -346,7 +342,6 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
                     <span className="flex-1 text-label text-text-secondary">
                       {translatePlan('count', { count: planned.length })} · {translatePlan('notFact')}
                     </span>
-                    <Badge tone="plan">{translatePlan('pill')}</Badge>
                     <Amount minor={planTotal} currency={baseCurrency} kind="plan" className="text-label" />
                   </span>
                 </th>
@@ -443,11 +438,8 @@ export function OperationList({ items, receiptIds, syncStates, planned = [], onS
           <section className="rounded-card bg-card px-4 py-1 shadow-card">
             <header className="flex items-center gap-3 pt-3 pb-2">
               <h3 className="flex-1 text-label font-semibold text-text-primary">{translatePlan('title')}</h3>
-              <span className="flex items-center gap-1.5">
-                <Badge tone="plan">{translatePlan('pill')}</Badge>
-                <span className="text-label font-medium text-text-secondary">
-                  {translatePlan('count', { count: planned.length })}
-                </span>
+              <span className="text-label font-medium text-text-secondary">
+                {translatePlan('count', { count: planned.length })}
               </span>
             </header>
             <ul>

@@ -7,6 +7,7 @@ import { Brand } from '@/components/layout/brand.component'
 import { Button } from '@/components/ui/button.component'
 import { Field } from '@/components/ui/field.component'
 import { Input } from '@/components/ui/input.component'
+import { PasswordInput } from '@/components/ui/password-input.component'
 import { issueKey } from '@/lib/forms/issue-key.utils'
 import { getBrowserSupabase } from '@/lib/supabase/browser-client'
 import { loginFormSchema } from '../schemas/login-form.schema'
@@ -170,7 +171,7 @@ export function LoginForm() {
             <Input name="email" type="email" autoComplete="email" />
           </Field>
           <Field label={translate('password')} required error={invalid.password ?? error ?? undefined}>
-            <Input name="password" type="password" autoComplete="current-password" />
+            <PasswordInput name="password" autoComplete="current-password" />
           </Field>
           <Button type="submit" className="w-full" disabled={isPending}>
             {translate('submit')}

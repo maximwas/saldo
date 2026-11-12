@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useLedger, useLedgerStore } from '@/contexts/ledger.context'
 import { ledgerQueryKey } from '@/lib/query/query-keys.utils'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { listMembers } from './members.actions'
 import { authorOf, type MemberProfile, memberName } from './members.utils'
 
@@ -25,8 +26,11 @@ function namesOf(members: Record<string, MemberProfile>) {
 /** name and photo of the space's members by user id; empty while loading or offline, so callers draw no avatar */
 export function useMembers() {
   const { ledgerId } = useLedger()
+  const data = useQuery(membersQuery(ledgerId)).data
+  // the shell reads them too: until hydration the server's «no members» is shown, not the restored device cache
+  const hydrated = useHydrated()
 
-  return useQuery(membersQuery(ledgerId)).data ?? NO_MEMBERS
+  return (hydrated ? data : undefined) ?? NO_MEMBERS
 }
 
 /** names of the space's members by user id (one query with useMembers) */
@@ -36,8 +40,9 @@ export function useMemberNames() {
     ...membersQuery(ledgerId),
     select: namesOf,
   })
+  const hydrated = useHydrated()
 
-  return query.data ?? NO_NAMES
+  return (hydrated ? query.data : undefined) ?? NO_NAMES
 }
 
 /** who added a record; null in a space of one or for an unknown author */

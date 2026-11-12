@@ -26,6 +26,12 @@ describe('currencySymbol', () => {
     expect(currencySymbol('UAH', 'uk')).toBe('₴')
     expect(currencySymbol('EUR', 'en')).toBe('€')
   })
+
+  it('keeps «$» for the US dollar only: another dollar shows its own sign', () => {
+    expect(currencySymbol('USD', 'uk')).toBe('$')
+    expect(currencySymbol('CAD', 'uk')).toBe('CAD')
+    expect(currencySymbol('CAD', 'en')).toBe('CA$')
+  })
 })
 
 describe('toMinor', () => {

@@ -156,7 +156,7 @@ function ImageCrop({ url, name, onPixelsAction }: ImageCropProps) {
         <Slider.Control className="flex h-6 flex-1 cursor-pointer items-center">
           <Slider.Track className="relative h-1 w-full rounded-full bg-border">
             <Slider.Indicator className="rounded-full bg-primary" />
-            <Slider.Thumb className="size-5 rounded-full border border-border bg-card shadow-card outline-none focus-visible:ring-2 focus-visible:ring-primary" />
+            <Slider.Thumb className="size-5 rounded-full border border-border bg-card shadow-card outline-none after:absolute after:-inset-3 focus-visible:ring-2 focus-visible:ring-primary" />
           </Slider.Track>
         </Slider.Control>
       </Slider.Root>

@@ -77,8 +77,13 @@ export type ToastAction = {
   onAction: () => void
 }
 
+// a toast with an action («Show», «Undo», «Retry») stays 10 s: sonner's 4 s was gone before a phone tap (QA2 #19)
+const ACTION_DURATION = 10_000
+
 const show = (kind: ToastKind, text: string, onAction?: () => void, actionLabel?: string) =>
-  toast.custom((id) => <ToastCard id={id} kind={kind} text={text} onAction={onAction} actionLabel={actionLabel} />)
+  toast.custom((id) => <ToastCard id={id} kind={kind} text={text} onAction={onAction} actionLabel={actionLabel} />, {
+    duration: onAction ? ACTION_DURATION : undefined,
+  })
 
 /** one helper for every screen: `notify.success(translate('saved'))`, `notify.success(msg, { label, onAction })`,
  * `notify.error(msg, { onRetry })`, `notify.undo(msg, { onUndo })` */

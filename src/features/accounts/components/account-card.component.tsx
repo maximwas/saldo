@@ -14,6 +14,7 @@ import { Bone } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useAccounts } from '../hooks/accounts.hook'
 import { ACCOUNT_KIND_STYLE } from '../utils/accounts.utils'
 import { AccountFormSheet } from './account-form-sheet.component'
@@ -34,6 +35,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
   const query = useAccounts()
   const { data } = query
   const { failedLoad, retry } = useScreenQueryState([query], translate('refreshFailed'))
+  const hydrated = useHydrated()
   const [editing, setEditing] = useState(false)
   const [archiving, setArchiving] = useState(false)
 
@@ -41,7 +43,7 @@ export function AccountCard({ accountId }: AccountCardProps) {
     return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (data === undefined) {
+  if (!hydrated || data === undefined) {
     return <Bone className="h-72 rounded-card" />
   }
 

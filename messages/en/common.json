@@ -6,6 +6,15 @@
     "en": "English"
   },
   "close": "Close",
+  "notFound": {
+    "title": "This page does not exist",
+    "hint": "The link may be out of date, or the address has a typo.",
+    "home": "Go to Overview"
+  },
+  "password": {
+    "show": "Show characters",
+    "hide": "Hide characters"
+  },
   "select": {
     "placeholder": "Select a value"
   },

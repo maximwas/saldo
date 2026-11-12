@@ -25,7 +25,7 @@ function Row({ label, minor, currency, total = false }: RowProps) {
     <div
       className={
         total
-          ? 'flex items-center justify-between gap-3 border-t border-on-primary/35 pt-3'
+          ? 'flex items-center justify-between gap-3 border-t border-on-hero/35 pt-3'
           : 'flex items-center justify-between gap-3'
       }
     >
@@ -34,7 +34,7 @@ function Row({ label, minor, currency, total = false }: RowProps) {
         <Amount
           minor={minor}
           currency={currency}
-          className={total ? 'text-body font-semibold text-on-primary' : 'text-label font-semibold text-on-primary'}
+          className={total ? 'text-body font-semibold text-on-hero' : 'text-label font-semibold text-on-hero'}
         />
       </dd>
     </div>
@@ -55,7 +55,7 @@ export function HeroAvailable({ overview }: HeroAvailableProps) {
   const untilLabel = hasDate ? dayText(untilOn, 'dayMonth') : ''
 
   return (
-    <section className="flex flex-col gap-6 rounded-card bg-primary p-5 text-on-primary lg:flex-row lg:items-center lg:gap-8 lg:p-8">
+    <section className="flex flex-col gap-6 rounded-card bg-hero-card p-5 text-on-hero lg:flex-row lg:items-center lg:gap-8 lg:p-8">
       <div className="flex min-w-0 flex-col gap-2 lg:flex-1">
         <h2 className="flex items-center gap-3 text-body font-medium">
           {hasDate ? translate('availableUntil', { date: untilLabel }) : translate('availableNoDate')}
@@ -63,7 +63,7 @@ export function HeroAvailable({ overview }: HeroAvailableProps) {
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="rounded-xs text-label font-medium underline outline-none focus-visible:ring-2 focus-visible:ring-on-primary"
+              className="relative rounded-xs text-label font-medium underline outline-none after:absolute after:-inset-x-1 after:-inset-y-3 focus-visible:ring-2 focus-visible:ring-on-hero"
             >
               {translate(hasDate ? 'incomeDate.change' : 'incomeDate.set')}
             </button>
@@ -76,7 +76,7 @@ export function HeroAvailable({ overview }: HeroAvailableProps) {
           minor={hasDate ? available.availableMinor : null}
           currency={baseCurrency}
           size="xl"
-          className="text-on-primary"
+          className="text-on-hero"
         />
         {!hasDate && <p className="flex items-start gap-2 pt-2 text-label">{translate('noIncomeDate')}</p>}
         {hasDate && available.expectedIncomeMinor !== null && available.expectedIncomeMinor > 0 && (
@@ -99,8 +99,8 @@ export function HeroAvailable({ overview }: HeroAvailableProps) {
         )}
       </div>
 
-      <div className="flex w-full flex-col gap-3 rounded-inner bg-primary-hover p-5 lg:w-105 lg:shrink-0">
-        <p className="text-micro">{translate('howWeCount')}</p>
+      <div className="flex w-full flex-col gap-3 rounded-inner bg-hero-panel p-5 lg:w-105 lg:shrink-0">
+        <p className="text-caption font-medium">{translate('howWeCount')}</p>
         <dl className="flex flex-col gap-3">
           <Row label={translate('balances')} minor={available.balancesMinor} currency={baseCurrency} />
           {hasDate && (

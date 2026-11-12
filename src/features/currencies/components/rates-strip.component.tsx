@@ -6,6 +6,7 @@ import { Bone } from '@/components/ui/skeleton.component'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { formatRate } from '@/lib/money/fx.utils'
 import { currencyName, currencySymbol } from '@/lib/money/money.utils'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useRateBoard } from '../hooks/currencies.hook'
 import { boardDigits, splitBoard } from '../utils/currencies.utils'
 import { RatesSheet } from './rates-sheet.component'
@@ -21,6 +22,7 @@ export function RatesStrip() {
   const dayText = useDayText()
   const { queries, data, save } = useRateBoard()
   const [open, setOpen] = useState(false)
+  const hydrated = useHydrated()
 
   if (queries.some((query) => query.isLoadingError)) {
     return (
@@ -41,7 +43,7 @@ export function RatesStrip() {
     )
   }
 
-  if (data === undefined) {
+  if (!hydrated || data === undefined) {
     return <Bone aria-busy className="h-11 w-full rounded-full" />
   }
 

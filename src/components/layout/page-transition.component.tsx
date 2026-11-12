@@ -2,15 +2,14 @@
 
 import { useAnimate, useReducedMotion } from 'motion/react'
 import { usePathname } from 'next/navigation'
-import { useLayoutEffect, useRef, useSyncExternalStore } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { MOTION } from '@/constants/motion.constants'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 
 type PageTransitionProps = {
   className?: string
   children: React.ReactNode
 }
-
-const subscribeNever = () => () => {}
 
 // Enter-only: the new page fades in and rises a little; the shell around it stays still. No exit animation:
 // AnimatePresence cannot see App Router pages leave without the internal LayoutRouterContext ("FrozenRouter"), which
@@ -20,11 +19,7 @@ export function PageTransition({ className, children }: PageTransitionProps) {
   const [scope, animate] = useAnimate<HTMLDivElement>()
   const reduceMotion = useReducedMotion()
   // false while hydrating server HTML: that first paint is already on screen and must not blink
-  const isClientRender = useSyncExternalStore(
-    subscribeNever,
-    () => true,
-    () => false,
-  )
+  const isClientRender = useHydrated()
   const animatedPathname = useRef(isClientRender ? null : pathname)
 
   // layout effect: the first frame of a new page is painted already faded out, not at full opacity

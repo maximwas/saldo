@@ -9,6 +9,7 @@ import { ErrorState } from '@/components/ui/error-state.component'
 import { Bone, SkeletonCard } from '@/components/ui/skeleton.component'
 import { useCanWrite } from '@/contexts/ledger.context'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { useCalendarData } from '../hooks/calendar.hook'
 import { useCalendarParams } from '../hooks/calendar-params.hook'
 import { activeQuickSet, fromFilter } from '../utils/calendar-filters.utils'
@@ -66,12 +67,13 @@ function CalendarBody() {
   const { view } = useCalendarParams()
   const { entries, totals } = useCalendarData()
   const { failedLoad, retry } = useScreenQueryState([entries, totals], translate('refreshFailed'))
+  const hydrated = useHydrated()
 
   if (failedLoad) {
     return <ErrorState title={translate('loadFailed')} onRetryAction={retry} />
   }
 
-  if (entries.data === undefined || totals.data === undefined) {
+  if (!hydrated || entries.data === undefined || totals.data === undefined) {
     return <GridSkeleton />
   }
 

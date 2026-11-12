@@ -92,6 +92,7 @@
     "amount": "Сума",
     "account": "Рахунок",
     "category": "Категорія",
+    "categoryPlaceholder": "Оберіть категорію",
     "noCategory": "Без категорії",
     "date": "Дата",
     "counterparty": "Одержувач",
@@ -143,6 +144,7 @@
       "purchase": "Покупка"
     },
     "time": "Час",
+    "timePlaceholder": "Напр. 18:40",
     "balance": "Залишок {amount}",
     "editingTitle": "Редагувати операцію",
     "saveChanges": "Зберегти зміни"

@@ -1,11 +1,23 @@
 import Decimal from 'decimal.js'
 
-const currencyFormat = (currency: string, locale: string) =>
-  new Intl.NumberFormat(locale, {
+// narrow signs several currencies share: only the US dollar keeps «$», the others show their own («CAD», «CA$»)
+const SHARED_SIGNS = new Set(['$', '¥', 'kr'])
+
+function currencyFormat(currency: string, locale: string) {
+  const narrow = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     currencyDisplay: 'narrowSymbol',
   })
+  const sign = narrow.formatToParts(0).find((part) => part.type === 'currency')?.value ?? ''
+
+  return currency === 'USD' || !SHARED_SIGNS.has(sign)
+    ? narrow
+    : new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+      })
+}
 
 /** digits after the point: 2 for UAH, USD, EUR; Intl knows the ISO 4217 exponent of every currency */
 export const minorDigits = (currency: string) =>

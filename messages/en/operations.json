@@ -92,6 +92,7 @@
     "amount": "Amount",
     "account": "Account",
     "category": "Category",
+    "categoryPlaceholder": "Choose a category",
     "noCategory": "No category",
     "date": "Date",
     "counterparty": "Payee",
@@ -143,6 +144,7 @@
       "purchase": "Purchase"
     },
     "time": "Time",
+    "timePlaceholder": "E.g. 18:40",
     "balance": "Balance {amount}",
     "editingTitle": "Edit operation",
     "saveChanges": "Save changes"

@@ -22,14 +22,12 @@ type Shares = ReturnType<typeof categoryShares>
 
 const ROW_CLASS = 'flex h-10 items-center gap-3 border-b border-border text-label'
 
+// one percent format across the app: «50,1 %» with a space in Ukrainian (Intl's uk percent drops it)
 function useShareText() {
   const format = useFormatter()
+  const translate = useTranslations('statistics.categories')
 
-  return (share: number) =>
-    format.number(share / 100, {
-      style: 'percent',
-      maximumFractionDigits: 1,
-    })
+  return (share: number) => translate('percent', { value: format.number(share, { maximumFractionDigits: 1 }) })
 }
 
 /** the category name, a link to its operations of the period (none for «no category»: the list has no such filter) */
@@ -103,7 +101,7 @@ function CategoriesChart({ data, donut = true }: CategoriesChartProps) {
   const drawn = data.shares.filter((share) => share.factMinor > 0)
 
   return (
-    <div className="flex flex-col items-center gap-4 lg:flex-row lg:gap-8">
+    <div className="flex flex-col items-center gap-4">
       <div
         role="img"
         aria-label={translate('categories.summary', { count: drawn.length })}
@@ -126,14 +124,16 @@ function CategoriesChart({ data, donut = true }: CategoriesChartProps) {
           <Amount minor={data.totalMinor} currency={currency} className="max-lg:text-label max-lg:font-semibold" />
         </div>
       </div>
-      <ul className="w-full flex-1">
+      <ul className="w-full min-w-0 flex-1">
         {data.shares.map((share, index) => (
           <li key={share.id ?? 'none'} className={cn(ROW_CLASS, index >= MOBILE_ROWS && 'max-lg:hidden')}>
             <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: share.fill }} />
             <span className="min-w-0 flex-1 truncate">
               <CategoryName share={share} />
             </span>
-            <span className="w-14 text-right text-text-secondary tabular-nums">{shareText(share.share)}</span>
+            <span className="w-14 text-right whitespace-nowrap text-text-secondary tabular-nums">
+              {shareText(share.share)}
+            </span>
             <Amount minor={share.factMinor} currency={currency} className="w-30 text-right text-label font-semibold" />
           </li>
         ))}

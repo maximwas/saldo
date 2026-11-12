@@ -11,8 +11,10 @@ type CategorySelectProps = FieldControlProps & {
   kind: 'income' | 'expense'
   value: string | null
   onValueChange: (value: string | null) => void
-  /** the first option, for no category */
-  noneLabel: string
+  /** the first option, for no category; without it the field has no «none» and an empty one shows the placeholder (a
+   * required category is chosen, never preselected) */
+  noneLabel?: string
+  placeholder?: string
   disabled?: boolean
   onBlur?: () => void
 }
@@ -33,14 +35,18 @@ export function CategorySelect({ categories, kind, value, onValueChange, noneLab
   return (
     <Select
       {...rest}
-      options={[
-        {
-          value: NO_CATEGORY,
-          label: noneLabel,
-        },
-        ...options,
-      ]}
-      value={value ?? NO_CATEGORY}
+      options={
+        noneLabel
+          ? [
+              {
+                value: NO_CATEGORY,
+                label: noneLabel,
+              },
+              ...options,
+            ]
+          : options
+      }
+      value={value ?? (noneLabel ? NO_CATEGORY : null)}
       onValueChange={(next) => onValueChange(next === NO_CATEGORY ? null : next)}
     />
   )

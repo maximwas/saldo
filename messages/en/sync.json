@@ -23,7 +23,7 @@
     "title": "Sync queue",
     "waiting": "{count, plural, one {# change is} other {# changes are}} waiting to be sent",
     "empty": "All changes are on the server.",
-    "hint": "Sending again never creates duplicates.",
+    "hint": "Sending again will not add anything twice.",
     "updatedAt": "Last update: {time}.",
     "syncNow": "Sync now",
     "retry": "Retry",

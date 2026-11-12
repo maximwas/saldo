@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeftRight, Search } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 import { PageOfflineBanner } from '@/components/layout/page-offline-banner.component'
 import { Banner } from '@/components/ui/banner.component'
 import { Button } from '@/components/ui/button.component'
@@ -15,6 +15,7 @@ import { useCanWrite, useLedgerStore } from '@/contexts/ledger.context'
 import { useDayText } from '@/lib/dates/day-text.hook'
 import { useScreenQueryState } from '@/lib/query/screen-query-state.hook'
 import { mergeQueued } from '@/lib/query/sync-queue.utils'
+import { useHydrated } from '@/lib/utils/hydrated.hook'
 import { operationQueries } from '../api/operations.queries'
 import { useOperationFilters } from '../hooks/operation-filters.hook'
 import { useQueuedOperations } from '../hooks/queued-operations.hook'
@@ -25,8 +26,6 @@ import { type EditorTarget, OperationEditor } from './operation-editor.component
 import { OperationFilters } from './operation-filters.component'
 import { OperationList } from './operation-list.component'
 import { OperationSummary } from './operation-summary.component'
-
-const subscribeNever = () => () => undefined
 
 // Figma Saldo file → Operations 2:11403 / 2:13681: type switch and chips, the totals of the filter, then the list by day.
 // Adding goes through the global «Add» (?add=), here only a row opens the sheet (edit / view) or a duplicate of it.
@@ -60,13 +59,7 @@ export function OperationsScreen() {
   })
   const options = useQuery(operationQueries.options(ledgerId))
   const { failedLoad, retry } = useScreenQueryState([list, options], translate('refreshFailed'))
-  // the screen is a streamed Suspense boundary: it hydrates after the device cache is restored, so the first client
-  // render repeats the server's skeleton and the data comes one render later (no hydration mismatch)
-  const hydrated = useSyncExternalStore(
-    subscribeNever,
-    () => true,
-    () => false,
-  )
+  const hydrated = useHydrated()
   // `key` changes with every target, so a row, then its duplicate, each get a fresh form and fresh ids
   const [editor, setEditor] = useState<{
     open: boolean
@@ -80,6 +73,8 @@ export function OperationsScreen() {
     : []
   const receiptIds = new Set(list.data?.receiptIds ?? [])
   const totals = summarize(items)
+  // income, expenses and their result say nothing about moving money between own accounts
+  const transfers = url.type === 'transfer'
   const [linkedId, setLinkedId] = useQueryState('operation', parseAsString.withOptions({ history: 'replace' }))
   const linked = linkedId ? items.find((item) => item.row.id === linkedId) : undefined
 
@@ -160,7 +155,7 @@ export function OperationsScreen() {
     // gap 12): a neutral 40 search icon, body-semibold title, label text, Secondary «reset filters»
     content = (
       <>
-        <OperationSummary totals={totals} period={period} withPlanMinor={null} />
+        {transfers ? null : <OperationSummary totals={totals} period={period} withPlanMinor={null} />}
         <EmptyState
           icon={Search}
           tone="neutral"
@@ -177,11 +172,13 @@ export function OperationsScreen() {
   } else {
     content = (
       <>
-        <OperationSummary
-          totals={totals}
-          period={period}
-          withPlanMinor={wholeMonth && planned.data != null ? totals.resultMinor - planned.data : null}
-        />
+        {transfers ? null : (
+          <OperationSummary
+            totals={totals}
+            period={period}
+            withPlanMinor={wholeMonth && planned.data != null ? totals.resultMinor - planned.data : null}
+          />
+        )}
         {list.data.truncated ? (
           <p className="text-caption text-text-tertiary">{translate('truncated', { count: list.data.rows.length })}</p>
         ) : null}

@@ -124,6 +124,7 @@ export function ObligationFormSheet({ obligation, onClose }: ObligationFormSheet
           control={form.control}
           name="title"
           label={translate('form.title')}
+          required
           render={(field) => <Input {...field} autoFocus />}
         />
         <SegmentedControl

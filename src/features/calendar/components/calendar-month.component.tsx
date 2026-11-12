@@ -116,7 +116,8 @@ function DayCell({ day, muted, inPeriod, entries, marks, totals }: DayCellProps)
         'relative flex h-12 flex-col items-center gap-1 overflow-hidden rounded-md pt-1.5 transition-colors lg:h-auto lg:items-stretch lg:p-2',
         week
           ? 'lg:min-h-60 lg:border lg:border-border'
-          : 'lg:min-h-48 lg:rounded-none lg:border-r lg:border-b lg:border-border',
+          : // a week row grows with its fullest day: a week of empty days stays short
+            'lg:min-h-32 lg:rounded-none lg:border-r lg:border-b lg:border-border',
         !inPeriod && 'max-lg:invisible',
         selected && 'bg-primary-soft',
         !selected && [muted ? 'lg:bg-app' : 'lg:bg-card', 'hover:bg-subtle lg:hover:bg-subtle'],
@@ -232,18 +233,18 @@ function Legend() {
           </li>
           <li>{translate(week ? 'howTo.totalsDay' : 'howTo.totals')}</li>
         </ul>
-        {!week && (
-          <ul className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <li>{translate('howTo.colours')}</li>
-            {LEGEND.map(([key, tone]) => (
-              <li key={key} className="flex items-center gap-1.5">
-                <span aria-hidden className={cn('size-2 rounded-full bg-current', tone)} />
-                {translate(`legend.${key}`)}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
+      {!week && (
+        <ul className="flex flex-wrap items-center gap-x-4 gap-y-2 text-label text-text-secondary">
+          <li>{translate('howTo.colours')}</li>
+          {LEGEND.map(([key, tone]) => (
+            <li key={key} className="flex items-center gap-1.5">
+              <span aria-hidden className={cn('size-2 rounded-full bg-current', tone)} />
+              {translate(`legend.${key}`)}
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   )
 }

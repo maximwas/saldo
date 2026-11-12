@@ -79,7 +79,8 @@ export function CalendarSets() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+      {/* phones: one row that scrolls under the screen edges, not three rows pushing the grid down (QA2 #7) */}
+      <div className="-mx-5 flex items-center gap-2 overflow-x-auto px-5 py-1 scrollbar-none lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0">
         <fieldset className="contents">
           <legend className="sr-only">{translate('sets.label')}</legend>
           {QUICK_SETS.map((set) => (
