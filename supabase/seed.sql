@@ -61,20 +61,22 @@ begin
   ) as x (code, today_rate, yesterday_rate)
   cross join lateral (values (0, x.today_rate), (1, x.yesterday_rate)) as d (back, rate);
 
-  -- subscriptions, a year of dates from the story's November
+  -- subscriptions, a year of dates from the story's November. The dates step whole months from the shifted first date,
+  -- as the app's recurrence does (month end clamped = short_month_rule last_day): shifting the November date by days
+  -- instead put Google One on the 5th while its first date said the 4th (QA, 12.11)
   for c in select * from (values
-    ('de000000-0000-4000-8000-0000000000b1'::uuid, 'Netflix', 'UAH', 34900::bigint, '2026-01-05'::date, '2026-11-05'::date),
-    ('de000000-0000-4000-8000-0000000000b2'::uuid, 'Spotify', 'UAH', 19900::bigint, '2026-01-12'::date, '2026-11-12'::date),
-    ('de000000-0000-4000-8000-0000000000b3'::uuid, 'Google One', 'USD', 299::bigint, '2026-01-22'::date, '2026-11-22'::date)
-  ) as x (id, name, currency, amount_minor, first_on, next_on)
+    ('de000000-0000-4000-8000-0000000000b1'::uuid, 'Netflix', 'UAH', 34900::bigint, '2026-01-05'::date),
+    ('de000000-0000-4000-8000-0000000000b2'::uuid, 'Spotify', 'UAH', 19900::bigint, '2026-01-12'::date),
+    ('de000000-0000-4000-8000-0000000000b3'::uuid, 'Google One', 'USD', 299::bigint, '2026-01-22'::date)
+  ) as x (id, name, currency, amount_minor, first_on)
   loop
     insert into public.subscriptions (id, ledger_id, name, category_id, account_id, currency, first_on)
     values (c.id, v_ledger, c.name, v_subscriptions, v_card, c.currency, c.first_on + v_shift);
     perform public.set_subscription_price(jsonb_build_object('id', gen_random_uuid(), 'subscription_id', c.id,
       'effective_on', c.first_on + v_shift, 'amount_minor', c.amount_minor));
     perform public.upsert_series_obligations('subscription', c.id,
-      (select jsonb_agg(jsonb_build_object('due_on', (c.next_on + v_shift + make_interval(months => n))::date))
-       from generate_series(0, 11) n));
+      (select jsonb_agg(jsonb_build_object('due_on', (c.first_on + v_shift + make_interval(months => n))::date))
+       from generate_series(10, 21) n));
   end loop;
 
   -- credits: estimated schedules, the installments paid before tracking have no rows and no operations

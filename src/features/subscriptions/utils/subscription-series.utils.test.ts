@@ -79,16 +79,53 @@ describe('seriesRows', () => {
     expect(nextPaymentOn(intended, TODAY)).toBe('2026-10-31')
   })
 
-  it('skips a date that is paid already: paying 31.10 early makes 30.11 the next one', () => {
+  it('reads the stored series, as Payments does: paying 31.10 early leaves 30.11 the first unpaid date', () => {
     expect(
       nextPaymentOn(
         {
           ...monthly,
-          paidOn: ['2026-10-31'],
+          plannedOn: ['2026-11-30', '2026-12-31'],
         },
         TODAY,
       ),
     ).toBe('2026-11-30')
+  })
+
+  it('takes a stored date the recurrence would not give: a moved payment or an older series (QA: 04.12 vs 05.12)', () => {
+    expect(
+      nextPaymentOn(
+        {
+          ...monthly,
+          plannedOn: ['2026-10-29', '2026-11-05'],
+        },
+        TODAY,
+      ),
+    ).toBe('2026-11-05')
+  })
+
+  it('falls back to the recurrence while nothing is stored yet', () => {
+    expect(
+      nextPaymentOn(
+        {
+          ...monthly,
+          plannedOn: [],
+        },
+        TODAY,
+      ),
+    ).toBe('2026-10-31')
+  })
+
+  it('plans nothing once paused, whatever is still stored', () => {
+    expect(
+      nextPaymentOn(
+        {
+          ...monthly,
+          status: 'paused',
+          plannedOn: ['2026-11-30'],
+        },
+        TODAY,
+      ),
+    ).toBeNull()
   })
 })
 
